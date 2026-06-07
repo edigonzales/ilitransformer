@@ -9,7 +9,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
-class Phase6OidStrategyTest {
+class OidStrategyTest {
 
     private final InMemoryStateStore store = new InMemoryStateStore();
 

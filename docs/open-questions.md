@@ -104,7 +104,7 @@
 - **Cross-Class IdMapping**: `putIdMapping()` speichert zusätzlich einen globalen Eintrag mit `sourceClass=null, sourceFileId=null, sourceBasketId=null`, damit referenzierte Objekte über Klassengrenzen hinweg gefunden werden.
 - **`sourceRef`-Alias-Auflösung**: In `pass2BuildTargets()` wird der Alias-Präfix (z.B. `p.RefToB` → `RefToB`) vor dem Aufruf von `readSourceReferenceOid()` entfernt.
 - **Neue Diagnostic-Codes**: `ILITRF-RUN-REF-TYPE-MISMATCH`, `ILITRF-RUN-REF-MISSING-MANDATORY`, `ILITRF-RUN-REF-CARDINALITY`.
-- **Testmodell**: `src/test/data/models/p7-ref-test.ili` mit `ClassA` (Referenz-Attribut `RefToB`), `ClassB` und Assoziation `AtoB`.
+- **Testmodell**: `src/test/data/models/with-references.ili` mit `ClassA` (Referenz-Attribut `RefToB`), `ClassB` und Assoziation `AtoB`.
 
 ### Open
 - Soll `checkRequiredRefs()` bei `required=true` und fehlender Referenz das Zielobjekt trotzdem schreiben oder verwerfen?

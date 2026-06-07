@@ -29,7 +29,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.*;
 
-class Phase6GoldenTest {
+class OidStrategyGoldenTest {
 
     private static final String MODELDIR = "src/test/data/models/";
     private static TypeSystemFacade p5ModelTs;

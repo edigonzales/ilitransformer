@@ -28,7 +28,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.*;
 
-class Phase7IntegrationTest {
+class ReferenceResolutionIntegrationTest {
 
     private static final String MODELDIR = "src/test/data/models/";
     private static TypeSystemFacade p7Ts;
@@ -38,7 +38,7 @@ class Phase7IntegrationTest {
     static void compileModels() {
         IliModelService service = new IliModelService();
         IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/p7-ref-test.ili", MODELDIR);
+                "src/test/data/models/with-references.ili", MODELDIR);
         assertThat(result.hasErrors())
                 .as("Model compilation errors: %s", result.diagnostics())
                 .isFalse();

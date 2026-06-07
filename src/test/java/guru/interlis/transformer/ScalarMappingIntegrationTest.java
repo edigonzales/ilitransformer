@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class Phase5IntegrationTest {
+class ScalarMappingIntegrationTest {
 
     private static final String MODELDIR = "src/test/data/models/";
 

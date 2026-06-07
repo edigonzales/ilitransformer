@@ -8,7 +8,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
-class Phase6BasketStrategyTest {
+class BasketStrategyTest {
 
     @Test
     void preserveReturnsSourceBasketId() {
