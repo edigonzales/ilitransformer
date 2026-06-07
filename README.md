@@ -2,7 +2,7 @@
 
 Generic INTERLIS transformation engine.
 
-**Status:** Phase 2 (INTERLIS Model Service and Inventory) — in progress.
+**Status:** Phase 3 (Typed Mapping Compiler) — in progress.
 **Primary use case:** DM01 ↔ DMAV transformation (scheduled for Phase 10+).
 
 ## Tech baseline
@@ -18,24 +18,25 @@ Generic INTERLIS transformation engine.
 ## Current implementation status
 
 - Two-pass execution engine (index → build + deferred refs → write)
+- `TypedPlan` / `TransformPlan` — typed execution plan instead of raw YAML
+- Model-aware `MappingCompiler.compileTyped()` — validates classes, attributes, roles, types, mandatory coverage
 - `inspect-model` CLI for INTERLIS model inventory (JSON + Markdown output)
 - `IliModelService` + `TypeSystemFacade` + `IliPath` for model metadata extraction
 - `validate-mapping` and `transform` CLI commands
-- Structural YAML mapping validation via `MappingCompiler`
 - INTERLIS model compilation via ili2c (ITF/XTF read/write via iox-ili)
 - Basic expression support (`${alias.attr}`, `if(...)`, string literals)
 - Diagnostics for unresolved/ambiguous references with 3-tier fallback
-- 14+ automated tests (unit tests + CLI tests)
+- 67 automated tests (11 test classes)
 - DMAV V1.1 test models under `src/test/data/av/models/`
 - Test ILI models under `src/test/data/models/`
 
-### Known limitations (Phase 2)
+### Known limitations (Phase 3)
 
-- No model-aware compiler validation (YAML structure only — planned for Phase 3)
 - All target values set as strings (no typed value system)
 - OID always sequential Long (not UUID-compatible for DMAV)
 - No `where`-filter, Joins, BAG OF STRUCTURE in engine
-- No modellbewusste Rollen-/Referenzauflösung
+- No modellbewusste Rollen-/Referenzauflösung at runtime
+- `Engine`-`isAbstract()` class check only at compile time
 - No `ilivalidator`-Support
 
 ## Run
@@ -57,7 +58,7 @@ See `docs/SPEC.md` for the full 15-phase specification.
 | 0 | Baseline, Repository-Hygiene und Namensentscheid | ✅ Done |
 | 1 | DSL-/Config-Modell stabilisieren | Next |
 | 2 | INTERLIS Model Service und Inventory | In Progress |
-| 3 | Typed Mapping Compiler | Planned |
+| 3 | Typed Mapping Compiler | In Progress |
 | 4 | Expression Engine und Function Registry | Planned |
 | 5 | Runtime MVP für 1:1 Scalar Mapping | Planned |
 | 6 | OID-, Basket- und Writer-Strategien | Planned |

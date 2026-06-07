@@ -27,3 +27,19 @@
 - Soll der `inspect-model` Output auch View-Klassen auflisten?
 - Soll die Enum-Werte-Liste direkt im Typ-String erscheinen oder als separates Feld?
 - Wie soll das `modeldir`-Handling bei `--modeldir`-Option mit Semikolon-Trennung mit ili2c-Settings interagieren?
+
+## Phase 3 (Typed Mapping Compiler)
+
+### Resolved
+- **TypedPlan-Struktur**: `TransformPlan` → `RulePlan` → `SourcePlan`, `AssignmentPlan`, `RefPlan`. Runtime akzeptiert nur noch `TransformPlan`.
+- **Typkompatibilität**: Einfache Heuristik (Literal-Klassifikation, SOURCE_PATH-Auflösung, STRUCTURE→STRUCTURE, ENUM↔TEXT). Funktionsaufrufe als UNKNOWN (→ Phase 4).
+- **Mandatory-Coverage**: `AttributeDef.getCardinality().getMinimum() > 0` → Warning wenn nicht im assign.
+- **Compiler-Report**: JSON + Markdown via `CompilerReport` Klasse.
+- **DiagnosticCode-Präfix**: `ILITRF-MAP-*` für Compiler-Diagnostics.
+- **Backward-Kompatibilität**: Engine behält `run(JobConfig)`-Methode, neue `runTyped(TransformPlan)` parallel.
+
+### Open
+- Soll die Typ-Inferenz bereits in Phase 4 Funktionsrückgabetypen kennen? (z.B. `truncate()` → TEXT, `toXmlDateTime()` → XML_DATE_TIME)
+- Soll `isAbstract()`-Prüfung Error oder Warning sein? (aktuell Error)
+- Sollen OID und Basket-Strategien bereits im `TransformPlan` repräsentiert werden?
+- Wie granular sollen Enum-Mapping-Coverage-Checks sein? (aktuell keine)

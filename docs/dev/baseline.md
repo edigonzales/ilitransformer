@@ -1,6 +1,6 @@
 # Baseline
 
-Stand nach Abschluss von Phase 2 (2026-06-07).
+Stand nach Abschluss von Phase 3 (2026-06-07).
 
 ## Technische Basis
 
@@ -39,27 +39,28 @@ Stand nach Abschluss von Phase 2 (2026-06-07).
 - `TypeSystemFacade` – stabile Query-API für Klassen, Attribute, Rollen, Typen
 - `IliPath` – Parser für INTERLIS-Pfade (`Model.Topic.Class.Attribute`)
 - `ModelInventory` + `InventorySerializer` – generiert JSON- und Markdown-Inventar
-- Modellinventar-Generierung: Topics, Klassen, Attribute (Typ, Kardinalität, Mandatory), Rollen (Association, Zielklasse), OID-Typen
-- Zwei-Pass-Transformations-Engine (Pass 1: Index, Pass 2: Build + Deferred Refs, Write)
-- INTERLIS-Modellkompilierung via ili2c
+- **`MappingCompiler.compileTyped()`** – modellbewusste Validierung (Klassen, Attribute, Rollen, Typen, Mandatory-Coverage, Zyklen) + produziert `TransformPlan`
+- **`TypedPlan`-Records** – `TransformPlan`, `RulePlan`, `SourcePlan`, `AssignmentPlan`, `RefPlan`
+- **Einfache Typkompatibilitäts-Prüfung** – Expression-Klassifikation (Literal/Path/Function) + Typ-Vergleich
+- **`CompilerReport`** – Compiler-Diagnostics als JSON/Markdown
+- Zwei-Pass-Transformations-Engine (mit TypedPlan-Unterstützung via `runTyped()`)
 - ITF/XTF I/O via iox-ili (Reader/Writer)
-- `MappingCompiler` mit struktureller YAML-Validierung
 - `ExpressionEngine` mit `${alias.attr}`, `if(cond, a, b)` und String-Literalen
 - `InMemoryStateStore` mit 3-Tier-Fallback für Referenzauflösung
 - `DiagnosticCollector` mit ERROR/WARNING/INFO
 - `GeometryAdapter`-Interface mit NoOp-Implementierung
-- 14+ Testklassen (Unit + CLI-Integration)
+- 67 Tests in 11 Testklassen
 - Test-ILI-Modelle unter `src/test/data/models/`
 - DMAV V1.1 Testmodelle unter `src/test/data/av/models/`
 
 ### Bekannte Einschränkungen (als TODO dokumentiert)
-- `MappingCompiler` validiert nur YAML-Struktur, nicht gegen INTERLIS-Metamodell (Phase 3)
-- Alle Zielwerte werden als String gesetzt (kein typisiertes Value-System)
-- OID-Strategie immer fortlaufende Longs (nicht UUID-kompatibel für DMAV)
-- `ExpressionEngine` nur minimal (nur `if`, Literale, `${path}`)
-- Keine `where`-Filter, Joins, BAG OF STRUCTURE
-- Keine modellbewusste Rollen-/Referenzauflösung
-- Kein `ilivalidator`-Support
+- Alle Zielwerte werden als String gesetzt (kein typisiertes Value-System) — Phase 4
+- OID-Strategie immer fortlaufende Longs (nicht UUID-kompatibel für DMAV) — Phase 6
+- `ExpressionEngine` nur minimal (nur `if`, Literale, `${path}`) — Phase 4
+- Typ-Inferenz für Funktionsaufrufe noch nicht (alle als UNKNOWN) — Phase 4
+- Keine `where`-Filter, Joins, BAG OF STRUCTURE — spätere Phasen
+- Keine modellbewusste Rollen-/Referenzauflösung in Runtime — Phase 7
+- Kein `ilivalidator`-Support — Phase 10+
 
 ## Repository-Struktur (nach Phase 0)
 
@@ -106,11 +107,14 @@ Stand nach Abschluss von Phase 2 (2026-06-07).
 - Letzter Commit vor Phase 0: `9d8f5e7` ("move data and add models")
 - Phase 0 umfasst: Hygiene, Umbenennung, CLI-Umbau, Modell-Update
 
-## Nächste Phase: Phase 3 (Typed Mapping Compiler)
+## Nächste Phase: Phase 4 (Expression Engine und Function Registry)
 
 Geplante Änderungen:
-- MappingCompiler gegen TypeSystem prüfen (Klassen, Attribute, Rollen existieren)
-- `TypedPlan`, `RulePlan`, `AssignmentPlan` Datenstrukturen
-- Typkompatibilitäts-Prüfung
-- Mandatory-Coverage-Report
-- Compiler-Report als Markdown/JSON
+- Expression AST oder kontrollierte Integration einer Expression-Library
+- `FunctionRegistry` mit INTERLIS-spezifischen Funktionen
+- Basisfunktionen: `if`, `coalesce`, `default`, `isNull`, `isDefined`
+- Stringfunktionen: `concat`, `substring`, `trim`, `upper`, `lower`, `replace`, `truncate`
+- Datumsfunktionen: `date`, `dateTime`, `xmlDateTime`, `today`
+- Enumfunktionen: `enumMap`, `enumDefault`, `enumName`
+- Typisierte Value-Objekte (keine Strings)
+- Typ-Inferenz für Funktionsaufrufe im Compiler
