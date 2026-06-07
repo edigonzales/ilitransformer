@@ -27,6 +27,8 @@ import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.RulePlan;
 import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
+import guru.interlis.transformer.model.RoleResolver;
+import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.BasketStrategy;
 import guru.interlis.transformer.state.DeferredRef;
 import guru.interlis.transformer.state.OidStrategy;
@@ -67,7 +69,7 @@ public final class TransformationEngine {
         resetCounters();
         pass1IndexLegacy(config, readerFactory);
         Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket = pass2BuildTargetsLegacy(config);
-        resolveDeferredRefs();
+        resolveDeferredRefs(null);
         targetsWritten = writeOutputsLegacy(config, writersByOutputId, objectsByOutputAndBasket);
         return buildResult(null);
     }
@@ -80,7 +82,8 @@ public final class TransformationEngine {
         resetCounters();
         pass1Index(plan, readerFactoryById);
         Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket = pass2BuildTargets(plan);
-        resolveDeferredRefs();
+        resolveDeferredRefs(plan);
+        checkRequiredRefs(plan);
         targetsWritten = writeOutputs(plan, writersByOutputId, objectsByOutputAndBasket);
         return buildResult(plan);
     }
@@ -217,10 +220,23 @@ public final class TransformationEngine {
                     }
                 }
 
+                TypeSystemFacade targetTs = plan.targetTypeSystems().get(rule.outputId());
+                RoleResolver roleResolver = targetTs != null ? new RoleResolver(targetTs) : null;
+
                 for (var ref : rule.refs()) {
                     if (ref.sourceRef() == null) continue;
-                    String sourceRefOid = readSourceReferenceOid(record.sourceObject(), ref.sourceRef());
+                    String attrName = ref.sourceRef();
+                    int dotIdx = attrName.indexOf('.');
+                    if (dotIdx >= 0) {
+                        attrName = attrName.substring(dotIdx + 1);
+                    }
+                    String sourceRefOid = readSourceReferenceOid(record.sourceObject(), attrName);
                     if (sourceRefOid != null && !sourceRefOid.isBlank()) {
+                        String expectedTargetClass = null;
+                        if (roleResolver != null) {
+                            expectedTargetClass = roleResolver.resolveExpectedTargetClass(
+                                    ref, getScopedName(rule.targetClass()));
+                        }
                         stateStore.addDeferredRef(new DeferredRef(
                                 getScopedName(rule.targetClass()),
                                 target.getobjectoid(),
@@ -229,7 +245,7 @@ public final class TransformationEngine {
                                 sourceRefOid,
                                 record.sourceFileId(),
                                 record.sourceBasketId(),
-                                null
+                                expectedTargetClass
                         ));
                     }
                 }
@@ -237,6 +253,12 @@ public final class TransformationEngine {
                 stateStore.putIdMapping(
                         new SourceRefKey(record.sourceClass(), record.sourceObject().getobjectoid(),
                                 record.sourceFileId(), record.sourceBasketId()),
+                        new TargetRefValue(getScopedName(rule.targetClass()), target.getobjectoid(),
+                                rule.outputId(), record.sourceBasketId())
+                );
+                stateStore.putIdMapping(
+                        new SourceRefKey(null, record.sourceObject().getobjectoid(),
+                                null, null),
                         new TargetRefValue(getScopedName(rule.targetClass()), target.getobjectoid(),
                                 rule.outputId(), record.sourceBasketId())
                 );
@@ -302,6 +324,12 @@ public final class TransformationEngine {
                 stateStore.putIdMapping(
                         new SourceRefKey(record.sourceClass(), record.sourceObject().getobjectoid(),
                                 record.sourceFileId(), record.sourceBasketId()),
+                        new TargetRefValue(rule.getEffectiveTargetClass(), target.getobjectoid(),
+                                rule.getEffectiveTargetOutput(), record.sourceBasketId())
+                );
+                stateStore.putIdMapping(
+                        new SourceRefKey(null, record.sourceObject().getobjectoid(),
+                                null, null),
                         new TargetRefValue(rule.getEffectiveTargetClass(), target.getobjectoid(),
                                 rule.getEffectiveTargetOutput(), record.sourceBasketId())
                 );
@@ -389,15 +417,21 @@ public final class TransformationEngine {
         return null;
     }
 
-    private void resolveDeferredRefs() {
+    private void resolveDeferredRefs(TransformPlan plan) {
         for (DeferredRef deferredRef : stateStore.deferredRefs()) {
             List<TargetRefValue> candidates = stateStore.findIdMappings(
-                    deferredRef.sourceClass(),
+                    null,
                     deferredRef.sourceReferencedOid(),
                     deferredRef.sourceFileId(),
                     deferredRef.sourceBasketId());
             if (candidates.isEmpty()) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.RUN_REF_UNRESOLVED, Severity.WARNING,
+                Severity severity = isRefRequired(plan, deferredRef)
+                        ? failPolicySeverity(plan, Severity.ERROR)
+                        : failPolicySeverity(plan, Severity.WARNING);
+                String code = isRefRequired(plan, deferredRef)
+                        ? DiagnosticCode.RUN_REF_MISSING_MANDATORY
+                        : DiagnosticCode.RUN_REF_UNRESOLVED;
+                diagnostics.add(new Diagnostic(code, severity,
                         "Could not resolve reference " + deferredRef.sourceReferencedOid(),
                         deferredRef.ownerTargetClass() + "/" + deferredRef.ownerTargetOid(),
                         "Check source OID / basket routing"));
@@ -411,11 +445,72 @@ public final class TransformationEngine {
                 continue;
             }
             TargetRefValue resolved = candidates.get(0);
+
+            if (deferredRef.expectedTargetClass() != null
+                    && !deferredRef.expectedTargetClass().isEmpty()
+                    && !deferredRef.expectedTargetClass().equals(resolved.targetClass())) {
+                Severity severity = failPolicySeverity(plan, Severity.ERROR);
+                diagnostics.add(new Diagnostic(DiagnosticCode.RUN_REF_TYPE_MISMATCH, severity,
+                        "Type mismatch for reference " + deferredRef.sourceReferencedOid()
+                                + ": expected " + deferredRef.expectedTargetClass()
+                                + " but resolved " + resolved.targetClass(),
+                        deferredRef.ownerTargetClass() + "/" + deferredRef.ownerTargetOid(),
+                        "Check target class of resolved object"));
+                continue;
+            }
+
             stateStore.findTargetObject(deferredRef.ownerTargetClass(), deferredRef.ownerTargetOid()).ifPresent(owner -> {
                 IomObject ref = owner.addattrobj(deferredRef.ownerAttribute(), Iom_jObject.REF);
                 ref.setobjectrefoid(resolved.targetOid());
             });
         }
+    }
+
+    private void checkRequiredRefs(TransformPlan plan) {
+        if (plan == null) return;
+        TypeSystemFacade targetTs = plan.targetTypeSystems().values().stream().findFirst().orElse(null);
+        for (RulePlan rule : plan.rules()) {
+            String targetClassScoped = getScopedName(rule.targetClass());
+            for (var ref : rule.refs()) {
+                if (!ref.required()) continue;
+                if (targetTs == null) continue;
+                RoleResolver roleResolver = new RoleResolver(targetTs);
+                long minCardinality = roleResolver.getTargetRoleCardinality(ref, targetClassScoped).min();
+                if (minCardinality <= 0) continue;
+
+                boolean hasResolved = stateStore.deferredRefs().stream()
+                        .anyMatch(dr -> dr.ownerTargetClass().equals(targetClassScoped)
+                                && dr.ownerAttribute().equals(ref.targetRoleName())
+                                && stateStore.findIdMappings(
+                                        null, dr.sourceReferencedOid(),
+                                        null, null).size() == 1);
+                if (!hasResolved) {
+                    Severity severity = failPolicySeverity(plan, Severity.ERROR);
+                    diagnostics.add(new Diagnostic(DiagnosticCode.RUN_REF_MISSING_MANDATORY, severity,
+                            "Required reference missing for role " + ref.targetRoleName(),
+                            targetClassScoped,
+                            "Ensure source objects have the required reference"));
+                }
+            }
+        }
+    }
+
+    private boolean isRefRequired(TransformPlan plan, DeferredRef deferredRef) {
+        if (plan == null) return false;
+        for (RulePlan rule : plan.rules()) {
+            if (!getScopedName(rule.targetClass()).equals(deferredRef.ownerTargetClass())) continue;
+            for (var ref : rule.refs()) {
+                if (ref.targetRoleName().equals(deferredRef.ownerAttribute()) && ref.required()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static Severity failPolicySeverity(TransformPlan plan, Severity defaultSeverity) {
+        if (plan == null) return defaultSeverity;
+        return "lenient".equals(plan.failPolicy()) ? Severity.WARNING : defaultSeverity;
     }
 
     private String readSourceReferenceOid(IomObject source, String roleName) {

@@ -91,3 +91,24 @@
 - Soll die Basket-Strategie `byTopic` auch Basket-OID-Typen des Zielmodells berücksichtigen?
 - Wie soll mit OID-Kollisionen bei `preserve` umgegangen werden?
 - Status der Phasen 0-3 OID/Basket-Strategie-Fragen als gelöst markieren?
+
+## Phase 7 (Referenzen, Rollen und Associations)
+
+### Resolved
+- **`RoleResolver`**: Erstellt als Wrapper um `TypeSystemFacade`. Löst `expectedTargetClass` für ein `RefPlan` gegen das Target-TypeSystem auf (findet den anderen Assoziationspartner).
+- **`TypeSystemFacade` erweitert**: Neue Methoden `resolveRole()`, `getRoleTargetClass()`, `getRoleCardinalityMin()`/`Max()`, `getRoleAssociation()`.
+- **`getRoleTargetClass()`**: Navigiert über `RoleDef.getContainer()` → `AssociationDef.getRoles()` → andere Rolle → `getDestination()` → `getScopedName()`.
+- **Type-Check in Runtime**: `resolveDeferredRefs()` prüft jetzt `deferredRef.expectedTargetClass()` vs `resolved.targetClass()` und emittiert `ILITRF-RUN-REF-TYPE-MISMATCH`.
+- **`failPolicy`-Integration**: `resolveDeferredRefs()` und `checkRequiredRefs()` werten `plan.failPolicy()` aus: `strict` → ERROR, `lenient` → WARNING.
+- **Cardinality/Mandatory-Check**: `checkRequiredRefs()` iteriert alle `RefPlan` mit `required=true` und prüft ob ein aufgelöster DeferredRef existiert → `ILITRF-RUN-REF-MISSING-MANDATORY`.
+- **Cross-Class IdMapping**: `putIdMapping()` speichert zusätzlich einen globalen Eintrag mit `sourceClass=null, sourceFileId=null, sourceBasketId=null`, damit referenzierte Objekte über Klassengrenzen hinweg gefunden werden.
+- **`sourceRef`-Alias-Auflösung**: In `pass2BuildTargets()` wird der Alias-Präfix (z.B. `p.RefToB` → `RefToB`) vor dem Aufruf von `readSourceReferenceOid()` entfernt.
+- **Neue Diagnostic-Codes**: `ILITRF-RUN-REF-TYPE-MISMATCH`, `ILITRF-RUN-REF-MISSING-MANDATORY`, `ILITRF-RUN-REF-CARDINALITY`.
+- **Testmodell**: `src/test/data/models/p7-ref-test.ili` mit `ClassA` (Referenz-Attribut `RefToB`), `ClassB` und Assoziation `AtoB`.
+
+### Open
+- Soll `checkRequiredRefs()` bei `required=true` und fehlender Referenz das Zielobjekt trotzdem schreiben oder verwerfen?
+- Soll die Auflösung von `expectedTargetClass` auch für Modelle ohne Assoziationen funktionieren (z.B. INTERLIS-1-REFERENCE-Attribute)?
+- Sollen Associations als eigene `IomObject`-Knoten im Output geschrieben werden (nicht nur als REF-Attribute auf dem Owner-Objekt)?
+- Wie granular soll der Cardinality-Check sein: reicht Prüfung auf `min > 0` (=required) oder soll die tatsächliche Anzahl der aufgelösten Refs pro Rolle gezählt werden?
+- Soll `checkRequiredRefs()` auch bei `DeferredRef`s prüfen, die aufgrund `sourceRef==null` nie erstellt wurden (aktuell: ja)?

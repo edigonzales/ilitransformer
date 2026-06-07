@@ -1,0 +1,24 @@
+INTERLIS 2.4;
+
+MODEL P7Model (en)
+  AT "http://test.ili-transformer.ch" VERSION "2026-06-07" =
+  TOPIC P7Topic =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.STANDARDOID;
+
+    CLASS ClassA =
+      Name: MANDATORY TEXT*60;
+      RefToB: TEXT*100;
+    END ClassA;
+
+    CLASS ClassB =
+      Name: MANDATORY TEXT*60;
+    END ClassB;
+
+    ASSOCIATION AtoB =
+      B_Role -<> {0..*} ClassB;
+      A_Role -- {1} ClassA;
+    END AtoB;
+
+  END P7Topic;
+END P7Model.

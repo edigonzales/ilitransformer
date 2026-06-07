@@ -40,6 +40,9 @@ public final class DiagnosticCode {
     // Runtime
     public static final String RUN_REF_UNRESOLVED = "ILITRF-RUN-REF-UNRESOLVED";
     public static final String RUN_REF_AMBIGUOUS = "ILITRF-RUN-REF-AMBIGUOUS";
+    public static final String RUN_REF_TYPE_MISMATCH = "ILITRF-RUN-REF-TYPE-MISMATCH";
+    public static final String RUN_REF_MISSING_MANDATORY = "ILITRF-RUN-REF-MISSING-MANDATORY";
+    public static final String RUN_REF_CARDINALITY = "ILITRF-RUN-REF-CARDINALITY";
 
     // Expression (Phase 4)
     public static final String EXPR_SYNTAX = "ILITRF-EXPR-SYNTAX";

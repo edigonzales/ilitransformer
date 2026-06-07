@@ -1,6 +1,10 @@
 package guru.interlis.transformer.model;
 
+import ch.interlis.ili2c.metamodel.AbstractClassDef;
+import ch.interlis.ili2c.metamodel.AssociationDef;
 import ch.interlis.ili2c.metamodel.AttributeDef;
+import ch.interlis.ili2c.metamodel.Cardinality;
+import ch.interlis.ili2c.metamodel.Container;
 import ch.interlis.ili2c.metamodel.Domain;
 import ch.interlis.ili2c.metamodel.Element;
 import ch.interlis.ili2c.metamodel.Extendable;
@@ -75,20 +79,83 @@ public final class TypeSystemFacade {
     }
 
     public boolean roleExists(String classPath, String roleName) {
+        return resolveRole(classPath, roleName) != null;
+    }
+
+    public RoleDef resolveRole(String classPath, String roleName) {
         Table table = resolveClass(classPath);
-        if (table == null) return false;
-        @SuppressWarnings("rawtypes")
-        Iterator it = table.getDefinedRoles();
-        if (it == null) return false;
+        if (table == null) return null;
+        @SuppressWarnings("unchecked")
+        Iterator<RoleDef> it = table.getTargetForRoles();
+        if (it == null) return null;
         while (it.hasNext()) {
-            Object obj = it.next();
-            if (obj instanceof RoleDef role) {
-                if (role.getName() != null && role.getName().equals(roleName)) {
-                    return true;
+            RoleDef role = it.next();
+            if (role.getName() != null && role.getName().equals(roleName)) {
+                return role;
+            }
+        }
+        return null;
+    }
+
+    public String getRoleTargetClass(String classPath, String roleName) {
+        RoleDef role = resolveRole(classPath, roleName);
+        if (role == null) return null;
+        Container container = role.getContainer();
+        if (container instanceof AssociationDef assoc) {
+            for (RoleDef other : assoc.getRoles()) {
+                if (other == role) continue;
+                AbstractClassDef dest = other.getDestination();
+                if (dest instanceof Table table) {
+                    return getScopedName(table);
+                }
+                if (dest != null && dest.getName() != null) {
+                    return dest.getName();
                 }
             }
         }
-        return false;
+        AbstractClassDef dest = role.getDestination();
+        if (dest instanceof Table table) {
+            return getScopedName(table);
+        }
+        if (dest != null && dest.getName() != null) {
+            return dest.getName();
+        }
+        return null;
+    }
+
+    public long getRoleCardinalityMin(String classPath, String roleName) {
+        RoleDef role = resolveRole(classPath, roleName);
+        if (role == null) return 0;
+        Cardinality card = role.getCardinality();
+        return card != null ? card.getMinimum() : 0;
+    }
+
+    public long getRoleCardinalityMax(String classPath, String roleName) {
+        RoleDef role = resolveRole(classPath, roleName);
+        if (role == null) return 0;
+        Cardinality card = role.getCardinality();
+        return card != null ? card.getMaximum() : Cardinality.UNBOUND;
+    }
+
+    public String getRoleAssociation(String classPath, String roleName) {
+        RoleDef role = resolveRole(classPath, roleName);
+        if (role == null) return null;
+        Container container = role.getContainer();
+        if (container instanceof AssociationDef assoc) {
+            return assoc.getName();
+        }
+        return null;
+    }
+
+    public static String getScopedName(Table table) {
+        Container container = table.getContainer();
+        if (container instanceof Topic topic) {
+            Container modelContainer = topic.getContainer();
+            if (modelContainer instanceof Model model) {
+                return model.getName() + "." + topic.getName() + "." + table.getName();
+            }
+        }
+        return table.getName();
     }
 
     public String getAttributeTypeString(String classPath, String attrName) {
