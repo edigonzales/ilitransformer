@@ -21,6 +21,8 @@ import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
+import guru.interlis.transformer.mapping.plan.BagPlan;
+import guru.interlis.transformer.mapping.plan.RulePlan;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
@@ -291,6 +293,140 @@ class Dm01ToDmavLfp3IntegrationTest {
         }
     }
 
+    @Test
+    void bagTextpositionForwardCreatesStructureInOutput() throws Exception {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
+
+        Map<String, TypeSystemFacade> sourceTs = Map.of("Dm01TestModel", dm01Ts);
+        Map<String, TypeSystemFacade> targetTs = Map.of("DmavTestModel", dmavTs);
+        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        assertThat(plan.diagnostics().hasErrors()).isFalse();
+
+        // Verify that the compile plan includes bags
+        RulePlan lfp3Rule = plan.rules().stream()
+                .filter(r -> r.ruleId().equals("lfp3"))
+                .findFirst().orElseThrow();
+        assertThat(lfp3Rule.bags()).hasSize(1);
+        assertThat(lfp3Rule.bags().get(0).bagAttrName()).isEqualTo("Textposition");
+        assertThat(lfp3Rule.bags().get(0).mode()).isEqualTo(BagPlan.BagMode.EMBED);
+
+        Iom_jObject nf = new Iom_jObject("Dm01TestModel.Fixpunkte.LFP3Nachfuehrung", "1");
+        nf.setattrvalue("NBIdent", "NF001");
+        nf.setattrvalue("Identifikator", "ID001");
+        nf.setattrvalue("Beschreibung", "Test-Nachfuehrung");
+        nf.setattrvalue("GueltigerEintrag", "2025-01-15");
+
+        Iom_jObject lfp = new Iom_jObject("Dm01TestModel.Fixpunkte.LFP3", "10");
+        lfp.setattrvalue("Entstehung", "1");
+        lfp.setattrvalue("NBIdent", "LFP001");
+        lfp.setattrvalue("Nummer", "12345");
+        lfp.setattrvalue("Geometrie", "2600000.000 1200000.000");
+        lfp.setattrvalue("Lagegenauigkeit", "5.0");
+        lfp.setattrvalue("IstLagezuverlaessig", "ja");
+        lfp.setattrvalue("Hoehengenauigkeit", "2.0");
+        lfp.setattrvalue("IstHoehenzuverlaessig", "nein");
+        lfp.setattrvalue("Punktzeichen", "Stein");
+
+        // LFP3Pos objects to become Textposition BAG items
+        Iom_jObject pos1 = new Iom_jObject("Dm01TestModel.Fixpunkte.LFP3Pos", "100");
+        pos1.setattrvalue("LFP3Pos_von", "10"); // references LFP3 OID
+        pos1.setattrvalue("Pos", "2600001.000");
+        pos1.setattrvalue("Ori", "45.0");
+        pos1.setattrvalue("HAli", "Center");
+        pos1.setattrvalue("VAli", "Half");
+
+        Iom_jObject pos2 = new Iom_jObject("Dm01TestModel.Fixpunkte.LFP3Pos", "101");
+        pos2.setattrvalue("LFP3Pos_von", "10");
+        pos2.setattrvalue("Pos", "2600002.000");
+        pos2.setattrvalue("Ori", "90.0");
+        pos2.setattrvalue("HAli", "Right");
+        pos2.setattrvalue("VAli", "Top");
+
+        Path outputPath = Files.createTempFile("dmav-lfp3-bag-", ".xtf");
+        try {
+            InterlisIoFactory ioFactory = new InterlisIoFactory();
+            IoxWriter writer = ioFactory.createWriter(outputPath, dmavTransferDescription);
+
+            DiagnosticCollector engineDiag = new DiagnosticCollector();
+            TransformationEngine engine = new TransformationEngine(
+                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan,
+                    onceReaderFactory(nf, lfp, pos1, pos2),
+                    Map.of("dmav", writer));
+
+            assertThat(result.sourceRecordsRead()).isEqualTo(4);
+            assertThat(result.targetsCreated()).isEqualTo(2);
+            assertThat(result.targetsWritten()).isEqualTo(2);
+            assertThat(result.errors()).isEqualTo(0);
+
+            String content = Files.readString(outputPath);
+            assertThat(content).contains("LFP3Nachfuehrung");
+            assertThat(content).contains("LFP3");
+            // Verify BAG structures are in output
+            assertThat(content).contains("Textposition");
+            assertThat(content).contains("Position");
+            assertThat(content).contains("2600001.000");
+            assertThat(content).contains("2600002.000");
+            assertThat(content).contains("Orientierung");
+            assertThat(content).contains("HReferenzpunkt");
+            assertThat(content).contains("Center");
+            assertThat(content).contains("Right");
+        } finally {
+            Files.deleteIfExists(outputPath);
+        }
+    }
+
+    @Test
+    void bagTextpositionZeroPositionsProducesNoEmptyStructures() throws Exception {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
+
+        Map<String, TypeSystemFacade> sourceTs = Map.of("Dm01TestModel", dm01Ts);
+        Map<String, TypeSystemFacade> targetTs = Map.of("DmavTestModel", dmavTs);
+        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        assertThat(plan.diagnostics().hasErrors()).isFalse();
+
+        Iom_jObject nf = new Iom_jObject("Dm01TestModel.Fixpunkte.LFP3Nachfuehrung", "1");
+        nf.setattrvalue("NBIdent", "NF001");
+        nf.setattrvalue("Identifikator", "ID001");
+        nf.setattrvalue("Beschreibung", "Test-ZeroPos");
+        nf.setattrvalue("GueltigerEintrag", "2025-01-15");
+
+        Iom_jObject lfp = new Iom_jObject("Dm01TestModel.Fixpunkte.LFP3", "10");
+        lfp.setattrvalue("Entstehung", "1");
+        lfp.setattrvalue("NBIdent", "LFP001");
+        lfp.setattrvalue("Nummer", "12345");
+        lfp.setattrvalue("Geometrie", "2600000.000 1200000.000");
+        lfp.setattrvalue("Lagegenauigkeit", "5.0");
+        lfp.setattrvalue("IstLagezuverlaessig", "ja");
+        lfp.setattrvalue("Punktzeichen", "Stein");
+
+        // No LFP3Pos records
+
+        Path outputPath = Files.createTempFile("dmav-lfp3-no-bag-", ".xtf");
+        try {
+            InterlisIoFactory ioFactory = new InterlisIoFactory();
+            IoxWriter writer = ioFactory.createWriter(outputPath, dmavTransferDescription);
+
+            DiagnosticCollector engineDiag = new DiagnosticCollector();
+            TransformationEngine engine = new TransformationEngine(
+                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan,
+                    onceReaderFactory(nf, lfp),
+                    Map.of("dmav", writer));
+
+            assertThat(result.targetsWritten()).isEqualTo(2);
+            assertThat(result.errors()).isEqualTo(0);
+
+            String content = Files.readString(outputPath);
+            assertThat(content).contains("LFP3");
+            // No empty Textposition structures
+            assertThat(content).doesNotContain("Textposition");
+        } finally {
+            Files.deleteIfExists(outputPath);
+        }
+    }
     private static IoxReader createMockReader(Iom_jObject... objects) {
         return new IoxReader() {
             private int index = 0;

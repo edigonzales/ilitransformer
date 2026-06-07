@@ -253,6 +253,7 @@ public final class JobConfig {
         public BagFrom from;
         public String structure;
         public Map<String, String> assign;
+        public String mode;
     }
 
     public static final class BagFrom {

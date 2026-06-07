@@ -1,6 +1,7 @@
 package guru.interlis.transformer.expr;
 
 import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -11,6 +12,7 @@ import guru.interlis.transformer.expr.builtins.EnumFunctions;
 import guru.interlis.transformer.expr.builtins.MathFunctions;
 import guru.interlis.transformer.expr.builtins.RefFunctions;
 import guru.interlis.transformer.expr.builtins.StringFunctions;
+import guru.interlis.transformer.mapping.plan.TypeInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -96,7 +98,20 @@ public final class ExpressionEngine {
     private Value evaluateAst(Expression ast, EvalContext ctx) {
         return switch (ast) {
             case LiteralExpr l -> l.value();
-            case PathExpr p -> resolveSourcePath(p.alias() + "." + p.attributeName(), ctx);
+            case PathExpr p -> {
+                if (p.attributeName() == null || p.attributeName().isBlank()) {
+                    // Bare alias: return the source object's OID as a reference
+                    IomObject source = ctx.sources().get(p.alias());
+                    if (source != null) {
+                        String oid = source.getobjectoid();
+                        if (oid != null) {
+                            yield new ReferenceValue(source.getobjecttag(), oid);
+                        }
+                    }
+                    yield NullValue.INSTANCE;
+                }
+                yield resolveSourcePath(p.alias() + "." + p.attributeName(), ctx);
+            }
             case FunctionCallExpr f -> evaluateFunctionCall(f, ctx);
             case ConditionalExpr c -> evaluateConditional(c, ctx);
         };
@@ -147,17 +162,66 @@ public final class ExpressionEngine {
     private Value resolveSourcePath(String path, EvalContext ctx) {
         String[] parts = path.split("\\.", 2);
         if (parts.length < 2) {
+            // Bare alias: treat as reference to the source object's OID
+            IomObject source = ctx.sources().get(parts[0]);
+            if (source != null) {
+                String oid = source.getobjectoid();
+                if (oid != null) {
+                    return new ReferenceValue(source.getobjecttag(), oid);
+                }
+                return NullValue.INSTANCE;
+            }
             return NullValue.INSTANCE;
         }
         IomObject source = ctx.sources().get(parts[0]);
         if (source == null) {
             return NullValue.INSTANCE;
         }
+        String attrName = parts[1];
+
+        // Check if this is a geometry attribute
+        TypeInfo attrType = resolveSourceAttributeType(ctx, parts[0], attrName);
+        if (attrType != null && (attrType == guru.interlis.transformer.mapping.plan.TypeInfo.COORD
+                || attrType == guru.interlis.transformer.mapping.plan.TypeInfo.POLYLINE
+                || attrType == guru.interlis.transformer.mapping.plan.TypeInfo.SURFACE
+                || attrType == guru.interlis.transformer.mapping.plan.TypeInfo.AREA)) {
+            return resolveGeometryValue(source, attrName, attrType, ctx);
+        }
+
         String attrValue = source.getattrvalue(parts[1]);
         if (attrValue == null) {
             return NullValue.INSTANCE;
         }
         return new TextValue(attrValue);
+    }
+
+    private TypeInfo resolveSourceAttributeType(EvalContext ctx, String alias, String attrName) {
+        if (ctx.sourceAttributeTypes() == null) return null;
+        Map<String, TypeInfo> aliasTypes = ctx.sourceAttributeTypes().get(alias);
+        if (aliasTypes == null) return null;
+        return aliasTypes.get(attrName);
+    }
+
+    private Value resolveGeometryValue(IomObject source, String attrName, TypeInfo attrType, EvalContext ctx) {
+        if (ctx.geometryAdapter() == null) {
+            String attrValue = source.getattrvalue(attrName);
+            if (attrValue != null) return new TextValue(attrValue);
+            return NullValue.INSTANCE;
+        }
+        int count = source.getattrvaluecount(attrName);
+        if (count > 0) {
+            IomObject geomObj = source.getattrobj(attrName, 0);
+            if (geomObj != null) {
+                return ctx.geometryAdapter().normalize(geomObj, attrType);
+            }
+        }
+        String attrValue = source.getattrvalue(attrName);
+        if (attrValue != null) {
+            Iom_jObject temp = new Iom_jObject(attrType.name(), null);
+            temp.setattrvalue("value", attrValue);
+            return ctx.geometryAdapter().normalize(temp, attrType);
+        }
+        return NullValue.INSTANCE;
     }
 
     // -- Legacy compatibility -----------------------------------------

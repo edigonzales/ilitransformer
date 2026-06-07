@@ -11,6 +11,15 @@ MODEL DmavTestModel (de)
       Versicherungsart = (Stein, Kunststoffzeichen, Bolzen, Rohr, Pfahl, Kreuz, unversichert, weitere);
       LFPArt = (LFP3, Hilfsfixpunkt);
       Grenzpunktfunktion = (keine, Grenzpunkt, Hoheitsgrenzpunkt);
+      HAlignment = (Left, Center, Right);
+      VAlignment = (Top, Cap, Half, Baseline, Bottom);
+
+    STRUCTURE Textposition =
+      Position: MANDATORY 0.0 .. 9999999.0;
+      Orientierung: MANDATORY 0.0 .. 400.0;
+      HReferenzpunkt: HAlignment;
+      VReferenzpunkt: VAlignment;
+    END Textposition;
 
     CLASS LFP3Nachfuehrung =
       NBIdent: MANDATORY TEXT*12;
@@ -32,6 +41,8 @@ MODEL DmavTestModel (de)
       Punktzeichen: MANDATORY Versicherungsart;
       Grenzpunktfunktion: MANDATORY Grenzpunktfunktion;
       AktiverUnterhalt: MANDATORY BOOLEAN;
+      SymbolOri: 0.0 .. 400.0;
+      Textposition: BAG {0..*} OF Textposition;
     END LFP3;
 
     ASSOCIATION Entstehung_LFP3 =

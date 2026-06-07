@@ -36,6 +36,16 @@ mapping:
       Kreuz: "Kreuz"
       unversichert: "unversichert"
       weitere: "weitere"
+    HAlignment_DM01_DMAV:
+      Left: "Left"
+      Center: "Center"
+      Right: "Right"
+    VAlignment_DM01_DMAV:
+      Top: "Top"
+      Cap: "Cap"
+      Half: "Half"
+      Baseline: "Baseline"
+      Bottom: "Bottom"
 
   rules:
     - id: lfp3-nachfuehrung
@@ -77,6 +87,19 @@ mapping:
         Punktzeichen: "enumMap(p.Punktzeichen, 'Versicherungsart_DM01_DMAV')"
         Grenzpunktfunktion: "#keine"
         AktiverUnterhalt: "true"
+      bags:
+        Textposition:
+          from:
+            input: dm01
+            class: "Dm01TestModel.Fixpunkte.LFP3Pos"
+            alias: pos
+            where: "refEquals(pos.LFP3Pos_von, p)"
+          structure: "DmavTestModel.Fixpunkte.Textposition"
+          assign:
+            Position: "pos.Pos"
+            Orientierung: "coalesce(pos.Ori, 100.0)"
+            HReferenzpunkt: "enumMap(coalesce(pos.HAli, 'Left'), 'HAlignment_DM01_DMAV')"
+            VReferenzpunkt: "enumMap(coalesce(pos.VAli, 'Baseline'), 'VAlignment_DM01_DMAV')"
       refs:
         - association: "Entstehung_LFP3"
           role: "Entstehung"

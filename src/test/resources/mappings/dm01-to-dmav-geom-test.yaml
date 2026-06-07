@@ -1,0 +1,41 @@
+version: 1
+
+job:
+  name: dm01-to-dmav-geom-test
+  description: "Test geometry pass-through transformation"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  inputs:
+    - id: dm01
+      path: "input/test.itf"
+      model: "Dm01GeomTestModel"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-geom-test.xtf"
+      model: "DmavGeomTestModel"
+      format: "xtf"
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "test-geom"
+  basketStrategy:
+    default: preserveOrGenerateUuid
+
+  rules:
+    - id: lfp3
+      target:
+        output: dmav
+        class: "DmavGeomTestModel.Fixpunkte.LFP3"
+      sources:
+        - alias: p
+          input: dm01
+          class: "Dm01GeomTestModel.Fixpunkte.LFP3"
+      identity:
+        sourceKey: ["p.NBIdent", "p.Nummer"]
+      assign:
+        NBIdent: "p.NBIdent"
+        Nummer: "p.Nummer"
+        Geometrie: "p.Geometrie"
+        Lagegenauigkeit: "p.Lagegenauigkeit"

@@ -4,6 +4,7 @@ import ch.interlis.ili2c.metamodel.AbstractClassDef;
 import ch.interlis.ili2c.metamodel.AssociationDef;
 import ch.interlis.ili2c.metamodel.AttributeDef;
 import ch.interlis.ili2c.metamodel.Cardinality;
+import ch.interlis.ili2c.metamodel.CompositionType;
 import ch.interlis.ili2c.metamodel.Container;
 import ch.interlis.ili2c.metamodel.Domain;
 import ch.interlis.ili2c.metamodel.Element;
@@ -72,6 +73,68 @@ public final class TypeSystemFacade {
             if (ext instanceof AttributeDef attr) {
                 if (attr.getName() != null && attr.getName().equals(attrName)) {
                     return attr;
+                }
+            }
+        }
+        return null;
+    }
+
+    public AttributeDef findStructureAttribute(CompositionType structureType, String attrName) {
+        Table component = structureType.getComponentType();
+        if (component == null) return null;
+        return findAttribute(component, attrName);
+    }
+
+    public CompositionType resolveStructureType(String qualifiedPath) {
+        IliPath path = IliPath.parse(qualifiedPath);
+        if (path.length() < 3) return null;
+
+        Iterator<Model> modelIt = td.iterator();
+        while (modelIt.hasNext()) {
+            Model model = modelIt.next();
+            if (!modelNameMatches(model, path.model())) continue;
+            Iterator<Element> elIt = model.iterator();
+            while (elIt.hasNext()) {
+                Element el = elIt.next();
+                if (el instanceof Topic topic) {
+                    if (!topicNameMatches(topic, path.topic())) continue;
+                    CompositionType ct = findStructureInTopic(topic, path.className());
+                    if (ct != null) return ct;
+                }
+                // Also search model-level elements
+                if (el instanceof CompositionType ct) {
+                    if (ct.getName() != null && ct.getName().equals(path.className())) {
+                        return ct;
+                    }
+                }
+            }
+            // Also try searching all topics for the structure
+            Iterator<Element> modelElIt = model.iterator();
+            while (modelElIt.hasNext()) {
+                Element element = modelElIt.next();
+                if (element instanceof Topic topic) {
+                    CompositionType ct = findStructureInTopic(topic, path.className());
+                    if (ct != null) {
+                        // Verify model name matches (topic container)
+                        Container container = topic.getContainer();
+                        if (container instanceof Model m && modelNameMatches(m, path.model())) {
+                            return ct;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private CompositionType findStructureInTopic(Topic topic, String structureName) {
+        Iterator<Element> it = topic.iterator();
+        while (it.hasNext()) {
+            Element el = it.next();
+            if (el instanceof CompositionType ct) {
+                if (ct.getName() != null && ct.getName().equals(structureName)) {
+                    return ct;
                 }
             }
         }

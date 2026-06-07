@@ -1,7 +1,10 @@
 package guru.interlis.transformer.mapping.compiler;
 
 import ch.interlis.ili2c.metamodel.AttributeDef;
+import ch.interlis.ili2c.metamodel.Cardinality;
+import ch.interlis.ili2c.metamodel.CompositionType;
 import ch.interlis.ili2c.metamodel.Container;
+import ch.interlis.ili2c.metamodel.Extendable;
 import ch.interlis.ili2c.metamodel.Model;
 import ch.interlis.ili2c.metamodel.Table;
 import ch.interlis.ili2c.metamodel.Topic;
@@ -18,6 +21,7 @@ import guru.interlis.transformer.expr.builtins.RefFunctions;
 import guru.interlis.transformer.expr.builtins.StringFunctions;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
+import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.ExpressionKind;
 // Plan records imported individually
 import guru.interlis.transformer.mapping.plan.RefPlan;
@@ -32,6 +36,7 @@ import guru.interlis.transformer.state.OidStrategy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -257,6 +262,10 @@ public final class MappingCompiler {
             }
         }
 
+        // Compile bags
+        List<BagPlan> bagPlans = compileBags(rule, sourcePlans, targetClass, targetTs, ruleId,
+                inputModelById, sourceTypeSystems, targetTypeSystems, diag);
+
         // Compile identity source keys
         List<String> identitySourceKeys = compileIdentityKeys(rule, sourcePlans, diag);
 
@@ -267,6 +276,7 @@ public final class MappingCompiler {
                 sourcePlans,
                 assignmentPlans,
                 refPlans,
+                bagPlans,
                 identitySourceKeys
         );
     }
@@ -424,6 +434,187 @@ public final class MappingCompiler {
         return keys;
     }
 
+    // -- Bag compilation (Phase 12) ----------------------------------------
+
+    private List<BagPlan> compileBags(JobConfig.RuleSpec rule, List<SourcePlan> sourcePlans,
+                                       Table targetClass, TypeSystemFacade targetTs,
+                                       String ruleId,
+                                       Map<String, String> inputModelById,
+                                       Map<String, TypeSystemFacade> sourceTypeSystems,
+                                       Map<String, TypeSystemFacade> targetTypeSystems,
+                                       DiagnosticCollector diag) {
+        if (rule.bags == null || rule.bags.isEmpty()) {
+            return List.of();
+        }
+
+        List<BagPlan> bagPlans = new ArrayList<>();
+        for (var entry : rule.bags.entrySet()) {
+            String bagAttrName = entry.getKey();
+            JobConfig.BagSpec bagSpec = entry.getValue();
+
+            // Validate bag attribute exists on target class
+            AttributeDef bagAttr = targetTs != null ? targetTs.findAttribute(targetClass, bagAttrName) : null;
+            if (bagAttr == null) {
+                diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_TARGET_ATTRIBUTE, Severity.ERROR,
+                        "Bag target attribute not found: " + bagAttrName + " in class " + targetClass.getName(),
+                        ruleId, "Check the bag attribute name in the target class"));
+                continue;
+            }
+
+            // Check if it's a BAG OF structure type
+            ch.interlis.ili2c.metamodel.Type domain = bagAttr.getDomain();
+            if (!(domain instanceof CompositionType compositionType)) {
+                diag.add(new Diagnostic(DiagnosticCode.MAP_TYPE_MISMATCH, Severity.ERROR,
+                        "Bag attribute " + bagAttrName + " is not a structure type",
+                        ruleId, "Bag attributes must be BAG OF structures"));
+                continue;
+            }
+
+            Table componentTable = compositionType.getComponentType();
+            if (componentTable == null) {
+                diag.add(new Diagnostic(DiagnosticCode.MAP_TYPE_MISMATCH, Severity.ERROR,
+                        "Bag attribute " + bagAttrName + " has no component type",
+                        ruleId, "Structure type must have a component"));
+                continue;
+            }
+
+            // Validate the structure name from YAML against the component type
+            String structureName = bagSpec.structure;
+            if (structureName != null && !structureName.isBlank()) {
+                String componentName = getScopedName(componentTable);
+                // Accept simple name match or full-qualified name match
+                if (!componentTable.getName().equals(structureName)
+                        && !componentName.equals(structureName)
+                        && !componentName.endsWith("." + structureName)) {
+                    diag.add(new Diagnostic(DiagnosticCode.MAP_TYPE_MISMATCH, Severity.WARNING,
+                            "Structure name mismatch: YAML specifies '" + structureName
+                                    + "' but target attribute uses '" + componentName + "'",
+                            ruleId, "The structure is determined by the target model"));
+                }
+            }
+
+            // Use the component type name for the structure
+            String effectiveStructureName = getScopedName(componentTable);
+
+            // Compile the from source
+            JobConfig.BagFrom from = bagSpec.from;
+            if (from == null || from.clazz == null || from.clazz.isBlank()) {
+                diag.add(new Diagnostic(DiagnosticCode.MAP_MISSING_SOURCE_CLASS, Severity.ERROR,
+                        "Bag '" + bagAttrName + "' is missing from.class",
+                        ruleId, "Specify the source class in bags.<name>.from.class"));
+                continue;
+            }
+            if (from.alias == null || from.alias.isBlank()) {
+                diag.add(new Diagnostic(DiagnosticCode.MAP_MISSING_ALIAS, Severity.ERROR,
+                        "Bag '" + bagAttrName + "' is missing from.alias",
+                        ruleId, "Specify an alias in bags.<name>.from.alias"));
+                continue;
+            }
+            if (from.input == null || from.input.isBlank()) {
+                diag.add(new Diagnostic(DiagnosticCode.MAP_MISSING_INPUT, Severity.ERROR,
+                        "Bag '" + bagAttrName + "' is missing from.input",
+                        ruleId, "Specify the input in bags.<name>.from.input"));
+                continue;
+            }
+
+            // Resolve the bag source class
+            String sourceModelName = inputModelById.get(from.input);
+            TypeSystemFacade sourceTs = sourceModelName != null ? sourceTypeSystems.get(sourceModelName) : null;
+            Table bagSourceClass = null;
+            if (sourceTs != null) {
+                bagSourceClass = sourceTs.resolveClass(from.clazz);
+            }
+            if (bagSourceClass == null) {
+                diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_SOURCE_CLASS, Severity.ERROR,
+                        "Bag source class not found: " + from.clazz,
+                        ruleId, "Check the class name in bags.<name>.from.class"));
+                continue;
+            }
+
+            SourcePlan bagSourcePlan = new SourcePlan(from.alias, bagSourceClass,
+                    List.of(from.input), from.where);
+
+            // Compile bag assignments against structure attributes
+            List<AssignmentPlan> bagAssignments = new ArrayList<>();
+            Set<String> assignedBagAttrs = new HashSet<>();
+            if (bagSpec.assign != null) {
+                for (var assignEntry : bagSpec.assign.entrySet()) {
+                    String structAttrName = assignEntry.getKey();
+                    String expr = assignEntry.getValue();
+
+                    if (!assignedBagAttrs.add(structAttrName)) {
+                        diag.add(new Diagnostic(DiagnosticCode.MAP_DUPLICATE_TARGET_ASSIGN, Severity.ERROR,
+                                "Structure attribute assigned multiple times: " + structAttrName
+                                        + " in bag " + bagAttrName,
+                                ruleId, "Remove duplicate assignment"));
+                    }
+
+                    AttributeDef structAttr = targetTs != null
+                            ? targetTs.findAttribute(componentTable, structAttrName) : null;
+                    if (structAttr == null) {
+                        diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_TARGET_ATTRIBUTE, Severity.ERROR,
+                                "Structure attribute not found: " + structAttrName
+                                        + " in structure " + effectiveStructureName,
+                                ruleId, "Check the attribute name in the structure type"));
+                    }
+
+                    ExpressionKind kind = classifyExpression(expr);
+                    TypeInfo type = inferExpressionType(expr, kind, List.of(bagSourcePlan), diag, ruleId);
+
+                    AssignmentPlan ap = new AssignmentPlan(structAttrName,
+                            structAttr, expr, kind, type);
+                    bagAssignments.add(ap);
+                }
+            }
+
+            // Check mandatory coverage for structure attributes
+            checkStructureMandatoryCoverage(componentTable, bagAssignments, bagAttrName, ruleId, diag);
+
+            // Validate where expression references
+            String whereExpr = bagSpec.from != null ? bagSpec.from.where : null;
+            if (whereExpr != null && !whereExpr.isBlank()) {
+                List<SourcePlan> allSources = new ArrayList<>(sourcePlans);
+                allSources.add(bagSourcePlan);
+                checkSourcePaths(whereExpr, allSources, ruleId, diag);
+            }
+
+            BagPlan.BagMode mode = "expand".equalsIgnoreCase(bagSpec.mode)
+                    ? BagPlan.BagMode.EXPAND : BagPlan.BagMode.EMBED;
+
+            BagPlan bp = new BagPlan(bagAttrName, bagSourcePlan, effectiveStructureName,
+                    bagAssignments, whereExpr, mode);
+            bagPlans.add(bp);
+        }
+        return bagPlans;
+    }
+
+    private void checkStructureMandatoryCoverage(Table componentTable,
+                                                  List<AssignmentPlan> assignments,
+                                                  String bagAttrName, String ruleId,
+                                                  DiagnosticCollector diag) {
+        Set<String> assigned = new HashSet<>();
+        for (AssignmentPlan ap : assignments) {
+            assigned.add(ap.targetAttrName());
+        }
+
+        Iterator<Extendable> it = componentTable.getAttributes();
+        while (it.hasNext()) {
+            Extendable ext = it.next();
+            if (ext instanceof AttributeDef attr) {
+                var card = attr.getCardinality();
+                if (card != null && card.getMinimum() > 0) {
+                    if (!assigned.contains(attr.getName())) {
+                        diag.add(new Diagnostic(DiagnosticCode.MAP_MANDATORY_MISSING, Severity.WARNING,
+                                "Mandatory structure attribute not assigned: " + attr.getName()
+                                        + " in structure " + componentTable.getName()
+                                        + " (bag " + bagAttrName + ")",
+                                ruleId, "Add an assignment or specify a default value"));
+                    }
+                }
+            }
+        }
+    }
+
     // -- Function type inference (Phase 4) ---------------------------------
 
     private TypeInfo inferFunctionType(String expr, DiagnosticCollector diag, String ruleId) {
@@ -530,7 +721,15 @@ public final class MappingCompiler {
     static TypeInfo classifyIliType(AttributeDef attr) {
         if (attr == null) return TypeInfo.UNKNOWN;
         ch.interlis.ili2c.metamodel.Type type = attr.getDomain();
-        return classifyIliTypeObj(type != null ? type : null);
+        TypeInfo result = classifyIliTypeObj(type != null ? type : null);
+        if (result == TypeInfo.UNKNOWN && type != null) {
+            // Try resolving domain aliases (for user-defined coordinate domains)
+            ch.interlis.ili2c.metamodel.Type resolved = attr.getDomainResolvingAliases();
+            if (resolved != null && resolved != type) {
+                result = classifyIliTypeObj(resolved);
+            }
+        }
+        return result;
     }
 
     static TypeInfo classifyIliTypeObj(ch.interlis.ili2c.metamodel.Type type) {

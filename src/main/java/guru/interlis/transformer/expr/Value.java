@@ -2,7 +2,7 @@ package guru.interlis.transformer.expr;
 
 public sealed interface Value
         permits TextValue, NumberValue, BooleanValue, DateValue, XmlDateTimeValue,
-                EnumValue, CoordValue, ReferenceValue, NullValue {
+                EnumValue, CoordValue, PolylineValue, SurfaceValue, ReferenceValue, NullValue {
 
     default boolean isNull() {
         return this instanceof NullValue;

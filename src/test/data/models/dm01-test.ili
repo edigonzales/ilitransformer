@@ -11,6 +11,10 @@ MODEL Dm01TestModel (de)
       Versicherungsart = (Stein, Kunststoffzeichen, Bolzen, Rohr, Pfahl, Kreuz, unversichert, weitere);
       Protokoll = (ja, nein);
 
+    DOMAIN
+      HAlignment = (Left, Center, Right);
+      VAlignment = (Top, Cap, Half, Baseline, Bottom);
+
     CLASS LFP3Nachfuehrung =
       NBIdent: MANDATORY TEXT*12;
       Identifikator: MANDATORY TEXT*12;
@@ -27,6 +31,19 @@ MODEL Dm01TestModel (de)
       Punktzeichen: MANDATORY Versicherungsart;
       Protokoll: MANDATORY Protokoll;
     END LFP3;
+
+    CLASS LFP3Pos =
+      LFP3Pos_von: MANDATORY TEXT*12;
+      Pos: MANDATORY 0.0 .. 9999999.0;
+      Ori: MANDATORY 0.0 .. 400.0;
+      HAli: HAlignment;
+      VAli: VAlignment;
+    END LFP3Pos;
+
+    CLASS LFP3Symbol =
+      LFP3Symbol_von: MANDATORY TEXT*12;
+      Ori: MANDATORY 0.0 .. 400.0;
+    END LFP3Symbol;
 
     ASSOCIATION Entstehung_LFP3 =
       Entstehung -- {1} LFP3Nachfuehrung;

@@ -2,6 +2,8 @@ package guru.interlis.transformer.expr;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.*;
 
 class ValueTest {
@@ -84,5 +86,39 @@ class ValueTest {
     void asBooleanThrowsOnNonBoolean() {
         assertThatThrownBy(() -> NullValue.INSTANCE.asBoolean())
                 .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void polylineValue() {
+        List<CoordValue> points = List.of(
+                new CoordValue(2600000.0, 1200000.0),
+                new CoordValue(2600100.0, 1200100.0),
+                new CoordValue(2600200.0, 1200000.0));
+        PolylineValue v = new PolylineValue(points);
+        assertThat(v.points()).hasSize(3);
+        assertThat(v.asText()).contains("2600000.0 1200000.0");
+        assertThat(v.toNative().toString()).contains(", ");
+    }
+
+    @Test
+    void polylineValueIsImmutable() {
+        List<CoordValue> points = new java.util.ArrayList<>(List.of(
+                new CoordValue(1.0, 2.0)));
+        PolylineValue v = new PolylineValue(points);
+        points.add(new CoordValue(3.0, 4.0));
+        assertThat(v.points()).hasSize(1);
+    }
+
+    @Test
+    void surfaceValue() {
+        List<CoordValue> ring1 = List.of(
+                new CoordValue(0.0, 0.0),
+                new CoordValue(10.0, 0.0),
+                new CoordValue(10.0, 10.0),
+                new CoordValue(0.0, 10.0));
+        SurfaceValue v = new SurfaceValue(List.of(ring1));
+        assertThat(v.rings()).hasSize(1);
+        assertThat(v.rings().get(0)).hasSize(4);
+        assertThat(v.asText()).contains("0.0 0.0");
     }
 }

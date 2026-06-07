@@ -190,7 +190,8 @@ public final class ExpressionParser {
             String[] parts = name.split("\\.", 2);
             return new PathExpr(parts[0], parts[1]);
         }
-        return new LiteralExpr(new TextValue(name));
+        // Bare identifier – treat as source path (alias reference)
+        return new PathExpr(name, null);
     }
 
     private String parseIdentifier() {

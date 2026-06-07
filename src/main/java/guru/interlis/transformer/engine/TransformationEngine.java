@@ -1,6 +1,8 @@
 package guru.interlis.transformer.engine;
 
+import ch.interlis.ili2c.metamodel.AttributeDef;
 import ch.interlis.ili2c.metamodel.Container;
+import ch.interlis.ili2c.metamodel.Extendable;
 import ch.interlis.ili2c.metamodel.Model;
 import ch.interlis.ili2c.metamodel.Table;
 import ch.interlis.ili2c.metamodel.Topic;
@@ -18,15 +20,22 @@ import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.expr.BooleanValue;
+import guru.interlis.transformer.expr.CoordValue;
 import guru.interlis.transformer.expr.EvalContext;
 import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.expr.NullValue;
+import guru.interlis.transformer.expr.PolylineValue;
+import guru.interlis.transformer.expr.SurfaceValue;
 import guru.interlis.transformer.expr.Value;
+import guru.interlis.transformer.geometry.GeometryAdapter;
+import guru.interlis.transformer.geometry.NoOpGeometryAdapter;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
+import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.RulePlan;
 import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
+import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.RoleResolver;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.BasketStrategy;
@@ -38,20 +47,30 @@ import guru.interlis.transformer.state.StateStore;
 import guru.interlis.transformer.state.TargetRefValue;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 public final class TransformationEngine {
     private final ExpressionEngine expressionEngine;
     private final StateStore stateStore;
     private final DiagnosticCollector diagnostics;
+    private final GeometryAdapter geometryAdapter;
 
     public TransformationEngine(ExpressionEngine expressionEngine, StateStore stateStore, DiagnosticCollector diagnostics) {
+        this(expressionEngine, stateStore, diagnostics, new NoOpGeometryAdapter());
+    }
+
+    public TransformationEngine(ExpressionEngine expressionEngine, StateStore stateStore,
+                                 DiagnosticCollector diagnostics, GeometryAdapter geometryAdapter) {
         this.expressionEngine = expressionEngine;
         this.stateStore = stateStore;
         this.diagnostics = diagnostics;
+        this.geometryAdapter = geometryAdapter;
     }
 
     // Counters for summary
@@ -61,6 +80,9 @@ public final class TransformationEngine {
     private long targetsWritten;
     private long engineErrors;
     private long engineWarnings;
+
+    // Expanded BAG targets (Phase 12 reverse)
+    private Map<String, Map<String, List<IomObject>>> expandedTargets;
 
     // -- Legacy API (Phase 1-2) --------------------------------------------
 
@@ -111,7 +133,27 @@ public final class TransformationEngine {
     // -- Pass 1: Source Scan / Indexing ------------------------------------
 
     private void pass1Index(TransformPlan plan, Function<String, IoxReader> readerFactoryById) throws Exception {
-        for (var sp : plan.rules().stream().flatMap(r -> r.sources().stream()).toList()) {
+        // Collect all source plans (rule-level + bag-level)
+        List<SourcePlan> allSourcePlans = new ArrayList<>();
+        for (RulePlan rule : plan.rules()) {
+            allSourcePlans.addAll(rule.sources());
+            for (BagPlan bag : rule.bags()) {
+                allSourcePlans.add(bag.fromSource());
+            }
+        }
+        // Deduplicate by (inputId, sourceClass)
+        Set<String> seen = new HashSet<>();
+        List<SourcePlan> uniqueSourcePlans = new ArrayList<>();
+        for (SourcePlan sp : allSourcePlans) {
+            for (String inputId : sp.inputIds()) {
+                String key = inputId + "::" + getScopedName(sp.sourceClass());
+                if (seen.add(key)) {
+                    uniqueSourcePlans.add(sp);
+                }
+            }
+        }
+
+        for (var sp : uniqueSourcePlans) {
             for (String inputId : sp.inputIds()) {
                 IoxReader reader = readerFactoryById.apply(inputId);
                 try {
@@ -134,6 +176,9 @@ public final class TransformationEngine {
                             stateStore.indexSourceObject(source.getobjecttag(), inputId, basketId, source);
                             stateStore.addSourceRecord(new SourceRecord(inputId, basketId, source.getobjecttag(), source));
                             sourceRecordsRead++;
+
+                            // Expand BAG structures into synthetic source records (Phase 12 reverse)
+                            expandBagStructures(source, inputId, basketId, plan);
                         }
                     }
                 } finally {
@@ -178,13 +223,19 @@ public final class TransformationEngine {
 
     private Map<String, Map<String, List<IomObject>>> pass2BuildTargets(TransformPlan plan) {
         Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket = new LinkedHashMap<>();
+        expandedTargets = new LinkedHashMap<>();
+
+        // Build source attribute type info for geometry detection
+        Map<String, Map<String, TypeInfo>> sourceAttrTypes = buildSourceAttributeTypeMap(plan);
+
         for (SourceRecord record : stateStore.sourceRecords()) {
             for (RulePlan rule : plan.rules()) {
                 SourcePlan matchedSource = findMatchingSource(rule, record);
                 if (matchedSource == null) continue;
 
                 Map<String, IomObject> sources = Map.of(matchedSource.alias(), record.sourceObject());
-                EvalContext evalCtx = new EvalContext(sources, diagnostics, rule.ruleId(), plan.enumMaps());
+                EvalContext evalCtx = new EvalContext(sources, diagnostics, rule.ruleId(), plan.enumMaps(),
+                        geometryAdapter, sourceAttrTypes);
 
                 // Evaluate where filter
                 if (matchedSource.where() != null && !matchedSource.where().isBlank()) {
@@ -210,17 +261,15 @@ public final class TransformationEngine {
                         targetOid);
                 targetsCreated++;
 
+                TypeSystemFacade targetTs = plan.targetTypeSystems().get(rule.outputId());
+
                 for (AssignmentPlan ap : rule.assignments()) {
                     Value value = expressionEngine.evaluate(ap.expression(), evalCtx);
                     if (value.isDefined()) {
-                        Object nativeValue = value.toNative();
-                        if (nativeValue != null) {
-                            target.setattrvalue(ap.targetAttrName(), nativeValue.toString());
-                        }
+                        setTargetAttribute(target, ap, value, targetTs);
                     }
                 }
 
-                TypeSystemFacade targetTs = plan.targetTypeSystems().get(rule.outputId());
                 RoleResolver roleResolver = targetTs != null ? new RoleResolver(targetTs) : null;
 
                 for (var ref : rule.refs()) {
@@ -250,6 +299,11 @@ public final class TransformationEngine {
                     }
                 }
 
+                // Process BAG OF STRUCTURE (Phase 12)
+                for (BagPlan bag : rule.bags()) {
+                    processBag(bag, rule, matchedSource, record, target, plan);
+                }
+
                 stateStore.putIdMapping(
                         new SourceRefKey(record.sourceClass(), record.sourceObject().getobjectoid(),
                                 record.sourceFileId(), record.sourceBasketId()),
@@ -275,6 +329,18 @@ public final class TransformationEngine {
                         .add(target);
             }
         }
+
+        // Merge expanded BAG targets (Phase 12 reverse)
+        for (var entry : expandedTargets.entrySet()) {
+            String outputId = entry.getKey();
+            for (var basketEntry : entry.getValue().entrySet()) {
+                objectsByOutputAndBasket
+                        .computeIfAbsent(outputId, ignored -> new LinkedHashMap<>())
+                        .computeIfAbsent(basketEntry.getKey(), ignored -> new ArrayList<>())
+                        .addAll(basketEntry.getValue());
+            }
+        }
+
         return objectsByOutputAndBasket;
     }
 
@@ -495,6 +561,158 @@ public final class TransformationEngine {
         }
     }
 
+    // -- BAG OF STRUCTURE processing (Phase 12) -------------------------
+
+    private void processBag(BagPlan bag, RulePlan rule, SourcePlan parentSource,
+                             SourceRecord parentRecord, Iom_jObject target, TransformPlan plan) {
+        if (bag.mode() == BagPlan.BagMode.EXPAND) {
+            processExpandBag(bag, rule, parentSource, parentRecord, target, plan);
+            return;
+        }
+
+        // EMBED mode: create embedded structures from separate source records
+        processEmbedBag(bag, rule, parentSource, parentRecord, target, plan);
+    }
+
+    private void processEmbedBag(BagPlan bag, RulePlan rule, SourcePlan parentSource,
+                                  SourceRecord parentRecord, Iom_jObject target, TransformPlan plan) {
+        String bagSourceClass = getScopedName(bag.fromSource().sourceClass());
+        List<IomObject> bagSourceObjects = new ArrayList<>();
+
+        for (SourceRecord sr : stateStore.sourceRecords()) {
+            if (bagSourceClass.equals(sr.sourceClass())
+                    && bag.fromSource().inputIds().contains(sr.sourceFileId())) {
+                bagSourceObjects.add(sr.sourceObject());
+            }
+        }
+
+        if (bagSourceObjects.isEmpty()) {
+            return;
+        }
+
+        List<IomObject> structures = new ArrayList<>();
+        Map<String, IomObject> parentSources = Map.of(parentSource.alias(), parentRecord.sourceObject());
+
+        for (IomObject bagSource : bagSourceObjects) {
+            Map<String, IomObject> allSources = new java.util.LinkedHashMap<>();
+            allSources.put(bag.fromSource().alias(), bagSource);
+            allSources.putAll(parentSources);
+
+            EvalContext bagCtx = new EvalContext(allSources, diagnostics, rule.ruleId(), plan.enumMaps());
+
+            // Evaluate bag where filter
+            if (bag.whereExpression() != null && !bag.whereExpression().isBlank()) {
+                Value whereResult = expressionEngine.evaluate(bag.whereExpression(), bagCtx);
+                if (!isFilterTruthy(whereResult)) {
+                    continue;
+                }
+            }
+
+            // Create structure object
+            Iom_jObject struct = new Iom_jObject(bag.structureName(), null);
+
+            Map<String, IomObject> assignSources = Map.of(bag.fromSource().alias(), bagSource);
+            EvalContext assignCtx = new EvalContext(assignSources, diagnostics, rule.ruleId(), plan.enumMaps());
+
+            for (AssignmentPlan ap : bag.assignments()) {
+                Value value = expressionEngine.evaluate(ap.expression(), assignCtx);
+                if (value.isDefined()) {
+                    Object nativeValue = value.toNative();
+                    if (nativeValue != null) {
+                        struct.setattrvalue(ap.targetAttrName(), nativeValue.toString());
+                    }
+                }
+            }
+            structures.add(struct);
+        }
+
+        // Add structures to the target object's BAG attribute
+        for (IomObject struct : structures) {
+            target.addattrobj(bag.bagAttrName(), struct);
+        }
+    }
+
+    private void processExpandBag(BagPlan bag, RulePlan rule, SourcePlan parentSource,
+                                    SourceRecord parentRecord, Iom_jObject target, TransformPlan plan) {
+        IomObject parentObj = parentRecord.sourceObject();
+        String bagAttrName = bag.bagAttrName();
+
+        int count = parentObj.getattrvaluecount(bagAttrName);
+        if (count <= 0) return;
+
+        for (int i = 0; i < count; i++) {
+            IomObject structure = parentObj.getattrobj(bagAttrName, i);
+            if (structure == null) continue;
+
+            String targetOid = stateStore.nextOid(
+                    plan.oidStrategy(), plan.oidNamespace(), rule.ruleId(),
+                    parentObj.getobjectoid() + "-" + i,
+                    Map.of());
+            if (targetOid == null) {
+                targetOid = Long.toString(oldNextOid());
+            }
+
+            Iom_jObject bagTarget = new Iom_jObject(bag.structureName(), targetOid);
+            targetsCreated++;
+
+            Map<String, IomObject> assignSources = Map.of(bag.fromSource().alias(), structure);
+            EvalContext assignCtx = new EvalContext(assignSources, diagnostics, rule.ruleId(), plan.enumMaps());
+
+            for (AssignmentPlan ap : bag.assignments()) {
+                Value value = expressionEngine.evaluate(ap.expression(), assignCtx);
+                if (value.isDefined()) {
+                    Object nativeValue = value.toNative();
+                    if (nativeValue != null) {
+                        bagTarget.setattrvalue(ap.targetAttrName(), nativeValue.toString());
+                    }
+                }
+            }
+
+            stateStore.indexTargetObject(bag.structureName(), bagTarget.getobjectoid(), bagTarget);
+
+            String targetTopic = extractTopic(bag.structureName());
+            String targetBasketId = BasketRouter.determineTargetBasket(
+                    plan.basketStrategy(), parentRecord.sourceBasketId(), targetTopic,
+                    bag.structureName());
+            String basketKey = basketKey(targetTopic, targetBasketId);
+            expandedTargets
+                    .computeIfAbsent(rule.outputId(), ignored -> new LinkedHashMap<>())
+                    .computeIfAbsent(basketKey, ignored -> new ArrayList<>())
+                    .add(bagTarget);
+        }
+    }
+
+    // -- BAG Structure Expansion (Phase 12 reverse) ---------------------
+
+    private void expandBagStructures(IomObject source, String inputId, String basketId, TransformPlan plan) {
+        for (RulePlan rule : plan.rules()) {
+            for (BagPlan bag : rule.bags()) {
+                if (bag.mode() != BagPlan.BagMode.EXPAND) continue;
+                // In EXPAND mode, bagAttrName is the source BAG attribute name
+                // fromSource.class is the parent class, fromSource.inputIds has the input
+                if (!bag.fromSource().inputIds().contains(inputId)) continue;
+
+                String parentClassName = getScopedName(bag.fromSource().sourceClass());
+                if (!parentClassName.equals(source.getobjecttag())) continue;
+
+                String bagAttrName = bag.bagAttrName();
+                int count = source.getattrvaluecount(bagAttrName);
+                if (count <= 0) continue;
+
+                for (int i = 0; i < count; i++) {
+                    IomObject structure = source.getattrobj(bagAttrName, i);
+                    if (structure == null) continue;
+                    // The structure's tag is the structure type name from the target model
+                    // Create a synthetic source record with the parent's OID stored
+                    stateStore.addSourceRecord(new SourceRecord(
+                            inputId, basketId,
+                            structure.getobjecttag(),
+                            structure));
+                }
+            }
+        }
+    }
+
     private boolean isRefRequired(TransformPlan plan, DeferredRef deferredRef) {
         if (plan == null) return false;
         for (RulePlan rule : plan.rules()) {
@@ -560,6 +778,78 @@ public final class TransformationEngine {
         if (value instanceof guru.interlis.transformer.expr.TextValue tv) return !tv.value().isEmpty();
         if (value instanceof guru.interlis.transformer.expr.NumberValue nv) return nv.value() != 0;
         return true;
+    }
+
+    private void setTargetAttribute(Iom_jObject target, AssignmentPlan ap, Value value,
+                                     TypeSystemFacade targetTs) {
+        TypeInfo targetType = ap.expectedType();
+        if (isGeometryType(targetType) && value instanceof Value) {
+            IomObject geomObj = geometryAdapter.denormalize(value, targetType);
+            if (geomObj != null) {
+                target.addattrobj(ap.targetAttrName(), geomObj);
+                return;
+            }
+        }
+        Object nativeValue = value.toNative();
+        if (nativeValue != null) {
+            target.setattrvalue(ap.targetAttrName(), nativeValue.toString());
+        }
+    }
+
+    private static boolean isGeometryType(TypeInfo type) {
+        return type == TypeInfo.COORD || type == TypeInfo.POLYLINE
+                || type == TypeInfo.SURFACE || type == TypeInfo.AREA;
+    }
+
+    private static Map<String, Map<String, TypeInfo>> buildSourceAttributeTypeMap(TransformPlan plan) {
+        Map<String, Map<String, TypeInfo>> result = new LinkedHashMap<>();
+        for (RulePlan rule : plan.rules()) {
+            for (SourcePlan sp : rule.sources()) {
+                if (sp.sourceClass() == null) continue;
+                String alias = sp.alias();
+                String sourceModel = null;
+                for (String inputId : sp.inputIds()) {
+                    for (var entry : plan.sourceTypeSystems().entrySet()) {
+                        if (entry.getKey() != null) {
+                            sourceModel = entry.getKey();
+                            break;
+                        }
+                    }
+                }
+                TypeSystemFacade sourceTs = sourceModel != null ? plan.sourceTypeSystems().get(sourceModel) : null;
+                if (sourceTs == null) continue;
+
+                Map<String, TypeInfo> aliasTypes = new LinkedHashMap<>();
+                Iterator<Extendable> it = sp.sourceClass().getAttributes();
+                while (it.hasNext()) {
+                    Extendable ext = it.next();
+                    if (ext instanceof AttributeDef attr) {
+                        TypeInfo ti = classifyAttributeType(attr);
+                        aliasTypes.put(attr.getName(), ti);
+                    }
+                }
+                result.put(alias, aliasTypes);
+            }
+        }
+        return result;
+    }
+
+    private static TypeInfo classifyAttributeType(AttributeDef attr) {
+        ch.interlis.ili2c.metamodel.Type type = attr.getDomainResolvingAliases();
+        if (type == null) type = attr.getDomain();
+        if (type == null) return TypeInfo.UNKNOWN;
+        if (type instanceof ch.interlis.ili2c.metamodel.CoordType) return TypeInfo.COORD;
+        if (type instanceof ch.interlis.ili2c.metamodel.PolylineType) return TypeInfo.POLYLINE;
+        if (type instanceof ch.interlis.ili2c.metamodel.SurfaceOrAreaType) return TypeInfo.SURFACE;
+        if (type instanceof ch.interlis.ili2c.metamodel.AreaType) return TypeInfo.AREA;
+        if (type instanceof ch.interlis.ili2c.metamodel.SurfaceType) return TypeInfo.SURFACE;
+        if (type.isBoolean()) return TypeInfo.BOOLEAN;
+        if (type instanceof ch.interlis.ili2c.metamodel.NumericType || type instanceof ch.interlis.ili2c.metamodel.NumericalType) return TypeInfo.NUMERIC;
+        if (type instanceof ch.interlis.ili2c.metamodel.EnumerationType) return TypeInfo.ENUM;
+        if (type instanceof ch.interlis.ili2c.metamodel.TextType) return TypeInfo.TEXT;
+        if (type instanceof ch.interlis.ili2c.metamodel.CompositionType) return TypeInfo.STRUCTURE;
+        if (type instanceof ch.interlis.ili2c.metamodel.ReferenceType) return TypeInfo.REFERENCE;
+        return TypeInfo.UNKNOWN;
     }
 
     private static String getScopedName(Table table) {
