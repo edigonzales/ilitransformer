@@ -1,0 +1,109 @@
+INTERLIS 2.4;
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! Datenmodell der amtlichen Vermessung "Bund" (DMAV)
+!! beschrieben in INTERLIS Version 2.4
+!!
+!! Bundesamt fuer Landestopographie (swisstopo)
+!! Fachstelle Eidgenoessische Vermessungsdirektion (V+D)
+!! CH-3084 Wabern
+!! www.cadastre.ch und www.interlis.ch
+!!
+!! Version: 1 deutsch
+!! Dateiname: DMAV_Dienstbarkeitsgrenzen_V1_1.ili
+!!
+!! Das vorliegende Datenmodell gilt fuer den Bezugsrahmen "Landesvermessung 1903+
+!! (LV95)".
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!! Typ: A=Änderung, E=Ergänzung, L=Löschung
+!!
+!! Version    | Line  | Typ | Bemerkung
+!!------------|-------|-----|-------------------------------------------------------------
+!! 2026-01-31 |127-131|  L  | ASSOCIATION Vorgaenger_Nachfolger_Dienstbarkeitsgrenze
+
+!!@ technicalContact = mailto:dmav@swisstopo.ch
+!!@ furtherInformation = https://www.cadastre-manual.admin.ch/de/modelldokumentation-dmav
+!!@ IDGeoIV = "228.5"
+MODEL DMAV_Dienstbarkeitsgrenzen_V1_1 (de)
+  AT "https://models.geo.admin.ch/V_D/" VERSION "2026-01-31" =
+  IMPORTS GeometryCHLV95_V2;
+  IMPORTS DMAVTYM_Geometrie_V1_0;
+  IMPORTS DMAVTYM_Grafik_V1_0;
+
+  TOPIC Dienstbarkeitsgrenzen =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    DOMAIN
+
+    Herkunft = (
+      numerisch,
+      grafisch,
+      unbestimmt);
+    
+    CLASS DiBNachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;
+      Beschreibung: MANDATORY TEXT*60;
+      Perimeter:  SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      GueltigerEintrag: MANDATORY INTERLIS.XMLDateTime;
+      Grundbucheintrag: INTERLIS.XMLDateTime;
+    UNIQUE CH050101: NBIdent, Identifikator;
+    END DiBNachfuehrung;
+
+    STRUCTURE Flaechenelement =
+      Geometrie: MANDATORY SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+    END Flaechenelement;
+
+    STRUCTURE Linienelement =
+      Geometrie: MANDATORY GeometryCHLV95_V2.Line;
+    END Linienelement;
+
+    STRUCTURE Punktelement =
+      Geometrie: MANDATORY GeometryCHLV95_V2.Coord2;
+      SymbolOri: DMAVTYM_Grafik_V1_0.Rotation;
+    END Punktelement;
+    
+    CLASS Dienstbarkeitsgrenze =
+      EREID:  TEXT*22;
+      NBIdent: MANDATORY TEXT*12;
+      Dienstbarkeitsnummer: TEXT*12;
+      Dienstbarkeitsart: TEXT*60;
+      Hoehe:  DMAVTYM_Geometrie_V1_0.Hoehe;
+      IstVollstaendig: MANDATORY BOOLEAN;
+      Herkunft: Herkunft;
+      Flaechenelement: BAG {0..*} OF Flaechenelement;
+      Linienelement: BAG {0..*} OF Linienelement;
+      Punktelement: BAG {0..*} OF Punktelement;
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+      MANDATORY CONSTRAINT CH050301: INTERLIS.elementCount(Flaechenelement)>0 
+        OR INTERLIS.elementCount(Linienelement)>0 
+        OR INTERLIS.elementCount(Punktelement)>0;
+    END Dienstbarkeitsgrenze;
+    
+    ASSOCIATION Entstehung_Dienstbarkeitsgrenze =
+        Entstehung -- {1} DiBNachfuehrung;
+        entstehende_Dienstbarkeitsgrenze -- {0..*} Dienstbarkeitsgrenze;
+    END Entstehung_Dienstbarkeitsgrenze;
+
+    ASSOCIATION Untergang_Dienstbarkeitsgrenze =
+        Untergang -- {0..1} DiBNachfuehrung;
+        untergehende_Dienstbarkeitsgrenze -- {0..*} Dienstbarkeitsgrenze;
+    END Untergang_Dienstbarkeitsgrenze;
+
+    VIEW Dienstbarkeitsgrenze_Gueltig
+     	PROJECTION OF Dienstbarkeitsgrenze;
+    	WHERE DEFINED(Dienstbarkeitsgrenze->Entstehung) AND DEFINED(Dienstbarkeitsgrenze->Entstehung->Grundbucheintrag) AND (NOT(DEFINED(Dienstbarkeitsgrenze->Untergang)) OR NOT(DEFINED(Dienstbarkeitsgrenze->Untergang->Grundbucheintrag)));
+    	=
+    	ALL OF Dienstbarkeitsgrenze;
+    UNIQUE CH050701: EREID;
+    END Dienstbarkeitsgrenze_Gueltig;
+    
+  END Dienstbarkeitsgrenzen;
+ 
+END DMAV_Dienstbarkeitsgrenzen_V1_1.

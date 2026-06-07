@@ -1,0 +1,44 @@
+INTERLIS 2.4;
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! Datenmodell der amtlichen Vermessung "Bund" (DMAV)
+!! beschrieben in INTERLIS Version 2.4
+!!
+!! Bundesamt fuer Landestopographie (swisstopo)
+!! Fachstelle Eidgenoessische Vermessungsdirektion (V+D)
+!! CH-3084 Wabern
+!! www.cadastre.ch und www.interlis.ch
+!!
+!! Version: 1 deutsch
+!! Dateiname: DMAVTYM_Alles_V1_1.ili
+!!
+!! Das vorliegende Datenmodell gilt fuer den Bezugsrahmen "Landesvermessung 1903+
+!! (LV95)".
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!@ technicalContact = mailto:dmav@swisstopo.ch
+!!@ furtherInformation = https://www.cadastre-manual.admin.ch/de/modelldokumentation-dmav
+MODEL DMAVTYM_Alles_V1_1 (de)
+  AT "https://models.geo.admin.ch/V_D/" VERSION "2026-01-31" =
+  IMPORTS DMAV_Bodenbedeckung_V1_1;
+  IMPORTS DMAV_DauerndeBodenverschiebungen_V1_1;
+  IMPORTS DMAV_Dienstbarkeitsgrenzen_V1_1;
+  IMPORTS DMAV_Einzelobjekte_V1_1;
+  IMPORTS DMAV_FixpunkteAVKategorie3_V1_1;
+  IMPORTS DMAV_Gebaeudeadressen_V1_1;
+  IMPORTS DMAV_Grundstuecke_V1_1;
+  IMPORTS DMAV_HoheitsgrenzenAV_V1_0;
+  IMPORTS DMAV_Nomenklatur_V1_1;
+  IMPORTS DMAV_Rohrleitungen_V1_1;
+  IMPORTS DMAV_Toleranzstufen_V1_1;
+  IMPORTS DMAVSUP_UntereinheitGrundbuch_V1_1;
+  
+  !! Als Dienst in die Daten der amtlichen Vermessung eingebunden:
+  IMPORTS FixpunkteLV_V1_0;                   !! Geobasisdaten ID 53
+  IMPORTS KGKCGC_FPDS2_V1_1;                  !! Geobasisdaten ID 54
+  IMPORTS HoheitsgrenzenLV_V1_0;              !! Geobasisdaten ID 39
+  IMPORTS OfficialIndexOfLocalities_V1_0;     !! Geobasisdaten ID 181
+  
+END DMAVTYM_Alles_V1_1.

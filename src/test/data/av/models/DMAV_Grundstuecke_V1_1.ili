@@ -1,0 +1,262 @@
+INTERLIS 2.4;
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! Datenmodell der amtlichen Vermessung "Bund" (DMAV)
+!! beschrieben in INTERLIS Version 2.4
+!!
+!! Bundesamt fuer Landestopographie (swisstopo)
+!! Fachstelle Eidgenoessische Vermessungsdirektion (V+D)
+!! CH-3084 Wabern
+!! www.cadastre.ch und www.interlis.ch
+!!
+!! Version: 1 deutsch
+!! Dateiname: DMAV_Grundstuecke_V1_1.ili
+!!
+!! Das vorliegende Datenmodell gilt fuer den Bezugsrahmen "Landesvermessung 1903+
+!! (LV95)".
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!! Typ: A=Änderung, E=Ergänzung, L=Löschung
+!!
+!! Version    | Line  | Typ | Bemerkung
+!!------------|-------|-----|-------------------------------------------------------------
+!! 2026-01-31 | 98-102|  L  | ASSOCIATION Vorgaenger_Nachfolger_Grenzpunkt
+!! 2026-01-31 |142-146|  L  | ASSOCIATION Vorgaenger_Nachfolger_Grundstueck
+!! 2026-01-31 |    193|  E  | IstBaurecht: BOOLEAN;
+
+!!@ technicalContact = mailto:dmav@swisstopo.ch
+!!@ furtherInformation = https://www.cadastre-manual.admin.ch/de/modelldokumentation-dmav
+!!@ IDGeoIV = "228.4"
+MODEL DMAV_Grundstuecke_V1_1 (de)
+  AT "https://models.geo.admin.ch/V_D/" VERSION "2026-01-31" =
+  IMPORTS Units;
+  IMPORTS GeometryCHLV95_V2;
+  IMPORTS DMAVTYM_Geometrie_V1_0;
+  IMPORTS DMAVTYM_Topologie_V1_0;
+  IMPORTS DMAVTYM_Vermarkung_V1_0;
+  IMPORTS DMAVTYM_Qualitaet_V1_0;
+  IMPORTS DMAVTYM_Grafik_V1_0;
+
+  TOPIC Grundstuecke =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    DOMAIN
+
+      Grundstuecksart = (
+        Liegenschaft,
+        SelbstaendigesDauerndesRecht,
+        Bergwerk);
+        
+      Mutationsart = (
+    	  Normal, 
+    	  Projektmutation, 
+    	  AbschlussProjektmutation);
+
+    CLASS GSNachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;  !! z.B. Nummer des technischen Dossiers
+      Beschreibung: MANDATORY TEXT*60;
+      Perimeter:  SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      Mutationsart: MANDATORY Mutationsart;
+      GueltigerEintrag: MANDATORY INTERLIS.XMLDateTime; !! Techn. Bearbeitung
+      Grundbucheintrag: INTERLIS.XMLDateTime;
+    UNIQUE CH040101: NBIdent, Identifikator;
+    END GSNachfuehrung;
+
+    !! Umfasst alle Grenzpunkte einer Liegenschaft, welche Liegenschafts-
+    !! oder Hoheitsgrenzpunkte sind.
+    CLASS Grenzpunkt =
+      NBIdent: TEXT*12;
+      Nummer:  TEXT*12;
+      Geometrie: MANDATORY GeometryCHLV95_V2.Coord2;
+      Hoehengeometrie: DMAVTYM_Geometrie_V1_0.Hoehe;
+      Lagegenauigkeit: MANDATORY DMAVTYM_Qualitaet_V1_0.Genauigkeit;
+      IstLagezuverlaessig: MANDATORY DMAVTYM_Qualitaet_V1_0.Zuverlaessigkeit;
+      Hoehengenauigkeit: DMAVTYM_Qualitaet_V1_0.Genauigkeit;
+      IstHoehenzuverlaessig: DMAVTYM_Qualitaet_V1_0.Zuverlaessigkeit; 
+      Punktzeichen: MANDATORY DMAVTYM_Vermarkung_V1_0.Versicherungsart; 
+      IstHoheitsgrenzpunkt: MANDATORY BOOLEAN;
+      IstHoheitsgrenzsteinAlt: MANDATORY BOOLEAN;
+      IstExaktDefiniert: MANDATORY BOOLEAN;
+      SymbolOri: DMAVTYM_Grafik_V1_0.Rotation; !! // undefiniert = 0.0 //
+      MANDATORY CONSTRAINT CH040201: DEFINED(Hoehengeometrie)==DEFINED(Hoehengenauigkeit);
+      MANDATORY CONSTRAINT CH040202: DEFINED(Hoehengeometrie)==DEFINED(IstHoehenzuverlaessig);
+      MANDATORY CONSTRAINT CH040203: IstExaktDefiniert OR Punktzeichen==#unversichert;
+    END Grenzpunkt;
+
+    ASSOCIATION Entstehung_Grenzpunkt =
+      Entstehung -- {1} GSNachfuehrung;
+      entstehender_Grenzpunkt -- {0..*} Grenzpunkt;
+    END Entstehung_Grenzpunkt;
+
+    ASSOCIATION Untergang_Grenzpunkt =
+      Untergang -- {0..1} GSNachfuehrung;
+      untergehender_Grenzpunkt -- {0..*} Grenzpunkt;
+    END Untergang_Grenzpunkt;
+
+    VIEW Grenzpunkt_Gueltig
+     	PROJECTION OF Grenzpunkt;
+    	WHERE DEFINED(Grenzpunkt->Entstehung) AND DEFINED(Grenzpunkt->Entstehung->Grundbucheintrag) AND (NOT(DEFINED(Grenzpunkt->Untergang)) OR NOT(DEFINED(Grenzpunkt->Untergang->Grundbucheintrag)));
+    	=
+    	ALL OF Grenzpunkt;
+    UNIQUE CH040601: Geometrie;
+    END Grenzpunkt_Gueltig;
+    
+    CLASS Grundstueck =
+      NBIdent: MANDATORY TEXT*12;
+      Nummer: MANDATORY TEXT*12;
+      !! Elektronisches Grundstueckinformationssystem
+      EGRID:  TEXT*14;
+      !! abgeleitetes Attribut: muss streitig sein, falls Liegenschaft,
+      !! SelbstRecht oder Bergwerk streitig;
+      IstStreitig: MANDATORY BOOLEAN;
+      !!unvollstaendig, falls z.B. das Grundstueck
+      !! teilweise ausserhalb des Perimeters liegt.
+      IstVollstaendig: MANDATORY BOOLEAN;
+      Grundstuecksart: MANDATORY Grundstuecksart;
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+      Fiktiv : MANDATORY BOOLEAN;
+      !! Gesamtflaechenmass wird nur benutzt, falls TeilGrundstueke existieren.
+      !! Das heisst mehrere Objekte Liegenschaft, SelbstRecht
+      !! oder Bergwerk werden zu einem Objekt Grundstueck.
+      Gesamtflaechenmass:  1 .. 999999999 [Units.m2];
+      MANDATORY CONSTRAINT CH040701: IstVollstaendig == NOT(DEFINED(Gesamtflaechenmass));
+	END Grundstueck;
+    
+    ASSOCIATION Entstehung_Grundstueck =
+      Entstehung -- {1} GSNachfuehrung;
+      entstehendes_Grundstueck -- {0..*} Grundstueck;
+    END Entstehung_Grundstueck;
+
+    ASSOCIATION Untergang_Grundstueck =
+      Untergang -- {0..1} GSNachfuehrung;
+      untergehendes_Grundstueck -- {0..*} Grundstueck;
+    END Untergang_Grundstueck;
+
+    VIEW Grundstueck_Gueltig
+     	PROJECTION OF Grundstueck;
+    	WHERE DEFINED(Grundstueck->Entstehung) AND DEFINED(Grundstueck->Entstehung->Grundbucheintrag) AND (NOT(DEFINED(Grundstueck->Untergang)) OR NOT(DEFINED(Grundstueck->Untergang->Grundbucheintrag)));
+    	=
+    	ALL OF Grundstueck;
+     UNIQUE CH041101: NBIdent, Nummer;
+     UNIQUE CH041102: EGRID;
+    END Grundstueck_Gueltig;
+
+    CLASS Liegenschaft =
+      !! NummerTeilgrundstueck ist fuer Teil Grundstueck noetig
+      NummerTeilgrundstueck:  TEXT*12; 
+      Geometrie: MANDATORY SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        !! // Geometrie nur LFP3 oder Grenzpunkt //
+        WITHOUT OVERLAPS > 0.002;
+      Fiktiv : MANDATORY BOOLEAN;
+      Flaechenmass: MANDATORY 1 .. 999999999 [Units.m2];
+      Streitig: GeometryCHLV95_V2.MultiLine;
+      Qualitaetsstandard: MANDATORY DMAVTYM_Qualitaet_V1_0.Qualitaetsstandard;
+      !! Verlauf einer streitigen Grenze muss auf derselben Liegenschaftsgeometrie liegen
+      MANDATORY CONSTRAINT CH041201: NOT(DEFINED(Streitig)) OR DMAVTYM_Topologie_V1_0.covers(THIS,>>Geometrie,THIS,>>Streitig);
+    END Liegenschaft;
+
+    ASSOCIATION GrundstueckLiegenschaft =
+      Grundstueck -<#> {1} Grundstueck;
+      Liegenschaft -- {0..*} Liegenschaft;
+      MANDATORY CONSTRAINT CH041301: Grundstueck->Grundstuecksart == #Liegenschaft;        
+      MANDATORY CONSTRAINT CH041302: Liegenschaft->Fiktiv==Grundstueck->Fiktiv;        
+    END GrundstueckLiegenschaft;
+    
+    CONSTRAINTS OF Liegenschaft =
+      MANDATORY CONSTRAINT CH041401: DEFINED(Streitig)==Grundstueck->IstStreitig;        
+      MANDATORY CONSTRAINT CH041402: NOT(DEFINED(NummerTeilgrundstueck)) == Grundstueck->IstVollstaendig;
+    END;
+    
+    VIEW Liegenschaft_Gueltig
+     	PROJECTION OF Liegenschaft;
+    	WHERE DEFINED(Liegenschaft->Grundstueck->Entstehung) AND DEFINED(Liegenschaft->Grundstueck->Entstehung->Grundbucheintrag) AND (NOT(DEFINED(Liegenschaft->Grundstueck->Untergang)) OR NOT(DEFINED(Liegenschaft->Grundstueck->Untergang->Grundbucheintrag)));
+    	=
+    	ALL OF Liegenschaft;
+    SET CONSTRAINT CH041501: INTERLIS.areAreas(ALL, UNDEFINED, >> Geometrie);
+    END Liegenschaft_Gueltig;
+    
+    !! Falls bei SelbstRecht keine Flaeche vorhanden ist, existiert hier
+    !! auch kein Objekt.
+    CLASS SelbstaendigesDauerndesRecht =
+      !! NummerTeilgrundstueck ist fuer Teil Grundstueck noetig
+      NummerTeilgrundstueck:  TEXT*12; 
+      Geometrie: MANDATORY SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        !! // Geometrie nur LFP3 oder Grenzpunkt //
+        WITHOUT OVERLAPS > 0.002;
+      Flaechenmass: MANDATORY 1 .. 999999999 [Units.m2];
+      Streitig: GeometryCHLV95_V2.MultiLine;
+      IstBaurecht: BOOLEAN;
+      !! Verlauf einer streitigen Grenze muss auf derselben SelbstRechtgeometrie liegen
+      MANDATORY CONSTRAINT CH041601: NOT(DEFINED(Streitig)) OR DMAVTYM_Topologie_V1_0.covers(THIS,>>Geometrie,THIS,>>Streitig);
+    END SelbstaendigesDauerndesRecht;
+
+    ASSOCIATION GrundstueckSelbstaendigesDauerndesRecht =
+      Grundstueck -<#> {1} Grundstueck;
+      SelbstaendigesDauerndesRecht-- {0..*} SelbstaendigesDauerndesRecht;
+      MANDATORY CONSTRAINT CH041701: Grundstueck->Grundstuecksart == #SelbstaendigesDauerndesRecht;
+      MANDATORY CONSTRAINT CH041702: NOT(Grundstueck->Fiktiv);
+	 END GrundstueckSelbstaendigesDauerndesRecht;
+    
+    CONSTRAINTS OF SelbstaendigesDauerndesRecht =
+      MANDATORY CONSTRAINT CH041801: DEFINED(Streitig)==Grundstueck->IstStreitig;        
+      MANDATORY CONSTRAINT CH041802: NOT(DEFINED(NummerTeilgrundstueck)) == Grundstueck->IstVollstaendig;
+    END;
+    
+    VIEW SelbstaendigesDauerndesRecht_Gueltig
+     	PROJECTION OF SelbstaendigesDauerndesRecht;
+    	WHERE DEFINED(SelbstaendigesDauerndesRecht->Grundstueck->Entstehung) AND DEFINED(SelbstaendigesDauerndesRecht->Grundstueck->Entstehung->Grundbucheintrag) AND (NOT(DEFINED(SelbstaendigesDauerndesRecht->Grundstueck->Untergang)) OR NOT(DEFINED(SelbstaendigesDauerndesRecht->Grundstueck->Untergang->Grundbucheintrag)));
+    	=
+    	ALL OF SelbstaendigesDauerndesRecht;
+    END SelbstaendigesDauerndesRecht_Gueltig;
+    
+    !! Falls bei Bergwerk keine Flaeche vorhanden ist, existiert hier
+    !! auch kein Objekt.
+    CLASS Bergwerk =
+      !! NummerTeilGrundstueck ist fuer Teil Grundstueck noetig
+      NummerTeilgrundstueck:  TEXT*12;
+      Geometrie: MANDATORY SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        !! // Geometrie nur LFP3 oder Grenzpunkt //
+        WITHOUT OVERLAPS > 0.002;
+      Flaechenmass: MANDATORY 1 .. 999999999 [Units.m2];
+      Streitig: GeometryCHLV95_V2.MultiLine;
+      !! Verlauf einer streitigen Grenze muss auf derselben Bergwerkgeometrie liegen
+      MANDATORY CONSTRAINT CH042001: NOT(DEFINED(Streitig)) OR DMAVTYM_Topologie_V1_0.covers(THIS,>>Geometrie,THIS,>>Streitig);
+    END Bergwerk;
+
+    ASSOCIATION GrundstueckBergwerk =
+      Grundstueck -<#> {1} Grundstueck;
+      Bergwerk -- {0..*} Bergwerk;
+      MANDATORY CONSTRAINT CH042101: Grundstueck->Grundstuecksart == #Bergwerk;
+      MANDATORY CONSTRAINT CH042102: NOT(Grundstueck->Fiktiv);
+    END GrundstueckBergwerk;
+    
+    CONSTRAINTS OF Bergwerk =
+      MANDATORY CONSTRAINT CH042201: DEFINED(Streitig)==Grundstueck->IstStreitig;        
+      MANDATORY CONSTRAINT CH042202: NOT(DEFINED(NummerTeilgrundstueck)) == Grundstueck->IstVollstaendig;
+    END;
+
+    VIEW Bergwerk_Gueltig
+     	PROJECTION OF Bergwerk;
+    	WHERE DEFINED(Bergwerk->Grundstueck->Entstehung) AND DEFINED(Bergwerk->Grundstueck->Entstehung->Grundbucheintrag) AND (NOT(DEFINED(Bergwerk->Grundstueck->Untergang)) OR NOT(DEFINED(Bergwerk->Grundstueck->Untergang->Grundbucheintrag)));
+    	=
+    	ALL OF Bergwerk;
+    END Bergwerk_Gueltig;
+
+    CONSTRAINTS OF Grundstueck =
+      MANDATORY CONSTRAINT CH042401: DEFINED(Gesamtflaechenmass) ==
+      	((INTERLIS.objectCount(Liegenschaft) + INTERLIS.objectCount(SelbstaendigesDauerndesRecht) +
+      		INTERLIS.objectCount(Bergwerk))>1);
+      MANDATORY CONSTRAINT CH042402:
+      	(INTERLIS.objectCount(Liegenschaft)>0 AND INTERLIS.objectCount(SelbstaendigesDauerndesRecht)==0 AND INTERLIS.objectCount(Bergwerk)==0)
+      	OR (INTERLIS.objectCount(Liegenschaft)==0 AND INTERLIS.objectCount(SelbstaendigesDauerndesRecht)>0 AND INTERLIS.objectCount(Bergwerk)==0)
+      	OR (INTERLIS.objectCount(Liegenschaft)==0 AND INTERLIS.objectCount(SelbstaendigesDauerndesRecht)==0 AND INTERLIS.objectCount(Bergwerk)>0);
+    END;
+    
+  END Grundstuecke;
+ 
+END DMAV_Grundstuecke_V1_1.

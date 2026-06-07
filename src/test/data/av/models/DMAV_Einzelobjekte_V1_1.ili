@@ -1,0 +1,166 @@
+INTERLIS 2.4;
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! Datenmodell der amtlichen Vermessung "Bund" (DMAV)
+!! beschrieben in INTERLIS Version 2.4
+!!
+!! Bundesamt fuer Landestopographie (swisstopo)
+!! Fachstelle Eidgenoessische Vermessungsdirektion (V+D)
+!! CH-3084 Wabern
+!! www.cadastre.ch und www.interlis.ch
+!!
+!! Version: 1.1 deutsch
+!! Dateiname: DMAV_Einzelobjekte_V1_1.ili
+!!
+!! Das vorliegende Datenmodell gilt fuer den Bezugsrahmen "Landesvermessung 1903+
+!! (LV95)".
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!! Typ: A=Änderung, E=Ergänzung, L=Löschung
+!!
+!! Version    | Line  | Typ | Bemerkung
+!!------------|-------|-----|-------------------------------------------------------------
+!! 2026-01-31 |143-147|  L  | ASSOCIATION Untergang_Einzelobjekt
+!! 2026-01-31 |148-152|  L  | ASSOCIATION Vorgaenger_Nachfolger_Einzelobjekt
+!! 2026-01-31 |153-158|  L  | VIEW Einzelobjekt_Gueltig
+
+!!@ technicalContact = mailto:dmav@swisstopo.ch
+!!@ furtherInformation = https://www.cadastre-manual.admin.ch/de/modelldokumentation-dmav
+!!@ IDGeoIV = "228.9"
+MODEL DMAV_Einzelobjekte_V1_1 (de)
+  AT "https://models.geo.admin.ch/V_D/" VERSION "2026-01-31" =
+  IMPORTS GeometryCHLV95_V2;
+  IMPORTS DMAVTYM_Geometrie_V1_0;
+  IMPORTS DMAVTYM_Modinfo_V1_0;
+  IMPORTS DMAVTYM_Qualitaet_V1_0;
+  IMPORTS DMAVTYM_Grafik_V1_0;
+
+  TOPIC Einzelobjekte =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    DOMAIN
+
+      Einzelobjektart = (
+        Mauer,
+        unterirdisches_Gebaeude,
+        uebriger_Gebaeudeteil,
+        eingedoltes_oeffentliches_Gewaesser,
+        wichtige_Treppe,
+        Tunnel_Unterfuehrung_Galerie,
+        Bruecke_Passerelle,
+        Bahnsteig,
+        Brunnen,
+        Reservoir,
+        Pfeiler,
+        Unterstand,
+        Silo_Turm_Gasometer,
+        Hochkamin,
+        Denkmal,
+        Mast_Antenne,
+        Aussichtsturm,
+        Uferverbauung,
+        Schwelle,
+        Lawinenverbauung,
+        massiver_Sockel,
+        Ruine_archaeologisches_Objekt,
+        Landungssteg,
+        einzelner_Fels,
+        schmale_bestockte_Flaeche,
+        Rinnsal,
+        schmaler_Weg,
+        Hochspannungsfreileitung,
+        Druckleitung,
+        Bahngeleise,
+        Luftseilbahn,
+        Gondelbahn_Sesselbahn,
+        Materialseilbahn,
+        Skilift,
+        Faehre,
+        Grotte_Hoehleneingang,
+        Achse,
+        wichtiger_Einzelbaum,
+        Bildstock_Kruzifix,
+        Quelle,
+        Bezugspunkt,
+        Jauchengrube_Mistlege);
+
+    CLASS EONachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;  !! z.B. Nummer des technischen Dossiers
+      Beschreibung: MANDATORY TEXT*60;
+      Perimeter:  SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      GueltigerEintrag: MANDATORY INTERLIS.XMLDateTime;
+    UNIQUE CH090101: NBIdent, Identifikator;
+    END EONachfuehrung;
+
+    STRUCTURE Flaechenelement =
+      Geometrie: MANDATORY SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      Symbolposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Symbolposition;
+    END Flaechenelement;
+
+    STRUCTURE Linienelement =
+      Geometrie: MANDATORY GeometryCHLV95_V2.Line;
+      Symbolposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Symbolposition;
+    END Linienelement;
+
+    STRUCTURE Punktelement =
+      Geometrie: MANDATORY GeometryCHLV95_V2.Coord2;
+      SymbolOri: DMAVTYM_Grafik_V1_0.Rotation;
+    END Punktelement;
+
+    STRUCTURE Objektname =
+      Name: MANDATORY TEXT*60;
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+    END Objektname;
+
+    STRUCTURE Objektnummer =
+      Nummer: MANDATORY TEXT*12;
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+    END Objektnummer;
+
+    CLASS Einzelobjekt =
+      Qualitaetsstandard: MANDATORY DMAVTYM_Qualitaet_V1_0.Qualitaetsstandard;
+      Einzelobjektart: MANDATORY Einzelobjektart;
+      Flaechenelement: BAG {0..*} OF Flaechenelement;
+      Linienelement: BAG {0..*} OF Linienelement;
+      Punktelement: BAG {0..*} OF Punktelement;
+      Objektnummer: BAG {0..*} OF Objektnummer;
+      Objektname: BAG {0..*} OF Objektname;
+      EGID:  1 .. 900000000;
+      Objektstatus: MANDATORY DMAVTYM_Modinfo_V1_0.Objektstatus;
+      MANDATORY CONSTRAINT CH090701: INTERLIS.elementCount(Flaechenelement)>0 
+        OR INTERLIS.elementCount(Linienelement)>0 
+        OR INTERLIS.elementCount(Punktelement)>0;
+    END Einzelobjekt;
+
+    ASSOCIATION Entstehung_Einzelobjekt =
+      Entstehung -- {1} EONachfuehrung;
+      entstehendes_Einzelobjekt -- {0..*} Einzelobjekt;
+    END Entstehung_Einzelobjekt;
+
+    CLASS Messpunkt =
+      Nummer:  TEXT*12;
+      Geometrie: MANDATORY GeometryCHLV95_V2.Coord2;
+      Hoehengeometrie: DMAVTYM_Geometrie_V1_0.Hoehe;
+      Lagegenauigkeit: MANDATORY DMAVTYM_Qualitaet_V1_0.Genauigkeit;
+      IstLagezuverlaessig: MANDATORY DMAVTYM_Qualitaet_V1_0.Zuverlaessigkeit;
+      Hoehengenauigkeit: DMAVTYM_Qualitaet_V1_0.Genauigkeit;
+      IstHoehenzuverlaessig: DMAVTYM_Qualitaet_V1_0.Zuverlaessigkeit; 
+      IstExaktDefiniert: MANDATORY BOOLEAN;
+      MANDATORY CONSTRAINT CH091201: DEFINED(Hoehengeometrie)==DEFINED(Hoehengenauigkeit);
+      MANDATORY CONSTRAINT CH091202: DEFINED(Hoehengeometrie)==DEFINED(IstHoehenzuverlaessig);
+    END Messpunkt;
+    
+    ASSOCIATION Entstehung_Messpunkt =
+      Entstehung -- {0..1} EONachfuehrung;
+      entstehender_Messpunkt -- {0..*} Messpunkt;
+    END Entstehung_Messpunkt;
+    
+  END Einzelobjekte;
+ 
+END DMAV_Einzelobjekte_V1_1.

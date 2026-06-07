@@ -1,0 +1,167 @@
+INTERLIS 2.4;
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! Datenmodell der amtlichen Vermessung "Bund" (DMAV)
+!! beschrieben in INTERLIS Version 2.4
+!!
+!! Bundesamt fuer Landestopographie (swisstopo)
+!! Fachstelle Eidgenoessische Vermessungsdirektion (V+D)
+!! CH-3084 Wabern
+!! www.cadastre.ch und www.interlis.ch
+!!
+!! Version: 1.1 deutsch
+!! Dateiname: DMAV_Gebaeudeadressen_V1_1.ili
+!!
+!! Das vorliegende Datenmodell gilt fuer den Bezugsrahmen "Landesvermessung 1903+
+!! (LV95)".
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!! Typ: A=Änderung, E=Ergänzung, L=Löschung
+!!
+!! Version    | Line  | Typ | Bemerkung
+!!------------|-------|-----|-------------------------------------------------------------
+!! 2026-01-31 |113-117|  L  | ASSOCIATION Untergang_Lokalisation
+!! 2026-01-31 |118-122|  L  | ASSOCIATION Vorgaenger_Nachfolger_Lokalisation
+!! 2026-01-31 |123-129|  L  | VIEW Lokalisation_Gueltig
+!! 2026-01-31 |166-170|  L  | ASSOCIATION Untergang_Gebaeudeeingang
+!! 2026-01-31 |171-175|  L  | ASSOCIATION Vorgaenger_Nachfolger_Lokalisation
+!! 2026-01-31 |176-182|  L  | VIEW Gebaeudeeingang_Gueltig
+!! 2026-01-31 |    186|  A  | Wenn Nummerierungsprinzip = "keineNummer" dürfen keine
+!!            |       |     | Hausnummern erfasst werden.
+
+!!@ technicalContact = mailto:dmav@swisstopo.ch
+!!@ furtherInformation = https://www.cadastre-manual.admin.ch/de/modelldokumentation-dmav
+!!@ IDGeoIV = "228.12"
+MODEL DMAV_Gebaeudeadressen_V1_1 (de)
+  AT "https://models.geo.admin.ch/V_D/" VERSION "2026-01-31" =
+  IMPORTS GeometryCHLV95_V2;
+  IMPORTS DMAVTYM_Modinfo_V1_0;
+  IMPORTS DMAVTYM_Grafik_V1_0;
+
+  TOPIC Gebaeudeadressen =  !! siehe SN 612040;
+                          !! Verantwortung der Gemeinden
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+ 
+  !! Geometrische Beziehung zwischen Gebaeudeeingang und PLZ
+  !! Geometrische Beziehung zwischen Gebaeudeeingang und Ortschaft
+  !! Geometrische Beziehung zwischen Lokalisation und OrtschaftsVerbund
+  
+  DOMAIN
+  
+      Sprache = ( !! Fuer Gebaeudeadressen, siehe SN 612040
+          de,  !! deutsch
+          fr,  !! francais
+          it,  !! italiano
+          rm);  !! rumantsch
+  
+    CLASS GANachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;  !! z.B. Nummer des technischen Dossiers
+      Beschreibung: MANDATORY TEXT*60;
+      Perimeter:  SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      GueltigerEintrag: MANDATORY INTERLIS.XMLDateTime;
+    UNIQUE CH120101: NBIdent, Identifikator;
+    END GANachfuehrung;
+    
+    STRUCTURE Lokalisationsname =
+      Name: MANDATORY TEXT*60; 
+      NameKurz:  TEXT*24; 
+      NameAlsIndex:  TEXT*16;
+      Sprache: MANDATORY Sprache;
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+    END Lokalisationsname; 
+    
+    STRUCTURE BenanntesGebiet =        
+      Geometrie: MANDATORY SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002; 
+    END BenanntesGebiet;
+    
+    STRUCTURE Strassenstueck =
+      Geometrie: MANDATORY GeometryCHLV95_V2.DirectedLine;
+      IstAchse: MANDATORY BOOLEAN;
+    END Strassenstueck;
+
+    CLASS Lokalisation =
+      LokalisationNummer:  TEXT*12;
+      AttributeProvisorisch: MANDATORY BOOLEAN;
+      IstOffizielleBezeichnung: MANDATORY BOOLEAN;
+      Lokalisationsstatus: MANDATORY DMAVTYM_Modinfo_V1_0.Objektstatus;
+      InAenderung: MANDATORY BOOLEAN;
+      Lokalisationsart: MANDATORY (
+          BenanntesGebiet,
+          Strasse,
+          Platz);
+      Nummerierungsprinzip: MANDATORY (
+      		keineNummern, 
+      		beliebig, 
+      		aufsteigend, 
+      		ungeradelinks, 
+      		geradelinks);          
+      !! Eidgenössischer Strassenidentifikator
+      ESID:  10000000 .. 90000000;
+      LokalisationName: BAG {1..*} OF Lokalisationsname;
+      BenanntesGebiet: BAG {0..*} OF BenanntesGebiet;
+      Strassenstueck: LIST {0..*} OF Strassenstueck;
+    MANDATORY CONSTRAINT CH120501:
+      (INTERLIS.elementCount(Strassenstueck)>0) == (Lokalisationsart==#Strasse OR Lokalisationsart==#Platz);
+    MANDATORY CONSTRAINT CH120502:
+      (INTERLIS.elementCount(BenanntesGebiet)>0) == (Lokalisationsart==#BenanntesGebiet);
+    UNIQUE CH120503: (LOCAL) LokalisationName:Sprache;
+    END Lokalisation;
+
+    ASSOCIATION Entstehung_Lokalisation =
+      Entstehung -- {1} GANachfuehrung;
+      entstehende_Lokalisation -- {0..*} Lokalisation;
+    END Entstehung_Lokalisation;
+    
+    STRUCTURE Gebaeudename =
+      Name: MANDATORY TEXT*60;
+      NameKurz:  TEXT*24;
+      NameAlsIndex:  TEXT*16;
+      Sprache: MANDATORY Sprache; 
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+    END Gebaeudename;
+    
+    STRUCTURE Gebaeudebeschreibung =
+      Beschreibung: MANDATORY TEXT*100;
+      Sprache: MANDATORY Sprache; 
+    END Gebaeudebeschreibung;
+    
+    CLASS Gebaeudeeingang =
+      Gebaeudestatus: MANDATORY DMAVTYM_Modinfo_V1_0.Objektstatus;
+      InAenderung: MANDATORY BOOLEAN;
+      AttributeProvisorisch: MANDATORY BOOLEAN;
+      IstOffizielleGebaeudeadresse: MANDATORY BOOLEAN;
+      Geometrie: MANDATORY GeometryCHLV95_V2.Coord2; 
+      HoeheUeberGrund:  -99 .. 99 [INTERLIS.m];
+      Hausnummer:  TEXT*12;  !! z.B. Polizeinummer
+      ImModul: MANDATORY (Bodenbedeckung, Einzelobjekte);
+      EGID:  1..900000000;
+      EDID:  0..90;
+      GebaeudeName: BAG {0..*} OF Gebaeudename;
+      GebaeudeBeschreibung: BAG {0..*} OF Gebaeudebeschreibung;
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+    UNIQUE CH121201: (LOCAL) GebaeudeName:Sprache;
+    UNIQUE CH121202: (LOCAL) GebaeudeBeschreibung:Sprache;
+    END Gebaeudeeingang;
+
+    ASSOCIATION Entstehung_Gebaeudeeingang =
+      Entstehung -- {1} GANachfuehrung;
+      entstehender_Gebaeudeeingang -- {0..*} Gebaeudeeingang;
+    END Entstehung_Gebaeudeeingang;
+
+    ASSOCIATION LokalisationGebaeudeeingang =
+      Lokalisation -<> {0..1} Lokalisation;
+      Gebaeudeeingang -- {0..*} Gebaeudeeingang;
+    MANDATORY CONSTRAINT CH121701: (Lokalisation->Nummerierungsprinzip!=#keineNummern) OR
+    	NOT(DEFINED(Gebaeudeeingang->Hausnummer));      
+    END LokalisationGebaeudeeingang;
+
+  END Gebaeudeadressen;
+ 
+
+END DMAV_Gebaeudeadressen_V1_1.

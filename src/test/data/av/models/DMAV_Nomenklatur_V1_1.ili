@@ -1,0 +1,97 @@
+INTERLIS 2.4;
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! Datenmodell der amtlichen Vermessung "Bund" (DMAV)
+!! beschrieben in INTERLIS Version 2.4
+!!
+!! Bundesamt fuer Landestopographie (swisstopo)
+!! Fachstelle Eidgenoessische Vermessungsdirektion (V+D)
+!! CH-3084 Wabern
+!! www.cadastre.ch und www.interlis.ch
+!!
+!! Version: 1 deutsch
+!! Dateiname: DMAV_Nomenklatur_V1_1.ili
+!!
+!! Das vorliegende Datenmodell gilt fuer den Bezugsrahmen "Landesvermessung 1903+
+!! (LV95)".
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!! Typ: A=Änderung, E=Ergänzung, L=Löschung
+!!
+!! Version    | Line  | Typ | Bemerkung
+!!------------|-------|-----|-------------------------------------------------------------
+!! 2026-01-31 |     50|  A  | Geometrie: MANDATORY AREA WITH ((STRAIGHTS, ARCS) VERTEX 
+!!            |       |     | GeometryCHLV95_V2.Coord2 WITHOUT OVERLAPS > 0.002;
+!! 2026-01-31 |  61-65|  L  | ASSOCIATION Untergang_Flurname
+!! 2026-01-31 |  66-73|  L  | VIEW Flurname_Gueltig
+!! 2026-01-31 |  87-91|  L  | ASSOCIATION Untergang_Ortsname
+!! 2026-01-31 |  92-98|  L  | VIEW Ortsname_Gueltig
+!! 2026-01-31 |110-114|  L  | ASSOCIATION Untergang_Gelaendename
+!! 2026-01-31 |115-121|  L  | VIEW Untergang_Gelaendename
+
+!!@ technicalContact = mailto:dmav@swisstopo.ch
+!!@ furtherInformation = https://www.cadastre-manual.admin.ch/de/modelldokumentation-dmav
+!!@ IDGeoIV = "228.7"
+MODEL DMAV_Nomenklatur_V1_1 (de)
+  AT "https://models.geo.admin.ch/V_D/" VERSION "2026-01-31" =
+  IMPORTS GeometryCHLV95_V2;
+  IMPORTS DMAVTYM_Grafik_V1_0;
+
+  TOPIC Nomenklatur =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS NKNachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;  !! z.B. Nummer des technischen Dossiers
+      Beschreibung: MANDATORY TEXT*60;
+      Perimeter:  SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      GueltigerEintrag: MANDATORY INTERLIS.XMLDateTime;
+    UNIQUE CH070101: NBIdent, Identifikator;
+    END NKNachfuehrung;
+
+    CLASS Flurname =
+      Name: MANDATORY TEXT*60;
+      Geometrie: MANDATORY AREA WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      Fiktiv : MANDATORY BOOLEAN;
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+    END Flurname;
+
+    ASSOCIATION Entstehung_Flurname =
+      Entstehung -- {1} NKNachfuehrung;
+      entstehender_Flurname -- {0..*} Flurname;
+    END Entstehung_Flurname;
+
+    
+    CLASS Ortsname =
+      Name: MANDATORY TEXT*60;
+      Geometrie: MANDATORY SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      Typ:  TEXT*30;  !! Vergabe durch Kanton
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+    END Ortsname;
+    
+    ASSOCIATION Entstehung_Ortsname =
+      Entstehung -- {1} NKNachfuehrung;
+      entstehender_Ortsname -- {0..*} Ortsname;
+    END Entstehung_Ortsname;
+
+
+    CLASS Gelaendename =
+      Name: MANDATORY TEXT*60;
+      Geometrie: MANDATORY GeometryCHLV95_V2.Coord2;
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+    END Gelaendename;
+
+    ASSOCIATION Entstehung_Gelaendename =
+      Entstehung -- {1} NKNachfuehrung;
+      entstehender_Gelaendename -- {0..*} Gelaendename;
+    END Entstehung_Gelaendename;
+    
+  END Nomenklatur;
+ 
+END DMAV_Nomenklatur_V1_1.

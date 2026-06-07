@@ -1,0 +1,140 @@
+INTERLIS 2.4;
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! Datenmodell der amtlichen Vermessung "Bund" (DMAV)
+!! beschrieben in INTERLIS Version 2.4
+!!
+!! Bundesamt fuer Landestopographie (swisstopo)
+!! Fachstelle Eidgenoessische Vermessungsdirektion (V+D)
+!! CH-3084 Wabern
+!! www.cadastre.ch und www.interlis.ch
+!!
+!! Version: 1 deutsch
+!! Dateiname: DMAV_FixpunkteAVKategorie3_V1_1.ili
+!!
+!! Das vorliegende Datenmodell gilt fuer den Bezugsrahmen "Landesvermessung 1903+
+!! (LV95)".
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!! Typ: A=Änderung, E=Ergänzung, L=Löschung
+!!
+!! Version    | Line  | Typ | Bemerkung
+!!------------|-------|-----|-------------------------------------------------------------$
+!! 2026-01-31 |     78|  E  | IstHoheitsgrenzsteinAlt: BOOLEAN; (CLASS LFP3)
+!! 2026-01-31 |     80|  E  | Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition; (CLASS LFP3)
+!! 2026-01-31 |     83|  E  | MANDATORY CONSTRAINT CH020204: (Grenzpunktfunktion!=#keine)==DEFINED(IstHoheitsgrenzsteinAlt);
+!! 2026-01-31 |     83|  E  | UNIQUE CH020205: Geometrie; (CLASS LFP3)
+!! 2026-01-31 |     83|  E  | UNIQUE CH020206: NBIdent, Nummer; (CLASS LFP3)
+!! 2026-01-31 |  90-94|  L  | ASSOCIATION Untergang_LFP3
+!! 2026-01-31 | 95-103|  L  | VIEW LFP3_Gueltig
+!! 2026-01-31 |    124|  E  | Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition; (CLASS HFP3)
+!! 2026-01-31 |    124|  L  | UNIQUE CH020701: Geometrie; (CLASS HFP3)
+!! 2026-01-31 |    124|  L  | UNIQUE CH020702: NBIdent, Nummer; (CLASS HFP3)
+!! 2026-01-31 |131-135|  L  | ASSOCIATION Untergang_HFP3
+!! 2026-01-31 |136-144|  L  | VIEW LFP3_Gueltig
+
+!!@ technicalContact = mailto:dmav@swisstopo.ch
+!!@ furtherInformation = https://www.cadastre-manual.admin.ch/de/modelldokumentation-dmav
+!!@ IDGeoIV = "228.2"
+MODEL DMAV_FixpunkteAVKategorie3_V1_1 (de)
+  AT "https://models.geo.admin.ch/V_D/" VERSION "2026-01-31" =
+  IMPORTS GeometryCHLV95_V2;
+  IMPORTS DMAVTYM_Geometrie_V1_0;
+  IMPORTS DMAVTYM_Vermarkung_V1_0;
+  IMPORTS DMAVTYM_Qualitaet_V1_0;
+  IMPORTS DMAVTYM_Grafik_V1_0;
+  
+  TOPIC FixpunkteAVKategorie3 =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+    
+    DOMAIN
+  
+  	  LFPArt=(LFP3,
+  	  			Hilfsfixpunkt);
+
+      Schutzart=(keinSchutz,
+      			Schacht,
+      			ueberdeckt);
+      			
+      Grenzpunktfunktion=(keine,
+      			Grenzpunkt,
+      			Hoheitsgrenzpunkt);
+
+
+    CLASS LFP3Nachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;  !! z.B. Nummer des technischen Dossiers
+      Beschreibung: MANDATORY TEXT*60;
+      Perimeter:  SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      GueltigerEintrag:  MANDATORY INTERLIS.XMLDateTime;
+      UNIQUE CH020101: NBIdent, Identifikator;
+    END LFP3Nachfuehrung;
+
+    CLASS LFP3 =
+      NBIdent: MANDATORY TEXT*12;
+      Nummer: MANDATORY TEXT*12;  !! Vergabe durch Kanton
+      LFPArt: MANDATORY LFPArt;
+      Geometrie: MANDATORY GeometryCHLV95_V2.Coord2;
+      Hoehengeometrie: DMAVTYM_Geometrie_V1_0.Hoehe;
+      Lagegenauigkeit: MANDATORY DMAVTYM_Qualitaet_V1_0.Genauigkeit;
+      IstLagezuverlaessig: MANDATORY DMAVTYM_Qualitaet_V1_0.Zuverlaessigkeit;
+      Hoehengenauigkeit: DMAVTYM_Qualitaet_V1_0.Genauigkeit;
+      IstHoehenzuverlaessig: DMAVTYM_Qualitaet_V1_0.Zuverlaessigkeit; 
+      Punktzeichen: MANDATORY DMAVTYM_Vermarkung_V1_0.Versicherungsart;
+      Schutzart: Schutzart;
+      Grenzpunktfunktion: MANDATORY Grenzpunktfunktion;
+      IstHoheitsgrenzsteinAlt: BOOLEAN;
+      AktiverUnterhalt: MANDATORY BOOLEAN;
+      SymbolOri: DMAVTYM_Grafik_V1_0.Rotation; !! // undefiniert = 0.0 //
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+      MANDATORY CONSTRAINT CH020201: DEFINED(Hoehengeometrie)==DEFINED(Hoehengenauigkeit);
+      MANDATORY CONSTRAINT CH020202: DEFINED(Hoehengeometrie)==DEFINED(IstHoehenzuverlaessig);
+      MANDATORY CONSTRAINT CH020203: LFPArt!=#LFP3 OR Punktzeichen!=#unversichert;
+      MANDATORY CONSTRAINT CH020204: (Grenzpunktfunktion!=#keine)==DEFINED(IstHoheitsgrenzsteinAlt);
+    UNIQUE CH020205: Geometrie;
+    UNIQUE CH020206: NBIdent, Nummer;
+    END LFP3;
+
+    ASSOCIATION Entstehung_LFP3 =
+      Entstehung -- {1} LFP3Nachfuehrung;
+      entstehender_LFP3 -- {0..*} LFP3;
+    END Entstehung_LFP3;
+    
+
+    CLASS HFP3Nachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;  !! z.B. Nummer des technischen Dossiers
+      Beschreibung: MANDATORY TEXT*60;
+      Perimeter:  SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      GueltigerEintrag: MANDATORY INTERLIS.XMLDateTime;      
+    UNIQUE CH020601: NBIdent, Identifikator;
+    END HFP3Nachfuehrung;
+
+    CLASS HFP3 = 
+      NBIdent: MANDATORY TEXT*12;
+      Nummer: MANDATORY TEXT*12;
+      Geometrie: MANDATORY GeometryCHLV95_V2.Coord2;
+      Hoehengeometrie: MANDATORY DMAVTYM_Geometrie_V1_0.Hoehe;
+      Lagegenauigkeit: MANDATORY DMAVTYM_Qualitaet_V1_0.Genauigkeit;
+      IstLagezuverlaessig: MANDATORY DMAVTYM_Qualitaet_V1_0.Zuverlaessigkeit;
+      Hoehengenauigkeit: MANDATORY DMAVTYM_Qualitaet_V1_0.Genauigkeit;
+      IstHoehenzuverlaessig: MANDATORY DMAVTYM_Qualitaet_V1_0.Zuverlaessigkeit;
+      Textposition: BAG {0..*} OF DMAVTYM_Grafik_V1_0.Textposition;
+    UNIQUE CH020701: Geometrie;
+    UNIQUE CH020702: NBIdent, Nummer;
+    END HFP3;
+
+    ASSOCIATION Entstehung_HFP3 =
+      Entstehung -- {1} HFP3Nachfuehrung;
+      entstehender_HFP3 -- {0..*} HFP3;
+    END Entstehung_HFP3;
+    
+
+  END FixpunkteAVKategorie3;
+ 
+END DMAV_FixpunkteAVKategorie3_V1_1.
