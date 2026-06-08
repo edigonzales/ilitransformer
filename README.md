@@ -69,7 +69,7 @@ See `docs/SPEC.md` for the full 15-phase specification.
 | 11 | DMAV→DM01 LFP3 Minimalpilot | Planned |
 | 12 | BAG OF STRUCTURE und Textpositionen | Planned |
 | 13 | Geometrie-MVP | Planned |
-| 14 | Erweiterter DM01↔DMAV-Analysebericht | Planned |
+| 14 | Erweiterter DM01↔DMAV-Analysebericht | ✅ Done |
 | 15 | Stabilisierung, CLI-UX und Dokumentation | Planned |
 
 ## Documentation

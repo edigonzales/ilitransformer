@@ -109,6 +109,34 @@ class TopicGapReportGeneratorTest {
         assertThat(lfp3Complexity).isIn("einfach", "mittel");
     }
 
+    @Test
+    void snapshotMatchesGoldenFile() throws Exception {
+        List<CorrelationHint> hints = createSyntheticHints();
+        List<MappingCandidate> candidates = createSyntheticCandidates();
+
+        TopicGapReportGenerator generator = new TopicGapReportGenerator(
+                hints, candidates, Map.of(), null, Map.of());
+
+        TopicGapReportGenerator.GapReport report = generator.generate();
+
+        Path reportPath = Files.createTempFile("topic-gap-report-", ".md");
+        try {
+            generator.writeReport(report, reportPath);
+            String actual = Files.readString(reportPath);
+
+            String normalized = actual
+                    .replaceAll("> Generated: .*", "> Generated: {{TIMESTAMP}}")
+                    .replace(reportPath.toString(), "{{REPORT_PATH}}");
+
+            Path goldenPath = Path.of("src/test/resources/dm01-dmav/topic-gap-report-snapshot.md");
+            String expected = Files.readString(goldenPath);
+
+            assertThat(normalized).isEqualTo(expected);
+        } finally {
+            Files.deleteIfExists(reportPath);
+        }
+    }
+
     // -- Synthetic test data --------------------------------------------
 
     private static List<CorrelationHint> createSyntheticHints() {

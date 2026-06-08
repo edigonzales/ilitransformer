@@ -76,7 +76,8 @@ public final class TopicGapReportGenerator {
 
         // Group candidates by DM01 topic
         Map<String, List<MappingCandidate>> byTopic = candidates.stream()
-                .collect(Collectors.groupingBy(c -> extractTopic(c.sourceClass())));
+                .collect(Collectors.groupingBy(c -> extractTopic(c.sourceClass()),
+                        LinkedHashMap::new, Collectors.toList()));
 
         for (var entry : byTopic.entrySet()) {
             String topicName = entry.getKey();
