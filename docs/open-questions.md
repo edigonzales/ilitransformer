@@ -153,3 +153,40 @@
 - Soll der Generator die generierten YAML-Fragmente automatisch durch `MappingCompiler.compileTyped()` validieren und die Ergebnisse in den Report aufnehmen?
 - Wie granular soll die Klassennamen-Auflösung sein: reine Namengleichheit (aktuell) oder zusätzlich Topic-Matching über `sourceTopic`/`targetTopic` aus den Hints?
 - Soll der Generator auch `refs`-Candidates aus Role-Hints und Assoziationen erzeugen (aktuell nur Attribut-Mappings)?
+
+## Phase 10 (DM01→DMAV LFP3 Minimalpilot)
+
+### Resolved
+- **DM01→DMAV LFP3**: Erstes handgeprüftes Mapping `dm01-to-dmav-lfp3.yaml` funktioniert.
+- **Golden Test**: `Dm01ToDmavLfp3IntegrationTest` mit realem Test-ITF (`so_2549.itf`).
+- **ilivalidator**: Bestanden auf erzeugtem DMAV-XTF.
+- **Deterministische UUIDs**: Reproduzierbare OIDs via Namespace + Source-Key.
+
+### Open
+- Bleiben als dokumentierte Lossiness/Einschränkungen im DM01/DMAV-Doc (siehe `docs/dm01-dmav/lossiness.md`).
+
+## Phase 14 (Erweiterter DM01↔DMAV-Analysebericht)
+
+### Resolved
+- **Topic Gap Report**: `docs/dm01-dmav/topic-gap-report-snapshot.md` als Snapshot-Test.
+- **Priorisierte Slices**: HFP3 → Grenzpunkt → Grundstück → Bodenbedeckung.
+
+### Open
+- Bleiben als offene fachliche Fragen im DM01/DMAV-Doc (siehe `docs/dm01-dmav/open-questions.md`).
+
+## Phase 15 (Stabilisierung, CLI-UX und Dokumentation)
+
+### Resolved
+- **CLI-Kommandos**: Alle 5 Commands sind picocli-Subcommands: `transform`, `validate-mapping`, `inspect-model`, `import-correlation`, `generate-mapping`.
+- **`transform --validate`**: Flag für optionalen ilivalidator-Lauf nach Transformation.
+- **`transform --report`**: Flag für Report-Ausgabepfad.
+- **Gradle-Tasks**: `importDmavCorrelation`, `generateDm01DmavMappings`, `generateModelInventory`, `validateGoldenTransfers`, `integrationTest`.
+- **Dokumentation**: ~18 Dokumentationsdateien erstellt/aktualisiert.
+
+### Offene Fragen (als bekannte Limitationen akzeptiert)
+
+- XTF-Reader kann eigene Output-Dateien nicht zurücklesen (IoxSyntaxException). Engine gibt Output-Objekte nicht direkt zur Verifizierung zurück.
+- `enumMap()` ist weiterhin Stub. Vollständige Enum-Mapping-Logik bleibt für spätere DM01↔DMAV-Slices.
+- `external` OID-Strategie und `expression` Basket-Strategie bleiben Stubs.
+- OID-Kollisionen bei `preserve`-Strategie sind nicht behandelt.
+- `lookupOne`/`lookupMany` (StateStore-Lookups aus Expressions) nicht implementiert.

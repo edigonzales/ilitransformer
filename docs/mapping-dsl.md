@@ -1,6 +1,6 @@
 # Mapping DSL
 
-Die Mapping-Datei ist eine YAML-Konfiguration, die die Transformation von INTERLIS-Transferdaten steuert. Sie wird durch den `MappingCompiler` in einen typisierten Ausführungsplan übersetzt.
+Die Mapping-Datei ist eine YAML-Konfiguration, die die Transformation von INTERLIS-Transferdaten steuert. Sie wird durch den `MappingCompiler` in einen typisierten Ausführungsplan (`TransformPlan`) übersetzt.
 
 ## Version
 
@@ -74,8 +74,8 @@ mapping:
 
 | Feld | Typ | Pflicht | Beschreibung |
 |---|---|---|---|
-| `mapping.oidStrategy` | `OidStrategySpec` | Nein | OID-Strategie ✅ |
-| `mapping.basketStrategy` | `BasketStrategySpec` | Nein | Basket-Strategie ✅ |
+| `mapping.oidStrategy` | `OidStrategySpec` | Nein | OID-Strategie |
+| `mapping.basketStrategy` | `BasketStrategySpec` | Nein | Basket-Strategie |
 | `mapping.enums` | `map[string, map[string, string]]` | Nein | Enum-Mapping-Tabellen |
 | `mapping.defaults` | `map[string, string]` | Nein | Default-Werte |
 | `mapping.compileMode` | `string` | Nein | `strict` (default) oder `allowTodos` |
@@ -89,16 +89,16 @@ oidStrategy:
   namespace: "my-namespace"    # für deterministicUuid
 ```
 
-Ab Phase 6 unterstützt: `preserve`, `integer`, `uuid`, `deterministicUuid`. `external` ist als Stub vorbereitet.
+Unterstützte Strategien: `preserve`, `integer`, `uuid`, `deterministicUuid`. `external` ist als Stub vorbereitet.
 
 ### BasketStrategySpec
 
 ```yaml
 basketStrategy:
-  default: preserve   # preserve | generateUuid | preserveOrGenerateUuid | byTopic | expression
+  default: preserveOrGenerateUuid   # preserve | generateUuid | preserveOrGenerateUuid | byTopic | expression
 ```
 
-Ab Phase 6 unterstützt: `preserve`, `generateUuid`, `preserveOrGenerateUuid`, `byTopic`. `expression` ist als Stub vorbereitet.
+Unterstützte Strategien: `preserve`, `generateUuid`, `preserveOrGenerateUuid`, `byTopic`. `expression` ist als Stub vorbereitet.
 
 ## RuleSpec
 
@@ -106,16 +106,14 @@ Jede Rule erzeugt Zielobjekte aus Quellobjekten.
 
 | Feld | Typ | Pflicht | Beschreibung |
 |---|---|---|---|
-| `id` | `string` | Ja | Eindeutige Rule-ID (innerhalb der Mapping-Datei) |
+| `id` | `string` | Ja | Eindeutige Rule-ID |
 | `target` | `TargetSpec` | Ja | Zielklasse und Output |
 | `sources` | `list[SourceSpec]` | Ja | Quellklassen (mindestens eine) |
 | `where` | `string` | Nein | Filter-Expression für Quellobjekte |
-| `identity` | `IdentitySpec` | Nein | Schlüsselfelder für OID-Bestimmung (ab Phase 6) ✅ |
-| `assign` | `map[string, string]` | Nein | Attributzuweisungen (Zielattribut → Expression) |
+| `identity` | `IdentitySpec` | Nein | Schlüsselfelder für deterministische OID |
+| `assign` | `map[string, string]` | Nein | Attributzuweisungen |
 | `refs` | `list[RefMapping]` | Nein | Referenzen / Associations |
 | `bags` | `map[string, BagSpec]` | Nein | BAG OF STRUCTURE |
-| `create` | `list[CreateSpec]` | Nein | Zu erstellende Objekte |
-| `joins` | `list[JoinSpec]` | Nein | Join-Definitionen |
 | `metadata` | `MetadataSpec` | Nein | Metadaten (Direction, Roundtrip, Lossiness) |
 | `defaults` | `map[string, string]` | Nein | Default-Werte für Zielattribute |
 
@@ -123,11 +121,11 @@ Jede Rule erzeugt Zielobjekte aus Quellobjekten.
 
 ```yaml
 target:
-  output: out1     # Pflicht: Output-ID (muss in job.outputs existieren)
+  output: out1     # Pflicht: Output-ID
   class: "M.T.C"   # Pflicht: qualifizierte INTERLIS-Klasse
 ```
 
-**Backward-Compat:** Die flachen Felder `targetClass` und `output` werden weiterhin unterstützt.
+Backward-Compat: Die flachen Felder `targetClass` und `output` werden weiterhin unterstützt.
 
 ### SourceSpec
 
@@ -135,11 +133,11 @@ target:
 sources:
   - alias: src               # Pflicht: Alias für Expressions
     class: "M.T.SourceClass" # Pflicht: qualifizierte INTERLIS-Quellklasse
-    inputs: [in1, in2]       # Pflicht: Input-IDs (Liste)
+    inputs: [in1, in2]       # Pflicht: Input-IDs
     where: "src.Status == 'aktiv'" # Optional: Filter
 ```
 
-**Backward-Compat:** Das flache Feld `input` (einzelner String) wird weiterhin unterstützt.
+Backward-Compat: Das flache Feld `input` (einzelner String) wird weiterhin unterstützt.
 
 ### IdentitySpec
 
@@ -164,9 +162,8 @@ assign:
 refs:
   - association: "Entstehung_LFP3"    # Vollqualifizierte Association
     role: "Entstehung"                # Rollenname
-    targetObject:
-      rule: "regel-id"               # Rule-ID des Zielobjekts
-      sourceRef: "src.Entstehung"    # Quellreferenz
+    sourceRef: "src.Entstehung"       # Quellreferenz
+    targetRule: "lfp3-nachfuehrung"   # Rule-ID des Zielobjekts
 ```
 
 ### BagSpec
@@ -184,32 +181,13 @@ bags:
       Position: "pos.Pos"
 ```
 
-### CreateSpec
-
-```yaml
-create:
-  - class: "M.T.NewClass"
-    assign:
-      attr1: "${src.val}"
-```
-
-### JoinSpec
-
-```yaml
-joins:
-  - left: src1
-    right: src2
-    on: "src1.Ref == src2.OID"
-    type: inner    # inner | left
-```
-
 ### MetadataSpec
 
 ```yaml
 metadata:
   direction: dm01-to-dmav
   roundtrip: notGuaranteed
-  lossiness: minor   # none | minor | significant | unknown
+  lossiness: none   # none | minor | significant | unknown
 ```
 
 ## Enum-Mappings
@@ -224,19 +202,27 @@ mapping:
 
 ## Kompilierung
 
-Der `MappingCompiler` validiert die Mapping-Datei und erzeugt einen `CompileResult` mit normalisiertem `JobConfig` und `DiagnosticCollector`. Fehlerhafte Mappings werden diagnostiziert:
+Der `MappingCompiler` validiert die Mapping-Datei und erzeugt einen `TransformPlan`. Fehlerhafte Mappings werden diagnostiziert:
 
 ```bash
 ili-transformer validate-mapping --mapping my-mapping.yaml
 ```
 
-## Nicht unterstützte Konstrukte (Phase 5)
+## Nicht unterstützte Konstrukte
 
-Folgende DSL-Felder sind im Datenmodell vorbereitet, werden aber in der Runtime noch nicht ausgewertet:
-- `bags` (erst Phase 12)
-- `create` (noch nicht implementiert)
-- `joins` (noch nicht implementiert)
-- `metadata.lossiness` (rein dokumentativ)
+- `joins` — DSL-Feld vorbereitet, Runtime noch nicht (komplexe Joins)
+- `create` — DSL-Feld vorbereitet, noch nicht implementiert
+- Externe OID-Strategie (`external`) — Stub
+- Expression-basierte Basket-Strategie — Stub
 
-Ab Phase 5 unterstützt:
-- `where` auf Source-Ebene: Filter-Expression, die Quellobjekte vor der Transformation filtert. Unterstützt `!= null`, `== null`, `defined()`, `notDefined()`, Funktionsaufrufe und `${alias.attr}`-Pfadreferenzen.
+## Typisierte Expression-Auswertung
+
+Seit Phase 4 werden Expressions typisiert ausgewertet. Der `MappingCompiler` inferiert Expression-Typen über `FunctionRegistry` und validiert gegen Zieltypen:
+
+- `truncate()` → TEXT
+- `toXmlDateTime()` → XML_DATE_TIME
+- `round()` → NUMERIC
+
+Typ-Inkompatibilitäten werden als `ILITRF-MAP-TYPE-MISMATCH` (WARNING) diagnostiziert, da die Runtime Typ-Koersion durchführen kann.
+
+Siehe `docs/expressions.md` für die vollständige Expression-Referenz.

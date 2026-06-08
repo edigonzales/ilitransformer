@@ -2,8 +2,8 @@
 
 Generic INTERLIS transformation engine.
 
-**Status:** Phase 3 (Typed Mapping Compiler) — in progress.
-**Primary use case:** DM01 ↔ DMAV transformation (scheduled for Phase 10+).
+**Status:** Phase 14 complete, Phase 15 (Stabilization) in progress.
+**Primary use case:** DM01 ↔ DMAV transformation (LFP3 pilot working in both directions).
 
 ## Tech baseline
 
@@ -17,64 +17,120 @@ Generic INTERLIS transformation engine.
 
 ## Current implementation status
 
+### Core engine (Phases 0–7)
+
 - Two-pass execution engine (index → build + deferred refs → write)
 - `TypedPlan` / `TransformPlan` — typed execution plan instead of raw YAML
 - Model-aware `MappingCompiler.compileTyped()` — validates classes, attributes, roles, types, mandatory coverage
-- `inspect-model` CLI for INTERLIS model inventory (JSON + Markdown output)
-- `IliModelService` + `TypeSystemFacade` + `IliPath` for model metadata extraction
-- `validate-mapping` and `transform` CLI commands
-- INTERLIS model compilation via ili2c (ITF/XTF read/write via iox-ili)
-- Basic expression support (`${alias.attr}`, `if(...)`, string literals)
-- Diagnostics for unresolved/ambiguous references with 3-tier fallback
-- 67 automated tests (11 test classes)
-- DMAV V1.1 test models under `src/test/data/av/models/`
-- Test ILI models under `src/test/data/models/`
+- `IliModelService` + `TypeSystemFacade` + `IliPath` + `RoleResolver`
+- `ExpressionEngine` with function registry: Basic, String, Date, Enum, Reference, Math builtins
+- `Value` type system (sealed interface: TextValue, NumberValue, BooleanValue, DateValue, EnumValue, CoordValue, GeometryObjectValue, ReferenceValue, NullValue)
+- OID strategies: `preserve`, `integer`, `uuid`, `deterministicUuid`, `external`
+- Basket strategies: `preserve`, `generateUuid`, `preserveOrGenerateUuid`, `byTopic`, `expression`
+- Reference resolution with deferred refs, role-aware type checking, cardinality validation
+- `failPolicy`: `strict`, `lenient`, `reportOnly`
+- Stable output sorting for reproducible results
+- `GeometryAdapter` with `IoxGeometryAdapter` and `ItfGeometryWriter`
+- Diagnostics with structured codes, rule-IDs, source/target paths
 
-### Known limitations (Phase 3)
+### DM01 ↔ DMAV (Phases 8–14)
 
-- All target values set as strings (no typed value system)
-- OID always sequential Long (not UUID-compatible for DMAV)
-- No `where`-filter, Joins, BAG OF STRUCTURE in engine
-- No modellbewusste Rollen-/Referenzauflösung at runtime
-- `Engine`-`isAbstract()` class check only at compile time
-- No `ilivalidator`-Support
+- **XLSX Import**: `CorrelationWorkbookImporter` parses the correlation table (250 hints from `DMAV_Korrelationstabelle_20260301.xlsx`)
+- **Mapping Candidate Generator**: Classified candidates (high/medium/low/manual) from hints + model inventory + synonyms
+- **LFP3 Pilot DM01→DMAV**: Working transformation with golden tests, ilivalidator validation
+- **LFP3 Pilot DMAV→DM01**: Reverse direction with lossiness documentation
+- **BAG OF STRUCTURE**: Textpositionen (Pos tables ↔ BAG OF Textposition)
+- **Geometry MVP**: Coord/Polyline/Surface pass-through with diagnostics
+- **Topic Gap Report**: Systematic analysis of remaining DM01/DMAV topics
+
+### CLI commands
+
+| Command | Status |
+|---|---|
+| `transform` | Working |
+| `validate-mapping` | Working |
+| `inspect-model` | Working |
+| `import-correlation` | Gradle task only (→ Phase 15 CLI) |
+| `generate-mapping` | Gradle task only (→ Phase 15 CLI) |
+
+### Known limitations
+
+- XTF-Reader with model context cannot read back own output files (IoxSyntaxException)
+- `enumMap()` is a stub (pass-through with diagnostic warning)
+- `external` OID strategy and `expression` basket strategy are stubs
+- No AREA topology repair, no LINEATTR support
+- No joins, splits, or merge semantics in engine
+- No persistent StateStore (in-memory only)
+- DM01↔DMAV: only LFP3 slice is fully implemented
 
 ## Run
 
 ```bash
 ./gradlew test
 ./gradlew run --args="inspect-model --model src/test/data/models/minimal.ili --modeldir src/test/data/models/"
-./gradlew run --args="transform path/to/mapping.yaml --modeldir path/to/models"
+./gradlew run --args="transform --mapping path/to/mapping.yaml --modeldir path/to/models"
 ./gradlew run --args="validate-mapping --mapping path/to/mapping.yaml"
-ili-transformer --help
+```
+
+### DM01 ↔ DMAV tasks
+
+```bash
+./gradlew importCorrelation
+./gradlew generateMappingCandidates
+./gradlew topicGapReport
+./gradlew validateOutput
+```
+
+### Transform with validation
+
+```bash
+./gradlew run --args="transform --mapping profiles/dm01-to-dmav/lfp3.yaml --modeldir 'src/test/data/av/models/;https://models.interlis.ch' --validate"
 ```
 
 ## Planned phases
 
-See `docs/SPEC.md` for the full 15-phase specification.
+See `docs/SPEC.md` for the full 16-phase specification.
 
 | Phase | Title | Status |
 |---:|---|---|
-| 0 | Baseline, Repository-Hygiene und Namensentscheid | ✅ Done |
-| 1 | DSL-/Config-Modell stabilisieren | Next |
-| 2 | INTERLIS Model Service und Inventory | In Progress |
-| 3 | Typed Mapping Compiler | In Progress |
-| 4 | Expression Engine und Function Registry | Planned |
-| 5 | Runtime MVP für 1:1 Scalar Mapping | Planned |
-| 6 | OID-, Basket- und Writer-Strategien | Planned |
-| 7 | Referenzen, Rollen und Associations | Planned |
-| 8 | XLSX-Korrelation importieren | Planned |
-| 9 | Mapping-Kandidatengenerator | Planned |
-| 10 | DM01→DMAV LFP3 Minimalpilot | Planned |
-| 11 | DMAV→DM01 LFP3 Minimalpilot | Planned |
-| 12 | BAG OF STRUCTURE und Textpositionen | Planned |
-| 13 | Geometrie-MVP | Planned |
-| 14 | Erweiterter DM01↔DMAV-Analysebericht | ✅ Done |
-| 15 | Stabilisierung, CLI-UX und Dokumentation | Planned |
+| 0 | Baseline, Repository-Hygiene und Namensentscheid | Done |
+| 1 | DSL-/Config-Modell stabilisieren | Done |
+| 2 | INTERLIS Model Service und Inventory | Done |
+| 3 | Typed Mapping Compiler | Done |
+| 4 | Expression Engine und Function Registry | Done |
+| 5 | Runtime MVP für 1:1 Scalar Mapping | Done |
+| 6 | OID-, Basket- und Writer-Strategien | Done |
+| 7 | Referenzen, Rollen und Associations | Done |
+| 8 | XLSX-Korrelation importieren | Done |
+| 9 | Mapping-Kandidatengenerator | Done |
+| 10 | DM01→DMAV LFP3 Minimalpilot | Done |
+| 11 | DMAV→DM01 LFP3 Minimalpilot | Done |
+| 12 | BAG OF STRUCTURE und Textpositionen | Done |
+| 13 | Geometrie-MVP | Done |
+| 14 | Erweiterter DM01↔DMAV-Analysebericht | Done |
+| 15 | Stabilisierung, CLI-UX und Dokumentation | In Progress |
 
 ## Documentation
 
 - `docs/SPEC.md` — Full specification (German)
+- `docs/mapping-dsl.md` — Mapping DSL reference
 - `docs/dev/baseline.md` — Technical baseline and code status
+- `docs/dev/diagnostics.md` — Diagnostic codes reference
 - `docs/dev/rename-plan.md` — ilinexus → ili-transformer rename log
-- `docs/dm01-dmav/` — DM01↔DMAV correlation table and future docs
+- `docs/dm01-dmav/` — DM01↔DMAV correlation table and docs
+- `docs/open-questions.md` — Open questions per phase
+
+### Phase 15 documentation (in progress)
+
+- `docs/expressions.md` — Expression language and builtins
+- `docs/cli.md` — CLI reference
+- `docs/testing.md` — Test strategy
+- `docs/dev/architecture.md` — Architecture overview
+- `docs/dev/typed-plan.md` — TypedPlan reference
+- `docs/dev/state-store.md` — StateStore concept
+- `docs/dm01-dmav/README.md` — DM01↔DMAV use case overview
+- `docs/dm01-dmav/correlation-table.md` — XLSX correlation table interpretation
+- `docs/dm01-dmav/status-matrix.md` — Topic/class/attribute mapping status
+- `docs/dm01-dmav/lfp3-pilot.md` — LFP3 pilot documentation
+- `docs/dm01-dmav/lossiness.md` — Information loss documentation
+- `docs/dm01-dmav/open-questions.md` — DM01/DMAV-specific open questions

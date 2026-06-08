@@ -53,13 +53,28 @@ application {
     mainClass = 'guru.interlis.transformer.app.CliMain'
 }
 
+sourceSets {
+    integrationTest {
+        java {
+            srcDir file('src/integrationTest/java')
+        }
+        resources {
+            srcDir file('src/integrationTest/resources')
+        }
+        compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
 }
 
-tasks.register('importCorrelation', JavaExec) {
+// -- DM01/DMAV tasks --------------------------------------------------------
+
+tasks.register('importDmavCorrelation', JavaExec) {
     group = 'dm01-dmav'
-    description = 'Import DM01↔DMAV correlation hints from XLSX'
+    description = 'Import DM01/DMAV correlation hints from XLSX'
     classpath = sourceSets.main.runtimeClasspath + configurations.xlsx
     mainClass = 'guru.interlis.transformer.dmav.CorrelationImportTask'
     args = [
@@ -69,9 +84,39 @@ tasks.register('importCorrelation', JavaExec) {
     ]
 }
 
+tasks.register('importCorrelation', JavaExec) {
+    group = 'dm01-dmav'
+    description = 'Alias for importDmavCorrelation — import DM01/DMAV correlation hints from XLSX'
+    classpath = sourceSets.main.runtimeClasspath + configurations.xlsx
+    mainClass = 'guru.interlis.transformer.dmav.CorrelationImportTask'
+    args = [
+        '--xlsx', 'docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx',
+        '--out', 'build/generated/dm01-dmav/correlation-hints.json',
+        '--report', 'build/reports/dm01-dmav/correlation-import-report.md'
+    ]
+}
+
+tasks.register('generateDm01DmavMappings', JavaExec) {
+    group = 'dm01-dmav'
+    description = 'Generate DM01/DMAV mapping candidates from correlation hints'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'guru.interlis.transformer.dmav.MappingCandidateTask'
+    args = [
+        '--hints', 'build/generated/dm01-dmav/correlation-hints.json',
+        '--out', 'build/generated/dm01-dmav/mapping-candidates.json',
+        '--report', 'build/reports/dm01-dmav/candidate-report.md',
+        '--dm01-model', 'DM01AVCH24LV95D',
+        '--dm01-dir', 'src/test/data/av/models/;https://models.interlis.ch',
+        '--dmav-model', 'DMAV_FixpunkteAVKategorie3_V1_1',
+        '--dmav-dir', 'src/test/data/av/models/;https://models.interlis.ch',
+        '--yaml-dm01-dmav', 'build/generated/dm01-dmav/dm01-to-dmav.generated.yaml',
+        '--yaml-dmav-dm01', 'build/generated/dm01-dmav/dmav-to-dm01.generated.yaml'
+    ]
+}
+
 tasks.register('generateMappingCandidates', JavaExec) {
     group = 'dm01-dmav'
-    description = 'Generate DM01↔DMAV mapping candidates from correlation hints'
+    description = 'Alias for generateDm01DmavMappings — generate DM01/DMAV mapping candidates from correlation hints'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'guru.interlis.transformer.dmav.MappingCandidateTask'
     args = [
@@ -89,7 +134,7 @@ tasks.register('generateMappingCandidates', JavaExec) {
 
 tasks.register('topicGapReport', JavaExec) {
     group = 'dm01-dmav'
-    description = 'Generate DM01↔DMAV topic gap analysis report (Phase 14)'
+    description = 'Generate DM01/DMAV topic gap analysis report (Phase 14)'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'guru.interlis.transformer.dmav.TopicGapReportTask'
     args = [
@@ -101,9 +146,9 @@ tasks.register('topicGapReport', JavaExec) {
     ]
 }
 
-tasks.register('validateOutput', JavaExec) {
+tasks.register('validateGoldenTransfers', JavaExec) {
     group = 'verification'
-    description = 'Validate ITF/XTF output with ilivalidator'
+    description = 'Validate ITF/XTF output with ilivalidator (alias for validateOutput)'
     classpath = configurations.validator + sourceSets.main.runtimeClasspath
     mainClass = 'guru.interlis.transformer.app.IlivalidatorRunner'
     args = [
@@ -112,4 +157,40 @@ tasks.register('validateOutput', JavaExec) {
         '--model', 'DMAV_FixpunkteAVKategorie3_V1_1',
         '--log', 'build/reports/ilivalidator/validation.log'
     ]
+}
+
+tasks.register('validateOutput', JavaExec) {
+    group = 'verification'
+    description = 'Alias for validateGoldenTransfers — validate ITF/XTF output with ilivalidator'
+    classpath = configurations.validator + sourceSets.main.runtimeClasspath
+    mainClass = 'guru.interlis.transformer.app.IlivalidatorRunner'
+    args = [
+        '--file', 'build/out/dmav-lfp3.xtf',
+        '--modeldir', 'src/test/data/av/models/;https://models.interlis.ch',
+        '--model', 'DMAV_FixpunkteAVKategorie3_V1_1',
+        '--log', 'build/reports/ilivalidator/validation.log'
+    ]
+}
+
+tasks.register('generateModelInventory', JavaExec) {
+    group = 'ili-transformer'
+    description = 'Generate INTERLIS model inventory as JSON and Markdown via inspect-model'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'guru.interlis.transformer.app.CliMain'
+    args = ['inspect-model',
+        '--model', 'DMAV_FixpunkteAVKategorie3_V1_1',
+        '--modeldir', 'src/test/data/av/models/;https://models.interlis.ch',
+        '--output', 'build/reports/model-inventory/dmav-fp3',
+        '--format', 'both'
+    ]
+}
+
+// -- integrationTest task --------------------------------------------------
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests (in src/integrationTest)'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    useJUnitPlatform()
 }

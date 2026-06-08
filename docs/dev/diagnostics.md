@@ -1,6 +1,6 @@
 # Diagnostic Codes
 
-## Compiler-Validierung (ILITRF-MAP-*)
+## Compiler / Mapping (ILITRF-MAP-*)
 
 | Code | Severity | Bedeutung |
 |---|---|---|
@@ -18,13 +18,14 @@
 | `ILITRF-MAP-UNKNOWN-SOURCE-CLASS` | ERROR | Quellklasse existiert nicht im Modell |
 | `ILITRF-MAP-ABSTRACT-TARGET-CLASS` | ERROR | Zielklasse ist abstrakt |
 | `ILITRF-MAP-UNKNOWN-TARGET-ATTRIBUTE` | ERROR | Zielattribut existiert nicht in der Zielklasse |
-| `ILITRF-MAP-UNKNOWN-SOURCE-ATTRIBUTE` | ERROR | Quellattribut existiert nicht |
+| `ILITRF-MAP-UNKNOWN-SOURCE-ATTRIBUTE` | WARNING | Quellattribut existiert nicht |
 | `ILITRF-MAP-UNKNOWN-ROLE` | WARNING | Rolle existiert nicht in der Zielklasse |
 | `ILITRF-MAP-TYPE-MISMATCH` | WARNING | Expression-Typ passt nicht zum Zieltyp |
 | `ILITRF-MAP-MANDATORY-MISSING` | WARNING | Pflichtattribut wird nicht gesetzt |
 | `ILITRF-MAP-DUPLICATE-TARGET-ASSIGN` | ERROR | Target-Attribut mehrfach zugewiesen |
 | `ILITRF-MAP-CYCLIC-DEPENDENCY` | ERROR | Zyklische Rule-Referenz |
 | `ILITRF-MAP-NON-TRANSFERABLE-TARGET` | WARNING | Zielklasse ist nicht transferierbar (View) |
+| `ILITRF-MAP-OID-TYPE-MISMATCH` | ERROR | OID-Strategie passt nicht zum Ziel-OID-Typ (z.B. integer auf UUIDOID) |
 
 ## Model (ILITRF-MODEL-*)
 
@@ -36,10 +37,19 @@
 
 | Code | Severity | Bedeutung |
 |---|---|---|
-| `ILITRF-RUN-REF-UNRESOLVED` | WARNING | Referenz konnte nicht aufgelöst werden |
+| `ILITRF-RUN-REF-UNRESOLVED` | WARNING/ERROR | Referenz konnte nicht aufgelöst werden |
 | `ILITRF-RUN-REF-AMBIGUOUS` | ERROR | Referenz ist mehrdeutig (mehrere Ziele) |
+| `ILITRF-RUN-REF-TYPE-MISMATCH` | WARNING/ERROR | Referenziertes Objekt hat falsche Zielklasse |
+| `ILITRF-RUN-REF-MISSING-MANDATORY` | WARNING/ERROR | Pflichtreferenz fehlt |
+| `ILITRF-RUN-REF-CARDINALITY` | WARNING | Kardinalität verletzt |
+| `ILITRF-RUN-OID-COLLISION` | ERROR | OID-Kollision |
+| `ILITRF-RUN-BASKET` | ERROR | Basket-Zuordnung fehlerhaft |
+| `ILITRF-RUN-SOURCE-READ` | ERROR | Fehler beim Lesen der Quelle |
+| `ILITRF-RUN-TARGET-WRITE` | ERROR | Fehler beim Schreiben des Ziels |
+| `ILITRF-RUN-EXPR` | ERROR | Expression-Auswertung fehlgeschlagen |
+| `ILITRF-RUN-CARDINALITY` | ERROR | Kardinalität verletzt |
 
-## Expression (ILITRF-EXPR-*) – Phase 4
+## Expression (ILITRF-EXPR-*)
 
 | Code | Severity | Bedeutung |
 |---|---|---|
@@ -49,13 +59,44 @@
 | `ILITRF-EXPR-NON-DETERMINISTIC` | WARNING | Nicht-deterministische Funktion verwendet |
 | `ILITRF-EXPR-UNSUPPORTED` | WARNING | Funktion/Feature noch nicht vollständig unterstützt |
 
-## Geplant (spätere Phasen)
+## Geometrie (ILITRF-GEOM-*)
 
-| Code | Phase | Bedeutung |
+| Code | Severity | Bedeutung |
 |---|---|---|
-| `ILITRF-MAP-ENUM-INCOMPLETE` | 3/10 | Enum-Mapping unvollständig |
-| `ILITRF-MAP-TODO` | 9 | TODO im Mapping |
-| `ILITRF-RUN-CARDINALITY` | 5 | Kardinalität verletzt |
-| `ILITRF-RUN-OID-COLLISION` | 6 | OID-Kollision |
-| `ILITRF-RUN-BASKET` | 6 | Basket-Zuordnung fehlerhaft |
-| `ILITRF-DMAV-CORRELATION-PARSE` | 8 | XLSX-Hint nicht interpretierbar |
+| `ILITRF-GEOM-TYPE-MISMATCH` | ERROR | Geometrietyp passt nicht |
+| `ILITRF-GEOM-CRS-MISMATCH` | ERROR | CRS passt nicht |
+| `ILITRF-GEOM-INVALID` | ERROR | Geometrie ungültig |
+| `ILITRF-GEOM-TOPOLOGY` | WARNING | Topologiebedingung verletzt |
+| `ILITRF-GEOM-LINEATTR-UNSUPPORTED` | WARNING | LINEATTR noch nicht unterstützt |
+
+## DM01 / DMAV (ILITRF-DMAV-*)
+
+| Code | Severity | Bedeutung |
+|---|---|---|
+| `ILITRF-DMAV-CORRELATION-PARSE` | WARNING | XLSX-Hint konnte nicht interpretiert werden |
+| `ILITRF-DMAV-LOW-CONFIDENCE` | WARNING | Mapping-Kandidat hat niedrige Confidence |
+| `ILITRF-DMAV-LOSSY` | WARNING | Mapping ist verlustbehaftet |
+| `ILITRF-DMAV-OPEN-QUESTION` | WARNING | Fachliche offene Frage blockiert automatisches Mapping |
+
+## Severity und Fail Policy
+
+| failPolicy | ERROR | WARNING |
+|---|---|---|
+| `strict` | Abbruch mit Exit-Code 1 | Nur geloggt |
+| `lenient` | Wird zu WARNING | Nur geloggt |
+| `reportOnly` | Nur geloggt | Nur geloggt |
+
+## Diagnostic-Modell
+
+```java
+public record Diagnostic(
+    DiagnosticCode code,
+    Severity severity,
+    String message,
+    String suggestion,
+    String ruleId,
+    String sourcePath,
+    String targetPath,
+    Map<String, Object> context
+) {}
+```
