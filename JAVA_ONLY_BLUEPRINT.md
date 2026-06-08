@@ -140,12 +140,11 @@ Ziele:
 - Geometrie nie als „special case“ überall verteilen.
 - Zentrale `GeometryAdapter`-API:
   - `normalize(sourceGeom)`
-  - `transform(crs, ops)`
   - `denormalize(targetType)`
 
 ## Warum
 - So bleiben ITF-Helpertabellen, Surface/Area-Splitting, zukünftige Geometrieoperationen kapselbar.
-- DSL bleibt einfach (`geom_transform(...)`, `clip(...)`) und delegiert intern.
+- DSL bleibt einfach; Geometrie-I/O und ITF-Hilfstabellen bleiben im Adapter bzw. Writer gekapselt.
 
 ---
 

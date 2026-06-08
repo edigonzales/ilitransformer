@@ -972,7 +972,7 @@ Die Expression Engine darf nicht einfach `Object` oder `String` zurückgeben. Si
 
 ```java
 sealed interface Value permits TextValue, NumberValue, BooleanValue, DateValue, XmlDateTimeValue,
-    EnumValue, CoordValue, PolylineValue, SurfaceValue, ReferenceValue,
+    EnumValue, CoordValue, GeometryObjectValue, ReferenceValue,
     StructureValue, BagValue, NullValue {}
 ```
 
@@ -1409,9 +1409,10 @@ Geometrie darf nicht als Sonderfall überall im Code verteilt werden. Es braucht
 public interface GeometryAdapter {
     Value normalize(IomObject rawGeometry, IliType sourceType);
     IomObject denormalize(Value geometry, IliType targetType);
-    Value transform(Value geometry, GeometryOperation operation);
 }
 ```
+
+`COORD` bleibt als eigener skalare `Value`. `POLYLINE`/`SURFACE`/`AREA` werden im Runtime-Pfad als kanonische IOM-Geometrie in `GeometryObjectValue` getragen.
 
 ### 17.2 MVP-Geometrie
 

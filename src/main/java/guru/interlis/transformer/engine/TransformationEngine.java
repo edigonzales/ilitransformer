@@ -23,12 +23,11 @@ import guru.interlis.transformer.expr.BooleanValue;
 import guru.interlis.transformer.expr.CoordValue;
 import guru.interlis.transformer.expr.EvalContext;
 import guru.interlis.transformer.expr.ExpressionEngine;
+import guru.interlis.transformer.expr.GeometryObjectValue;
 import guru.interlis.transformer.expr.NullValue;
-import guru.interlis.transformer.expr.PolylineValue;
-import guru.interlis.transformer.expr.SurfaceValue;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.geometry.GeometryAdapter;
-import guru.interlis.transformer.geometry.NoOpGeometryAdapter;
+import guru.interlis.transformer.geometry.IoxGeometryAdapter;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.BagPlan;
@@ -62,7 +61,7 @@ public final class TransformationEngine {
     private final GeometryAdapter geometryAdapter;
 
     public TransformationEngine(ExpressionEngine expressionEngine, StateStore stateStore, DiagnosticCollector diagnostics) {
-        this(expressionEngine, stateStore, diagnostics, new NoOpGeometryAdapter());
+        this(expressionEngine, stateStore, diagnostics, new IoxGeometryAdapter());
     }
 
     public TransformationEngine(ExpressionEngine expressionEngine, StateStore stateStore,
@@ -133,57 +132,44 @@ public final class TransformationEngine {
     // -- Pass 1: Source Scan / Indexing ------------------------------------
 
     private void pass1Index(TransformPlan plan, Function<String, IoxReader> readerFactoryById) throws Exception {
-        // Collect all source plans (rule-level + bag-level)
-        List<SourcePlan> allSourcePlans = new ArrayList<>();
+        Set<String> inputIds = new HashSet<>();
         for (RulePlan rule : plan.rules()) {
-            allSourcePlans.addAll(rule.sources());
+            for (SourcePlan sp : rule.sources()) {
+                inputIds.addAll(sp.inputIds());
+            }
             for (BagPlan bag : rule.bags()) {
-                allSourcePlans.add(bag.fromSource());
+                inputIds.addAll(bag.fromSource().inputIds());
             }
         }
-        // Deduplicate by (inputId, sourceClass)
-        Set<String> seen = new HashSet<>();
-        List<SourcePlan> uniqueSourcePlans = new ArrayList<>();
-        for (SourcePlan sp : allSourcePlans) {
-            for (String inputId : sp.inputIds()) {
-                String key = inputId + "::" + getScopedName(sp.sourceClass());
-                if (seen.add(key)) {
-                    uniqueSourcePlans.add(sp);
-                }
-            }
-        }
-
-        for (var sp : uniqueSourcePlans) {
-            for (String inputId : sp.inputIds()) {
-                IoxReader reader = readerFactoryById.apply(inputId);
-                try {
-                    String basketId = null;
-                    IoxEvent event;
-                    while ((event = reader.read()) != null) {
-                        if (event instanceof StartBasketEvent basket) {
-                            basketId = basket.getBid();
-                            continue;
-                        }
-                        if (event instanceof EndBasketEvent) {
-                            basketId = null;
-                            continue;
-                        }
-                        if (event instanceof EndTransferEvent) {
-                            break;
-                        }
-                        if (event instanceof ObjectEvent obj) {
-                            IomObject source = obj.getIomObject();
-                            stateStore.indexSourceObject(source.getobjecttag(), inputId, basketId, source);
-                            stateStore.addSourceRecord(new SourceRecord(inputId, basketId, source.getobjecttag(), source));
-                            sourceRecordsRead++;
-
-                            // Expand BAG structures into synthetic source records (Phase 12 reverse)
-                            expandBagStructures(source, inputId, basketId, plan);
-                        }
+        for (String inputId : inputIds) {
+            IoxReader reader = readerFactoryById.apply(inputId);
+            try {
+                String basketId = null;
+                IoxEvent event;
+                while ((event = reader.read()) != null) {
+                    if (event instanceof StartBasketEvent basket) {
+                        basketId = basket.getBid();
+                        continue;
                     }
-                } finally {
-                    reader.close();
+                    if (event instanceof EndBasketEvent) {
+                        basketId = null;
+                        continue;
+                    }
+                    if (event instanceof EndTransferEvent) {
+                        break;
+                    }
+                    if (event instanceof ObjectEvent obj) {
+                        IomObject source = obj.getIomObject();
+                        stateStore.indexSourceObject(source.getobjecttag(), inputId, basketId, source);
+                        stateStore.addSourceRecord(new SourceRecord(inputId, basketId, source.getobjecttag(), source));
+                        sourceRecordsRead++;
+
+                        // Expand BAG structures into synthetic source records (Phase 12 reverse)
+                        expandBagStructures(source, inputId, basketId, plan);
+                    }
                 }
+            } finally {
+                reader.close();
             }
         }
     }
@@ -783,17 +769,51 @@ public final class TransformationEngine {
     private void setTargetAttribute(Iom_jObject target, AssignmentPlan ap, Value value,
                                      TypeSystemFacade targetTs) {
         TypeInfo targetType = ap.expectedType();
-        if (isGeometryType(targetType) && value instanceof Value) {
+        if (isGeometryType(targetType)) {
             IomObject geomObj = geometryAdapter.denormalize(value, targetType);
             if (geomObj != null) {
                 target.addattrobj(ap.targetAttrName(), geomObj);
+                if (targetType == TypeInfo.AREA && value instanceof GeometryObjectValue gov
+                        && isIli1TargetClass(targetTs, target.getobjecttag())) {
+                    addAreaPointHelper(target, ap.targetAttrName(), gov.pointOnSurface());
+                }
                 return;
             }
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.GEOM_TYPE_MISMATCH,
+                    Severity.ERROR,
+                    "Could not denormalize geometry value for target attribute " + ap.targetAttrName(),
+                    target.getobjecttag() + "/" + target.getobjectoid(),
+                    "Check source geometry availability and mapping type compatibility"));
+            return;
         }
         Object nativeValue = value.toNative();
         if (nativeValue != null) {
             target.setattrvalue(ap.targetAttrName(), nativeValue.toString());
         }
+    }
+
+    private void addAreaPointHelper(Iom_jObject target, String attrName, CoordValue pointOnSurface) {
+        if (pointOnSurface == null) return;
+        String helperAttr = "_itf_" + attrName;
+        for (int i = target.getattrvaluecount(helperAttr) - 1; i >= 0; i--) {
+            target.deleteattrobj(helperAttr, i);
+        }
+        Iom_jObject coord = new Iom_jObject("COORD", null);
+        coord.setattrvalue("C1", Double.toString(pointOnSurface.x()));
+        coord.setattrvalue("C2", Double.toString(pointOnSurface.y()));
+        target.addattrobj(helperAttr, coord);
+    }
+
+    private boolean isIli1TargetClass(TypeSystemFacade targetTs, String targetClassName) {
+        if (targetTs == null || targetClassName == null) return false;
+        Table table = targetTs.resolveClass(targetClassName);
+        if (table == null) return false;
+        Container container = table.getContainer();
+        while (container != null && !(container instanceof Model)) {
+            container = container.getContainer();
+        }
+        return container instanceof Model model && Model.ILI1.equals(model.getIliVersion());
     }
 
     private static boolean isGeometryType(TypeInfo type) {
@@ -840,8 +860,8 @@ public final class TransformationEngine {
         if (type == null) return TypeInfo.UNKNOWN;
         if (type instanceof ch.interlis.ili2c.metamodel.CoordType) return TypeInfo.COORD;
         if (type instanceof ch.interlis.ili2c.metamodel.PolylineType) return TypeInfo.POLYLINE;
-        if (type instanceof ch.interlis.ili2c.metamodel.SurfaceOrAreaType) return TypeInfo.SURFACE;
         if (type instanceof ch.interlis.ili2c.metamodel.AreaType) return TypeInfo.AREA;
+        if (type instanceof ch.interlis.ili2c.metamodel.SurfaceOrAreaType) return TypeInfo.SURFACE;
         if (type instanceof ch.interlis.ili2c.metamodel.SurfaceType) return TypeInfo.SURFACE;
         if (type.isBoolean()) return TypeInfo.BOOLEAN;
         if (type instanceof ch.interlis.ili2c.metamodel.NumericType || type instanceof ch.interlis.ili2c.metamodel.NumericalType) return TypeInfo.NUMERIC;

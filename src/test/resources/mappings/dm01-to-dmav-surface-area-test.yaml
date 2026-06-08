@@ -1,0 +1,53 @@
+version: 1
+
+job:
+  name: dm01-to-dmav-surface-area-test
+  description: "Test SURFACE/AREA geometry pass-through"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  inputs:
+    - id: dm01
+      path: "input/test.itf"
+      model: "Dm01SurfaceAreaTestModel"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-surface-area-test.xtf"
+      model: "DmavSurfaceAreaTestModel"
+      format: "xtf"
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "test-surface-area"
+  basketStrategy:
+    default: preserveOrGenerateUuid
+
+  rules:
+    - id: surface-class
+      target:
+        output: dmav
+        class: "DmavSurfaceAreaTestModel.TestTopic.SurfaceClass"
+      sources:
+        - alias: s
+          input: dm01
+          class: "Dm01SurfaceAreaTestModel.TestTopic.SurfaceClass"
+      identity:
+        sourceKey: ["s.NBIdent"]
+      assign:
+        NBIdent: "s.NBIdent"
+        Perimeter: "s.Perimeter"
+
+    - id: area-class
+      target:
+        output: dmav
+        class: "DmavSurfaceAreaTestModel.TestTopic.AreaClass"
+      sources:
+        - alias: a
+          input: dm01
+          class: "Dm01SurfaceAreaTestModel.TestTopic.AreaClass"
+      identity:
+        sourceKey: ["a.NBIdent"]
+      assign:
+        NBIdent: "a.NBIdent"
+        Geometrie: "a.Geometrie"

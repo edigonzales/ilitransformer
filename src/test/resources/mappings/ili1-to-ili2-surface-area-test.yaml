@@ -1,0 +1,53 @@
+version: 1
+
+job:
+  name: ili1-to-ili2-surface-area-test
+  description: "Read INTERLIS 1 surface/area helper tables and write INTERLIS 2 geometry"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  inputs:
+    - id: ili1
+      path: "input/test.itf"
+      model: "Ili1SurfaceAreaTestModel"
+      format: "itf"
+  outputs:
+    - id: ili2
+      path: "build/out/ili2-surface-area-test.xtf"
+      model: "DmavSurfaceAreaTestModel"
+      format: "xtf"
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "test-ili1-surface-area"
+  basketStrategy:
+    default: preserveOrGenerateUuid
+
+  rules:
+    - id: surface-class
+      target:
+        output: ili2
+        class: "DmavSurfaceAreaTestModel.TestTopic.SurfaceClass"
+      sources:
+        - alias: s
+          input: ili1
+          class: "Ili1SurfaceAreaTestModel.TestTopic.SurfaceClass"
+      identity:
+        sourceKey: ["s.NBIdent"]
+      assign:
+        NBIdent: "s.NBIdent"
+        Perimeter: "s.Perimeter"
+
+    - id: area-class
+      target:
+        output: ili2
+        class: "DmavSurfaceAreaTestModel.TestTopic.AreaClass"
+      sources:
+        - alias: a
+          input: ili1
+          class: "Ili1SurfaceAreaTestModel.TestTopic.AreaClass"
+      identity:
+        sourceKey: ["a.NBIdent"]
+      assign:
+        NBIdent: "a.NBIdent"
+        Geometrie: "a.Geometrie"

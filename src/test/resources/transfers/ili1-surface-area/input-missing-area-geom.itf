@@ -1,0 +1,13 @@
+SCNT
+////
+MTID INTERLIS1
+MODL Ili1SurfaceAreaTestModel
+TOPI TestTopic
+TABL AreaClass_Geometrie
+ETAB
+TABL AreaClass
+OBJE 0 A999 2600030.000 1200030.000
+ETAB
+ETOP
+EMOD
+ENDE

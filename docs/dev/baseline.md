@@ -48,7 +48,7 @@ Stand nach Abschluss von Phase 6 (2026-06-07).
 - `ExpressionEngine` mit `${alias.attr}`, `if(cond, a, b)` und String-Literalen
 - `InMemoryStateStore` mit 3-Tier-Fallback für Referenzauflösung
 - `DiagnosticCollector` mit ERROR/WARNING/INFO
-- `GeometryAdapter`-Interface mit NoOp-Implementierung
+- `GeometryAdapter`-Interface mit `IoxGeometryAdapter` als zentralem Geometrie-Adapter
 - **OID-Strategien**: `preserve`, `integer`, `uuid`, `deterministicUuid` (UUIDv3 via `java.util.UUID.nameUUIDFromBytes()`), `external` (Stub)
 - **Basket-Strategien**: `preserve`, `generateUuid`, `preserveOrGenerateUuid`, `byTopic`, `expression` (Stub) via `BasketRouter`
 - **Stable Sorting**: Target-Objekte werden im Writer nach `getobjecttag()` → `getobjectoid()` sortiert
@@ -100,7 +100,7 @@ Stand nach Abschluss von Phase 6 (2026-06-07).
 │   │   ├── diag/        (Diagnostic, DiagnosticCollector, Severity)
 │   │   ├── engine/      (TransformationEngine, RuleRuntime)
 │   │   ├── expr/        (ExpressionEngine)
-│   │   ├── geometry/    (GeometryAdapter, NoOpGeometryAdapter)
+│   │   ├── geometry/    (GeometryAdapter, IoxGeometryAdapter, ItfGeometryWriter)
 │   │   ├── interlis/    (InterlisIoFactory, InterlisModelLoader)
 │   │   ├── mapping/
 │   │   │   ├── compiler/ (MappingCompiler)

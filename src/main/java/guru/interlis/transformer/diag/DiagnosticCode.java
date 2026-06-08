@@ -60,4 +60,6 @@ public final class DiagnosticCode {
     public static final String GEOM_INVALID = "ILITRF-GEOM-INVALID";
     public static final String GEOM_TOPOLOGY = "ILITRF-GEOM-TOPOLOGY";
     public static final String GEOM_LINEATTR_UNSUPPORTED = "ILITRF-GEOM-LINEATTR-UNSUPPORTED";
+    public static final String GEOM_AREA_POINT_MISSING = "ILITRF-GEOM-AREA-POINT-MISSING";
+    public static final String GEOM_SEGMENT_UNSUPPORTED = "ILITRF-GEOM-SEGMENT-UNSUPPORTED";
 }

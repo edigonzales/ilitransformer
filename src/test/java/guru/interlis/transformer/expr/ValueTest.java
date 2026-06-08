@@ -1,8 +1,8 @@
 package guru.interlis.transformer.expr;
 
+import ch.interlis.iom_j.Iom_jObject;
+import guru.interlis.transformer.mapping.plan.TypeInfo;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -89,36 +89,33 @@ class ValueTest {
     }
 
     @Test
-    void polylineValue() {
-        List<CoordValue> points = List.of(
-                new CoordValue(2600000.0, 1200000.0),
-                new CoordValue(2600100.0, 1200100.0),
-                new CoordValue(2600200.0, 1200000.0));
-        PolylineValue v = new PolylineValue(points);
-        assertThat(v.points()).hasSize(3);
-        assertThat(v.asText()).contains("2600000.0 1200000.0");
-        assertThat(v.toNative().toString()).contains(", ");
+    void geometryObjectValueCopiesGeometry() {
+        Iom_jObject coord = new Iom_jObject("COORD", null);
+        coord.setattrvalue("C1", "1.0");
+        coord.setattrvalue("C2", "2.0");
+
+        GeometryObjectValue value = new GeometryObjectValue(
+                TypeInfo.COORD, coord, new CoordValue(1.0, 2.0));
+
+        coord.setattrvalue("C1", "9.0");
+
+        Iom_jObject copy = (Iom_jObject) value.geometryObject();
+        assertThat(copy.getattrvalue("C1")).isEqualTo("1.0");
+        assertThat(value.pointOnSurface()).isEqualTo(new CoordValue(1.0, 2.0));
+        assertThat(value.toNative().toString()).contains("COORD");
     }
 
     @Test
-    void polylineValueIsImmutable() {
-        List<CoordValue> points = new java.util.ArrayList<>(List.of(
-                new CoordValue(1.0, 2.0)));
-        PolylineValue v = new PolylineValue(points);
-        points.add(new CoordValue(3.0, 4.0));
-        assertThat(v.points()).hasSize(1);
-    }
+    void geometryObjectValueReturnsFreshCopies() {
+        Iom_jObject coord = new Iom_jObject("COORD", null);
+        coord.setattrvalue("C1", "1.0");
+        coord.setattrvalue("C2", "2.0");
 
-    @Test
-    void surfaceValue() {
-        List<CoordValue> ring1 = List.of(
-                new CoordValue(0.0, 0.0),
-                new CoordValue(10.0, 0.0),
-                new CoordValue(10.0, 10.0),
-                new CoordValue(0.0, 10.0));
-        SurfaceValue v = new SurfaceValue(List.of(ring1));
-        assertThat(v.rings()).hasSize(1);
-        assertThat(v.rings().get(0)).hasSize(4);
-        assertThat(v.asText()).contains("0.0 0.0");
+        GeometryObjectValue value = new GeometryObjectValue(TypeInfo.COORD, coord);
+        Iom_jObject first = (Iom_jObject) value.geometryObject();
+        first.setattrvalue("C1", "9.0");
+        Iom_jObject second = (Iom_jObject) value.geometryObject();
+
+        assertThat(second.getattrvalue("C1")).isEqualTo("1.0");
     }
 }

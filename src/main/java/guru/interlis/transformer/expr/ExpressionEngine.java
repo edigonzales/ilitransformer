@@ -208,20 +208,63 @@ public final class ExpressionEngine {
             if (attrValue != null) return new TextValue(attrValue);
             return NullValue.INSTANCE;
         }
-        int count = source.getattrvaluecount(attrName);
-        if (count > 0) {
-            IomObject geomObj = source.getattrobj(attrName, 0);
-            if (geomObj != null) {
-                return ctx.geometryAdapter().normalize(geomObj, attrType);
+        IomObject geomObj = firstObjectAttribute(source, attrName);
+        if (geomObj != null) {
+            Value normalized = ctx.geometryAdapter().normalize(geomObj, attrType);
+            if (attrType == TypeInfo.AREA && normalized instanceof GeometryObjectValue gov) {
+                CoordValue pointOnSurface = resolvePointOnSurface(source, attrName, ctx);
+                if (pointOnSurface != null) {
+                    return gov.withPointOnSurface(pointOnSurface);
+                }
             }
+            return normalized;
         }
         String attrValue = source.getattrvalue(attrName);
-        if (attrValue != null) {
+        if (attrType == TypeInfo.COORD && attrValue != null) {
             Iom_jObject temp = new Iom_jObject(attrType.name(), null);
             temp.setattrvalue("value", attrValue);
             return ctx.geometryAdapter().normalize(temp, attrType);
         }
+        if (attrValue != null || firstObjectAttribute(source, "_itf_" + attrName) != null) {
+            reportMissingMergedGeometry(source, attrName, attrType, ctx);
+        }
         return NullValue.INSTANCE;
+    }
+
+    private CoordValue resolvePointOnSurface(IomObject source, String attrName, EvalContext ctx) {
+        IomObject helperPoint = firstObjectAttribute(source, "_itf_" + attrName);
+        if (helperPoint != null) {
+            Value value = ctx.geometryAdapter().normalize(helperPoint, TypeInfo.COORD);
+            return value instanceof CoordValue cv ? cv : null;
+        }
+        return parsePointOnSurface(source.getattrvalue(attrName), ctx);
+    }
+
+    private CoordValue parsePointOnSurface(String attrValue, EvalContext ctx) {
+        if (attrValue == null || attrValue.isBlank()) return null;
+        Iom_jObject temp = new Iom_jObject("COORD", null);
+        temp.setattrvalue("value", attrValue);
+        Value value = ctx.geometryAdapter().normalize(temp, TypeInfo.COORD);
+        return value instanceof CoordValue cv ? cv : null;
+    }
+
+    private IomObject firstObjectAttribute(IomObject source, String attrName) {
+        int count = source.getattrvaluecount(attrName);
+        if (count <= 0) return null;
+        return source.getattrobj(attrName, 0);
+    }
+
+    private void reportMissingMergedGeometry(IomObject source, String attrName, TypeInfo attrType, EvalContext ctx) {
+        if (ctx.diagnostics() == null) return;
+        String oid = source.getobjectoid() != null ? source.getobjectoid() : "<no-oid>";
+        ctx.diagnostics().add(new Diagnostic(
+                DiagnosticCode.GEOM_INVALID,
+                Severity.ERROR,
+                "Geometry attribute " + source.getobjecttag() + "." + attrName
+                        + " of type " + attrType
+                        + " has no merged geometry object; only scalar data is available",
+                source.getobjecttag() + "/" + oid,
+                "Ensure the model-aware ITF reader merges geometry helper tables and the input contains them"));
     }
 
     // -- Legacy compatibility -----------------------------------------

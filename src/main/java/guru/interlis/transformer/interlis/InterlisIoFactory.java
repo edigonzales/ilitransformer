@@ -1,9 +1,11 @@
 package guru.interlis.transformer.interlis;
 
+import guru.interlis.transformer.geometry.ItfGeometryWriter;
+import guru.interlis.transformer.diag.DiagnosticCollector;
 import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iom_j.itf.ItfReader;
+import ch.interlis.iom_j.itf.ItfReader2;
 import ch.interlis.iom_j.itf.ItfWriter;
-import ch.interlis.iom_j.xtf.XtfReader;
+import ch.interlis.iom_j.xtf.Xtf24Reader;
 import ch.interlis.iom_j.xtf.XtfWriter;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.IoxWriter;
@@ -15,9 +17,10 @@ public final class InterlisIoFactory {
         String lowerName = path.getFileName().toString().toLowerCase();
         IoxReader reader;
         if (lowerName.endsWith(".itf")) {
-            reader = new ItfReader(path.toFile());
+            // ItfReader2 merges AREA/SURFACE helper tables into canonical geometry objects.
+            reader = new ItfReader2(path.toFile(), false);
         } else if (lowerName.endsWith(".xtf") || lowerName.endsWith(".xml")) {
-            reader = new XtfReader(path.toFile());
+            reader = Xtf24Reader.createReader(path.toFile());
         } else {
             throw new IllegalArgumentException("Unsupported input file type: " + path);
         }
@@ -28,9 +31,15 @@ public final class InterlisIoFactory {
     }
 
     public IoxWriter createWriter(Path path, TransferDescription transferDescription) throws Exception {
+        return createWriter(path, transferDescription, null);
+    }
+
+    public IoxWriter createWriter(Path path, TransferDescription transferDescription,
+                                  DiagnosticCollector diagnostics) throws Exception {
         String lowerName = path.getFileName().toString().toLowerCase();
         if (lowerName.endsWith(".itf")) {
-            return new ItfWriter(path.toFile(), transferDescription);
+            return new ItfGeometryWriter(
+                    new ItfWriter(path.toFile(), transferDescription), transferDescription, diagnostics);
         }
         if (lowerName.endsWith(".xtf") || lowerName.endsWith(".xml")) {
             return new XtfWriter(path.toFile(), transferDescription);

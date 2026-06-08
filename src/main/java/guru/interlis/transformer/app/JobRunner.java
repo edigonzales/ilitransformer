@@ -85,11 +85,12 @@ public final class JobRunner {
         }
 
         // Create I/O
+        DiagnosticCollector engineDiag = new DiagnosticCollector();
         InterlisIoFactory ioFactory = new InterlisIoFactory();
         Map<String, IoxWriter> writersByOutputId = new HashMap<>();
         for (JobConfig.OutputSpec output : config.job.outputs) {
             writersByOutputId.put(output.id,
-                    ioFactory.createWriter(Path.of(output.path), tdByModel.get(output.model)));
+                    ioFactory.createWriter(Path.of(output.path), tdByModel.get(output.model), engineDiag));
         }
 
         // Build reader factory
@@ -99,7 +100,6 @@ public final class JobRunner {
                     ioFactory.createReader(Path.of(input.path), tdByModel.get(input.model)));
         }
 
-        DiagnosticCollector engineDiag = new DiagnosticCollector();
         TransformationEngine engine = new TransformationEngine(new ExpressionEngine(),
                 new InMemoryStateStore(), engineDiag);
         TransformResult result = engine.runTyped(plan, readerByInputId::get, writersByOutputId);

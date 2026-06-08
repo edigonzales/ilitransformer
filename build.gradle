@@ -21,6 +21,7 @@ repositories {
 
 configurations {
     xlsx
+    validator
 }
 
 dependencies {
@@ -36,10 +37,15 @@ dependencies {
     compileOnly 'org.apache.poi:poi-ooxml:5.4.0'
     xlsx 'org.apache.poi:poi-ooxml:5.4.0'
 
+    validator 'ch.interlis:ilivalidator:1.15.0'
+
+    compileOnly 'ch.interlis:ilivalidator:1.15.0'
+
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testImplementation 'org.assertj:assertj-core:3.25.3'
     testImplementation 'org.mockito:mockito-core:5.12.0'
     testImplementation 'org.apache.poi:poi-ooxml:5.4.0'
+    testImplementation 'ch.interlis:ilivalidator:1.15.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -78,5 +84,18 @@ tasks.register('generateMappingCandidates', JavaExec) {
         '--dmav-dir', 'src/test/data/av/models/;https://models.interlis.ch',
         '--yaml-dm01-dmav', 'build/generated/dm01-dmav/dm01-to-dmav.generated.yaml',
         '--yaml-dmav-dm01', 'build/generated/dm01-dmav/dmav-to-dm01.generated.yaml'
+    ]
+}
+
+tasks.register('validateOutput', JavaExec) {
+    group = 'verification'
+    description = 'Validate ITF/XTF output with ilivalidator'
+    classpath = configurations.validator + sourceSets.main.runtimeClasspath
+    mainClass = 'guru.interlis.transformer.app.IlivalidatorRunner'
+    args = [
+        '--file', 'build/out/dmav-lfp3.xtf',
+        '--modeldir', 'src/test/data/av/models/;https://models.interlis.ch',
+        '--model', 'DMAV_FixpunkteAVKategorie3_V1_1',
+        '--log', 'build/reports/ilivalidator/validation.log'
     ]
 }
