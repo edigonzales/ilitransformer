@@ -68,12 +68,12 @@ class SurfaceAreaGeometryIntegrationTest {
         var surfAssign = plan.rules().get(0).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Perimeter"))
                 .findFirst().orElseThrow();
-        assertThat(surfAssign.expectedType()).isEqualTo(TypeInfo.SURFACE);
+        assertThat(surfAssign.expression().resultType()).isEqualTo(TypeInfo.SURFACE);
 
         var areaAssign = plan.rules().get(1).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Geometrie"))
                 .findFirst().orElseThrow();
-        assertThat(areaAssign.expectedType()).isEqualTo(TypeInfo.AREA);
+        assertThat(areaAssign.expression().resultType()).isEqualTo(TypeInfo.AREA);
     }
 
     @Test

@@ -86,7 +86,7 @@ class GeometryIntegrationTest {
         AssignmentPlan geomAp = plan.rules().get(0).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Geometrie"))
                 .findFirst().orElseThrow();
-        assertThat(geomAp.expectedType()).isEqualTo(TypeInfo.COORD);
+        assertThat(geomAp.expression().resultType()).isEqualTo(TypeInfo.COORD);
     }
 
     @Test

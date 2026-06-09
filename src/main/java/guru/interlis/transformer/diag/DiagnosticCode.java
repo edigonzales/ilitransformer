@@ -105,4 +105,8 @@ public final class DiagnosticCode {
     public static final String GEOM_LINEATTR_UNSUPPORTED = "ILITRF-GEOM-LINEATTR-UNSUPPORTED";
     public static final String GEOM_AREA_POINT_MISSING = "ILITRF-GEOM-AREA-POINT-MISSING";
     public static final String GEOM_SEGMENT_UNSUPPORTED = "ILITRF-GEOM-SEGMENT-UNSUPPORTED";
+
+    // Geometry – Phase 24
+    public static final String GEOM_DIMENSION_MISMATCH = "ILITRF-GEOM-DIMENSION-MISMATCH";
+    public static final String GEOM_COORD_DOMAIN_MISMATCH = "ILITRF-GEOM-COORD-DOMAIN-MISMATCH";
 }

@@ -11,6 +11,8 @@ import guru.interlis.transformer.mapping.plan.TypeInfo;
 
 public final class IoxGeometryAdapter implements GeometryAdapter {
 
+    private final GeometryValueCopier copier = new GeometryValueCopier();
+
     @Override
     public Value normalize(IomObject sourceGeometry, TypeInfo sourceType) {
         if (sourceGeometry == null) return NullValue.INSTANCE;

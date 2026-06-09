@@ -169,10 +169,30 @@ public final class FeatureMatrix {
                 "Configurable error handling at plan level",
                 "TransformationEngineIntegrationTest"));
 
-        entries.add(FeatureEntry.of("GeometryAdapter (Coord/Polyline/Surface)", "13",
+        entries.add(FeatureEntry.of("GeometryAdapter (Coord/Polyline/Surface/Area)", "13/24",
                 FeatureStatus.SUPPORTED,
-                "IoxGeometryAdapter and ItfGeometryWriter for pass-through",
-                "IoxGeometryAdapterTest", "GeometryIntegrationTest"));
+                "IoxGeometryAdapter with GeometryValueCopier, ItfGeometryWriter for ILI1 helper tables",
+                "IoxGeometryAdapterTest", "GeometryIntegrationTest", "GeometryDeepCopyTest"));
+
+        entries.add(FeatureEntry.of("GeometryValueCopier", "24",
+                FeatureStatus.SUPPORTED,
+                "Deep copy IomObject geometries to prevent source-target aliasing",
+                "GeometryDeepCopyTest"));
+
+        entries.add(FeatureEntry.of("GeometryCompatibilityService", "24",
+                FeatureStatus.SUPPORTED,
+                "Compile-time geometry compatibility checks: dimension, SURFACE/AREA, type matching",
+                "GeometryCompatibilityServiceTest"));
+
+        entries.add(FeatureEntry.of("Geometry roundtrip (Read→Write→Read)", "24",
+                FeatureStatus.SUPPORTED,
+                "COORD, POLYLINE (straight+ARC), SURFACE, AREA with multiple boundaries; XTF and ITF validated with ilivalidator",
+                "CoordRoundtripTest", "PolylineRoundtripTest", "XtfReadOwnOutputTest"));
+
+        entries.add(FeatureEntry.of("Real dataset geometry smoke test", "24",
+                FeatureStatus.SUPPORTED,
+                "Read full DM01 ITF and DMAV XTF, inventory geometry types",
+                "RealDatasetGeometrySmokeTest"));
 
         entries.add(FeatureEntry.of("ITF/XTF I/O via iox-ili", "5",
                 FeatureStatus.SUPPORTED,
