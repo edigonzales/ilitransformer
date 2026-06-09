@@ -61,7 +61,17 @@ sourceSets {
         resources {
             srcDir file('src/integrationTest/resources')
         }
-        compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + configurations.testRuntimeClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+    realDataTest {
+        java {
+            srcDir file('src/realDataTest/java')
+        }
+        resources {
+            srcDir file('src/realDataTest/resources')
+        }
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + configurations.testRuntimeClasspath
         runtimeClasspath += output + compileClasspath
     }
 }
@@ -194,3 +204,24 @@ tasks.register('integrationTest', Test) {
     classpath = sourceSets.integrationTest.runtimeClasspath
     useJUnitPlatform()
 }
+
+tasks.register('realDataTest', Test) {
+    description = 'Runs real data validation tests (slow, not part of check)'
+    group = 'verification'
+    testClassesDirs = sourceSets.realDataTest.output.classesDirs
+    classpath = sourceSets.realDataTest.runtimeClasspath
+    useJUnitPlatform()
+}
+
+tasks.register('generateFeatureMatrix', JavaExec) {
+    group = 'documentation'
+    description = 'Generate feature matrix as Markdown and JSON'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'guru.interlis.transformer.feature.FeatureMatrixTask'
+    args = [
+        '--markdown', 'build/reports/feature-matrix.md',
+        '--json', 'build/reports/feature-matrix.json'
+    ]
+}
+
+check.dependsOn integrationTest

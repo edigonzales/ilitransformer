@@ -1,6 +1,6 @@
 # Baseline
 
-Stand nach Abschluss von Phase 14 (2026-06-08).
+Stand nach Abschluss von Phase 16 (2026-06-09).
 
 ## Technische Basis
 
@@ -86,12 +86,29 @@ Stand nach Abschluss von Phase 14 (2026-06-08).
 - Kein persistenter StateStore (nur InMemory)
 - DM01↔DMAV: Nur LFP3-Slice vollständig implementiert
 
-## Nächste Phase: Phase 15 (Stabilisierung, CLI-UX und Dokumentation)
+## Phase 16: Reproduzierbare Baseline, CI und Feature-Matrix
 
-Status: In Progress.
+Abgeschlossen am 2026-06-09.
+
+- Unit-Tests und Integrationstests in getrennten SourceSets (`src/test/` und `src/integrationTest/`)
+- `./gradlew clean check` läuft `test` und `integrationTest` gemeinsam
+- Optionales `realDataTest` SourceSet für langsame Echtdaten-Validierung
+- `FeatureStatus`-Enum und `FeatureMatrix` mit statischer Feature-Liste
+- `generateFeatureMatrix` Gradle-Task schreibt Markdown und JSON nach `build/reports/`
+- CI-Workflow via GitHub Actions (`.github/workflows/ci.yml`)
+- `CheckedInModelsCompileTest`: kompiliert alle eingecheckten `.ili`-Modelle
+- `CheckedInTransfersValidateTest`: validiert alle eingecheckten Transferdateien (mit Allowlist)
+- `BuildLayoutTest`: prüft Projektstruktur und Build-Konfiguration
+- `RealDatasetCatalogTest`: katalogisiert und prüft Echtdaten
+- `FeatureMatrixTest`: validiert dass alle `SUPPORTED`-Features Test-Referenzen haben
+- Alle Validator-Tests prüfen `valid` (keine `println`-nur Tests mehr)
+
+## Nächste Phase: Phase 17 (Modell-, Input-, Output- und TypeSystem-Bindings korrigieren)
+
+Status: Geplant.
 
 Ziele:
-- CLI-Kommandos vervollständigen (5/5)
-- Dokumentation komplettieren (~18 Dateien)
-- Gradle-Tasks konsolidieren
-- README und Baseline aktualisieren
+- `InputBinding` / `OutputBinding` / `ModelRegistry` einführen
+- `TransformPlan` auf Input-/Output-IDs umstellen
+- `failPolicy` von String auf Enum umstellen
+- `JobRunner.prepare()` und `MappingCompiler.compileTyped()` mit `ModelRegistry`

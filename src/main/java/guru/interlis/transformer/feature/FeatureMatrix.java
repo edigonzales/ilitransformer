@@ -1,0 +1,233 @@
+package guru.interlis.transformer.feature;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public final class FeatureMatrix {
+
+    private static final List<FeatureEntry> ENTRIES = buildEntries();
+
+    FeatureMatrix() {}
+
+    public List<FeatureEntry> entries() {
+        return Collections.unmodifiableList(ENTRIES);
+    }
+
+    public void writeMarkdown(Path output) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("# Feature Matrix\n\n");
+        sb.append("| Feature | Phase | Status | Description | Tests |\n");
+        sb.append("|---|---|---|---|---|\n");
+
+        for (var e : ENTRIES) {
+            sb.append("| ").append(e.feature())
+              .append(" | ").append(e.phase())
+              .append(" | ").append(statusEmoji(e.status())).append(" ").append(e.status())
+              .append(" | ").append(e.description())
+              .append(" | ").append(String.join(", ", e.testReferences()))
+              .append(" |\n");
+        }
+        Files.writeString(output, sb.toString(), StandardCharsets.UTF_8);
+    }
+
+    public void writeJson(Path output) throws IOException {
+        ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+        mapper.writeValue(output.toFile(), ENTRIES);
+    }
+
+    private static String statusEmoji(FeatureStatus status) {
+        return switch (status) {
+            case SUPPORTED -> "✅";
+            case EXPERIMENTAL -> "🔬";
+            case PARTIAL -> "🟡";
+            case CONFIG_ONLY -> "⚙️";
+            case STUB -> "📌";
+            case UNSUPPORTED -> "❌";
+        };
+    }
+
+    private static List<FeatureEntry> buildEntries() {
+        var entries = new ArrayList<FeatureEntry>();
+
+        entries.add(FeatureEntry.of("CLI transform", "0",
+                FeatureStatus.SUPPORTED,
+                "Transform command with --mapping and --modeldir",
+                "CliMainTest"));
+
+        entries.add(FeatureEntry.of("CLI validate-mapping", "1",
+                FeatureStatus.SUPPORTED,
+                "Validate mapping YAML without executing",
+                "CliMainTest", "MappingCompilerTest"));
+
+        entries.add(FeatureEntry.of("CLI inspect-model", "2",
+                FeatureStatus.SUPPORTED,
+                "Inspect INTERLIS model structure",
+                "InspectModelCliTest"));
+
+        entries.add(FeatureEntry.of("IliModelService + TypeSystemFacade", "2",
+                FeatureStatus.SUPPORTED,
+                "Compile and query INTERLIS models",
+                "IliModelServiceTest"));
+
+        entries.add(FeatureEntry.of("IliPath", "2",
+                FeatureStatus.SUPPORTED,
+                "Parse and resolve INTERLIS paths",
+                "IliPathTest"));
+
+        entries.add(FeatureEntry.of("ModelInventory + InventorySerializer", "2",
+                FeatureStatus.SUPPORTED,
+                "Enumerate model classes and attributes",
+                "InventorySerializerTest"));
+
+        entries.add(FeatureEntry.of("MappingCompiler.compileTyped()", "3",
+                FeatureStatus.SUPPORTED,
+                "Compile YAML config into typed TransformPlan",
+                "TypedCompilerTest"));
+
+        entries.add(FeatureEntry.of("TransformPlan (typed plan)", "3",
+                FeatureStatus.SUPPORTED,
+                "Typed execution plan with RulePlan, AssignmentPlan, RefPlan, BagPlan",
+                "TypedCompilerTest"));
+
+        entries.add(FeatureEntry.of("ExpressionEngine", "4",
+                FeatureStatus.SUPPORTED,
+                "Parse and evaluate mapping expressions",
+                "ExpressionEngineTest", "ExpressionParserTest"));
+
+        entries.add(FeatureEntry.of("FunctionRegistry (Basic/String/Date/Enum/Ref/Math)", "4",
+                FeatureStatus.SUPPORTED,
+                "Builtin functions for expressions",
+                "FunctionRegistryTest", "BuiltinFunctionsTest"));
+
+        entries.add(FeatureEntry.of("Value type system", "4",
+                FeatureStatus.SUPPORTED,
+                "Sealed interface: TextValue, NumberValue, BooleanValue, DateValue, EnumValue, CoordValue, GeometryObjectValue, ReferenceValue, NullValue",
+                "ValueTest", "ExpressionEngineTest"));
+
+        entries.add(FeatureEntry.of("Two-pass execution engine", "5",
+                FeatureStatus.SUPPORTED,
+                "Pass 0 (index), Pass 1 (build), Pass 2 (refs), Write (stable sort)",
+                "TransformationEngineIntegrationTest"));
+
+        entries.add(FeatureEntry.of("1:1 Scalar mapping", "5",
+                FeatureStatus.SUPPORTED,
+                "Copy attributes from source to target",
+                "ScalarMappingIntegrationTest"));
+
+        entries.add(FeatureEntry.of("OID strategies (preserve/integer/uuid/deterministic)", "6",
+                FeatureStatus.SUPPORTED,
+                "preserve, integer, uuid, deterministicUuid (UUIDv3)",
+                "OidStrategyTest", "OidStrategyGoldenTest"));
+
+        entries.add(FeatureEntry.of("OID strategy external", "6",
+                FeatureStatus.STUB,
+                "External OID source — pass-through stub",
+                ""));
+
+        entries.add(FeatureEntry.of("Basket strategies", "6",
+                FeatureStatus.SUPPORTED,
+                "preserve, generateUuid, preserveOrGenerateUuid, byTopic",
+                "BasketStrategyTest"));
+
+        entries.add(FeatureEntry.of("Basket strategy expression", "6",
+                FeatureStatus.STUB,
+                "Expression-based basket routing — stub",
+                ""));
+
+        entries.add(FeatureEntry.of("Reference resolution + roles", "7",
+                FeatureStatus.SUPPORTED,
+                "DeferredRefs, type checking, cardinality, role-aware resolution",
+                "ReferenceResolutionIntegrationTest"));
+
+        entries.add(FeatureEntry.of("failPolicy (strict/lenient/reportOnly)", "7",
+                FeatureStatus.SUPPORTED,
+                "Configurable error handling at plan level",
+                "TransformationEngineIntegrationTest"));
+
+        entries.add(FeatureEntry.of("GeometryAdapter (Coord/Polyline/Surface)", "13",
+                FeatureStatus.SUPPORTED,
+                "IoxGeometryAdapter and ItfGeometryWriter for pass-through",
+                "IoxGeometryAdapterTest", "GeometryIntegrationTest"));
+
+        entries.add(FeatureEntry.of("ITF/XTF I/O via iox-ili", "5",
+                FeatureStatus.SUPPORTED,
+                "Read and write INTERLIS transfer files",
+                "SurfaceAreaItfIntegrationTest", "GeometryIntegrationTest"));
+
+        entries.add(FeatureEntry.of("XLSX correlation import", "8",
+                FeatureStatus.SUPPORTED,
+                "Parse DM01/DMAV correlation workbook",
+                "CorrelationWorkbookImporterTest"));
+
+        entries.add(FeatureEntry.of("Mapping candidate generator", "9",
+                FeatureStatus.SUPPORTED,
+                "Generate mapping candidates from correlation hints",
+                "MappingCandidateGeneratorTest"));
+
+        entries.add(FeatureEntry.of("DM01→DMAV LFP3 pilot", "10",
+                FeatureStatus.SUPPORTED,
+                "LFP3 transformation DM01 to DMAV with golden test",
+                "Dm01ToDmavLfp3IntegrationTest"));
+
+        entries.add(FeatureEntry.of("DMAV→DM01 LFP3 pilot", "11",
+                FeatureStatus.SUPPORTED,
+                "LFP3 transformation DMAV to DM01 with golden test",
+                "DmavToDm01Lfp3IntegrationTest"));
+
+        entries.add(FeatureEntry.of("BAG OF STRUCTURE (Textpositionen)", "12",
+                FeatureStatus.SUPPORTED,
+                "Pos tables to BAG OF Textposition in both directions",
+                "Dm01ToDmavLfp3IntegrationTest"));
+
+        entries.add(FeatureEntry.of("Topic gap report", "14",
+                FeatureStatus.SUPPORTED,
+                "Systematic analysis of DM01/DMAV topic coverage",
+                "TopicGapReportGeneratorTest"));
+
+        entries.add(FeatureEntry.of("enumMap()", "15",
+                FeatureStatus.STUB,
+                "Enum mapping pass-through with diagnostic warning",
+                ""));
+
+        entries.add(FeatureEntry.of("Joins / Splits / Merge", "-",
+                FeatureStatus.UNSUPPORTED,
+                "Multi-source joins, record splits, merge semantics",
+                ""));
+
+        entries.add(FeatureEntry.of("Persistent StateStore", "-",
+                FeatureStatus.UNSUPPORTED,
+                "Disk-backed or database-backed state store",
+                ""));
+
+        entries.add(FeatureEntry.of("AREA topology repair", "-",
+                FeatureStatus.UNSUPPORTED,
+                "Topological repair of AREA geometries",
+                ""));
+
+        entries.add(FeatureEntry.of("LINEATTR support", "-",
+                FeatureStatus.UNSUPPORTED,
+                "Line attribute geometry processing",
+                ""));
+
+        validate(entries);
+        return Collections.unmodifiableList(entries);
+    }
+
+    private static void validate(List<FeatureEntry> entries) {
+        for (var e : entries) {
+            if (e.status() == FeatureStatus.SUPPORTED && e.testReferences().isEmpty()) {
+                throw new IllegalStateException(
+                        "Feature '" + e.feature() + "' is SUPPORTED but has no test references");
+            }
+        }
+    }
+}

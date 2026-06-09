@@ -2,7 +2,7 @@
 
 Generic INTERLIS transformation engine.
 
-**Status:** Phase 14 complete, Phase 15 (Stabilization) in progress.
+**Status:** Phase 16 complete, Phase 17 (Modell/Bindings-Korrektur) planned.
 **Primary use case:** DM01 ↔ DMAV transformation (LFP3 pilot working in both directions).
 
 ## Tech baseline
@@ -81,6 +81,13 @@ Generic INTERLIS transformation engine.
 ./gradlew validateOutput
 ```
 
+### ILI transformer tasks
+
+```bash
+./gradlew generateFeatureMatrix
+./gradlew generateModelInventory
+```
+
 ### Transform with validation
 
 ```bash
@@ -108,7 +115,7 @@ See `docs/SPEC.md` for the full 16-phase specification.
 | 12 | BAG OF STRUCTURE und Textpositionen | Done |
 | 13 | Geometrie-MVP | Done |
 | 14 | Erweiterter DM01↔DMAV-Analysebericht | Done |
-| 15 | Stabilisierung, CLI-UX und Dokumentation | In Progress |
+| 16 | Reproduzierbare Baseline, CI und Feature-Matrix | Done |
 
 ## Documentation
 
