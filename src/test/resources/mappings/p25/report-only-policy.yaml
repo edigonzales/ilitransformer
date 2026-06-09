@@ -1,0 +1,26 @@
+version: 1
+
+job:
+  description: "Simple identity mapping with report_only fail policy"
+  failPolicy: "report_only"
+  inputs:
+    - id: in1
+      path: "/tmp/does-not-exist.xtf"
+      model: "TestModel"
+  outputs:
+    - id: out1
+      path: "/tmp/should-not-exist.xtf"
+      model: "TestModel"
+
+mapping:
+  rules:
+    - id: rule1
+      target:
+        output: out1
+        class: "TestModel.TestTopic.TestClass"
+      sources:
+        - alias: s
+          input: in1
+          class: "TestModel.TestTopic.TestClass"
+      assign:
+        Name: "${s.Name}"

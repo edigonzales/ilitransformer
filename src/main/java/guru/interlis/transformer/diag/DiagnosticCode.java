@@ -109,4 +109,12 @@ public final class DiagnosticCode {
     // Geometry – Phase 24
     public static final String GEOM_DIMENSION_MISMATCH = "ILITRF-GEOM-DIMENSION-MISMATCH";
     public static final String GEOM_COORD_DOMAIN_MISMATCH = "ILITRF-GEOM-COORD-DOMAIN-MISMATCH";
+
+    // Validation – Phase 25
+    public static final String VALIDATION_FAILED = "ILITRF-VALIDATION-FAILED";
+    public static final String VALIDATION_WARNING = "ILITRF-VALIDATION-WARNING";
+
+    // Commit – Phase 25
+    public static final String COMMIT_FAILED = "ILITRF-COMMIT-FAILED";
+    public static final String COMMIT_ROLLED_BACK = "ILITRF-COMMIT-ROLLED-BACK";
 }

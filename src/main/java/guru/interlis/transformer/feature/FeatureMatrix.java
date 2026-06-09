@@ -194,6 +194,51 @@ public final class FeatureMatrix {
                 "Read full DM01 ITF and DMAV XTF, inventory geometry types",
                 "RealDatasetGeometrySmokeTest"));
 
+        entries.add(FeatureEntry.of("FailPolicy STRICT – kein Commit bei Fehler", "25",
+                FeatureStatus.SUPPORTED,
+                "Compiler-Fehler, Runtime-Fehler oder Validator-Fehler verhindern Commit; Exit-Code != 0",
+                "StrictRollbackTest"));
+
+        entries.add(FeatureEntry.of("FailPolicy LENIENT – herabstufbare Fehler", "25",
+                FeatureStatus.SUPPORTED,
+                "Explizit herabstufbare Fehler werden Warnings; strukturelle Fehler verhindern Commit",
+                "LenientPolicyTest"));
+
+        entries.add(FeatureEntry.of("FailPolicy REPORT_ONLY", "25",
+                FeatureStatus.SUPPORTED,
+                "Modelle und Mapping kompilieren, Ausfuehrbarkeit analysieren, keine endgueltigen Outputs",
+                "ReportOnlyTest"));
+
+        entries.add(FeatureEntry.of("TransactionalOutputManager", "25",
+                FeatureStatus.SUPPORTED,
+                "Temp-Dateien, atomarer Move bei Erfolg, Rollback bei Fehler, keep-temp fuer Debugging",
+                "TransactionalOutputManagerTest"));
+
+        entries.add(FeatureEntry.of("TransformationReportWriter (JSON+MD)", "25",
+                FeatureStatus.SUPPORTED,
+                "Objektzahlen, Filterzahlen, Warnings/Errors, Referenzbericht, Validatorstatus, Laufzeit, Modelle",
+                "ReportOptionCliTest"));
+
+        entries.add(FeatureEntry.of("TransferValidationService + InProcessIlivalidatorService", "25",
+                FeatureStatus.SUPPORTED,
+                "Gekapselter ilivalidator-Service mit strukturiertem ValidationResult (errorCount, warningCount)",
+                "ValidateOptionCliTest", "ValidatorFailureExitCodeTest"));
+
+        entries.add(FeatureEntry.of("validate-transfer CLI command", "25",
+                FeatureStatus.SUPPORTED,
+                "Neuer Subcommand: validate-transfer --file/--modeldir/--model/--log",
+                "ValidatorFailureExitCodeTest"));
+
+        entries.add(FeatureEntry.of("CLI --fail-policy / --keep-temp / --validate / --report", "25",
+                FeatureStatus.SUPPORTED,
+                "Alle CLI-Optionen haben Wirkung; modeldirs aus CLI und YAML mergen korrekt",
+                "ValidateOptionCliTest", "ReportOptionCliTest", "JobModeldirMergeTest", "RelativeMappingPathCliTest"));
+
+        entries.add(FeatureEntry.of("validate-mapping mit compileTyped und modeldirs", "25",
+                FeatureStatus.SUPPORTED,
+                "validate-mapping fuehrt compileTyped mit CLI-modeldirs aus",
+                "ValidateMappingTypedCliTest"));
+
         entries.add(FeatureEntry.of("ITF/XTF I/O via iox-ili", "5",
                 FeatureStatus.SUPPORTED,
                 "Read and write INTERLIS transfer files",

@@ -1,9 +1,8 @@
 package guru.interlis.transformer.app;
 
-import ch.ehi.basics.settings.Settings;
-import org.interlis2.validator.Validator;
+import guru.interlis.transformer.validation.InProcessIlivalidatorService;
+import guru.interlis.transformer.validation.TransferValidationService;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -11,41 +10,38 @@ public final class IlivalidatorRunner {
 
     private IlivalidatorRunner() {}
 
+    private static final TransferValidationService service = new InProcessIlivalidatorService();
+
+    /**
+     * @deprecated Use {@link guru.interlis.transformer.validation.ValidationResult} instead.
+     */
+    @Deprecated(since = "25", forRemoval = false)
     public record ValidationResult(boolean success, String log) {}
 
     /**
      * Validates an ITF/XTF file against an INTERLIS model.
      *
-     * @param dataFile  the ITF/XTF file to validate
-     * @param modelDirs model directories (semicolon-separated paths)
-     * @param modelName the INTERLIS model name (e.g. "DM01AVCH24LV95D")
-     * @param logFile   where to write the validation log (may be null)
-     * @return validation result with success flag and log content
+     * @deprecated Use {@link TransferValidationService#validate(Path, List, List, Path)} instead.
      */
+    @Deprecated(since = "25", forRemoval = false)
     public static ValidationResult validate(
             Path dataFile, List<String> modelDirs, String modelName, Path logFile) throws Exception {
 
-        Settings settings = new Settings();
-        settings.setValue("org.interlis2.validator.ilidirs", String.join(";", modelDirs));
-        settings.setValue("org.interlis2.validator.modelNames", modelName);
+        guru.interlis.transformer.validation.ValidationResult result =
+                service.validate(dataFile, modelDirs,
+                        modelName != null ? List.of(modelName) : List.of(), logFile);
 
-        if (logFile != null) {
-            Files.createDirectories(logFile.getParent());
-            settings.setValue("org.interlis2.validator.log", logFile.toString());
-        }
-
-        boolean success = Validator.runValidation(
-                new String[]{dataFile.toString()}, settings);
-
-        String log = logFile != null && Files.exists(logFile)
-                ? Files.readString(logFile) : "";
-
-        return new ValidationResult(success, log);
+        return new ValidationResult(result.valid(), result.logText());
     }
 
     // -- CLI entry point for Gradle task ----------------------------------
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
+        int exitCode = run(args);
+        System.exit(exitCode);
+    }
+
+    private static int run(String[] args) {
         Path file = null;
         String modelDirs = null;
         String model = null;
@@ -62,15 +58,15 @@ public final class IlivalidatorRunner {
 
         if (file == null || modelDirs == null || model == null) {
             System.err.println("Usage: IlivalidatorRunner --file <path> --modeldir <dirs> --model <name> [--log <path>]");
-            System.exit(1);
+            return 1;
         }
 
-        ValidationResult result = validate(file,
-                List.of(modelDirs.split(";")), model, log);
-        System.out.println(result.success() ? "VALIDATION OK" : "VALIDATION FAILED");
-        if (!result.log().isBlank()) {
-            System.out.println(result.log());
+        guru.interlis.transformer.validation.ValidationResult result =
+                service.validate(file, List.of(modelDirs.split(";")), List.of(model), log);
+        System.out.println(result.valid() ? "VALIDATION OK" : "VALIDATION FAILED");
+        if (!result.logText().isBlank()) {
+            System.out.println(result.logText());
         }
-        System.exit(result.success() ? 0 : 1);
+        return result.valid() ? 0 : 1;
     }
 }

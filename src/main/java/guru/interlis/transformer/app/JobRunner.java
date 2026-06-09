@@ -4,26 +4,47 @@ import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.IoxWriter;
 import guru.interlis.transformer.diag.Diagnostic;
+import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
-import guru.interlis.transformer.mapping.compiler.CompilerReport;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler.CompileResult;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.model.MappingLoader;
+import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.InMemoryStateStore;
+import guru.interlis.transformer.validation.InProcessIlivalidatorService;
+import guru.interlis.transformer.validation.TransferValidationService;
+import guru.interlis.transformer.validation.ValidationResult;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class JobRunner {
+
+    private static final Set<String> NON_DOWNGRADEABLE_CODES = Set.of(
+            DiagnosticCode.RUN_DUPLICATE_TARGET_OID,
+            DiagnosticCode.MODEL_COMPILE_FAILED,
+            DiagnosticCode.RUN_REF_MISSING_MANDATORY,
+            DiagnosticCode.RUN_MISSING_SOURCE_OID
+    );
+
+    private final TransferValidationService validationService = new InProcessIlivalidatorService();
 
     public CompileResult validateMapping(Path configPath) throws Exception {
         MappingLoader loader = new MappingLoader();
@@ -39,7 +60,7 @@ public final class JobRunner {
         ModelRegistry modelRegistry = ModelRegistry.builder()
                 .config(config)
                 .modelDirs(config.job.modeldir)
-                .modelDirs(options.modelDirs)
+                .modelDirs(options.modelDirectories())
                 .baseDirectory(baseDirectory)
                 .build();
 
@@ -49,60 +70,250 @@ public final class JobRunner {
     }
 
     public DiagnosticCollector run(Path configPath, String modelDir) throws Exception {
-        RunOptions options = new RunOptions();
+        List<String> dirs = new ArrayList<>();
         if (modelDir != null && !modelDir.isBlank()) {
-            options.modelDirs.add(modelDir);
+            dirs.add(modelDir);
         }
-        PreparedJob prepared = prepare(configPath, options);
+        return run(configPath, new RunOptions(dirs));
+    }
 
-        // Print compiler diagnostics
-        if (!prepared.plan().diagnostics().all().isEmpty()) {
-            System.out.println("--- Compiler Diagnostics ---");
-            for (Diagnostic d : prepared.plan().diagnostics().all()) {
-                System.out.printf("[%s] %s: %s (rule: %s)%n",
-                        d.severity(), d.code(), d.message(),
-                        d.sourcePath() != null ? d.sourcePath() : "");
-                if (d.suggestion() != null) {
-                    System.out.printf("  Suggestion: %s%n", d.suggestion());
+    /**
+     * Runs a transformation with full runtime options including fail policy enforcement,
+     * transactional output, optional validation, and report generation.
+     */
+    public DiagnosticCollector run(Path configPath, RunOptions options) throws Exception {
+        PreparedJob prepared = prepare(configPath, options);
+        TransformPlan plan = prepared.plan();
+        JobConfig config = prepared.config();
+
+        printCompilerDiagnostics(plan);
+
+        if (plan.diagnostics().hasErrors()) {
+            System.err.println("Compilation failed with errors. Aborting.");
+            return plan.diagnostics();
+        }
+
+        if (plan.failPolicy() == FailPolicy.REPORT_ONLY) {
+            System.out.println("REPORT_ONLY mode: compilation successful. Skipping transformation run.");
+            if (options.reportDirectory() != null) {
+                writeReports(plan, null, new DiagnosticCollector(), List.of(),
+                        Duration.ZERO, Map.of(), options.reportDirectory());
+            }
+            return plan.diagnostics();
+        }
+
+        Instant start = Instant.now();
+        DiagnosticCollector engineDiag = new DiagnosticCollector();
+        TransformResult result = null;
+        List<ValidationResult> validationResults = new ArrayList<>();
+        boolean committed = false;
+
+        try (TransactionalOutputManager txManager = new TransactionalOutputManager(options.keepTemporaryFiles())) {
+            InterlisIoFactory ioFactory = new InterlisIoFactory();
+
+            Map<String, IoxWriter> writersByOutputId = new LinkedHashMap<>();
+            Map<String, OutputBinding> tempBindings = new LinkedHashMap<>();
+            for (var entry : plan.outputsById().entrySet()) {
+                String outputId = entry.getKey();
+                OutputBinding binding = entry.getValue();
+                try {
+                    Path tempPath = txManager.createTemporaryOutput(binding);
+                    writersByOutputId.put(outputId,
+                            ioFactory.createWriter(tempPath, binding.transferDescription(), engineDiag));
+                    tempBindings.put(outputId, new OutputBinding(outputId, tempPath,
+                            binding.declaredModelName(), binding.format(),
+                            binding.transferDescription(), binding.typeSystem()));
+                } catch (Exception e) {
+                    engineDiag.add(new Diagnostic(DiagnosticCode.COMMIT_FAILED,
+                            Severity.ERROR, "Failed to create writer for output " + outputId + ": " + e.getMessage(), outputId, null));
                 }
             }
-            System.out.println();
+
+            Map<String, IoxReader> readerByInputId = new HashMap<>();
+            for (var entry : plan.inputsById().entrySet()) {
+                String inputId = entry.getKey();
+                var binding = entry.getValue();
+                try {
+                    readerByInputId.put(inputId,
+                            ioFactory.createReader(binding.path(), binding.transferDescription()));
+                } catch (Exception e) {
+                    engineDiag.add(new Diagnostic(DiagnosticCode.COMMIT_FAILED,
+                            Severity.ERROR, "Failed to open input " + inputId + ": " + e.getMessage(), inputId, null));
+                }
+            }
+
+            if (!engineDiag.hasErrors() && !readerByInputId.isEmpty()) {
+                TransformationEngine engine = new TransformationEngine(new ExpressionEngine(),
+                        new InMemoryStateStore(), engineDiag);
+                try {
+                    result = engine.runTyped(plan, readerByInputId::get, writersByOutputId);
+                } catch (Exception e) {
+                    engineDiag.add(new Diagnostic(DiagnosticCode.COMMIT_FAILED,
+                            Severity.ERROR, "Transformation engine failed: " + e.getMessage(), null, null));
+                }
+            }
+
+            // Close writers before validation
+            for (IoxWriter writer : writersByOutputId.values()) {
+                try {
+                    writer.flush();
+                    writer.close();
+                } catch (Exception e) {
+                    engineDiag.add(new Diagnostic(DiagnosticCode.COMMIT_FAILED,
+                            Severity.ERROR, "Failed to close writer: " + e.getMessage(), null, null));
+                }
+            }
+
+            // Validate outputs if requested
+            if (options.validateOutput()) {
+                for (var entry : tempBindings.entrySet()) {
+                    String outputId = entry.getKey();
+                    OutputBinding binding = entry.getValue();
+                    OutputBinding realBinding = plan.outputsById().get(outputId);
+                    if (realBinding == null) continue;
+
+                    ValidationResult vr = validationService.validate(
+                            binding.path(),
+                            options.modelDirectories(),
+                            List.of(realBinding.declaredModelName()),
+                            options.reportDirectory() != null
+                                    ? options.reportDirectory().resolve(outputId + "-validation.log")
+                                    : null);
+                    validationResults.add(vr);
+
+                    if (!vr.valid()) {
+                        engineDiag.add(new Diagnostic(DiagnosticCode.VALIDATION_FAILED,
+                                Severity.ERROR,
+                                "Validator reported errors for output " + outputId
+                                        + " (model: " + realBinding.declaredModelName() + ")",
+                                outputId, "See validation log for details"));
+                    }
+                }
+            }
+
+            // Decide commit/rollback based on fail policy
+            boolean hasNonDowngradeableErrors = hasNonDowngradeableErrors(engineDiag);
+            boolean hasAnyErrors = engineDiag.hasErrors();
+
+            boolean shouldCommit = switch (plan.failPolicy()) {
+                case STRICT -> !hasAnyErrors;
+                case LENIENT -> !hasNonDowngradeableErrors;
+                case REPORT_ONLY -> false;
+            };
+
+            if (shouldCommit) {
+                for (var entry : plan.outputsById().entrySet()) {
+                    String outputId = entry.getKey();
+                    if (txManager.tempPath(outputId) != null) {
+                        txManager.commit(outputId);
+                    }
+                }
+                committed = true;
+            } else {
+                engineDiag.add(new Diagnostic(DiagnosticCode.COMMIT_ROLLED_BACK,
+                        Severity.ERROR,
+                        "Output rolled back due to errors (failPolicy="
+                                + plan.failPolicy().name().toLowerCase() + ")",
+                        null, "Fix errors and retry, or use --keep-temp to inspect temporary files"));
+                txManager.rollbackAll();
+            }
         }
 
-        if (prepared.plan().diagnostics().hasErrors()) {
-            System.err.println("Compilation failed with errors. Aborting.");
-            return prepared.plan().diagnostics();
-        }
-
-        // Create I/O readers and writers from bindings
-        DiagnosticCollector engineDiag = new DiagnosticCollector();
-        InterlisIoFactory ioFactory = new InterlisIoFactory();
-        Map<String, IoxWriter> writersByOutputId = new HashMap<>();
-        for (var entry : prepared.plan().outputsById().entrySet()) {
-            String outputId = entry.getKey();
-            OutputBinding binding = entry.getValue();
-            writersByOutputId.put(outputId,
-                    ioFactory.createWriter(binding.path(), binding.transferDescription(), engineDiag));
-        }
-
-        Map<String, IoxReader> readerByInputId = new HashMap<>();
-        for (var entry : prepared.plan().inputsById().entrySet()) {
-            String inputId = entry.getKey();
-            var binding = entry.getValue();
-            readerByInputId.put(inputId,
-                    ioFactory.createReader(binding.path(), binding.transferDescription()));
-        }
-
-        TransformationEngine engine = new TransformationEngine(new ExpressionEngine(),
-                new InMemoryStateStore(), engineDiag);
-        TransformResult result = engine.runTyped(prepared.plan(), readerByInputId::get, writersByOutputId);
-
+        // Merge engine diagnostics into plan
         for (Diagnostic d : engineDiag.all()) {
-            prepared.plan().diagnostics().add(d);
+            plan.diagnostics().add(d);
         }
 
-        System.out.println(result.summary());
+        Duration elapsed = Duration.between(start, Instant.now());
 
-        return prepared.plan().diagnostics();
+        if (result != null) {
+            System.out.println(result.summary());
+        }
+        if (committed) {
+            System.out.println("Output committed successfully.");
+        }
+
+        // Write reports
+        if (options.reportDirectory() != null) {
+            Map<String, String> modelVersions = collectModelVersions(plan);
+            writeReports(plan, result, engineDiag, validationResults, elapsed, modelVersions,
+                    options.reportDirectory());
+        }
+
+        return plan.diagnostics();
+    }
+
+    // -- Fail policy helpers -------------------------------------------------
+
+    private static boolean hasNonDowngradeableErrors(DiagnosticCollector diagnostics) {
+        return diagnostics.all().stream()
+                .anyMatch(d -> d.severity() == Severity.ERROR
+                        && (d.code() == null
+                        || NON_DOWNGRADEABLE_CODES.contains(d.code())
+                        || d.code().startsWith("ILITRF-MODEL-")
+                        || d.code().startsWith("ILITRF-MAP-")));
+    }
+
+    // -- Internal helpers ----------------------------------------------------
+
+    private static void printCompilerDiagnostics(TransformPlan plan) {
+        if (plan.diagnostics().all().isEmpty()) return;
+        System.out.println("--- Compiler Diagnostics ---");
+        for (Diagnostic d : plan.diagnostics().all()) {
+            System.out.printf("[%s] %s: %s (rule: %s)%n",
+                    d.severity(), d.code(), d.message(),
+                    d.sourcePath() != null ? d.sourcePath() : "");
+            if (d.suggestion() != null) {
+                System.out.printf("  Suggestion: %s%n", d.suggestion());
+            }
+        }
+        System.out.println();
+    }
+
+    private void writeReports(TransformPlan plan, TransformResult result,
+                               DiagnosticCollector diagnostics,
+                               List<ValidationResult> validationResults,
+                               Duration elapsed, Map<String, String> modelVersions,
+                               Path reportDirectory) {
+        try {
+            TransformationReportWriter reportWriter = new TransformationReportWriter();
+            TransformResult safeResult = result != null ? result
+                    : new TransformResult(0, 0, 0, 0, 0, 0, "-", "-");
+
+            reportWriter.writeJson(reportDirectory.resolve("transformation-report.json"),
+                    plan, safeResult, diagnostics, validationResults, elapsed, modelVersions);
+            reportWriter.writeMarkdown(reportDirectory.resolve("transformation-report.md"),
+                    plan, safeResult, diagnostics, validationResults, elapsed, modelVersions);
+            System.out.println("Reports written to: " + reportDirectory);
+        } catch (IOException e) {
+            System.err.println("Failed to write reports: " + e.getMessage());
+        }
+    }
+
+    private static Map<String, String> collectModelVersions(TransformPlan plan) {
+        Map<String, String> versions = new LinkedHashMap<>();
+        for (var entry : plan.inputsById().entrySet()) {
+            var binding = entry.getValue();
+            if (binding.transferDescription() != null) {
+                var modelIt = binding.transferDescription().iterator();
+                while (modelIt.hasNext()) {
+                    var model = modelIt.next();
+                            versions.putIfAbsent(model.getName(),
+                                    model.getModelVersion() != null ? model.getModelVersion() : "unknown");
+                }
+            }
+        }
+        for (var entry : plan.outputsById().entrySet()) {
+            var binding = entry.getValue();
+            if (binding.transferDescription() != null) {
+                var modelIt = binding.transferDescription().iterator();
+                while (modelIt.hasNext()) {
+                    var model = modelIt.next();
+                            versions.putIfAbsent(model.getName(),
+                                    model.getModelVersion() != null ? model.getModelVersion() : "unknown");
+                }
+            }
+        }
+        return versions;
     }
 }
