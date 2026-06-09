@@ -87,13 +87,12 @@ public final class CompilerReport {
 
             if (!rp.assignments().isEmpty()) {
                 sb.append("\n**Assignments:**\n\n");
-                sb.append("| Target | Expression | Kind | Source Type |\n");
-                sb.append("|--------|------------|------|-------------|\n");
+                sb.append("| Target | Expression | Result Type |\n");
+                sb.append("|--------|------------|-------------|\n");
                 for (AssignmentPlan ap : rp.assignments()) {
                     sb.append("| ").append(escape(ap.targetAttrName()))
-                            .append(" | ").append(escape(ap.expression()))
-                            .append(" | ").append(ap.exprKind())
-                            .append(" | ").append(ap.expectedType())
+                            .append(" | ").append(escape(ap.expression().sourceText()))
+                            .append(" | ").append(ap.expression().resultType())
                             .append(" |\n");
                 }
             }
@@ -144,9 +143,8 @@ public final class CompilerReport {
             for (var ap : rp.assignments()) {
                 Map<String, Object> am = new LinkedHashMap<>();
                 am.put("target", ap.targetAttrName());
-                am.put("expression", ap.expression());
-                am.put("exprKind", ap.exprKind().name());
-                am.put("expectedType", ap.expectedType().name());
+                am.put("expression", ap.expression().sourceText());
+                am.put("resultType", ap.expression().resultType().name());
                 assignMaps.add(am);
             }
             rm.put("assignments", assignMaps);

@@ -7,7 +7,7 @@ public record BagPlan(
         SourcePlan fromSource,
         String structureName,
         List<AssignmentPlan> assignments,
-        String whereExpression,
+        CompiledExpression whereExpression,
         BagMode mode
 ) {
     public enum BagMode {

@@ -26,14 +26,14 @@ class ValueTest {
 
     @Test
     void numberValue() {
-        NumberValue v = new NumberValue(42.5);
+        NumberValue v = new NumberValue(java.math.BigDecimal.valueOf(42.5));
         assertThat(v.asNumber()).isEqualTo(42.5);
         assertThat(v.toNative()).isEqualTo(42.5);
     }
 
     @Test
     void numberValueIntegerAsLong() {
-        NumberValue v = new NumberValue(42.0);
+        NumberValue v = new NumberValue(java.math.BigDecimal.valueOf(42));
         assertThat(v.toNative()).isEqualTo(42L);
     }
 

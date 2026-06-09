@@ -12,6 +12,7 @@ import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
+import guru.interlis.transformer.expr.ExpressionCompiler;
 import guru.interlis.transformer.expr.FunctionRegistry;
 import guru.interlis.transformer.expr.builtins.BasicFunctions;
 import guru.interlis.transformer.expr.builtins.DateFunctions;
@@ -23,6 +24,8 @@ import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.BasketPlan;
+import guru.interlis.transformer.mapping.plan.CompiledExpression;
+import guru.interlis.transformer.mapping.plan.ExpressionCompileContext;
 import guru.interlis.transformer.mapping.plan.ExpressionKind;
 import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.InputBinding;
@@ -49,13 +52,16 @@ import java.util.Set;
 public final class MappingCompiler {
 
     private final FunctionRegistry functionRegistry;
+    private final ExpressionCompiler expressionCompiler;
 
     public MappingCompiler() {
         this.functionRegistry = defaultRegistry();
+        this.expressionCompiler = new ExpressionCompiler();
     }
 
     public MappingCompiler(FunctionRegistry functionRegistry) {
         this.functionRegistry = functionRegistry;
+        this.expressionCompiler = new ExpressionCompiler();
     }
 
     private static FunctionRegistry defaultRegistry() {
@@ -87,9 +93,10 @@ public final class MappingCompiler {
         validateRulesStructurally(config, diagnostics);
 
         // Compile rules
+        Map<String, Map<String, String>> enumMaps = extractEnumMaps(config);
         List<RulePlan> rulePlans = new ArrayList<>();
         for (JobConfig.RuleSpec rule : config.mapping.rules) {
-            RulePlan rp = compileRule(rule, diagnostics, modelRegistry);
+            RulePlan rp = compileRule(rule, diagnostics, modelRegistry, enumMaps);
             if (rp != null) {
                 rulePlans.add(rp);
             }
@@ -183,7 +190,8 @@ public final class MappingCompiler {
     // -- Typed rule compilation --------------------------------------------
 
     private RulePlan compileRule(JobConfig.RuleSpec rule, DiagnosticCollector diag,
-                                  ModelRegistry modelRegistry) {
+                                  ModelRegistry modelRegistry,
+                                  Map<String, Map<String, String>> enumMaps) {
         String ruleId = rule.id;
         String targetOutput = rule.getEffectiveTargetOutput();
         String targetClassName = rule.getEffectiveTargetClass();
@@ -210,7 +218,7 @@ public final class MappingCompiler {
         TypeSystemFacade targetTs = targetOutput != null && !targetOutput.isEmpty()
                 ? modelRegistry.requireTargetTypeSystem(targetOutput) : null;
 
-        // Compile sources
+        // Compile sources (phase 1: class resolution)
         List<SourcePlan> sourcePlans = new ArrayList<>();
         for (JobConfig.SourceSpec src : rule.sources) {
             SourcePlan sp = compileSource(src, ruleId, modelRegistry, diag);
@@ -220,6 +228,20 @@ public final class MappingCompiler {
         }
         if (sourcePlans.isEmpty()) {
             return null;
+        }
+
+        // Build sourcesByAlias map for expression context
+        Map<String, SourcePlan> sourcesByAlias = new HashMap<>();
+        for (SourcePlan sp : sourcePlans) {
+            sourcesByAlias.put(sp.alias(), sp);
+        }
+
+        // Compile where filters (phase 2: expression compilation)
+        sourcePlans = compileWhereFilters(sourcePlans, sourcesByAlias, ruleId, enumMaps, diag,
+                rule.sources);
+        sourcesByAlias = new HashMap<>();
+        for (SourcePlan sp : sourcePlans) {
+            sourcesByAlias.put(sp.alias(), sp);
         }
 
         // Compile assignments
@@ -233,7 +255,8 @@ public final class MappingCompiler {
                         ruleId, "Remove duplicate assignment or use an explicit merge policy"));
             }
 
-            AssignmentPlan ap = compileAssignment(attr, targetClass, targetTs, sourcePlans, ruleId, diag);
+            AssignmentPlan ap = compileAssignment(attr, targetClass, targetTs, sourcesByAlias,
+                    ruleId, enumMaps, diag);
             if (ap != null) {
                 assignmentPlans.add(ap);
             }
@@ -254,8 +277,8 @@ public final class MappingCompiler {
         }
 
         // Compile bags
-        List<BagPlan> bagPlans = compileBags(rule, sourcePlans, targetClass, targetTs, ruleId,
-                modelRegistry, diag);
+        List<BagPlan> bagPlans = compileBags(rule, sourcePlans, sourcesByAlias, targetClass, targetTs,
+                ruleId, modelRegistry, enumMaps, diag);
 
         // Compile identity source keys
         List<String> identitySourceKeys = compileIdentityKeys(rule, sourcePlans, diag);
@@ -299,17 +322,48 @@ public final class MappingCompiler {
                     ruleId, "Check the source class name and ensure its model is listed in inputs"));
         }
 
-        return new SourcePlan(src.alias, sourceClass, src.getInputIds(), src.where);
+        return new SourcePlan(src.alias, sourceClass, src.getInputIds(), null);
+    }
+
+    private List<SourcePlan> compileWhereFilters(List<SourcePlan> sourcePlans,
+                                                   Map<String, SourcePlan> sourcesByAlias,
+                                                   String ruleId,
+                                                   Map<String, Map<String, String>> enumMaps,
+                                                   DiagnosticCollector diag,
+                                                   List<JobConfig.SourceSpec> sourceSpecs) {
+        Map<String, String> whereByAlias = new HashMap<>();
+        for (JobConfig.SourceSpec src : sourceSpecs) {
+            if (src.where != null && !src.where.isBlank() && src.alias != null) {
+                whereByAlias.put(src.alias, src.where);
+            }
+        }
+        if (whereByAlias.isEmpty()) {
+            return sourcePlans;
+        }
+
+        List<SourcePlan> result = new ArrayList<>();
+        for (SourcePlan sp : sourcePlans) {
+            String rawWhere = whereByAlias.get(sp.alias());
+            CompiledExpression compiledWhere = null;
+            if (rawWhere != null) {
+                ExpressionCompileContext ctx = new ExpressionCompileContext(
+                        ruleId, sourcesByAlias, TypeInfo.BOOLEAN, functionRegistry, enumMaps);
+                compiledWhere = expressionCompiler.compile(rawWhere, ctx, diag);
+            }
+            result.add(new SourcePlan(sp.alias(), sp.sourceClass(), sp.inputIds(), compiledWhere));
+        }
+        return result;
     }
 
     private AssignmentPlan compileAssignment(JobConfig.AttributeMapping attr,
                                               Table targetClass, TypeSystemFacade targetTs,
-                                              List<SourcePlan> sourcePlans, String ruleId,
+                                              Map<String, SourcePlan> sourcesByAlias,
+                                              String ruleId,
+                                              Map<String, Map<String, String>> enumMaps,
                                               DiagnosticCollector diag) {
         String targetName = attr.target;
         String expr = attr.expr;
 
-        // Check target attribute exists
         AttributeDef targetAttr = null;
         if (targetTs != null) {
             targetAttr = targetTs.findAttribute(targetClass, targetName);
@@ -320,33 +374,25 @@ public final class MappingCompiler {
             }
         }
 
-        // Classify expression
-        ExpressionKind kind = classifyExpression(expr);
-        TypeInfo type = inferExpressionType(expr, kind, sourcePlans, diag, ruleId);
+        TypeInfo expectedTargetType = targetAttr != null
+                ? ExpressionCompiler.classifyIliAttr(targetAttr) : TypeInfo.UNKNOWN;
 
-        // For function calls, use registry-based return type inference
-        if (kind == ExpressionKind.FUNCTION_CALL) {
-            TypeInfo inferred = inferFunctionType(expr, diag, ruleId);
-            if (inferred != TypeInfo.UNKNOWN) {
-                type = inferred;
-            }
-        }
+        ExpressionCompileContext compileCtx = new ExpressionCompileContext(ruleId, sourcesByAlias,
+                expectedTargetType, functionRegistry, enumMaps);
 
-        // Check source attribute references
-        checkSourcePaths(expr, sourcePlans, ruleId, diag);
+        CompiledExpression compiled = expressionCompiler.compile(expr, compileCtx, diag);
 
-        // Simple type compatibility check
-        if (targetAttr != null && type != TypeInfo.UNKNOWN) {
-            TypeInfo targetType = classifyIliType(targetAttr);
-            if (!isTypeCompatible(type, targetType)) {
+        if (targetAttr != null && compiled.resultType() != TypeInfo.UNKNOWN) {
+            TypeInfo targetType = ExpressionCompiler.classifyIliAttr(targetAttr);
+            if (!isTypeCompatible(compiled.resultType(), targetType)) {
                 diag.add(new Diagnostic(DiagnosticCode.MAP_TYPE_MISMATCH, Severity.WARNING,
-                        "Type mismatch: expression '" + expr + "' produces " + type
+                        "Type mismatch: expression '" + expr + "' produces " + compiled.resultType()
                                 + " but target '" + targetName + "' expects " + targetType,
                         ruleId, "Add a type conversion or check the expression"));
             }
         }
 
-        return new AssignmentPlan(targetName, targetAttr, expr, kind, type);
+        return new AssignmentPlan(targetName, targetAttr, compiled);
     }
 
     private RefPlan compileRef(JobConfig.RefMapping ref, Table targetClass,
@@ -678,9 +724,11 @@ public final class MappingCompiler {
     // -- Bag compilation (Phase 12) ----------------------------------------
 
     private List<BagPlan> compileBags(JobConfig.RuleSpec rule, List<SourcePlan> sourcePlans,
+                                       Map<String, SourcePlan> sourcesByAlias,
                                        Table targetClass, TypeSystemFacade targetTs,
                                        String ruleId,
                                        ModelRegistry modelRegistry,
+                                       Map<String, Map<String, String>> enumMaps,
                                        DiagnosticCollector diag) {
         if (rule.bags == null || rule.bags.isEmpty()) {
             return List.of();
@@ -768,8 +816,17 @@ public final class MappingCompiler {
                 continue;
             }
 
+            // Compile the bag where filter
+            CompiledExpression bagWhere = null;
+            if (from.where != null && !from.where.isBlank()) {
+                Map<String, SourcePlan> bagSourcesByAlias = new HashMap<>(sourcesByAlias);
+                ExpressionCompileContext whereCtx = new ExpressionCompileContext(ruleId,
+                        bagSourcesByAlias, TypeInfo.BOOLEAN, functionRegistry, enumMaps);
+                bagWhere = expressionCompiler.compile(from.where, whereCtx, diag);
+            }
+
             SourcePlan bagSourcePlan = new SourcePlan(from.alias, bagSourceClass,
-                    List.of(from.input), from.where);
+                    List.of(from.input), bagWhere);
 
             // Compile bag assignments against structure attributes
             List<AssignmentPlan> bagAssignments = new ArrayList<>();
@@ -795,11 +852,19 @@ public final class MappingCompiler {
                                 ruleId, "Check the attribute name in the structure type"));
                     }
 
-                    ExpressionKind kind = classifyExpression(expr);
-                    TypeInfo type = inferExpressionType(expr, kind, List.of(bagSourcePlan), diag, ruleId);
+                    TypeInfo expectedType = structAttr != null
+                            ? ExpressionCompiler.classifyIliAttr(structAttr) : TypeInfo.UNKNOWN;
+
+                    Map<String, SourcePlan> bagCtxSources = new HashMap<>();
+                    bagCtxSources.put(from.alias, bagSourcePlan);
+                    bagCtxSources.putAll(sourcesByAlias);
+
+                    ExpressionCompileContext compileCtx = new ExpressionCompileContext(ruleId,
+                            bagCtxSources, expectedType, functionRegistry, enumMaps);
+                    CompiledExpression compiledExpr = expressionCompiler.compile(expr, compileCtx, diag);
 
                     AssignmentPlan ap = new AssignmentPlan(structAttrName,
-                            structAttr, expr, kind, type);
+                            structAttr, compiledExpr);
                     bagAssignments.add(ap);
                 }
             }
@@ -807,19 +872,11 @@ public final class MappingCompiler {
             // Check mandatory coverage for structure attributes
             checkStructureMandatoryCoverage(componentTable, bagAssignments, bagAttrName, ruleId, diag);
 
-            // Validate where expression references
-            String whereExpr = bagSpec.from != null ? bagSpec.from.where : null;
-            if (whereExpr != null && !whereExpr.isBlank()) {
-                List<SourcePlan> allSources = new ArrayList<>(sourcePlans);
-                allSources.add(bagSourcePlan);
-                checkSourcePaths(whereExpr, allSources, ruleId, diag);
-            }
-
             BagPlan.BagMode mode = "expand".equalsIgnoreCase(bagSpec.mode)
                     ? BagPlan.BagMode.EXPAND : BagPlan.BagMode.EMBED;
 
             BagPlan bp = new BagPlan(bagAttrName, bagSourcePlan, effectiveStructureName,
-                    bagAssignments, whereExpr, mode);
+                    bagAssignments, bagWhere, mode);
             bagPlans.add(bp);
         }
         return bagPlans;
@@ -859,7 +916,7 @@ public final class MappingCompiler {
         if (funcName == null) return TypeInfo.UNKNOWN;
         var def = functionRegistry.resolve(funcName);
         if (def.isPresent()) {
-            if (def.get().nonDeterministic()) {
+            if (!def.get().deterministic()) {
                 diag.add(new Diagnostic(DiagnosticCode.EXPR_NON_DETERMINISTIC, Severity.WARNING,
                         "Non-deterministic function used: " + funcName,
                         ruleId, "Results may vary between runs"));

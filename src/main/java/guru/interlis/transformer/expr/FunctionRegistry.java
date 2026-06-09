@@ -20,13 +20,13 @@ public final class FunctionRegistry {
 
     public void register(String name, TypeInfo returnType, List<FunctionDef.FunctionParam> params,
                          FunctionImplementation impl) {
-        register(new FunctionDef(name, returnType, params, false, impl));
+        register(FunctionDef.eager(name, returnType, params, impl));
     }
 
     public void registerNonDeterministic(String name, TypeInfo returnType,
                                           List<FunctionDef.FunctionParam> params,
                                           FunctionImplementation impl) {
-        register(new FunctionDef(name, returnType, params, true, impl));
+        register(FunctionDef.eagerNonDeterministic(name, returnType, params, impl));
     }
 
     public Optional<FunctionDef> resolve(String name) {

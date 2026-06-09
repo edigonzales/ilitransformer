@@ -12,6 +12,7 @@ import guru.interlis.transformer.expr.builtins.EnumFunctions;
 import guru.interlis.transformer.expr.builtins.MathFunctions;
 import guru.interlis.transformer.expr.builtins.RefFunctions;
 import guru.interlis.transformer.expr.builtins.StringFunctions;
+import guru.interlis.transformer.mapping.plan.CompiledExpression;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import java.util.List;
 import java.util.Map;
@@ -54,9 +55,13 @@ public final class ExpressionEngine {
         }
         String trimmed = expression.trim();
 
-        // Legacy quick path: simple string literal
-        if ((trimmed.startsWith("\"") && trimmed.endsWith("\""))
-                || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+        // Legacy quick path: simple string literal (no operators/spaces)
+        if (trimmed.length() >= 2 && ((trimmed.startsWith("\"") && trimmed.endsWith("\""))
+                || (trimmed.startsWith("'") && trimmed.endsWith("'")))
+                && !trimmed.substring(1, trimmed.length() - 1).contains("\"")
+                && !trimmed.substring(1, trimmed.length() - 1).contains("'")
+                && !trimmed.contains("==") && !trimmed.contains("!=")
+                && !trimmed.contains("(") && !trimmed.contains("${")) {
             return new TextValue(trimmed.substring(1, trimmed.length() - 1));
         }
 
@@ -80,17 +85,14 @@ public final class ExpressionEngine {
             return NullValue.INSTANCE;
         }
 
-        try {
-            return evaluateAst(ast, ctx);
-        } catch (Exception e) {
-            if (ctx.diagnostics() != null) {
-                ctx.diagnostics().add(new Diagnostic(
-                        DiagnosticCode.EXPR_TYPE, Severity.ERROR,
-                        "Expression evaluation error: " + e.getMessage(),
-                        ctx.ruleId(), expression));
-            }
+        return evaluateAst(ast, ctx);
+    }
+
+    public Value evaluate(CompiledExpression compiled, EvalContext ctx) {
+        if (compiled == null || compiled.ast() == null) {
             return NullValue.INSTANCE;
         }
+        return evaluateAst(compiled.ast(), ctx);
     }
 
     // -- AST evaluation -----------------------------------------------
@@ -130,17 +132,22 @@ public final class ExpressionEngine {
         }
         FunctionDef def = defOpt.get();
 
-        if (def.nonDeterministic() && ctx.diagnostics() != null) {
+        if (!def.deterministic() && ctx.diagnostics() != null) {
             ctx.diagnostics().add(new Diagnostic(
                     DiagnosticCode.EXPR_NON_DETERMINISTIC, Severity.WARNING,
                     "Non-deterministic function used: " + def.name(),
                     ctx.ruleId(), "Results may vary between runs"));
         }
 
+        if (def.evaluationMode() == EvaluationMode.LAZY && def.lazyImplementation() != null) {
+            return def.lazyImplementation().apply(call.arguments(),
+                    expr -> evaluateAst(expr, ctx), ctx);
+        }
+
         List<Value> evalArgs = call.arguments().stream()
                 .map(arg -> evaluateAst(arg, ctx))
                 .toList();
-        return def.impl().apply(evalArgs, ctx);
+        return def.implementation().apply(evalArgs, ctx);
     }
 
     private Value evaluateConditional(ConditionalExpr cond, EvalContext ctx) {
@@ -153,7 +160,7 @@ public final class ExpressionEngine {
         if (!value.isDefined()) return false;
         if (value instanceof BooleanValue bv) return bv.value();
         if (value instanceof TextValue tv) return !tv.value().isEmpty();
-        if (value instanceof NumberValue nv) return nv.value() != 0;
+        if (value instanceof NumberValue nv) return nv.value().compareTo(java.math.BigDecimal.ZERO) != 0;
         return true;
     }
 

@@ -263,7 +263,8 @@ public final class TransformationEngine {
                         geometryAdapter, sourceAttrTypes);
 
                 // Evaluate where filter
-                if (matchedSource.where() != null && !matchedSource.where().isBlank()) {
+                if (matchedSource.where() != null && matchedSource.where().sourceText() != null
+                        && !matchedSource.where().sourceText().isBlank()) {
                     Value whereResult = expressionEngine.evaluate(matchedSource.where(), evalCtx);
                     if (!isFilterTruthy(whereResult)) {
                         sourceRecordsFiltered++;
@@ -700,7 +701,8 @@ public final class TransformationEngine {
             EvalContext bagCtx = new EvalContext(allSources, diagnostics, rule.ruleId(), plan.enumMaps());
 
             // Evaluate bag where filter
-            if (bag.whereExpression() != null && !bag.whereExpression().isBlank()) {
+            if (bag.whereExpression() != null && bag.whereExpression().sourceText() != null
+                    && !bag.whereExpression().sourceText().isBlank()) {
                 Value whereResult = expressionEngine.evaluate(bag.whereExpression(), bagCtx);
                 if (!isFilterTruthy(whereResult)) {
                     continue;
@@ -890,13 +892,13 @@ public final class TransformationEngine {
         if (value == null || value.isNull()) return false;
         if (value instanceof BooleanValue bv) return bv.value();
         if (value instanceof guru.interlis.transformer.expr.TextValue tv) return !tv.value().isEmpty();
-        if (value instanceof guru.interlis.transformer.expr.NumberValue nv) return nv.value() != 0;
+        if (value instanceof guru.interlis.transformer.expr.NumberValue nv) return nv.value().compareTo(java.math.BigDecimal.ZERO) != 0;
         return true;
     }
 
     private void setTargetAttribute(Iom_jObject target, AssignmentPlan ap, Value value,
                                      TypeSystemFacade targetTs) {
-        TypeInfo targetType = ap.expectedType();
+        TypeInfo targetType = ap.expression().resultType();
         if (isGeometryType(targetType)) {
             IomObject geomObj = geometryAdapter.denormalize(value, targetType);
             if (geomObj != null) {

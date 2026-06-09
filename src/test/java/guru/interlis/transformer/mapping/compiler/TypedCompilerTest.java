@@ -4,7 +4,6 @@ import ch.interlis.ili2c.metamodel.TransferDescription;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
-import guru.interlis.transformer.mapping.plan.ExpressionKind;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.IliModelService;
@@ -60,8 +59,7 @@ class TypedCompilerTest {
         var nameAssign = assignments.stream().filter(a -> a.targetAttrName().equals("Name")).findFirst();
         assertThat(nameAssign).isPresent();
         assertThat(nameAssign.get().targetAttr()).isNotNull();
-        assertThat(nameAssign.get().exprKind()).isEqualTo(ExpressionKind.SOURCE_PATH);
-        assertThat(nameAssign.get().expectedType()).isEqualTo(TypeInfo.TEXT);
+        assertThat(nameAssign.get().expression().resultType()).isEqualTo(TypeInfo.TEXT);
     }
 
     @Test
@@ -78,13 +76,11 @@ class TypedCompilerTest {
 
         var nameAssign = plan.rules().get(0).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Name")).findFirst().orElseThrow();
-        assertThat(nameAssign.exprKind()).isEqualTo(ExpressionKind.LITERAL_TEXT);
-        assertThat(nameAssign.expectedType()).isEqualTo(TypeInfo.TEXT);
+        assertThat(nameAssign.expression().resultType()).isEqualTo(TypeInfo.TEXT);
 
         var boolAssign = plan.rules().get(0).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Aktiv")).findFirst().orElseThrow();
-        assertThat(boolAssign.exprKind()).isEqualTo(ExpressionKind.LITERAL_BOOLEAN);
-        assertThat(boolAssign.expectedType()).isEqualTo(TypeInfo.BOOLEAN);
+        assertThat(boolAssign.expression().resultType()).isEqualTo(TypeInfo.BOOLEAN);
     }
 
     // -- Negative tests -----------------------------------------------------
@@ -250,8 +246,7 @@ class TypedCompilerTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         var assign = plan.rules().get(0).assignments().get(0);
-        assertThat(assign.exprKind()).isEqualTo(ExpressionKind.LITERAL_ENUM);
-        assertThat(assign.expectedType()).isEqualTo(TypeInfo.ENUM);
+        assertThat(assign.expression().resultType()).isEqualTo(TypeInfo.ENUM);
     }
 
     // -- Function type inference (Phase 4) -------------------------
@@ -267,8 +262,7 @@ class TypedCompilerTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         var assign = plan.rules().get(0).assignments().get(0);
-        assertThat(assign.exprKind()).isEqualTo(ExpressionKind.FUNCTION_CALL);
-        assertThat(assign.expectedType()).isEqualTo(TypeInfo.TEXT);
+        assertThat(assign.expression().resultType()).isEqualTo(TypeInfo.TEXT);
     }
 
     @Test
@@ -282,7 +276,7 @@ class TypedCompilerTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         var assign = plan.rules().get(0).assignments().get(0);
-        assertThat(assign.expectedType()).isEqualTo(TypeInfo.XML_DATE_TIME);
+        assertThat(assign.expression().resultType()).isEqualTo(TypeInfo.XML_DATE_TIME);
     }
 
     @Test
@@ -296,7 +290,7 @@ class TypedCompilerTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         var assign = plan.rules().get(0).assignments().get(0);
-        assertThat(assign.expectedType()).isEqualTo(TypeInfo.UNKNOWN);
+        assertThat(assign.expression().resultType()).isEqualTo(TypeInfo.UNKNOWN);
     }
 
     // -- Helpers ------------------------------------------------------------

@@ -8,6 +8,7 @@ import guru.interlis.transformer.expr.NumberValue;
 import guru.interlis.transformer.expr.TextValue;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
+import java.math.BigDecimal;
 import java.util.List;
 
 public final class MathFunctions {
@@ -28,27 +29,29 @@ public final class MathFunctions {
 
     static Value mul(List<Value> args, EvalContext ctx) {
         if (args.size() < 2 || !args.get(0).isDefined()) return NullValue.INSTANCE;
-        double value = toDouble(args.get(0));
-        double factor = toDouble(args.get(1));
-        return new NumberValue(value * factor);
+        BigDecimal value = toBigDecimal(args.get(0));
+        BigDecimal factor = toBigDecimal(args.get(1));
+        if (value == null || factor == null) return NullValue.INSTANCE;
+        return new NumberValue(value.multiply(factor));
     }
 
     static Value div(List<Value> args, EvalContext ctx) {
         if (args.size() < 2 || !args.get(0).isDefined()) return NullValue.INSTANCE;
-        double value = toDouble(args.get(0));
-        double divisor = toDouble(args.get(1));
-        if (divisor == 0.0) return NullValue.INSTANCE;
-        return new NumberValue(value / divisor);
+        BigDecimal value = toBigDecimal(args.get(0));
+        BigDecimal divisor = toBigDecimal(args.get(1));
+        if (value == null || divisor == null) return NullValue.INSTANCE;
+        if (divisor.compareTo(BigDecimal.ZERO) == 0) return NullValue.INSTANCE;
+        return new NumberValue(value.divide(divisor, 10, java.math.RoundingMode.HALF_UP));
     }
 
-    private static double toDouble(Value v) {
+    private static BigDecimal toBigDecimal(Value v) {
         if (v instanceof NumberValue nv) return nv.value();
         if (v instanceof TextValue tv) {
             try {
-                return Double.parseDouble(tv.value());
+                return new BigDecimal(tv.value());
             } catch (NumberFormatException ignored) {
             }
         }
-        return v.asNumber();
+        return null;
     }
 }

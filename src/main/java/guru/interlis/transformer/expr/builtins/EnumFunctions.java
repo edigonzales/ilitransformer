@@ -12,6 +12,7 @@ import guru.interlis.transformer.expr.NullValue;
 import guru.interlis.transformer.expr.NumberValue;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +69,7 @@ public final class EnumFunctions {
         if ("false".equalsIgnoreCase(targetValue)) return BooleanValue.FALSE;
 
         try {
-            return new NumberValue(Double.parseDouble(targetValue));
+            return new NumberValue(new BigDecimal(targetValue));
         } catch (NumberFormatException ignored) {
         }
 

@@ -27,21 +27,21 @@ class ExpressionParserTest {
     void parsesNumberLiteral() {
         Expression expr = ExpressionParser.parse("42");
         assertThat(expr).isInstanceOf(LiteralExpr.class);
-        assertThat(((NumberValue) ((LiteralExpr) expr).value()).value()).isEqualTo(42.0);
+        assertThat(((NumberValue) ((LiteralExpr) expr).value()).value()).isEqualTo(new java.math.BigDecimal("42"));
     }
 
     @Test
     void parsesNegativeNumber() {
         Expression expr = ExpressionParser.parse("-15");
         assertThat(expr).isInstanceOf(LiteralExpr.class);
-        assertThat(((NumberValue) ((LiteralExpr) expr).value()).value()).isEqualTo(-15.0);
+        assertThat(((NumberValue) ((LiteralExpr) expr).value()).value()).isEqualTo(new java.math.BigDecimal("-15"));
     }
 
     @Test
     void parsesDecimalNumber() {
         Expression expr = ExpressionParser.parse("3.14");
         assertThat(expr).isInstanceOf(LiteralExpr.class);
-        assertThat(((NumberValue) ((LiteralExpr) expr).value()).value()).isEqualTo(3.14);
+        assertThat(((NumberValue) ((LiteralExpr) expr).value()).value()).isEqualTo(new java.math.BigDecimal("3.14"));
     }
 
     @Test

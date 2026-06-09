@@ -57,6 +57,15 @@ public final class DiagnosticCode {
     public static final String EXPR_NON_DETERMINISTIC = "ILITRF-EXPR-NON-DETERMINISTIC";
     public static final String EXPR_UNSUPPORTED = "ILITRF-EXPR-UNSUPPORTED";
 
+    // Expression Compiler (Phase 20)
+    public static final String EXPR_UNKNOWN_PATH = "ILITRF-EXPR-UNKNOWN-PATH";
+    public static final String EXPR_WRONG_ARG_COUNT = "ILITRF-EXPR-WRONG-ARG-COUNT";
+    public static final String EXPR_WRONG_ARG_TYPE = "ILITRF-EXPR-WRONG-ARG-TYPE";
+    public static final String EXPR_ENUM_MAP_MISSING = "ILITRF-EXPR-ENUM-MAP-MISSING";
+    public static final String EXPR_ENUM_MAP_INCOMPLETE = "ILITRF-EXPR-ENUM-MAP-INCOMPLETE";
+    public static final String EXPR_ENUM_TARGET_INVALID = "ILITRF-EXPR-ENUM-TARGET-INVALID";
+    public static final String EXPR_NOT_DETERMINISTIC = "ILITRF-EXPR-NOT-DETERMINISTIC";
+
     // DM01/DMAV
     public static final String DMAV_CORRELATION_PARSE = "ILITRF-DMAV-CORRELATION-PARSE";
 

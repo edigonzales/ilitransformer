@@ -1,5 +1,6 @@
 package guru.interlis.transformer.expr;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +19,7 @@ public final class ExpressionParser {
             throw new ExpressionParseException("Expression is empty", expression, 0);
         }
         ExpressionParser parser = new ExpressionParser(expression.trim());
-        Expression result = parser.parseExpression();
+        Expression result = parser.parseOr();
         parser.skipWhitespace();
         if (parser.pos < parser.input.length()) {
             throw new ExpressionParseException(
@@ -28,44 +29,118 @@ public final class ExpressionParser {
         return result;
     }
 
-    // -- Entry points ------------------------------------------------
+    // -- Precedence levels (lowest to highest) -----------------------
 
-    private Expression parseExpression() {
+    private Expression parseOr() {
+        Expression left = parseAnd();
         skipWhitespace();
-        if (pos >= input.length()) {
-            throw error("Unexpected end of expression");
-        }
-        Expression left = parseTopLevel();
-        skipWhitespace();
-
-        // Handle != null and == null comparisons
-        if (pos + 1 < input.length()) {
-            if (input.startsWith("!=", pos)) {
-                pos += 2;
-                skipWhitespace();
-                if (!startsWithIgnoreCase("null")) {
-                    throw error("Expected 'null' after '!='");
-                }
-                pos += 4;
-                return new FunctionCallExpr("defined", List.of(left));
-            }
-            if (input.startsWith("==", pos)) {
-                pos += 2;
-                skipWhitespace();
-                if (!startsWithIgnoreCase("null")) {
-                    throw error("Expected 'null' after '=='");
-                }
-                pos += 4;
-                return new FunctionCallExpr("notDefined", List.of(left));
-            }
+        while (consumeKeyword("or")) {
+            skipWhitespace();
+            Expression right = parseAnd();
+            left = new ConditionalExpr(left, new LiteralExpr(BooleanValue.TRUE), right);
+            skipWhitespace();
         }
         return left;
     }
 
-    private Expression parseTopLevel() {
-        char ch = peek();
+    private Expression parseAnd() {
+        Expression left = parseEquality();
+        skipWhitespace();
+        while (consumeKeyword("and")) {
+            skipWhitespace();
+            Expression right = parseEquality();
+            left = new ConditionalExpr(left, right, new LiteralExpr(BooleanValue.FALSE));
+            skipWhitespace();
+        }
+        return left;
+    }
+
+    private Expression parseEquality() {
+        Expression left = parseComparison();
+        skipWhitespace();
+        while (pos < input.length()) {
+            if (input.startsWith("==", pos)) {
+                pos += 2;
+                skipWhitespace();
+                Expression right = parseComparison();
+                if (isNullLiteral(right)) {
+                    left = new FunctionCallExpr("notDefined", List.of(left));
+                } else {
+                    left = new FunctionCallExpr("eq", List.of(left, right));
+                }
+            } else if (input.startsWith("!=", pos)) {
+                pos += 2;
+                skipWhitespace();
+                Expression right = parseComparison();
+                if (isNullLiteral(right)) {
+                    left = new FunctionCallExpr("defined", List.of(left));
+                } else {
+                    left = new FunctionCallExpr("neq", List.of(left, right));
+                }
+            } else {
+                break;
+            }
+            skipWhitespace();
+        }
+        return left;
+    }
+
+    private Expression parseComparison() {
+        Expression left = parseUnary();
+        skipWhitespace();
+        while (pos < input.length()) {
+            String op = null;
+            if (input.startsWith("<=", pos)) {
+                op = "lte";
+                pos += 2;
+            } else if (input.startsWith(">=", pos)) {
+                op = "gte";
+                pos += 2;
+            } else if (input.startsWith("<", pos)) {
+                op = "lt";
+                pos += 1;
+            } else if (input.startsWith(">", pos)) {
+                op = "gt";
+                pos += 1;
+            } else {
+                break;
+            }
+            skipWhitespace();
+            Expression right = parseUnary();
+            left = new FunctionCallExpr(op, List.of(left, right));
+            skipWhitespace();
+        }
+        return left;
+    }
+
+    private Expression parseUnary() {
+        skipWhitespace();
+        if (consumeKeyword("not")) {
+            skipWhitespace();
+            Expression operand = parseUnary();
+            return new FunctionCallExpr("not", List.of(operand));
+        }
+        return parsePrimary();
+    }
+
+    private Expression parsePrimary() {
+        skipWhitespace();
+        if (pos >= input.length()) {
+            throw error("Unexpected end of expression");
+        }
+
+        char ch = input.charAt(pos);
 
         switch (ch) {
+            case '(':
+                pos++;
+                Expression inner = parseOr();
+                skipWhitespace();
+                if (pos >= input.length() || input.charAt(pos) != ')') {
+                    throw error("Unterminated parenthesized expression");
+                }
+                pos++;
+                return inner;
             case '"':
             case '\'':
                 return parseStringLiteral();
@@ -74,8 +149,9 @@ public final class ExpressionParser {
             case '$':
                 return parsePathRef();
             default:
-                // Could be: number, boolean, null, identifier, function call, if()
-                if (ch == '-' || ch == '+' || Character.isDigit(ch) || (ch == '.' && pos + 1 < input.length() && Character.isDigit(input.charAt(pos + 1)))) {
+                if (ch == '-' || ch == '+' || Character.isDigit(ch)
+                        || (ch == '.' && pos + 1 < input.length()
+                            && Character.isDigit(input.charAt(pos + 1)))) {
                     return parseNumberLiteral();
                 }
                 if (startsWithIgnoreCase("null")) {
@@ -90,18 +166,19 @@ public final class ExpressionParser {
                     pos += 5;
                     return new LiteralExpr(BooleanValue.FALSE);
                 }
-                // identifier-based: function call or bare path
                 return parseIdentifierExpr();
         }
     }
 
+    // -- Literals ----------------------------------------------------
+
     private Expression parseStringLiteral() {
         char quote = input.charAt(pos);
-        pos++; // skip opening quote
+        pos++;
         int start = pos;
         while (pos < input.length() && input.charAt(pos) != quote) {
             if (input.charAt(pos) == '\\' && pos + 1 < input.length()) {
-                pos += 2; // skip escaped char
+                pos += 2;
             } else {
                 pos++;
             }
@@ -110,12 +187,12 @@ public final class ExpressionParser {
             throw error("Unterminated string literal");
         }
         String value = input.substring(start, pos);
-        pos++; // skip closing quote
+        pos++;
         return new LiteralExpr(new TextValue(value));
     }
 
     private Expression parseEnumLiteral() {
-        pos++; // skip #
+        pos++;
         int start = pos;
         while (pos < input.length() && Character.isJavaIdentifierPart(input.charAt(pos))) {
             pos++;
@@ -141,15 +218,17 @@ public final class ExpressionParser {
                 pos++;
             }
         }
-        double value = Double.parseDouble(input.substring(start, pos));
+        BigDecimal value = new BigDecimal(input.substring(start, pos));
         return new LiteralExpr(new NumberValue(value));
     }
+
+    // -- Path reference ----------------------------------------------
 
     private Expression parsePathRef() {
         if (!input.startsWith("${", pos)) {
             throw error("Expected '${' for path reference");
         }
-        pos += 2; // skip ${
+        pos += 2;
         int start = pos;
         while (pos < input.length() && input.charAt(pos) != '.' && input.charAt(pos) != '}') {
             pos++;
@@ -161,7 +240,7 @@ public final class ExpressionParser {
         if (pos >= input.length() || input.charAt(pos) != '.') {
             throw error("Invalid path reference: missing '.' after alias");
         }
-        pos++; // skip .
+        pos++;
         start = pos;
         while (pos < input.length() && input.charAt(pos) != '}') {
             pos++;
@@ -173,30 +252,30 @@ public final class ExpressionParser {
         if (pos >= input.length()) {
             throw error("Unterminated path reference: missing '}'");
         }
-        pos++; // skip }
+        pos++;
         return new PathExpr(alias, attrName);
     }
+
+    // -- Identifier expr (function call or bare path) ----------------
 
     private Expression parseIdentifierExpr() {
         String name = parseIdentifier();
         skipWhitespace();
 
         if (pos < input.length() && input.charAt(pos) == '(') {
-            // Function call
             return parseFunctionCall(name);
         }
-        // Bare identifier – treat as literal or source path depending on content
         if (name.contains(".")) {
             String[] parts = name.split("\\.", 2);
             return new PathExpr(parts[0], parts[1]);
         }
-        // Bare identifier – treat as source path (alias reference)
         return new PathExpr(name, null);
     }
 
     private String parseIdentifier() {
         int start = pos;
-        while (pos < input.length() && (Character.isJavaIdentifierPart(input.charAt(pos)) || input.charAt(pos) == '.')) {
+        while (pos < input.length()
+                && (Character.isJavaIdentifierPart(input.charAt(pos)) || input.charAt(pos) == '.')) {
             pos++;
         }
         if (pos == start) {
@@ -206,22 +285,22 @@ public final class ExpressionParser {
     }
 
     private Expression parseFunctionCall(String functionName) {
-        pos++; // skip (
+        pos++;
         List<Expression> args = new ArrayList<>();
         skipWhitespace();
         if (pos < input.length() && input.charAt(pos) != ')') {
-            args.add(parseExpression());
+            args.add(parseOr());
             skipWhitespace();
             while (pos < input.length() && input.charAt(pos) == ',') {
-                pos++; // skip ,
-                args.add(parseExpression());
+                pos++;
+                args.add(parseOr());
                 skipWhitespace();
             }
         }
         if (pos >= input.length() || input.charAt(pos) != ')') {
             throw error("Unterminated function call: missing ')'");
         }
-        pos++; // skip )
+        pos++;
 
         if ("if".equals(functionName)) {
             if (args.size() != 3) {
@@ -234,14 +313,6 @@ public final class ExpressionParser {
 
     // -- Helpers -----------------------------------------------------
 
-    private char peek() {
-        skipWhitespace();
-        if (pos >= input.length()) {
-            throw error("Unexpected end of expression");
-        }
-        return input.charAt(pos);
-    }
-
     private void skipWhitespace() {
         while (pos < input.length() && Character.isWhitespace(input.charAt(pos))) {
             pos++;
@@ -252,12 +323,23 @@ public final class ExpressionParser {
         if (pos + prefix.length() > input.length()) return false;
         String chunk = input.substring(pos, pos + prefix.length());
         if (!chunk.equalsIgnoreCase(prefix)) return false;
-        // Ensure word boundary after
         if (pos + prefix.length() < input.length()
                 && Character.isJavaIdentifierPart(input.charAt(pos + prefix.length()))) {
             return false;
         }
         return true;
+    }
+
+    private boolean consumeKeyword(String keyword) {
+        if (startsWithIgnoreCase(keyword)) {
+            pos += keyword.length();
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean isNullLiteral(Expression expr) {
+        return expr instanceof LiteralExpr lit && lit.value() instanceof NullValue;
     }
 
     private ExpressionParseException error(String message) {
