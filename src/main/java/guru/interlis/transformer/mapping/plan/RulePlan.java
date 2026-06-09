@@ -10,5 +10,6 @@ public record RulePlan(
         java.util.List<AssignmentPlan> assignments,
         java.util.List<RefPlan> refs,
         java.util.List<BagPlan> bags,
-        java.util.List<String> identitySourceKeys
+        java.util.List<String> identitySourceKeys,
+        CompiledExpression predicate
 ) {}

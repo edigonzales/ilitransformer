@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 class ReferenceResolutionServiceTest {
 
     private static final TransformPlan EMPTY_PLAN = new TransformPlan(
-            "test", "forward", FailPolicy.STRICT,
+            "test", "forward", FailPolicy.STRICT, CompileMode.STRICT,
             List.of(), Map.of(), Map.of(),
             new DiagnosticCollector(),
             new OidPlan(OidStrategy.PRESERVE, "ns"),

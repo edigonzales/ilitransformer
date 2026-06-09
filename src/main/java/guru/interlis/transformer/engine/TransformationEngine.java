@@ -272,6 +272,15 @@ public final class TransformationEngine {
                     }
                 }
 
+                // Phase 21: Evaluate rule-level predicate
+                if (rule.predicate() != null && !rule.predicate().sourceText().isBlank()) {
+                    Value predResult = expressionEngine.evaluate(rule.predicate(), evalCtx);
+                    if (!isFilterTruthy(predResult)) {
+                        sourceRecordsFiltered++;
+                        continue;
+                    }
+                }
+
                 Map<String, String> rawIdentityValues = buildIdentityKeyValues(
                         rule.identitySourceKeys(), record.sourceObject(), matchedSource.alias());
                 String sourceOid = record.sourceObject().getobjectoid();

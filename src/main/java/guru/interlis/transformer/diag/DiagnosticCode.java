@@ -69,6 +69,12 @@ public final class DiagnosticCode {
     // DM01/DMAV
     public static final String DMAV_CORRELATION_PARSE = "ILITRF-DMAV-CORRELATION-PARSE";
 
+    // DSL consistency (Phase 21)
+    public static final String MAP_UNSUPPORTED_FEATURE = "ILITRF-MAP-UNSUPPORTED-FEATURE";
+    public static final String MAP_UNSUPPORTED_BASKET_STRATEGY = "ILITRF-MAP-UNSUPPORTED-BASKET-STRATEGY";
+    public static final String MAP_UNSUPPORTED_BAG_MODE = "ILITRF-MAP-UNSUPPORTED-BAG-MODE";
+    public static final String MAP_UNKNOWN_COMPILE_MODE = "ILITRF-MAP-UNKNOWN-COMPILE-MODE";
+
     // Geometry (Phase 13)
     public static final String GEOM_TYPE_MISMATCH = "ILITRF-GEOM-TYPE-MISMATCH";
     public static final String GEOM_CRS_MISMATCH = "ILITRF-GEOM-CRS-MISMATCH";

@@ -24,6 +24,7 @@ import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.BasketPlan;
+import guru.interlis.transformer.mapping.plan.CompileMode;
 import guru.interlis.transformer.mapping.plan.CompiledExpression;
 import guru.interlis.transformer.mapping.plan.ExpressionCompileContext;
 import guru.interlis.transformer.mapping.plan.ExpressionKind;
@@ -92,11 +93,17 @@ public final class MappingCompiler {
         validateOutputs(config, diagnostics);
         validateRulesStructurally(config, diagnostics);
 
+        // Parse compile mode
+        CompileMode compileMode = parseCompileMode(config.mapping.compileMode, diagnostics);
+
+        // Phase 21: Validate unsupported DSL features
+        new DslCapabilityValidator().validateSupportedFeatures(config, diagnostics);
+
         // Compile rules
         Map<String, Map<String, String>> enumMaps = extractEnumMaps(config);
         List<RulePlan> rulePlans = new ArrayList<>();
         for (JobConfig.RuleSpec rule : config.mapping.rules) {
-            RulePlan rp = compileRule(rule, diagnostics, modelRegistry, enumMaps);
+            RulePlan rp = compileRule(rule, diagnostics, modelRegistry, enumMaps, config.mapping.defaults);
             if (rp != null) {
                 rulePlans.add(rp);
             }
@@ -142,17 +149,29 @@ public final class MappingCompiler {
         // Parse fail policy
         FailPolicy failPolicy = parseFailPolicy(config.job.failPolicy);
 
+        // Phase 21: In STRICT mode, upgrade WARNING diagnostics to ERROR
+        if (compileMode == CompileMode.STRICT) {
+            List<Diagnostic> existing = new ArrayList<>(diagnostics.all());
+            for (Diagnostic d : existing) {
+                if (d.severity() == Severity.WARNING) {
+                    diagnostics.add(new Diagnostic(d.code(), Severity.ERROR, d.message(),
+                            d.sourcePath(), d.suggestion()));
+                }
+            }
+        }
+
         return new TransformPlan(
                 config.job.name,
                 config.job.direction,
                 failPolicy,
+                compileMode,
                 rulePlans,
                 modelRegistry.inputsById(),
                 modelRegistry.outputsById(),
                 diagnostics,
                 new OidPlan(oidStrategy, oidNamespace),
                 new BasketPlan(basketStrategy),
-                extractEnumMaps(config)
+                enumMaps
         );
     }
 
@@ -191,7 +210,8 @@ public final class MappingCompiler {
 
     private RulePlan compileRule(JobConfig.RuleSpec rule, DiagnosticCollector diag,
                                   ModelRegistry modelRegistry,
-                                  Map<String, Map<String, String>> enumMaps) {
+                                  Map<String, Map<String, String>> enumMaps,
+                                  Map<String, String> mappingDefaults) {
         String ruleId = rule.id;
         String targetOutput = rule.getEffectiveTargetOutput();
         String targetClassName = rule.getEffectiveTargetClass();
@@ -244,6 +264,14 @@ public final class MappingCompiler {
             sourcesByAlias.put(sp.alias(), sp);
         }
 
+        // Compile rule-level predicate (Phase 21)
+        CompiledExpression predicate = null;
+        if (rule.where != null && !rule.where.isBlank()) {
+            ExpressionCompileContext predCtx = new ExpressionCompileContext(
+                    ruleId, sourcesByAlias, TypeInfo.BOOLEAN, functionRegistry, enumMaps);
+            predicate = expressionCompiler.compile(rule.where, predCtx, diag);
+        }
+
         // Compile assignments
         List<AssignmentPlan> assignmentPlans = new ArrayList<>();
         Set<String> assignedTargets = new HashSet<>();
@@ -262,7 +290,35 @@ public final class MappingCompiler {
             }
         }
 
-        // Check mandatory coverage
+        // Phase 21: Compile rule-level defaults
+        if (rule.defaults != null && !rule.defaults.isEmpty()) {
+            for (var entry : rule.defaults.entrySet()) {
+                if (!assignedTargets.contains(entry.getKey())) {
+                    AssignmentPlan dp = compileDefaultAssignment(entry.getKey(), entry.getValue(),
+                            targetClass, targetTs, sourcesByAlias, ruleId, enumMaps, diag);
+                    if (dp != null) {
+                        assignedTargets.add(entry.getKey());
+                        assignmentPlans.add(dp);
+                    }
+                }
+            }
+        }
+
+        // Phase 21: Compile mapping-level defaults (fallback after rule defaults)
+        if (mappingDefaults != null && !mappingDefaults.isEmpty()) {
+            for (var entry : mappingDefaults.entrySet()) {
+                if (!assignedTargets.contains(entry.getKey())) {
+                    AssignmentPlan dp = compileDefaultAssignment(entry.getKey(), entry.getValue(),
+                            targetClass, targetTs, sourcesByAlias, ruleId, enumMaps, diag);
+                    if (dp != null) {
+                        assignedTargets.add(entry.getKey());
+                        assignmentPlans.add(dp);
+                    }
+                }
+            }
+        }
+
+        // Check mandatory coverage (after defaults, Phase 21)
         if (targetTs != null) {
             checkMandatoryCoverage(targetClass, targetTs, assignmentPlans, ruleId, diag);
         }
@@ -291,7 +347,8 @@ public final class MappingCompiler {
                 assignmentPlans,
                 refPlans,
                 bagPlans,
-                identitySourceKeys
+                identitySourceKeys,
+                predicate
         );
     }
 
@@ -389,6 +446,39 @@ public final class MappingCompiler {
                         "Type mismatch: expression '" + expr + "' produces " + compiled.resultType()
                                 + " but target '" + targetName + "' expects " + targetType,
                         ruleId, "Add a type conversion or check the expression"));
+            }
+        }
+
+        return new AssignmentPlan(targetName, targetAttr, compiled);
+    }
+
+    private AssignmentPlan compileDefaultAssignment(String targetName, String expr,
+                                                     Table targetClass, TypeSystemFacade targetTs,
+                                                     Map<String, SourcePlan> sourcesByAlias,
+                                                     String ruleId,
+                                                     Map<String, Map<String, String>> enumMaps,
+                                                     DiagnosticCollector diag) {
+        AttributeDef targetAttr = null;
+        if (targetTs != null) {
+            targetAttr = targetTs.findAttribute(targetClass, targetName);
+        }
+
+        TypeInfo expectedTargetType = targetAttr != null
+                ? ExpressionCompiler.classifyIliAttr(targetAttr) : TypeInfo.UNKNOWN;
+
+        ExpressionCompileContext compileCtx = new ExpressionCompileContext(ruleId, sourcesByAlias,
+                expectedTargetType, functionRegistry, enumMaps);
+
+        CompiledExpression compiled = expressionCompiler.compile(expr, compileCtx, diag);
+
+        if (targetAttr != null && compiled.resultType() != TypeInfo.UNKNOWN) {
+            TypeInfo targetType = ExpressionCompiler.classifyIliAttr(targetAttr);
+            if (!isTypeCompatible(compiled.resultType(), targetType)) {
+                diag.add(new Diagnostic(DiagnosticCode.MAP_TYPE_MISMATCH, Severity.WARNING,
+                        "Default expression '" + expr + "' for '" + targetName
+                                + "' produces " + compiled.resultType()
+                                + " but target expects " + targetType,
+                        ruleId, "Check the default expression type"));
             }
         }
 
@@ -1193,6 +1283,17 @@ public final class MappingCompiler {
         if (failPolicy.equalsIgnoreCase("lenient")) return FailPolicy.LENIENT;
         if (failPolicy.equalsIgnoreCase("report_only") || failPolicy.equalsIgnoreCase("reportOnly")) return FailPolicy.REPORT_ONLY;
         return FailPolicy.STRICT;
+    }
+
+    private static CompileMode parseCompileMode(String compileMode, DiagnosticCollector diag) {
+        if (compileMode == null) return CompileMode.STRICT;
+        if (compileMode.equalsIgnoreCase("strict")) return CompileMode.STRICT;
+        if (compileMode.equalsIgnoreCase("compatible")) return CompileMode.COMPATIBLE;
+        if (compileMode.equalsIgnoreCase("report")) return CompileMode.REPORT;
+        diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_COMPILE_MODE, Severity.WARNING,
+                "Unknown compileMode: " + compileMode,
+                null, "Valid values: strict, compatible, report"));
+        return CompileMode.STRICT;
     }
 
     // -- Structural validation (unchanged from Phase 1) --------------------
