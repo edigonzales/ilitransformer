@@ -314,6 +314,27 @@ public final class FeatureMatrix {
                 "Scan/Classify von Transfer-Dateien ohne harte Dateinamen; requireSingleItf/Xtf",
                 "RealDatasetCatalogTest"));
 
+        // Phase 27: Reale Datensatzinventarisierung und Testausschnitte
+        entries.add(FeatureEntry.of("TransferInventory & Inventory Service", "27",
+                FeatureStatus.SUPPORTED,
+                "Transfer-Inhaltsstatistiken (Objektzahlen pro Klasse, OID-Typen, Geometrietypen, Referenzen, LFP3-Erkennung)",
+                "FullDatasetInventoryTest"));
+
+        entries.add(FeatureEntry.of("ConnectedSubgraphExtractor", "27",
+                FeatureStatus.SUPPORTED,
+                "Extrahiert fachlich zusammenhängende Teiltransfers inklusive Referenzen; BFS-Expansion, Bidirectional, maxDepth/maxObjects",
+                "ConnectedSubgraphExtractorTest"));
+
+        entries.add(FeatureEntry.of("LFP3 Fixture Extraction (DMAV)", "27",
+                FeatureStatus.SUPPORTED,
+                "Aus realem DMAV-Datensatz LFP3-Fixtures extrahieren und mit ilivalidator validieren",
+                "ExtractedDmavFixtureValidationTest"));
+
+        entries.add(FeatureEntry.of("DM01 ITF Fixture Extraction", "27",
+                FeatureStatus.PARTIAL,
+                "DM01-Daten können gelesen und inventarisiert werden; ITF-Geometrie-Hilfstabellen verhindern Write-Back",
+                "ExtractedDm01FixtureValidationTest"));
+
         entries.add(FeatureEntry.of("Persistent StateStore", "-",
                 FeatureStatus.UNSUPPORTED,
                 "Disk-backed or database-backed state store",

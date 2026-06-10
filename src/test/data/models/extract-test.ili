@@ -1,0 +1,19 @@
+INTERLIS 2.4;
+
+MODEL ExtractTest (en)
+  AT "http://test.ili-transformer.ch" VERSION "2026-06-07" =
+  TOPIC ExtractTopic =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Parent =
+      Name: MANDATORY TEXT*60;
+    END Parent;
+
+    CLASS Child =
+      Name: MANDATORY TEXT*60;
+      ParentRef: REFERENCE TO Parent;
+    END Child;
+
+  END ExtractTopic;
+END ExtractTest.
