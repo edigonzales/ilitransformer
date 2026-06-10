@@ -3,12 +3,17 @@ package guru.interlis.transformer.interlis;
 import guru.interlis.transformer.geometry.ItfGeometryWriter;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.itf.ItfReader2;
 import ch.interlis.iom_j.itf.ItfWriter;
 import ch.interlis.iom_j.xtf.Xtf24Reader;
 import ch.interlis.iom_j.xtf.XtfWriter;
+import ch.interlis.iox.EndTransferEvent;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.IoxWriter;
+import ch.interlis.iox.IoxException;
 import ch.interlis.iox_j.IoxIliReader;
 import java.nio.file.Path;
 
@@ -27,7 +32,7 @@ public final class InterlisIoFactory {
         if (reader instanceof IoxIliReader iliReader) {
             iliReader.setModel(transferDescription);
         }
-        return reader;
+        return new EndTransferAwareReader(reader);
     }
 
     public IoxWriter createWriter(Path path, TransferDescription transferDescription) throws Exception {
@@ -45,5 +50,46 @@ public final class InterlisIoFactory {
             return new XtfWriter(path.toFile(), transferDescription);
         }
         throw new IllegalArgumentException("Unsupported output file type: " + path);
+    }
+
+    private static final class EndTransferAwareReader implements IoxReader {
+        private final IoxReader delegate;
+        private boolean endTransferSeen;
+
+        private EndTransferAwareReader(IoxReader delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public IoxEvent read() throws IoxException {
+            if (endTransferSeen) {
+                return null;
+            }
+            IoxEvent event = delegate.read();
+            if (event instanceof EndTransferEvent) {
+                endTransferSeen = true;
+            }
+            return event;
+        }
+
+        @Override
+        public void close() throws IoxException {
+            delegate.close();
+        }
+
+        @Override
+        public void setFactory(IoxFactoryCollection factory) throws IoxException {
+            delegate.setFactory(factory);
+        }
+
+        @Override
+        public IoxFactoryCollection getFactory() throws IoxException {
+            return delegate.getFactory();
+        }
+
+        @Override
+        public IomObject createIomObject(String type, String oid) throws IoxException {
+            return delegate.createIomObject(type, oid);
+        }
     }
 }

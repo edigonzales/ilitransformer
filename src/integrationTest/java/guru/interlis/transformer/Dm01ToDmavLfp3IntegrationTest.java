@@ -142,16 +142,14 @@ class Dm01ToDmavLfp3IntegrationTest {
             assertThat(content).contains("Stein");
             assertThat(content).contains("0.05");
             assertThat(content).contains("0.02");
-            assertThat(content).contains("2025-01-15");
+            assertThat(content).contains("2025-01-15T12:00:00");
             assertThat(content).contains("keine");
             assertThat(result.summary()).contains("DETERMINISTIC_UUID");
 
             for (Diagnostic d : engineDiag.all()) {
                 System.out.println("  Engine: [" + d.severity() + "] " + d.message());
             }
-            // coalesce() evaluates all arguments eagerly including now(),
-            // so non-deterministic warning is expected even when first arg is defined
-            assertThat(engineDiag.all()).allMatch(d -> d.message().contains("Non-deterministic"));
+            assertThat(engineDiag.all()).isEmpty();
         } finally {
             Files.deleteIfExists(outputPath);
         }
@@ -202,7 +200,7 @@ class Dm01ToDmavLfp3IntegrationTest {
     }
 
     @Test
-    void gueltigerEintragFallsBackToNow() throws Exception {
+    void gueltigerEintragMissingDoesNotUseNowFallback() throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
@@ -233,15 +231,12 @@ class Dm01ToDmavLfp3IntegrationTest {
             DiagnosticCollector engineDiag = new DiagnosticCollector();
             TransformationEngine engine = new TransformationEngine(
                     new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dmav", writer));
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dmav", writer));
 
+            assertThat(result.errors()).isZero();
             String content = Files.readString(outputPath);
-            assertThat(content).contains("LFP3Nachfuehrung");
-            assertThat(content).containsPattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}");
-
-            boolean hasNonDetWarning = engineDiag.all().stream()
-                    .anyMatch(d -> d.message().contains("Non-deterministic"));
-            assertThat(hasNonDetWarning).isTrue();
+            assertThat(content).doesNotContain("GueltigerEintrag");
+            assertThat(engineDiag.all()).isEmpty();
         } finally {
             Files.deleteIfExists(outputPath);
         }
@@ -330,14 +325,16 @@ class Dm01ToDmavLfp3IntegrationTest {
 
         // LFP3Pos objects to become Textposition BAG items
         Iom_jObject pos1 = new Iom_jObject("Dm01TestModel.Fixpunkte.LFP3Pos", "100");
-        pos1.setattrvalue("LFP3Pos_von", "10"); // references LFP3 OID
+        IomObject pos1Ref = pos1.addattrobj("LFP3Pos_von", Iom_jObject.REF);
+        pos1Ref.setobjectrefoid("10");
         pos1.setattrvalue("Pos", "2600001.000");
         pos1.setattrvalue("Ori", "45.0");
         pos1.setattrvalue("HAli", "Center");
         pos1.setattrvalue("VAli", "Half");
 
         Iom_jObject pos2 = new Iom_jObject("Dm01TestModel.Fixpunkte.LFP3Pos", "101");
-        pos2.setattrvalue("LFP3Pos_von", "10");
+        IomObject pos2Ref = pos2.addattrobj("LFP3Pos_von", Iom_jObject.REF);
+        pos2Ref.setobjectrefoid("10");
         pos2.setattrvalue("Pos", "2600002.000");
         pos2.setattrvalue("Ori", "90.0");
         pos2.setattrvalue("HAli", "Right");

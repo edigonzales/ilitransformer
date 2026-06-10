@@ -54,7 +54,7 @@ class BasketStrategyTest {
     void byTopicCreatesTopicBasedBasketId() {
         String result = BasketRouter.determineTargetBasket(
                 BasketStrategy.BY_TOPIC, null, "MyModel.MyTopic", "Class");
-        assertThat(result).isEqualTo("basket-MyModel.MyTopic");
+        assertThatCode(() -> UUID.fromString(result)).doesNotThrowAnyException();
     }
 
     @Test

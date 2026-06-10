@@ -112,6 +112,9 @@ public final class JobConfig {
         @JsonProperty("bags")
         public Map<String, BagSpec> bags;
 
+        @JsonProperty("losses")
+        public List<LossSpec> losses;
+
         @JsonProperty("create")
         public List<CreateSpec> create;
 
@@ -254,8 +257,16 @@ public final class JobConfig {
         public String structure;
         public Map<String, String> assign;
         public String mode;
+        public Integer maxItems;
         @JsonProperty("parentRef")
         public BagParentRef parentRef;
+    }
+
+    public static final class LossSpec {
+        public String sourcePath;
+        public String reasonCode;
+        public String description;
+        public String when;
     }
 
     public static final class BagParentRef {

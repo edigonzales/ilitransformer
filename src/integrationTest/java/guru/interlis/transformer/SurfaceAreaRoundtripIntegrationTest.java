@@ -39,6 +39,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class SurfaceAreaRoundtripIntegrationTest {
 
@@ -187,6 +188,7 @@ class SurfaceAreaRoundtripIntegrationTest {
 
     @Test
     void realDmavSurfaceReverseSmoke() throws Exception {
+        assumeTrue(Files.exists(REAL_DMAV_INPUT), "real DMAV fixture not present: " + REAL_DMAV_INPUT);
         IliModelService service = new IliModelService();
         IliModelCompileResult sourceResult = service.compileModel(REAL_DMAV_MODEL, REAL_DMAV_MODELDIR);
         if (sourceResult.hasErrors()) {

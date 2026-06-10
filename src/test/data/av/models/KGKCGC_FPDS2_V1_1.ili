@@ -1,2 +1,187 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message><Key>V_D/KGKCGC_FPDS2_V1_1.ili</Key><RequestId>7W75SX7BBQFB63QK</RequestId><HostId>jyC+poT+so/KRCYsBRkYshbyMTe9yzGCnBq28JAcHuytBJUjUDm2iRBHjUgTPCnRpJM770r++V52+5iaFtGez1uIlRtAvjQU</HostId></Error>
+INTERLIS 2.4;
+
+/** DE: Fixpunkt-Datenservice 2.0
+ *  FR: Service de donnees sur les points fixes 2.0
+ *  IT: Servizzio Dati Punti Fisso 2.0
+ *  EN: Control Point Data Service 2.0
+ *
+ *  [2022-07-01] 1.0 Initialer Modellrelease
+ *  [2022-07-14] 1.1 Umwandlung Strukturen in Klassen
+ *  [2025-08-14] 1.1-patch Metaattribut IDGeoIV=228.1
+*/
+
+!!@ IDGeoIV=228.1
+!!@ technicalContact=mailto:info@kgk-cgc.ch
+!!@ furtherInformation=https://models.kgk-cgc.ch/pdf/KGKCGC_FPDS2_V1_1_DE.pdf
+MODEL KGKCGC_FPDS2_V1_1 (de)
+AT "https://www.kgk-cgc.ch"
+VERSION "2025-08-14"  =
+  IMPORTS CHAdminCodes_V2;
+  IMPORTS GeometryCHLV95_V2;
+
+  DOMAIN
+
+    Genauigkeit = 0.001 .. 7.000 [INTERLIS.M];
+
+    NBIdent = TEXT*12;
+
+    Zuverlaessigkeit = (
+      ja,
+      nein
+    );
+
+  TOPIC FPDS2 =
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS UebersichtGeodienst =
+      Bezeichnung : MANDATORY TEXT*30;
+      URL : MANDATORY INTERLIS.URI;
+    END UebersichtGeodienst;
+
+    CLASS UebersichtMassstab =
+      Massstabszahl : MANDATORY 0.0 .. 2500000.0;
+    END UebersichtMassstab;
+
+    CLASS Zustaendigkeit =
+      Kanton : MANDATORY CHAdminCodes_V2.CHCantonCode;
+      Name : MANDATORY MTEXT*100;
+      Adresse : MTEXT*50;
+    END Zustaendigkeit;
+
+    CLASS Fixpunkt =
+      Art : MANDATORY (
+        LFP2,
+        HFP2
+      );
+      Begehbarkeit : MANDATORY (
+          begehbar,
+          nicht_begehbar
+      );
+      Bemerkung : MTEXT*400;
+      Bildquelle1 : INTERLIS.URI;
+      Bildquelle2 : INTERLIS.URI;
+      GNSSSichtbarkeit : MANDATORY (
+        gut,
+        mittel,
+        schlecht,
+        keine_Angabe
+      );
+      Inschrift : TEXT*8;
+      NBIdent : MANDATORY KGKCGC_FPDS2_V1_1.NBIdent;
+      Nummer : MANDATORY TEXT*12;
+      ProtokollSprache : MANDATORY (
+        deutsch,
+        franzoesisch,
+        italienisch
+      );
+      SymbolOri : 0.0 .. 399.9 CIRCULAR CLOCKWISE;
+      TSP : MANDATORY BOOLEAN;
+      Unterhaltsstrategie : MANDATORY (
+          aktiv,
+          passiv
+      );
+      UNIQUE NBIdent, Nummer;
+    END Fixpunkt;
+
+    CONSTRAINTS OF Fixpunkt =
+      MANDATORY CONSTRAINT Art != #LFP2 OR DEFINED(SymbolOri);
+    END;
+
+    CLASS FixpunktVersion =
+      Geometrie : GeometryCHLV95_V2.Coord2;
+      UntergegangenAm : INTERLIS.XMLDate;
+      HoeheGen : KGKCGC_FPDS2_V1_1.Genauigkeit;
+      HoeheGeom : -200.000 .. 5000.000 [INTERLIS.M];
+      HoeheZuv : KGKCGC_FPDS2_V1_1.Zuverlaessigkeit;
+      Koordinatenbestimmung : MANDATORY (
+        transformiert,
+        gemessen_LV95
+      );
+      LageGen : MANDATORY KGKCGC_FPDS2_V1_1.Genauigkeit;
+      LageZuv : MANDATORY KGKCGC_FPDS2_V1_1.Zuverlaessigkeit;
+      Punktzeichen : MANDATORY (
+        Bolzen_horizontal,
+        Bolzen,
+        Bolzen_mit_Stiftloch,
+        Bronzeplatte,
+        Kappenbolzen,
+        Landesnivellement,
+        Mast_Antenne,
+        Niete,
+        Nivellementsbolzen,
+        Pyramide,
+        Stein,
+        Turm,
+        unterirdische_Versicherung,
+        weitere
+      );
+      Punktzeichenbeschreibung : MTEXT*250;
+      Schutzart : (
+        kein_Schutz,
+        Schacht,
+        ueberdeckt
+      );
+      Steinsatz : TEXT*50;
+      SekundaereVersicherung : MTEXT*100;
+    END FixpunktVersion;
+
+    CLASS FixpunktAktion =
+      Beschreibung : MANDATORY MTEXT*60;
+      Datum : MANDATORY INTERLIS.XMLDate;
+    END FixpunktAktion;
+
+    CLASS FixpunkteNachfuehrung =
+      Bemerkung : MTEXT*300;
+      Beschreibung : MANDATORY TEXT*30;
+      GueltigerEintrag : INTERLIS.XMLDate;
+      DatumEroeffnung : MANDATORY INTERLIS.XMLDate;
+      Identifikator : MANDATORY TEXT*12;
+      NBIdent : MANDATORY KGKCGC_FPDS2_V1_1.NBIdent;
+      Status : MANDATORY (
+        in_Bearbeitung,
+        abgeschlossen
+      );
+      UNIQUE NBIdent, Identifikator;
+    END FixpunkteNachfuehrung;
+	
+    ASSOCIATION FP_UebersichtGeodienst =
+      UG -- {1} UebersichtGeodienst;
+      FP -- {0..*} Fixpunkt;
+    END FP_UebersichtGeodienst;
+	
+    ASSOCIATION FP_UebersichtMassstab =
+      UM -- {1} UebersichtMassstab;
+      FP -- {0..*} Fixpunkt;
+    END FP_UebersichtMassstab;
+	
+    ASSOCIATION FP_Zustaendigkeit =
+      ZS -- {1} Zustaendigkeit;
+      FP -- {0..*} Fixpunkt;
+    END FP_Zustaendigkeit;
+	
+    ASSOCIATION FPVersion_FPNachfuehrung =
+      FPN -- {1} FixpunkteNachfuehrung;
+      FPV -- {0..*} FixpunktVersion;
+    END FPVersion_FPNachfuehrung;
+
+    ASSOCIATION FP_FPAktion =
+      FP -- {1} Fixpunkt;
+      FPA -- {0..*} FixpunktAktion;
+    END FP_FPAktion;
+
+    ASSOCIATION FP_FPVersion =
+      FPV -- {0..*} FixpunktVersion;
+      FP -- {1} Fixpunkt;
+    END FP_FPVersion;
+
+    CONSTRAINTS OF FixpunktVersion =
+      MANDATORY CONSTRAINT FP->Art != #HFP2 OR DEFINED(HoeheGeom);
+      MANDATORY CONSTRAINT FP->Art != #HFP2 OR DEFINED(HoeheGen);
+      MANDATORY CONSTRAINT FP->Art != #HFP2 OR DEFINED(HoeheZuv);
+      MANDATORY CONSTRAINT FP->Art != #LFP2 OR (DEFINED(HoeheGeom) AND DEFINED(HoeheGen)) OR (NOT(DEFINED(HoeheGeom)) AND NOT(DEFINED(HoeheGen)));
+      MANDATORY CONSTRAINT FP->Art != #LFP2 OR (DEFINED(HoeheGeom) AND DEFINED(HoeheZuv)) OR (NOT(DEFINED(HoeheGeom)) AND NOT(DEFINED(HoeheZuv)));
+    END;
+
+  END FPDS2;
+
+END KGKCGC_FPDS2_V1_1.

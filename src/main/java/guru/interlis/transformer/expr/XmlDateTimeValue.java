@@ -4,20 +4,24 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 public record XmlDateTimeValue(ZonedDateTime value) implements Value {
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     @Override
     public String asText() {
-        return value.format(FORMATTER);
+        return format();
     }
 
     @Override
     public Object toNative() {
-        return value.format(FORMATTER);
+        return format();
     }
 
     @Override
     public String toString() {
-        return value.format(FORMATTER);
+        return format();
+    }
+
+    private String format() {
+        return value.toLocalDateTime().format(FORMATTER);
     }
 }

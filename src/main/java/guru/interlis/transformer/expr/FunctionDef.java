@@ -41,4 +41,11 @@ public record FunctionDef(
         return new FunctionDef(name, params, false,
                 returnTypeResolver, deterministic, EvaluationMode.LAZY, null, impl);
     }
+
+    public static FunctionDef lazyVariadic(String name, TypeResolver returnTypeResolver,
+                                             List<FunctionParam> params, boolean deterministic,
+                                             LazyFunctionImplementation impl) {
+        return new FunctionDef(name, params, true,
+                returnTypeResolver, deterministic, EvaluationMode.LAZY, null, impl);
+    }
 }

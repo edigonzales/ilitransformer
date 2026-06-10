@@ -1,6 +1,7 @@
 package guru.interlis.transformer.engine;
 
 import guru.interlis.transformer.state.BasketStrategy;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 public final class BasketRouter {
@@ -13,7 +14,8 @@ public final class BasketRouter {
             case PRESERVE -> sourceBasketId;
             case GENERATE_UUID -> UUID.randomUUID().toString();
             case PRESERVE_OR_GENERATE_UUID -> preserveOrGenerate(sourceBasketId);
-            case BY_TOPIC -> "basket-" + targetTopic;
+            case BY_TOPIC -> UUID.nameUUIDFromBytes(("basket:" + targetTopic)
+                    .getBytes(StandardCharsets.UTF_8)).toString();
             case EXPRESSION -> null;
         };
     }

@@ -1,25 +1,30 @@
 version: 1
 
+# Test-Mapping für RealDm01ToDmavLfp3EndToEndTest
+# Verwendet absolute Pfade zum Projekt-Root (CWD)
 job:
-  name: dm01-to-dmav-lfp3-test
-  description: "Test transformation for enumMap + div + refs"
+  name: dm01-to-dmav-lfp3-real
+  description: "Real-data test: DM01 FixpunkteKategorie3.LFP3 nach DMAV FixpunkteAVKategorie3.LFP3"
   direction: dm01-to-dmav
   failPolicy: strict
+  modeldir:
+    - "https://models.interlis.ch"
   inputs:
     - id: dm01
-      path: "input/test.itf"
-      model: "Dm01TestModel"
+      path: "src/test/resources/real-dm01-dmav/lfp3/dm01-input.itf"
+      model: "DM01AVCH24LV95D"
       format: "itf"
   outputs:
     - id: dmav
-      path: "build/out/dmav-test.xtf"
-      model: "DmavTestModel"
+      path: "build/out/dmav-lfp3-real.xtf"
+      model: "DMAV_FixpunkteAVKategorie3_V1_1"
       format: "xtf"
 
 mapping:
+  compileMode: compatible
   oidStrategy:
     default: deterministicUuid
-    namespace: "test-lfp3"
+    namespace: "dm01-to-dmav-lfp3-real"
   basketStrategy:
     default: byTopic
 
@@ -36,42 +41,33 @@ mapping:
       Kreuz: "Kreuz"
       unversichert: "unversichert"
       weitere: "weitere"
-    HAlignment_DM01_DMAV:
-      Left: "Left"
-      Center: "Center"
-      Right: "Right"
-    VAlignment_DM01_DMAV:
-      Top: "Top"
-      Cap: "Cap"
-      Half: "Half"
-      Baseline: "Baseline"
-      Bottom: "Bottom"
 
   rules:
     - id: lfp3-nachfuehrung
       target:
         output: dmav
-        class: "DmavTestModel.Fixpunkte.LFP3Nachfuehrung"
+        class: "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3Nachfuehrung"
       sources:
         - alias: nf
           input: dm01
-          class: "Dm01TestModel.Fixpunkte.LFP3Nachfuehrung"
+          class: "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
       assign:
         NBIdent: "nf.NBIdent"
         Identifikator: "nf.Identifikator"
         Beschreibung: "truncate(nf.Beschreibung, 60)"
-        GueltigerEintrag: "toXmlDateTime(nf.GueltigerEintrag)"
+        Perimeter: "nf.Perimeter"
+        GueltigerEintrag: "toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1))"
 
     - id: lfp3
       target:
         output: dmav
-        class: "DmavTestModel.Fixpunkte.LFP3"
+        class: "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3"
       sources:
         - alias: p
           input: dm01
-          class: "Dm01TestModel.Fixpunkte.LFP3"
+          class: "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3"
       identity:
         sourceKey: ["p.NBIdent", "p.Nummer"]
       assign:
@@ -80,10 +76,10 @@ mapping:
         LFPArt: "#LFP3"
         Geometrie: "p.Geometrie"
         Hoehengeometrie: "p.HoeheGeom"
-        Lagegenauigkeit: "div(p.Lagegenauigkeit, 100.0)"
-        IstLagezuverlaessig: "enumMap(p.IstLagezuverlaessig, 'Zuverlaessigkeit_DM01_DMAV')"
-        Hoehengenauigkeit: "div(p.Hoehengenauigkeit, 100.0)"
-        IstHoehenzuverlaessig: "enumMap(p.IstHoehenzuverlaessig, 'Zuverlaessigkeit_DM01_DMAV')"
+        Lagegenauigkeit: "div(p.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(p.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        Hoehengenauigkeit: "div(p.HoeheGen, 100.0)"
+        IstHoehenzuverlaessig: "enumMap(p.HoeheZuv, 'Zuverlaessigkeit_DM01_DMAV')"
         Punktzeichen: "enumMap(p.Punktzeichen, 'Versicherungsart_DM01_DMAV')"
         Grenzpunktfunktion: "#keine"
         AktiverUnterhalt: "true"
@@ -91,15 +87,14 @@ mapping:
         Textposition:
           from:
             input: dm01
-            class: "Dm01TestModel.Fixpunkte.LFP3Pos"
+            class: "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Pos"
             alias: pos
             where: "refEquals(pos.LFP3Pos_von, p)"
-          structure: "DmavTestModel.Fixpunkte.Textposition"
           assign:
             Position: "pos.Pos"
             Orientierung: "coalesce(pos.Ori, 100.0)"
-            HReferenzpunkt: "enumMap(coalesce(pos.HAli, 'Left'), 'HAlignment_DM01_DMAV')"
-            VReferenzpunkt: "enumMap(coalesce(pos.VAli, 'Baseline'), 'VAlignment_DM01_DMAV')"
+            HReferenzpunkt: "coalesce(pos.HAli, 'Left')"
+            VReferenzpunkt: "coalesce(pos.VAli, 'Bottom')"
       refs:
         - association: "Entstehung_LFP3"
           role: "Entstehung"

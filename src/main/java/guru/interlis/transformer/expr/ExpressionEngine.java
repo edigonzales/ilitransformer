@@ -195,11 +195,29 @@ public final class ExpressionEngine {
             return resolveGeometryValue(source, attrName, attrType, ctx);
         }
 
+        if (attrType == TypeInfo.REFERENCE) {
+            String refOid = readReferenceOid(source, attrName);
+            if (refOid != null) {
+                return new ReferenceValue(null, refOid);
+            }
+            return NullValue.INSTANCE;
+        }
+
         String attrValue = source.getattrvalue(parts[1]);
         if (attrValue == null) {
             return NullValue.INSTANCE;
         }
         return new TextValue(attrValue);
+    }
+
+    private String readReferenceOid(IomObject source, String attrName) {
+        if (source.getattrvaluecount(attrName) > 0) {
+            IomObject refObj = source.getattrobj(attrName, 0);
+            if (refObj != null && refObj.getobjectrefoid() != null) {
+                return refObj.getobjectrefoid();
+            }
+        }
+        return source.getattrvalue(attrName);
     }
 
     private TypeInfo resolveSourceAttributeType(EvalContext ctx, String alias, String attrName) {

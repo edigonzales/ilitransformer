@@ -10,6 +10,7 @@ import guru.interlis.transformer.mapping.plan.ResolvedPath;
 import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -93,17 +94,20 @@ public final class ExpressionCompiler {
         }
 
         if (source.sourceClass() != null) {
-            var it = source.sourceClass().getAttributes();
-            while (it.hasNext()) {
-                ch.interlis.ili2c.metamodel.Extendable ext = it.next();
-                if (ext instanceof ch.interlis.ili2c.metamodel.AttributeDef attrDef) {
-                    if (attrName.equals(attrDef.getName())) {
-                        TypeInfo attrType = classifyIliAttr(attrDef);
-                        paths.add(new ResolvedPath(alias, attrName,
-                                source.sourceClass().getName(), attrType));
-                        return attrType;
-                    }
-                }
+            ch.interlis.ili2c.metamodel.AttributeDef attrDef =
+                    findAttribute(source.sourceClass(), attrName);
+            if (attrDef != null) {
+                TypeInfo attrType = classifyIliAttr(attrDef);
+                paths.add(new ResolvedPath(alias, attrName,
+                        source.sourceClass().getName(), attrType));
+                return attrType;
+            }
+            ch.interlis.ili2c.metamodel.RoleDef roleDef =
+                    findRole(source.sourceClass(), attrName);
+            if (roleDef != null) {
+                paths.add(new ResolvedPath(alias, attrName,
+                        source.sourceClass().getName(), TypeInfo.REFERENCE));
+                return TypeInfo.REFERENCE;
             }
         }
 
@@ -161,6 +165,11 @@ public final class ExpressionCompiler {
                     context.ruleId(), "Results may vary between runs"));
         }
 
+        TypeInfo enumMapType = inferEnumMapReturnType(def, call, context);
+        if (enumMapType != null) {
+            return enumMapType;
+        }
+
         return def.returnTypeResolver() != null
                 ? def.returnTypeResolver().resolveReturnType(argTypes)
                 : TypeInfo.UNKNOWN;
@@ -205,6 +214,38 @@ public final class ExpressionCompiler {
                     "Enum mapping table '" + mapName + "' not found in config",
                     context.ruleId(), "Define the mapping under mapping.enums"));
         }
+    }
+
+    private TypeInfo inferEnumMapReturnType(FunctionDef def, FunctionCallExpr call,
+                                            ExpressionCompileContext context) {
+        if (!"enumMap".equalsIgnoreCase(def.name())) return null;
+        if (call.arguments().size() < 2) return TypeInfo.ENUM;
+
+        Expression mapNameExpr = call.arguments().get(1);
+        if (!(mapNameExpr instanceof LiteralExpr lit && lit.value() instanceof TextValue tv)) {
+            return TypeInfo.ENUM;
+        }
+
+        Map<String, Map<String, String>> enumMaps = context.enumMaps();
+        if (enumMaps == null) return TypeInfo.ENUM;
+        Map<String, String> mapping = enumMaps.get(tv.value());
+        if (mapping == null || mapping.isEmpty()) return TypeInfo.ENUM;
+
+        boolean allBoolean = true;
+        boolean allNumeric = true;
+        for (String value : mapping.values()) {
+            if (!"true".equalsIgnoreCase(value) && !"false".equalsIgnoreCase(value)) {
+                allBoolean = false;
+            }
+            try {
+                new BigDecimal(value);
+            } catch (NumberFormatException e) {
+                allNumeric = false;
+            }
+        }
+        if (allBoolean) return TypeInfo.BOOLEAN;
+        if (allNumeric) return TypeInfo.NUMERIC;
+        return TypeInfo.ENUM;
     }
 
     private void checkArgTypeCompatibility(FunctionDef def, List<TypeInfo> argTypes,
@@ -254,7 +295,50 @@ public final class ExpressionCompiler {
     public static TypeInfo classifyIliAttr(ch.interlis.ili2c.metamodel.AttributeDef attr) {
         if (attr == null) return TypeInfo.UNKNOWN;
         ch.interlis.ili2c.metamodel.Type type = attr.getDomain();
-        return classifyIliType(type != null ? type : null);
+        TypeInfo result = classifyIliType(type);
+        if (result == TypeInfo.UNKNOWN && type != null) {
+            ch.interlis.ili2c.metamodel.Type resolved = attr.getDomainResolvingAliases();
+            if (resolved != null && resolved != type) {
+                result = classifyIliType(resolved);
+            }
+        }
+        return result;
+    }
+
+    private static ch.interlis.ili2c.metamodel.AttributeDef findAttribute(
+            ch.interlis.ili2c.metamodel.Table table, String attrName) {
+        ch.interlis.ili2c.metamodel.AttributeDef found = table.findAttribute(attrName);
+        if (found != null) return found;
+        var it = table.getAttributesAndRoles2();
+        while (it.hasNext()) {
+            ch.interlis.ili2c.metamodel.ViewableTransferElement element = it.next();
+            if (element.obj instanceof ch.interlis.ili2c.metamodel.AttributeDef attr
+                    && attrName.equals(attr.getName())) {
+                return attr;
+            }
+        }
+        return null;
+    }
+
+    private static ch.interlis.ili2c.metamodel.RoleDef findRole(
+            ch.interlis.ili2c.metamodel.Table table, String roleName) {
+        var it = table.getAttributesAndRoles2();
+        while (it.hasNext()) {
+            ch.interlis.ili2c.metamodel.ViewableTransferElement element = it.next();
+            if (element.obj instanceof ch.interlis.ili2c.metamodel.RoleDef role
+                    && roleName.equals(role.getName())) {
+                return role;
+            }
+        }
+        @SuppressWarnings("unchecked")
+        java.util.Iterator<ch.interlis.ili2c.metamodel.RoleDef> targetRoles = table.getTargetForRoles();
+        while (targetRoles != null && targetRoles.hasNext()) {
+            ch.interlis.ili2c.metamodel.RoleDef role = targetRoles.next();
+            if (roleName.equals(role.getName())) {
+                return role;
+            }
+        }
+        return null;
     }
 
     static TypeInfo classifyIliType(ch.interlis.ili2c.metamodel.Type type) {

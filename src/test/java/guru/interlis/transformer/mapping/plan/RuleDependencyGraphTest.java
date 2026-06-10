@@ -57,7 +57,7 @@ class RuleDependencyGraphTest {
 
     private static RulePlan rule(String id, RefPlan... refs) {
         return new RulePlan(id, "", null, List.of(), List.of(),
-                List.of(refs), List.of(), List.of(), null,
+                List.of(refs), List.of(), List.of(), List.of(), null,
                 List.of(), List.of());
     }
 

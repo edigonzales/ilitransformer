@@ -130,8 +130,8 @@ class DmavToDm01Lfp3IntegrationTest {
             // mul(): 0.05 * 100 = 5.0
             assertThat(content).contains("5.0");
 
-            // toDate(): XMLDateTime → DATE (time truncated)
-            assertThat(content).contains("2025-01-15");
+            // toDate(): XMLDateTime -> ILI1 DATE (time truncated, compact ITF format)
+            assertThat(content).contains("20250115");
 
             // INTEGER OID
             assertThat(result.summary()).contains("INTEGER");
@@ -177,8 +177,8 @@ class DmavToDm01Lfp3IntegrationTest {
             engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dm01", writer));
 
             String content = Files.readString(outputPath);
-            // Date preserved, time dropped
-            assertThat(content).contains("2024-12-31");
+            // Date preserved, time dropped, compact ITF format
+            assertThat(content).contains("20241231");
 
         } finally {
             Files.deleteIfExists(outputPath);

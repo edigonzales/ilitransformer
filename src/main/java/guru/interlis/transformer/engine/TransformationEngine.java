@@ -23,6 +23,7 @@ import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.geometry.GeometryAdapter;
 import guru.interlis.transformer.geometry.IoxGeometryAdapter;
+import guru.interlis.transformer.loss.LossinessCollector;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.BagPlan;
@@ -98,6 +99,7 @@ public final class TransformationEngine {
 
     // Phase 26 metrics
     private final ExecutionMetrics metrics;
+    private final LossinessCollector lossinessCollector;
 
     // Phase 26 pre-computed index (built per-run from plan)
     private RuleDispatchIndex dispatchIndex;
@@ -172,15 +174,18 @@ public final class TransformationEngine {
         this.sourceLookupIndex = sourceLookupIndex;
         this.parentChildIndex = parentChildIndex;
         this.metrics = metrics != null ? metrics : new ExecutionMetrics();
+        this.lossinessCollector = new LossinessCollector();
 
-        this.bagTransformationService = new BagTransformationService(expressionEngine, oidGenerationService);
+        this.bagTransformationService = new BagTransformationService(
+                expressionEngine, oidGenerationService, lossinessCollector);
         this.sourceIndexingService = new SourceIndexingService();
 
         AssignmentExecutionService assignmentExec = new AssignmentExecutionService(
                 expressionEngine, geometryAdapter);
         TargetObjectFactory targetFactory = new TargetObjectFactory(
                 expressionEngine, oidGenerationService, assignmentExec, bagTransformationService);
-        this.ruleExecutionService = new RuleExecutionService(expressionEngine, targetFactory, geometryAdapter);
+        this.ruleExecutionService = new RuleExecutionService(
+                expressionEngine, targetFactory, geometryAdapter, referenceIndex, lossinessCollector);
         this.outputWritingService = new OutputWritingService();
     }
 
@@ -219,6 +224,10 @@ public final class TransformationEngine {
 
     public ExecutionMetricsSnapshot getMetricsSnapshot() {
         return metrics.snapshot();
+    }
+
+    public LossinessCollector getLossinessCollector() {
+        return lossinessCollector;
     }
 
     // -- Legacy APIs (kept for backward compatibility) ----------------------
@@ -339,8 +348,7 @@ public final class TransformationEngine {
                 String basketId = parts.length > 1 ? parts[1] : null;
                 writer.write(new ch.interlis.iox_j.StartBasketEvent(topic, basketId));
                 List<IomObject> sorted = new ArrayList<>(basketEntry.getValue());
-                sorted.sort(Comparator.comparing(IomObject::getobjecttag)
-                        .thenComparing(IomObject::getobjectoid));
+                sorted.sort(OutputWritingService.targetObjectComparator());
                 for (IomObject target : sorted) {
                     writer.write(new ch.interlis.iox_j.ObjectEvent(target));
                     written++;

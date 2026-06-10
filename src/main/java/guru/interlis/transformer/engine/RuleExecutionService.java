@@ -12,6 +12,8 @@ import guru.interlis.transformer.expr.FunctionCallExpr;
 import guru.interlis.transformer.expr.PathExpr;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.geometry.GeometryAdapter;
+import guru.interlis.transformer.loss.LossEvent;
+import guru.interlis.transformer.loss.LossinessCollector;
 import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.CreatePlan;
 import guru.interlis.transformer.mapping.plan.InputBinding;
@@ -27,6 +29,7 @@ import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.CanonicalValue;
 import guru.interlis.transformer.state.LookupKey;
 import guru.interlis.transformer.state.ParentChildIndex;
+import guru.interlis.transformer.state.ReferenceIndex;
 import guru.interlis.transformer.state.SourceLookupIndex;
 import guru.interlis.transformer.state.SourceRecord;
 import guru.interlis.transformer.state.StateStore;
@@ -42,13 +45,32 @@ public final class RuleExecutionService {
     private final ExpressionEngine expressionEngine;
     private final TargetObjectFactory targetObjectFactory;
     private final GeometryAdapter geometryAdapter;
+    private final ReferenceIndex referenceIndex;
+    private final LossinessCollector lossinessCollector;
 
     public RuleExecutionService(ExpressionEngine expressionEngine,
                                  TargetObjectFactory targetObjectFactory,
                                  GeometryAdapter geometryAdapter) {
+        this(expressionEngine, targetObjectFactory, geometryAdapter, null);
+    }
+
+    public RuleExecutionService(ExpressionEngine expressionEngine,
+                                 TargetObjectFactory targetObjectFactory,
+                                 GeometryAdapter geometryAdapter,
+                                 ReferenceIndex referenceIndex) {
+        this(expressionEngine, targetObjectFactory, geometryAdapter, referenceIndex, null);
+    }
+
+    public RuleExecutionService(ExpressionEngine expressionEngine,
+                                 TargetObjectFactory targetObjectFactory,
+                                 GeometryAdapter geometryAdapter,
+                                 ReferenceIndex referenceIndex,
+                                 LossinessCollector lossinessCollector) {
         this.expressionEngine = expressionEngine;
         this.targetObjectFactory = targetObjectFactory;
         this.geometryAdapter = geometryAdapter;
+        this.referenceIndex = referenceIndex;
+        this.lossinessCollector = lossinessCollector;
     }
 
     public RuleExecutionResult executeRules(
@@ -122,7 +144,7 @@ public final class RuleExecutionService {
                                           ParentChildIndex parentChildIndex) {
         TargetObjectFactory.ObjectCreationContext ctx = new TargetObjectFactory.ObjectCreationContext(
                 objectsByOutputAndBasket, expandedTargets, diagnostics, stateStore,
-                null, parentChildIndex, metrics);
+                referenceIndex, parentChildIndex, metrics, geometryAdapter, sourceAttrTypes);
 
         List<SourceRecord> records = stateStore.sourceRecords();
         for (SourceRecord record : records) {
@@ -140,6 +162,7 @@ public final class RuleExecutionService {
                 if (!evaluateWhereAndPredicate(matchedSource, rule, evalCtx, expressionEngine, metrics)) continue;
 
                 metrics.recordRuleMatch(rule.ruleId());
+                recordLosses(rule, record, evalCtx);
                 int created = targetObjectFactory.createTarget(rule, matchedSource, record, evalCtx, plan, ctx);
                 metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
             }
@@ -155,7 +178,7 @@ public final class RuleExecutionService {
                                     DiagnosticCollector diagnostics, ExecutionMetrics metrics) {
         TargetObjectFactory.ObjectCreationContext ctx = new TargetObjectFactory.ObjectCreationContext(
                 objectsByOutputAndBasket, new LinkedHashMap<>(), diagnostics, stateStore,
-                null, parentChildIndex, metrics);
+                referenceIndex, parentChildIndex, metrics, geometryAdapter, sourceAttrTypes);
 
         JoinPlan join = rule.joins().get(0);
         SourcePlan leftPlan = join.left();
@@ -207,6 +230,7 @@ public final class RuleExecutionService {
                         geometryAdapter, sourceAttrTypes);
                 if (evaluateWhereAndPredicate(leftPlan, rule, evalCtx, expressionEngine, metrics)) {
                     metrics.recordRuleMatch(rule.ruleId());
+                    recordLosses(rule, leftRecord, evalCtx);
                     targetObjectFactory.createTarget(rule, leftPlan, leftRecord, evalCtx, plan, ctx);
                     metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
                 }
@@ -239,6 +263,7 @@ public final class RuleExecutionService {
                 if (!evaluateWhereAndPredicate(leftPlan, rule, joinCtx, expressionEngine, metrics)) continue;
 
                 metrics.recordRuleMatch(rule.ruleId());
+                recordLosses(rule, leftRecord, joinCtx);
                 targetObjectFactory.createTarget(rule, leftPlan, leftRecord, joinCtx, plan, ctx);
                 metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
             }
@@ -253,7 +278,7 @@ public final class RuleExecutionService {
                                     ParentChildIndex parentChildIndex) {
         TargetObjectFactory.ObjectCreationContext ctx = new TargetObjectFactory.ObjectCreationContext(
                 objectsByOutputAndBasket, new LinkedHashMap<>(), diagnostics, stateStore,
-                null, parentChildIndex, metrics);
+                referenceIndex, parentChildIndex, metrics, geometryAdapter, sourceAttrTypes);
 
         for (SourceRecord record : stateStore.sourceRecords()) {
             SourcePlan sp = findSourcePlan(parentRule, record);
@@ -315,35 +340,59 @@ public final class RuleExecutionService {
         return true;
     }
 
+    private void recordLosses(RulePlan rule, SourceRecord record, EvalContext evalCtx) {
+        if (lossinessCollector == null || rule.losses().isEmpty()) {
+            return;
+        }
+        for (var loss : rule.losses()) {
+            if (loss.whenExpression() != null
+                    && !isFilterTruthy(expressionEngine.evaluate(loss.whenExpression(), evalCtx))) {
+                continue;
+            }
+            lossinessCollector.record(new LossEvent(
+                    rule.ruleId(),
+                    record.sourceClass(),
+                    record.sourceObject().getobjectoid(),
+                    loss.sourcePath(),
+                    loss.reasonCode(),
+                    loss.description()));
+        }
+    }
+
     private static Map<String, Map<String, TypeInfo>> buildSourceAttributeTypeMap(TransformPlan plan) {
         Map<String, Map<String, TypeInfo>> result = new LinkedHashMap<>();
         for (RulePlan rule : plan.rules()) {
             for (SourcePlan sp : rule.sources()) {
                 if (sp.sourceClass() == null) continue;
-                String alias = sp.alias();
-                TypeSystemFacade sourceTs = null;
-                for (String inputId : sp.inputIds()) {
-                    InputBinding binding = plan.inputsById().get(inputId);
-                    if (binding != null && binding.typeSystem() != null) {
-                        sourceTs = binding.typeSystem();
-                        break;
-                    }
-                }
-                if (sourceTs == null) continue;
-
-                Map<String, TypeInfo> aliasTypes = new LinkedHashMap<>();
-                Iterator<ch.interlis.ili2c.metamodel.Extendable> it = sp.sourceClass().getAttributes();
-                while (it.hasNext()) {
-                    ch.interlis.ili2c.metamodel.Extendable ext = it.next();
-                    if (ext instanceof ch.interlis.ili2c.metamodel.AttributeDef attr) {
-                        TypeInfo ti = classifyAttributeType(attr);
-                        aliasTypes.put(attr.getName(), ti);
-                    }
-                }
-                result.put(alias, aliasTypes);
+                addSourceAttributeTypes(result, sp.alias(), sp.sourceClass());
+            }
+            for (BagPlan bag : rule.bags()) {
+                if (bag.fromSource() == null || bag.fromSource().sourceClass() == null) continue;
+                addSourceAttributeTypes(result, bag.fromSource().alias(), bag.fromSource().sourceClass());
             }
         }
         return result;
+    }
+
+    private static void addSourceAttributeTypes(Map<String, Map<String, TypeInfo>> result,
+                                                String alias,
+                                                ch.interlis.ili2c.metamodel.Table sourceClass) {
+        if (alias == null || sourceClass == null) return;
+        Map<String, TypeInfo> aliasTypes = result.computeIfAbsent(alias, ignored -> new LinkedHashMap<>());
+        Iterator<ch.interlis.ili2c.metamodel.ViewableTransferElement> it =
+                sourceClass.getAttributesAndRoles2();
+        while (it.hasNext()) {
+            ch.interlis.ili2c.metamodel.ViewableTransferElement element = it.next();
+            if (element.obj instanceof ch.interlis.ili2c.metamodel.AttributeDef attr) {
+                if (attr.getName() != null) {
+                    aliasTypes.put(attr.getName(), classifyAttributeType(attr));
+                }
+            } else if (element.obj instanceof ch.interlis.ili2c.metamodel.RoleDef role) {
+                if (role.getName() != null) {
+                    aliasTypes.put(role.getName(), TypeInfo.REFERENCE);
+                }
+            }
+        }
     }
 
     private static TypeInfo classifyAttributeType(ch.interlis.ili2c.metamodel.AttributeDef attr) {

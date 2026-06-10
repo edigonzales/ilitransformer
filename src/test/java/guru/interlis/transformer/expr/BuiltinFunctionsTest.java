@@ -167,6 +167,27 @@ class BuiltinFunctionsTest {
     }
 
     @Test
+    void toXmlDateTimeConvertsIli1CompactDate() {
+        Value result = engine.evaluate("toXmlDateTime('20240115')", Map.of("s", src));
+        assertThat(result).isInstanceOf(XmlDateTimeValue.class);
+        assertThat(result.asText()).isEqualTo("2024-01-15T12:00:00");
+    }
+
+    @Test
+    void toDateConvertsIli1CompactDate() {
+        Value result = engine.evaluate("toDate('20240115')", Map.of("s", src));
+        assertThat(result).isInstanceOf(DateValue.class);
+    }
+
+    @Test
+    void toDateConvertsLocalXmlDateTime() {
+        Value result = engine.evaluate("toDate('2024-01-15T12:00:00')", Map.of("s", src));
+        assertThat(result).isInstanceOf(DateValue.class);
+        assertThat(result.asText()).isEqualTo("2024-01-15");
+        assertThat(result.toNative()).isEqualTo("20240115");
+    }
+
+    @Test
     void toXmlDateTimeReturnsNullForInvalid() {
         Value result = engine.evaluate("toXmlDateTime('not-a-date')", Map.of("s", src));
         assertThat(result.isNull()).isTrue();

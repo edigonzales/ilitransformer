@@ -19,7 +19,7 @@ public final class BasicFunctions {
     private BasicFunctions() {}
 
     public static void registerAll(FunctionRegistry registry) {
-        registry.register(FunctionDef.lazy("coalesce",
+        registry.register(FunctionDef.lazyVariadic("coalesce",
                 argTypes -> argTypes.isEmpty() ? TypeInfo.UNKNOWN : argTypes.get(0),
                 List.of(new FunctionDef.FunctionParam("values", TypeInfo.UNKNOWN)),
                 true, BasicFunctions::coalesceLazy));

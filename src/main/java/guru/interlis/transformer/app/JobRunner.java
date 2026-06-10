@@ -23,6 +23,7 @@ import guru.interlis.transformer.engine.ExecutionMetrics;
 import guru.interlis.transformer.engine.ExecutionMetricsSnapshot;
 import guru.interlis.transformer.engine.RuleDispatchIndex;
 import guru.interlis.transformer.geometry.IoxGeometryAdapter;
+import guru.interlis.transformer.loss.LossinessCollector;
 import guru.interlis.transformer.state.DefaultOidGenerationService;
 import guru.interlis.transformer.state.InMemoryParentChildIndex;
 import guru.interlis.transformer.state.InMemoryReferenceIndex;
@@ -118,6 +119,7 @@ public final class JobRunner {
         DiagnosticCollector engineDiag = new DiagnosticCollector();
         TransformResult result = null;
         ExecutionMetricsSnapshot metricsSnapshot = null;
+        LossinessCollector lossinessCollector = null;
         List<ValidationResult> validationResults = new ArrayList<>();
         boolean committed = false;
 
@@ -169,20 +171,27 @@ public final class JobRunner {
                 try {
                     result = engine.runTyped(plan, readerByInputId::get, writersByOutputId);
                     metricsSnapshot = engine.getMetricsSnapshot();
+                    lossinessCollector = engine.getLossinessCollector();
                 } catch (Exception e) {
                     engineDiag.add(new Diagnostic(DiagnosticCode.COMMIT_FAILED,
-                            Severity.ERROR, "Transformation engine failed: " + e.getMessage(), null, null));
+                            Severity.ERROR,
+                            "Transformation engine failed: " + e.getClass().getSimpleName()
+                                    + (e.getMessage() != null ? ": " + e.getMessage() : ""),
+                            null, null));
                 }
             }
 
-            // Close writers before validation
-            for (IoxWriter writer : writersByOutputId.values()) {
-                try {
-                    writer.flush();
-                    writer.close();
-                } catch (Exception e) {
-                    engineDiag.add(new Diagnostic(DiagnosticCode.COMMIT_FAILED,
-                            Severity.ERROR, "Failed to close writer: " + e.getMessage(), null, null));
+            // TransformationEngine owns normal writer finalization. If execution failed before
+            // the output service could close the writers, close any remaining handles here.
+            if (result == null) {
+                for (IoxWriter writer : writersByOutputId.values()) {
+                    try {
+                        writer.flush();
+                        writer.close();
+                    } catch (Exception e) {
+                        engineDiag.add(new Diagnostic(DiagnosticCode.COMMIT_FAILED,
+                                Severity.ERROR, "Failed to close writer: " + e.getMessage(), null, null));
+                    }
                 }
             }
 
@@ -263,6 +272,7 @@ public final class JobRunner {
             Map<String, String> modelVersions = collectModelVersions(plan);
             writeReports(plan, result, engineDiag, validationResults, elapsed, modelVersions,
                     metricsSnapshot, options.reportDirectory());
+            writeLossinessReports(lossinessCollector, options.reportDirectory());
         }
 
         return plan.diagnostics();
@@ -315,6 +325,18 @@ public final class JobRunner {
             System.out.println("Reports written to: " + reportDirectory);
         } catch (IOException e) {
             System.err.println("Failed to write reports: " + e.getMessage());
+        }
+    }
+
+    private void writeLossinessReports(LossinessCollector collector, Path reportDirectory) {
+        if (collector == null || collector.isEmpty()) {
+            return;
+        }
+        try {
+            collector.writeJson(reportDirectory.resolve("lossiness-report.json"));
+            collector.writeMarkdown(reportDirectory.resolve("lossiness-report.md"));
+        } catch (IOException e) {
+            System.err.println("Failed to write lossiness reports: " + e.getMessage());
         }
     }
 

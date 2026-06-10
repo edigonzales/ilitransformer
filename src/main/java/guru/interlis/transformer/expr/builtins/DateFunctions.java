@@ -9,6 +9,8 @@ import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.expr.XmlDateTimeValue;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,6 +18,8 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public final class DateFunctions {
+
+    private static final DateTimeFormatter ILI1_DATE = DateTimeFormatter.BASIC_ISO_DATE;
 
     private DateFunctions() {}
 
@@ -46,10 +50,20 @@ public final class DateFunctions {
             return new DateValue(zdt.toLocalDate());
         } catch (DateTimeParseException e1) {
             try {
-                LocalDate date = LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE);
-                return new DateValue(date);
+                LocalDateTime dateTime = LocalDateTime.parse(text, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                return new DateValue(dateTime.toLocalDate());
             } catch (DateTimeParseException e2) {
-                return NullValue.INSTANCE;
+                try {
+                    LocalDate date = LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE);
+                    return new DateValue(date);
+                } catch (DateTimeParseException e3) {
+                    try {
+                        LocalDate date = LocalDate.parse(text, ILI1_DATE);
+                        return new DateValue(date);
+                    } catch (DateTimeParseException e4) {
+                        return NullValue.INSTANCE;
+                    }
+                }
             }
         }
     }
@@ -63,10 +77,20 @@ public final class DateFunctions {
             return new XmlDateTimeValue(ZonedDateTime.parse(text, DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         } catch (DateTimeParseException e1) {
             try {
-                LocalDate date = LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE);
-                return new XmlDateTimeValue(date.atStartOfDay(ZoneOffset.UTC));
+                LocalDateTime dateTime = LocalDateTime.parse(text, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                return new XmlDateTimeValue(dateTime.atZone(ZoneOffset.UTC));
             } catch (DateTimeParseException e2) {
-                return NullValue.INSTANCE;
+                try {
+                    LocalDate date = LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE);
+                    return new XmlDateTimeValue(date.atTime(LocalTime.NOON).atZone(ZoneOffset.UTC));
+                } catch (DateTimeParseException e3) {
+                    try {
+                        LocalDate date = LocalDate.parse(text, ILI1_DATE);
+                        return new XmlDateTimeValue(date.atTime(LocalTime.NOON).atZone(ZoneOffset.UTC));
+                    } catch (DateTimeParseException e4) {
+                        return NullValue.INSTANCE;
+                    }
+                }
             }
         }
     }

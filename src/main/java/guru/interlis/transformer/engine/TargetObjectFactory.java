@@ -8,9 +8,11 @@ import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.expr.EvalContext;
 import guru.interlis.transformer.expr.ExpressionEngine;
+import guru.interlis.transformer.geometry.GeometryAdapter;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.CreatePlan;
+import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
 import guru.interlis.transformer.mapping.plan.RulePlan;
 import guru.interlis.transformer.mapping.plan.SourcePlan;
@@ -72,7 +74,7 @@ public final class TargetObjectFactory {
 
         assignmentExecutionService.execute(rule.assignments(), evalCtx, target, targetTs);
 
-        deferReferences(rule, driverRecord, target, targetTs, plan, ctx);
+        deferReferences(rule, matchedSource, driverRecord, target, targetTs, plan, ctx);
 
         processBags(rule, matchedSource, driverRecord, target, plan, ctx);
 
@@ -119,20 +121,24 @@ public final class TargetObjectFactory {
         return new Iom_jObject(getScopedName(rule.targetClass()), targetOid);
     }
 
-    private void deferReferences(RulePlan rule, SourceRecord driverRecord, Iom_jObject target,
+    private void deferReferences(RulePlan rule, SourcePlan matchedSource, SourceRecord driverRecord, Iom_jObject target,
                                   TypeSystemFacade targetTs, TransformPlan plan,
                                   ObjectCreationContext ctx) {
         RoleResolver roleResolver = targetTs != null ? new RoleResolver(targetTs) : null;
 
         for (var ref : rule.refs()) {
             if (ref.sourceRef() == null) continue;
-            String attrName = ref.sourceRef();
-            int dotIdx = attrName.indexOf('.');
-            if (dotIdx >= 0) {
-                attrName = attrName.substring(dotIdx + 1);
+            String sourceRefOid = resolveSourceReferenceOid(ref.sourceRef(), matchedSource, driverRecord);
+            if (sourceRefOid == null || sourceRefOid.isBlank()) {
+                if (ref.required()) {
+                    ctx.diagnostics().add(new Diagnostic(DiagnosticCode.RUN_REF_MISSING_MANDATORY,
+                            plan.failPolicy() == FailPolicy.LENIENT ? Severity.WARNING : Severity.ERROR,
+                            "Required reference missing for role " + ref.targetRoleName(),
+                            getScopedName(rule.targetClass()) + "/" + target.getobjectoid(),
+                            "Ensure source object has the required reference"));
+                }
+                continue;
             }
-            String sourceRefOid = readSourceReferenceOid(driverRecord.sourceObject(), attrName);
-            if (sourceRefOid == null || sourceRefOid.isBlank()) continue;
 
             String expectedTargetClass = null;
             if (roleResolver != null) {
@@ -184,7 +190,8 @@ public final class TargetObjectFactory {
         for (BagPlan bag : rule.bags()) {
             BoundSourceObject parent = new BoundSourceObject(matchedSource, driverRecord);
             BagExecutionContext bagCtx = new BagExecutionContext(bag, parent, target, plan,
-                    ctx.stateStore(), ctx.parentChildIndex(), ctx.diagnostics(), rule, ctx.expandedTargets());
+                    ctx.stateStore(), ctx.parentChildIndex(), ctx.diagnostics(), rule, ctx.expandedTargets(),
+                    ctx.geometryAdapter(), ctx.sourceAttributeTypes(), ctx.referenceIndex());
             if (bag.isEmbed()) {
                 bagTransformationService.embed(bagCtx);
             } else {
@@ -335,6 +342,25 @@ public final class TargetObjectFactory {
         return source.getattrvalue(roleName);
     }
 
+    private static String resolveSourceReferenceOid(String sourceRef, SourcePlan matchedSource,
+                                                     SourceRecord driverRecord) {
+        if (sourceRef == null || sourceRef.isBlank()) return null;
+        String trimmed = sourceRef.trim();
+        if (matchedSource != null && trimmed.equals(matchedSource.alias())) {
+            return driverRecord.sourceObject().getobjectoid();
+        }
+        String attrName = trimmed;
+        int dotIdx = attrName.indexOf('.');
+        if (dotIdx >= 0) {
+            String alias = attrName.substring(0, dotIdx);
+            if (matchedSource != null && !alias.equals(matchedSource.alias())) {
+                return null;
+            }
+            attrName = attrName.substring(dotIdx + 1);
+        }
+        return readSourceReferenceOid(driverRecord.sourceObject(), attrName);
+    }
+
     private static Map<String, String> buildIdentityKeyValues(List<String> identitySourceKeys,
                                                                IomObject sourceObject, String alias) {
         if (identitySourceKeys == null || identitySourceKeys.isEmpty()) {
@@ -412,7 +438,9 @@ public final class TargetObjectFactory {
             StateStore stateStore,
             ReferenceIndex referenceIndex,
             ParentChildIndex parentChildIndex,
-            ExecutionMetrics metrics
+            ExecutionMetrics metrics,
+            GeometryAdapter geometryAdapter,
+            Map<String, Map<String, TypeInfo>> sourceAttributeTypes
     ) {
         public void recordTargetsCreated(int count) {
             if (metrics != null) {

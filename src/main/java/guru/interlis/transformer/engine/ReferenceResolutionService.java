@@ -46,6 +46,11 @@ public final class ReferenceResolutionService {
         for (DeferredReference ref : deferredRefs) {
             SourceReferenceSelector selector = ref.sourceSelector();
             List<TargetReference> candidates = referenceIndex.find(selector);
+            if (ref.targetRuleId() != null && !ref.targetRuleId().isBlank()) {
+                candidates = candidates.stream()
+                        .filter(candidate -> ref.targetRuleId().equals(candidate.producingRuleId()))
+                        .toList();
+            }
 
             if (candidates.isEmpty()) {
                 Severity severity = ref.required()
@@ -128,10 +133,6 @@ public final class ReferenceResolutionService {
                 resolved++;
             }
         }
-
-        // Check required refs that were never deferred (source object has no matching ref value)
-        int missingMandatoryFromPlan = checkRequiredRefsWithoutDeferred(plan, stateStore, diagnostics);
-        unresolvedMandatory += missingMandatoryFromPlan;
 
         return new ReferenceResolutionReport(resolved, unresolvedOptional, unresolvedMandatory,
                 ambiguous, typeMismatch, cardinalityViolations, totalDeferred);

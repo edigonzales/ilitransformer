@@ -190,6 +190,38 @@ class ReferenceResolutionServiceTest {
     }
 
     @Test
+    void targetRuleDisambiguatesSameSourceObject() {
+        InMemoryStateStore stateStore = new InMemoryStateStore();
+        InMemoryReferenceIndex refIndex = new InMemoryReferenceIndex();
+        DiagnosticCollector diag = new DiagnosticCollector();
+
+        Iom_jObject owner = new Iom_jObject("Model.T.Label", "label1");
+        TargetObjectKey ownerKey = new TargetObjectKey("out1", "Model.T.Label", "label1");
+        stateStore.registerTarget(ownerKey, owner);
+
+        refIndex.add(new SourceObjectKey("in1", "b1", "Model.T.Point", "oid1"),
+                new TargetReference("out1", "Model.T.Point", "point1", "point-rule"));
+        refIndex.add(new SourceObjectKey("in1", "b1", "Model.T.Point", "oid1"),
+                new TargetReference("out1", "Model.T.Symbol", "symbol1", "symbol-rule"));
+
+        stateStore.addDeferredReference(new DeferredReference(
+                ownerKey, "labelOf", null,
+                new SourceReferenceSelector("in1", "b1", "Model.T.Point", "oid1"),
+                "point-rule", "Model.T.Point",
+                new DeferredReference.Cardinality(1, 1),
+                true));
+
+        ReferenceResolutionService service = new ReferenceResolutionService();
+        ReferenceResolutionReport report = service.resolveAll(
+                EMPTY_PLAN, stateStore, refIndex, diag);
+
+        assertThat(report.resolved()).isEqualTo(1);
+        assertThat(report.ambiguous()).isZero();
+        assertThat(diag.all()).isEmpty();
+        assertThat(owner.getattrobj("labelOf", 0).getobjectrefoid()).isEqualTo("point1");
+    }
+
+    @Test
     void wrongTargetClassReference() {
         InMemoryStateStore stateStore = new InMemoryStateStore();
         InMemoryReferenceIndex refIndex = new InMemoryReferenceIndex();

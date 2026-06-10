@@ -37,6 +37,7 @@ import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.JoinCardinality;
 import guru.interlis.transformer.mapping.plan.JoinPlan;
 import guru.interlis.transformer.mapping.plan.JoinType;
+import guru.interlis.transformer.mapping.plan.LossPlan;
 import guru.interlis.transformer.mapping.plan.OidPlan;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
 import guru.interlis.transformer.mapping.plan.RefPlan;
@@ -344,6 +345,9 @@ public final class MappingCompiler {
         List<BagPlan> bagPlans = compileBags(rule, sourcePlans, sourcesByAlias, targetClass, targetTs,
                 ruleId, modelRegistry, enumMaps, diag);
 
+        // Compile declared lossiness
+        List<LossPlan> lossPlans = compileLosses(rule, sourcesByAlias, ruleId, enumMaps, diag);
+
         // Compile identity source keys
         List<String> identitySourceKeys = compileIdentityKeys(rule, sourcePlans, diag);
 
@@ -362,11 +366,33 @@ public final class MappingCompiler {
                 assignmentPlans,
                 refPlans,
                 bagPlans,
+                lossPlans,
                 identitySourceKeys,
                 predicate,
                 joinPlans,
                 createPlans
         );
+    }
+
+    private List<LossPlan> compileLosses(JobConfig.RuleSpec rule,
+                                          Map<String, SourcePlan> sourcesByAlias,
+                                          String ruleId,
+                                          Map<String, Map<String, String>> enumMaps,
+                                          DiagnosticCollector diag) {
+        if (rule.losses == null || rule.losses.isEmpty()) {
+            return List.of();
+        }
+        List<LossPlan> result = new ArrayList<>();
+        for (JobConfig.LossSpec loss : rule.losses) {
+            CompiledExpression when = null;
+            if (loss.when != null && !loss.when.isBlank()) {
+                ExpressionCompileContext ctx = new ExpressionCompileContext(ruleId,
+                        sourcesByAlias, TypeInfo.BOOLEAN, functionRegistry, enumMaps);
+                when = expressionCompiler.compile(loss.when, ctx, diag);
+            }
+            result.add(new LossPlan(loss.sourcePath, loss.reasonCode, loss.description, when));
+        }
+        return result;
     }
 
     // -- Phase 22: Join compilation -------------------------------------------
@@ -638,60 +664,44 @@ public final class MappingCompiler {
             roleName = ref.target; // backward compat
         }
 
-        // Check role exists (look in target class's target-for-roles)
+        // Check role/reference exists from the owner-side XTF/ITF attribute perspective.
         if (roleName != null && targetTs != null) {
-            boolean roleFound = false;
-            ch.interlis.ili2c.metamodel.RoleDef foundRole = null;
-            @SuppressWarnings("rawtypes")
-            var it = targetClass.getTargetForRoles();
-            if (it != null) {
-                while (it.hasNext()) {
-                    Object obj = it.next();
-                    if (obj instanceof ch.interlis.ili2c.metamodel.RoleDef roleDef) {
-                        if (roleName.equals(roleDef.getName())) {
-                            roleFound = true;
-                            foundRole = roleDef;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (!roleFound) {
+            TypeSystemFacade.ReferenceInfo referenceInfo =
+                    targetTs.resolveReference(getScopedName(targetClass), roleName);
+            if (referenceInfo == null) {
                 diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_ROLE, Severity.WARNING,
                         "Role not found on target class '" + targetClass.getName() + "': " + roleName,
-                        ruleId, "Check the association/role name in the target model"));
+                        ruleId, "Check the owner-side reference/role name in the target model"));
             }
 
             // Phase 19: Check association exists and role belongs to it
-            if (roleFound && ref.association != null) {
-                ch.interlis.ili2c.metamodel.Container container = foundRole.getContainer();
-                if (container instanceof ch.interlis.ili2c.metamodel.AssociationDef assoc) {
-                    if (!ref.association.equals(assoc.getName())) {
+            if (referenceInfo != null && ref.association != null) {
+                if (referenceInfo.association() != null) {
+                    if (!ref.association.equals(referenceInfo.association().getName())) {
                         diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_ROLE, Severity.ERROR,
                                 "Role '" + roleName + "' belongs to association '"
-                                        + assoc.getName() + "', not '" + ref.association + "'",
+                                        + referenceInfo.association().getName() + "', not '" + ref.association + "'",
                                 ruleId, "Correct the association name or remove it"));
                     }
                 } else if (ref.association != null) {
                     diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_ROLE, Severity.WARNING,
-                            "Role '" + roleName + "' is not part of an association"
+                            "Reference '" + roleName + "' is not part of an association"
                                     + " but association '" + ref.association + "' was specified",
                             ruleId, "Remove the association name or use the correct role"));
                 }
             }
 
             // Phase 19: Check mandatory status consistency
-            if (roleFound && foundRole != null) {
-                ch.interlis.ili2c.metamodel.Cardinality card = foundRole.getCardinality();
-                long modelMin = card != null ? card.getMinimum() : 0;
+            if (referenceInfo != null) {
+                long modelMin = referenceInfo.minCardinality();
                 if (modelMin > 0 && !ref.required) {
                     diag.add(new Diagnostic(DiagnosticCode.MAP_TYPE_MISMATCH, Severity.WARNING,
-                            "Role '" + roleName + "' is mandatory in model but ref is marked optional",
+                            "Reference '" + roleName + "' is mandatory in model but ref is marked optional",
                             ruleId, "Set required: true or adjust the model"));
                 }
                 if (modelMin == 0 && ref.required) {
                     diag.add(new Diagnostic(DiagnosticCode.MAP_TYPE_MISMATCH, Severity.WARNING,
-                            "Role '" + roleName + "' is optional in model but ref is marked required",
+                            "Reference '" + roleName + "' is optional in model but ref is marked required",
                             ruleId, "Set required: false or adjust the model"));
                 }
             }
@@ -1207,7 +1217,6 @@ public final class MappingCompiler {
             // Parent ref plan for EXPAND mode (back-reference)
             RefPlan parentRefPlan = null;
             if (mode == BagPlan.BagMode.EXPAND && bagSpec.parentRef != null
-                    && bagSpec.parentRef.association != null && !bagSpec.parentRef.association.isBlank()
                     && bagSpec.parentRef.role != null && !bagSpec.parentRef.role.isBlank()) {
                 parentRefPlan = new RefPlan(bagSpec.parentRef.role, bagSpec.parentRef.association,
                         bagSpec.parentRef.parentAlias != null ? bagSpec.parentRef.parentAlias : parentAlias,
@@ -1216,7 +1225,7 @@ public final class MappingCompiler {
 
             BagPlan bp = new BagPlan(bagAttrName, bagSourcePlan, effectiveStructureName,
                     bagAssignments, bagWhere, mode, parentRefAttribute, parentAlias,
-                    cardinalityMin, cardinalityMax, bagIdentityPlan, parentRefPlan);
+                    cardinalityMin, cardinalityMax, bagSpec.maxItems, bagIdentityPlan, parentRefPlan);
             bagPlans.add(bp);
         }
         return bagPlans;
@@ -1674,6 +1683,9 @@ public final class MappingCompiler {
             if (modelContainer instanceof Model model) {
                 return model.getName() + "." + topic.getName() + "." + table.getName();
             }
+        }
+        if (container instanceof Model model) {
+            return model.getName() + "." + table.getName();
         }
         return table.getName();
     }

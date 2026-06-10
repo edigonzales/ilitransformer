@@ -26,14 +26,17 @@ MODEL Dm01TestModel (de)
       NBIdent: MANDATORY TEXT*12;
       Nummer: MANDATORY TEXT*12;
       Geometrie: MANDATORY TEXT*30;
+      HoeheGeom: 0.0 .. 9999.9;
       Lagegenauigkeit: MANDATORY 0.0 .. 700.0;
       IstLagezuverlaessig: MANDATORY Zuverlaessigkeit;
+      Hoehengenauigkeit: 0.0 .. 700.0;
+      IstHoehenzuverlaessig: Zuverlaessigkeit;
       Punktzeichen: MANDATORY Versicherungsart;
       Protokoll: MANDATORY Protokoll;
     END LFP3;
 
     CLASS LFP3Pos =
-      LFP3Pos_von: MANDATORY TEXT*12;
+      LFP3Pos_von: MANDATORY REFERENCE TO LFP3;
       Pos: MANDATORY 0.0 .. 9999999.0;
       Ori: MANDATORY 0.0 .. 400.0;
       HAli: HAlignment;
@@ -41,7 +44,7 @@ MODEL Dm01TestModel (de)
     END LFP3Pos;
 
     CLASS LFP3Symbol =
-      LFP3Symbol_von: MANDATORY TEXT*12;
+      LFP3Symbol_von: MANDATORY REFERENCE TO LFP3;
       Ori: MANDATORY 0.0 .. 400.0;
     END LFP3Symbol;
 

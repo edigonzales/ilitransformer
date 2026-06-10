@@ -118,7 +118,7 @@ class ScalarMappingIntegrationTest {
         Map<String, TypeSystemFacade> targetTs = Map.of("P5Model", p5ModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
-        assertThat(plan.rules().get(0).sources().get(0).where()).isEqualTo("${s.Name} == null");
+        assertThat(plan.rules().get(0).sources().get(0).where().sourceText()).isEqualTo("${s.Name} == null");
 
         Iom_jObject src1 = new Iom_jObject("P5Model.P5Topic.SourceClass", "1");
         src1.setattrvalue("Name", "Alice");

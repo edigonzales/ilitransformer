@@ -105,11 +105,21 @@ public final class SourceIndexingService {
         for (BagPlan bag : embedBags) {
             if (!bag.hasParentRef()) continue;
             String refAttr = bag.parentRefAttribute();
-            String parentOid = sr.sourceObject().getattrvalue(refAttr);
+            String parentOid = readReferenceOid(sr.sourceObject(), refAttr);
             if (parentOid != null && !parentOid.isBlank()) {
                 parentChildIndex.index(sourceClass, refAttr, parentOid, sr);
             }
         }
+    }
+
+    private static String readReferenceOid(IomObject source, String refAttr) {
+        if (source.getattrvaluecount(refAttr) > 0) {
+            IomObject refObj = source.getattrobj(refAttr, 0);
+            if (refObj != null && refObj.getobjectrefoid() != null) {
+                return refObj.getobjectrefoid();
+            }
+        }
+        return source.getattrvalue(refAttr);
     }
 
     private static void expandBagStructures(RuleDispatchIndex dispatchIndex, IomObject source,

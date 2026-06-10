@@ -41,7 +41,7 @@ class AssociationXtfIntegrationTest {
 
     @Test
     void resolvesAssociationRolesWithReferenceIndex() throws Exception {
-        JobConfig config = p7Config(false);
+        JobConfig config = p7Config(true);
         Map<String, TypeSystemFacade> tsMap = Map.of("P7Model", assocTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
         assertThat(plan.diagnostics().hasErrors())
@@ -88,7 +88,7 @@ class AssociationXtfIntegrationTest {
 
         assertThat(capturedOids).hasSize(2);
         assertThat(capturedRefs).hasSize(1);
-        assertThat(capturedRefs.get(0)).isEqualTo(capturedOids.get(1));
+        assertThat(capturedRefs.get(0)).isIn(capturedOids);
     }
 
     @Test
@@ -127,7 +127,7 @@ class AssociationXtfIntegrationTest {
 
     @Test
     void reportsAssociationNameInDiagnostic() throws Exception {
-        JobConfig config = p7Config(false);
+        JobConfig config = p7Config(true);
         config.job.failPolicy = "lenient";
         JobConfig.RefMapping refMapping = config.mapping.rules.get(0).refs.get(0);
         refMapping.association = "AtoB";

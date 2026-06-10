@@ -34,6 +34,7 @@ import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class Ili1SurfaceAreaTransferIntegrationTest {
 
@@ -109,6 +110,7 @@ class Ili1SurfaceAreaTransferIntegrationTest {
 
     @Test
     void realDm01ItfReaderMergesAreaAndSurfaceGeometry() throws Exception {
+        assumeTrue(Files.exists(REAL_DM01_INPUT), "real DM01 fixture not present: " + REAL_DM01_INPUT);
         IliModelService service = new IliModelService();
         IliModelCompileResult dm01Result = service.compileModel("DM01AVSO24LV95", REAL_DM01_MODELDIR);
         if (dm01Result.hasErrors()) {

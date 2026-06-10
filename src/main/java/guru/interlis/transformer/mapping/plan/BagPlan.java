@@ -13,6 +13,7 @@ public record BagPlan(
         String parentAlias,
         Integer cardinalityMin,
         Integer cardinalityMax,
+        Integer maxItems,
         IdentityPlan identityPlan,
         RefPlan parentRefPlan
 ) {

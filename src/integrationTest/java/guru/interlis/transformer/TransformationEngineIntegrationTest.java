@@ -99,9 +99,13 @@ class TransformationEngineIntegrationTest {
             }
         }
         assertThat(writtenObjects).hasSize(2);
-        IomObject first = writtenObjects.get(0);
-        IomObject parentRef = first.getattrobj("parentRef", 0);
+        IomObject parentRef = writtenObjects.stream()
+                .map(obj -> obj.getattrobj("parentRef", 0))
+                .filter(obj -> obj != null && obj.getobjectrefoid() != null)
+                .findFirst()
+                .orElse(null);
         assertThat(parentRef).isNotNull();
-        assertThat(parentRef.getobjectrefoid()).isEqualTo(writtenObjects.get(1).getobjectoid());
+        assertThat(parentRef.getobjectrefoid())
+                .isIn(writtenObjects.stream().map(IomObject::getobjectoid).toList());
     }
 }

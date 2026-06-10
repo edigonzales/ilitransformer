@@ -25,8 +25,7 @@ public final class OutputWritingService {
                 String basketId = parts.length > 1 && !parts[1].isEmpty() ? parts[1] : null;
                 writer.write(new ch.interlis.iox_j.StartBasketEvent(topic, basketId));
                 List<IomObject> sorted = new ArrayList<>(basketEntry.getValue());
-                sorted.sort(Comparator.comparing(IomObject::getobjecttag)
-                        .thenComparing(IomObject::getobjectoid));
+                sorted.sort(targetObjectComparator());
                 for (IomObject target : sorted) {
                     writer.write(new ch.interlis.iox_j.ObjectEvent(target));
                     written++;
@@ -38,5 +37,30 @@ public final class OutputWritingService {
             writer.close();
         }
         return written;
+    }
+
+    public static Comparator<IomObject> targetObjectComparator() {
+        return Comparator.comparingInt(OutputWritingService::referenceWeight)
+                .thenComparing(IomObject::getobjecttag)
+                .thenComparing(IomObject::getobjectoid);
+    }
+
+    private static int referenceWeight(IomObject object) {
+        return hasReference(object) ? 1 : 0;
+    }
+
+    private static boolean hasReference(IomObject object) {
+        if (object == null) return false;
+        if (object.getobjectrefoid() != null) return true;
+        for (int i = 0; i < object.getattrcount(); i++) {
+            String attrName = object.getattrname(i);
+            int valueCount = object.getattrvaluecount(attrName);
+            for (int valueIdx = 0; valueIdx < valueCount; valueIdx++) {
+                if (hasReference(object.getattrobj(attrName, valueIdx))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

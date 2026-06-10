@@ -74,6 +74,7 @@ mapping:
       refs:
         - association: "Entstehung_LFP3"
           role: "Entstehung"
+          required: true
           targetObject:
             rule: lfp3-nachfuehrung
             sourceRef: "p.Entstehung"

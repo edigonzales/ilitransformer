@@ -10,6 +10,7 @@ public record RulePlan(
         java.util.List<AssignmentPlan> assignments,
         java.util.List<RefPlan> refs,
         java.util.List<BagPlan> bags,
+        java.util.List<LossPlan> losses,
         java.util.List<String> identitySourceKeys,
         CompiledExpression predicate,
         java.util.List<JoinPlan> joins,
