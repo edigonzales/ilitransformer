@@ -64,6 +64,69 @@ mapping:
         Bodenbedeckungsart: "bb.Art"
         Fiktiv: "false"
         Objektstatus: "#weitere"
+        EGID: "lookup('DM01AVCH24LV95D.Bodenbedeckung.Gebaeudenummer', 'Gebaeudenummer_von', oid(bb), 'GWR_EGID')"
+      bags:
+        Objektnummer:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Bodenbedeckung.Gebaeudenummer"
+            alias: gn
+          parentRef:
+            attribute: Gebaeudenummer_von
+            parentAlias: bb
+          assign:
+            Nummer: "gn.Nummer"
+          nestedBags:
+            Textposition:
+              from:
+                input: dm01
+                class: "DM01AVCH24LV95D.Bodenbedeckung.GebaeudenummerPos"
+                alias: gnp
+              parentRef:
+                attribute: GebaeudenummerPos_von
+                parentAlias: gn
+              assign:
+                Position: "gnp.Pos"
+                Orientierung: "coalesce(gnp.Ori, 100.0)"
+                HReferenzpunkt: "coalesce(gnp.HAli, 'Center')"
+                VReferenzpunkt: "coalesce(gnp.VAli, 'Half')"
+                Textgroesse: "coalesce(gnp.Groesse, 'mittel')"
+        Objektname:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Bodenbedeckung.Objektname"
+            alias: on
+          parentRef:
+            attribute: Objektname_von
+            parentAlias: bb
+          assign:
+            Name: "on.Name"
+          nestedBags:
+            Textposition:
+              from:
+                input: dm01
+                class: "DM01AVCH24LV95D.Bodenbedeckung.ObjektnamePos"
+                alias: onp
+              parentRef:
+                attribute: ObjektnamePos_von
+                parentAlias: on
+              assign:
+                Position: "onp.Pos"
+                Orientierung: "coalesce(onp.Ori, 100.0)"
+                HReferenzpunkt: "coalesce(onp.HAli, 'Center')"
+                VReferenzpunkt: "coalesce(onp.VAli, 'Half')"
+                Textgroesse: "coalesce(onp.Groesse, 'mittel')"
+        Symbolposition:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Bodenbedeckung.BoFlaecheSymbol"
+            alias: sym
+          parentRef:
+            attribute: BoFlaecheSymbol_von
+            parentAlias: bb
+          assign:
+            Position: "sym.Pos"
+            Orientierung: "coalesce(sym.Ori, 100.0)"
       refs:
         - association: "Entstehung_Bodenbedeckung"
           role: "Entstehung"
