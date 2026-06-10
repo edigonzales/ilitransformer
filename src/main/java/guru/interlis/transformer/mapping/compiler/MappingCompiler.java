@@ -1415,7 +1415,9 @@ public final class MappingCompiler {
             case TEXT, ENUM -> targetType == TypeInfo.TEXT || targetType == TypeInfo.ENUM;
             case NUMERIC -> targetType == TypeInfo.NUMERIC || targetType == TypeInfo.TEXT;
             case BOOLEAN -> targetType == TypeInfo.BOOLEAN || targetType == TypeInfo.TEXT;
-            case COORD, POLYLINE, SURFACE, AREA -> targetType == sourceType || targetType == TypeInfo.TEXT;
+            case COORD, POLYLINE, SURFACE, AREA -> targetType == sourceType || targetType == TypeInfo.TEXT
+                    || (sourceType == TypeInfo.AREA && targetType == TypeInfo.SURFACE)
+                    || (sourceType == TypeInfo.SURFACE && targetType == TypeInfo.AREA);
             case XML_DATE_TIME -> targetType == TypeInfo.XML_DATE_TIME || targetType == TypeInfo.DATE
                     || targetType == TypeInfo.TEXT;
             case DATE -> targetType == TypeInfo.DATE || targetType == TypeInfo.XML_DATE_TIME
