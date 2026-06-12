@@ -1,0 +1,75 @@
+INTERLIS 2.4;
+
+MODEL DmavBbTestModel (de)
+  AT "http://test.ili-transformer.ch" VERSION "2026-06-07" =
+  TOPIC Bodenbedeckung =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    DOMAIN
+      Zuverlaessigkeit = BOOLEAN;
+      Bodenbedeckungsart = (Gebaeude, befestigt, humusiert, Gewaesser, bestockt, vegetationslos);
+      Qualitaetsstandard = (AV93, AV03);
+      Objektstatus = (real, projektiert, weitere);
+      HAlignment = (Left, Center, Right);
+      VAlignment = (Top, Cap, Half, Baseline, Bottom);
+
+    STRUCTURE Textposition =
+      Position: MANDATORY TEXT*30;
+      Orientierung: MANDATORY 0.0 .. 400.0;
+      HReferenzpunkt: HAlignment;
+      VReferenzpunkt: VAlignment;
+      Textgroesse: (klein, mittel, gross);
+    END Textposition;
+
+    STRUCTURE Objektnummer =
+      Nummer: MANDATORY TEXT*12;
+      Textposition: BAG {0..*} OF Textposition;
+    END Objektnummer;
+
+    STRUCTURE Objektname =
+      Name: MANDATORY TEXT*30;
+      Textposition: BAG {0..*} OF Textposition;
+    END Objektname;
+
+    CLASS BBNachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;
+      Beschreibung: MANDATORY TEXT*60;
+      GueltigerEintrag: MANDATORY INTERLIS.XMLDateTime;
+    END BBNachfuehrung;
+
+    CLASS Bodenbedeckung =
+      Geometrie: MANDATORY TEXT*30;
+      Qualitaetsstandard: MANDATORY Qualitaetsstandard;
+      Bodenbedeckungsart: MANDATORY Bodenbedeckungsart;
+      Fiktiv: MANDATORY BOOLEAN;
+      Objektstatus: MANDATORY Objektstatus;
+      EGID: 1 .. 999999999;
+      Objektnummer: BAG {0..*} OF Objektnummer;
+      Objektname: BAG {0..*} OF Objektname;
+      Symbolposition: BAG {0..*} OF Textposition;
+    END Bodenbedeckung;
+
+    CLASS Messpunkt =
+      Nummer: TEXT*12;
+      Geometrie: MANDATORY TEXT*30;
+      Lagegenauigkeit: MANDATORY 0.001 .. 7.000;
+      IstLagezuverlaessig: MANDATORY Zuverlaessigkeit;
+      Hoehengenauigkeit: 0.001 .. 7.000;
+      IstHoehenzuverlaessig: Zuverlaessigkeit;
+      IstExaktDefiniert: MANDATORY BOOLEAN;
+    END Messpunkt;
+
+    ASSOCIATION Entstehung_Bodenbedeckung =
+      Entstehung -- {1} BBNachfuehrung;
+      entstehende_BoFlaeche -- {0..*} Bodenbedeckung;
+    END Entstehung_Bodenbedeckung;
+
+    ASSOCIATION Entstehung_Messpunkt =
+      Entstehung -- {0..1} BBNachfuehrung;
+      entstehender_Messpunkt -- {0..*} Messpunkt;
+    END Entstehung_Messpunkt;
+
+  END Bodenbedeckung;
+END DmavBbTestModel.

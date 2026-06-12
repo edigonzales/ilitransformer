@@ -1,0 +1,169 @@
+version: 1
+
+job:
+  name: dmav-to-dm01-bb-test
+  description: "Test transformation DMAV Bodenbedeckung nach DM01 Bodenbedeckung"
+  direction: dmav-to-dm01
+  failPolicy: strict
+  inputs:
+    - id: dmav
+      path: "input/test.xtf"
+      model: "DmavBbTestModel"
+      format: "xtf"
+  outputs:
+    - id: dm01
+      path: "build/out/dm01-bb-test.itf"
+      model: "Dm01BbTestModel"
+      format: "itf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: integer
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Bodenbedeckungsart_DMAV_DM01:
+      Gebaeude: "Gebaeude"
+      befestigt: "befestigt"
+      humusiert: "humusiert"
+      Gewaesser: "Gewaesser"
+      bestockt: "bestockt"
+      vegetationslos: "vegetationslos"
+    Zuverlaessigkeit_DMAV_DM01:
+      true: "ja"
+      false: "nein"
+    Qualitaetsstandard_DMAV_DM01:
+      AV93: "AV93"
+      AV03: "AV03"
+
+  rules:
+    - id: bb-nachfuehrung
+      target:
+        output: dm01
+        class: "Dm01BbTestModel.Bodenbedeckung.BBNachfuehrung"
+      sources:
+        - alias: nf
+          input: dmav
+          class: "DmavBbTestModel.Bodenbedeckung.BBNachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 30)"
+        GueltigerEintrag: "nf.GueltigerEintrag"
+
+    - id: boflaeche
+      target:
+        output: dm01
+        class: "Dm01BbTestModel.Bodenbedeckung.BoFlaeche"
+      sources:
+        - alias: b
+          input: dmav
+          class: "DmavBbTestModel.Bodenbedeckung.Bodenbedeckung"
+      assign:
+        Geometrie: "b.Geometrie"
+        Qualitaet: "b.Qualitaetsstandard"
+        Art: "b.Bodenbedeckungsart"
+      bags:
+        Objektnummer:
+          mode: expand
+          structure: "Dm01BbTestModel.Bodenbedeckung.Gebaeudenummer"
+          from:
+            input: dmav
+            alias: gn
+            class: "DmavBbTestModel.Bodenbedeckung.Objektnummer"
+          parentRef:
+            role: Gebaeudenummer_von
+            parentAlias: b
+          assign:
+            Nummer: "gn.Nummer"
+            GWR_EGID: "b.EGID"
+          nestedBags:
+            Textposition:
+              mode: expand
+              structure: "Dm01BbTestModel.Bodenbedeckung.GebaeudenummerPos"
+              from:
+                input: dmav
+                alias: gnp
+                class: "DmavBbTestModel.Bodenbedeckung.Textposition"
+              parentRef:
+                role: GebaeudenummerPos_von
+              assign:
+                Pos: "gnp.Position"
+                Ori: "coalesce(gnp.Orientierung, 100.0)"
+                HAli: "coalesce(gnp.HReferenzpunkt, 'Center')"
+                VAli: "coalesce(gnp.VReferenzpunkt, 'Half')"
+                Groesse: "coalesce(gnp.Textgroesse, 'mittel')"
+        Objektname:
+          mode: expand
+          structure: "Dm01BbTestModel.Bodenbedeckung.Objektname"
+          from:
+            input: dmav
+            alias: onItem
+            class: "DmavBbTestModel.Bodenbedeckung.Objektname"
+          parentRef:
+            role: Objektname_von
+          assign:
+            Name: "onItem.Name"
+          nestedBags:
+            Textposition:
+              mode: expand
+              structure: "Dm01BbTestModel.Bodenbedeckung.ObjektnamePos"
+              from:
+                input: dmav
+                alias: onp
+                class: "DmavBbTestModel.Bodenbedeckung.Textposition"
+              parentRef:
+                role: ObjektnamePos_von
+              assign:
+                Pos: "onp.Position"
+                Ori: "coalesce(onp.Orientierung, 100.0)"
+                HAli: "coalesce(onp.HReferenzpunkt, 'Center')"
+                VAli: "coalesce(onp.VReferenzpunkt, 'Half')"
+                Groesse: "coalesce(onp.Textgroesse, 'mittel')"
+        Symbolposition:
+          mode: expand
+          structure: "Dm01BbTestModel.Bodenbedeckung.BoFlaecheSymbol"
+          from:
+            input: dmav
+            alias: symItem
+            class: "DmavBbTestModel.Bodenbedeckung.Textposition"
+          parentRef:
+            role: BoFlaecheSymbol_von
+          assign:
+            Pos: "symItem.Position"
+            Ori: "coalesce(symItem.Orientierung, 100.0)"
+      refs:
+        - association: "Entstehung_BoFlaeche"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: bb-nachfuehrung
+            sourceRef: "b.Entstehung"
+
+    - id: einzelpunkt
+      target:
+        output: dm01
+        class: "Dm01BbTestModel.Bodenbedeckung.Einzelpunkt"
+      sources:
+        - alias: m
+          input: dmav
+          class: "DmavBbTestModel.Bodenbedeckung.Messpunkt"
+      identity:
+        sourceKey: ["m.Nummer"]
+      assign:
+        Identifikator: "m.Nummer"
+        Geometrie: "m.Geometrie"
+        LageGen: "div(m.Lagegenauigkeit, 0.01)"
+        LageZuv: "enumMap(m.IstLagezuverlaessig, 'Zuverlaessigkeit_DMAV_DM01')"
+        ExaktDefiniert: "#Ja"
+      refs:
+        - association: "Entstehung_Einzelpunkt"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: bb-nachfuehrung
+            sourceRef: "m.Entstehung"

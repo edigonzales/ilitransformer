@@ -4,14 +4,26 @@
 
 | Symbol | Bedeutung |
 |---|---|
-| ✅ | Unterstützt (Golden Test + Validierung) |
+| ✅ | Validiert (Profil + Tests + ilivalidator grün) |
+| 🔧 | Profil vorhanden, ungetestet/nicht validiert |
 | 🟡 | Teilweise / generierter Vorschlag |
 | ❌ | Offen / nicht implementiert |
 | ⚫ | Bewusst nicht unterstützt / fachlich unklar |
 
+Stand: 2026-06-11
+
+---
+
 ## FixpunkteKategorie3 / FixpunkteAVKategorie3
 
-### LFP3Nachfuehrung
+### LFP3 (FixpunkteAVKategorie3.LFP3/LFP3Nachfuehrung) – ✅
+
+**Profile:** `profiles/{dm01-to-dmav,dmav-to-dm01}/1.1/lfp3.yaml`
+**Tests:** `Dm01ToDmavLfp3IntegrationTest`, `DmavToDm01Lfp3IntegrationTest`
+**Fixtures:** `src/test/resources/real-dm01-dmav/lfp3/`
+**ilivalidator:** beide Richtungen validiert
+
+#### LFP3Nachfuehrung
 
 | DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
 |---|---|---|---|
@@ -21,13 +33,13 @@
 | Perimeter | Perimeter | ✅ | ✅ |
 | GueltigerEintrag | GueltigerEintrag / Datum1 | ✅ | ✅ |
 
-### LFP3
+#### LFP3
 
 | DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
 |---|---|---|---|
 | NBIdent | NBIdent | ✅ | ✅ |
 | Nummer | Nummer | ✅ | ✅ |
-| LFPArt | — | ✅ (Default #LFP3) | ❌ |
+| LFPArt | — | ✅ (Default #LFP3) | ⚫ (kein Äquivalent) |
 | Geometrie | Geometrie | ✅ | ✅ |
 | Hoehengeometrie | HoeheGeom | ✅ | ✅ |
 | Lagegenauigkeit | LageGen | ✅ | ✅ |
@@ -36,52 +48,135 @@
 | IstHoehenzuverlaessig | HoeheZuv | ✅ | ✅ |
 | Punktzeichen | Punktzeichen | ✅ | ✅ |
 | Schutzart | — | ❌ (null) | ❌ |
-| Grenzpunktfunktion | — | ✅ (Default #keine) | ❌ |
+| Grenzpunktfunktion | — | ✅ (Default #keine) | ⚫ (kein Äquivalent) |
 | IstHoheitsgrenzsteinAlt | — | ❌ | ❌ |
-| AktiverUnterhalt | — | ✅ (Default true) | ❌ |
+| AktiverUnterhalt | — | ✅ (Default true) | ⚫ (kein Äquivalent) |
 | SymbolOri | LFP3Symbol.Ori | ✅ | ✅ |
 | Entstehung (Ref) | Entstehung | ✅ | ✅ |
 | Textposition (BAG) | LFP3Pos | ✅ | ✅ |
 
-### HFP3Nachfuehrung / HFP3
+#### HFP3 (HFP3Nachfuehrung + HFP3) – 🟡
 
 | Status | DM01→DMAV | DMAV→DM01 |
 |---|---|---|
-| Gesamt | 🟡 | ❌ |
+| Profil | ❌ | ❌ |
+| Generierte Kandidaten | 🟡 | ❌ |
 
-## Liegenschaften / Grundstuecke
+---
 
-### Grenzpunkt
+## Bodenbedeckung / Bodenbedeckung – 🔧 (Tests ✅)
+
+**Profile:** `profiles/{dm01-to-dmav,dmav-to-dm01}/1.1/bb.yaml`
+**Testmodelle:** `dm01-bb-test.ili`, `dmav-bb-test.ili`
+**Integrationstests:** `Dm01ToDmavBbIntegrationTest` (5 Tests ✅), `DmavToDm01BbIntegrationTest` (5 Tests ✅)
+**ilivalidator:** noch nicht validiert (Echtdaten-Transformation pending)
+**Fixtures:** noch nicht erstellt
+
+### BBNachfuehrung
 
 | DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
 |---|---|---|---|
-| Gesamt | | 🟡 | ❌ |
+| NBIdent | NBIdent | ✅ | ✅ |
+| Identifikator | Identifikator | ✅ | ✅ |
+| Beschreibung | Beschreibung | ✅ | ✅ |
+| Perimeter | Perimeter | ✅ | ✅ |
+| GueltigerEintrag | GueltigerEintrag / Datum1 | ✅ | ✅ |
 
-### Grundstueck / Liegenschaft
+### BoFlaeche / Bodenbedeckung
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
+|---|---|---|---|
+| Geometrie | Geometrie | ✅ | ✅ |
+| Qualitaetsstandard | Qualitaet | ✅ | ✅ |
+| Bodenbedeckungsart | Art | ✅ | ✅ |
+| Fiktiv | — | ✅ (Default false) | ⚫ (kein Äquivalent) |
+| Objektstatus | — | ✅ (Default #weitere) | ⚫ (kein Äquivalent) |
+| EGID | lookup(GWR_EGID) | ✅ | ✅ |
+| Objektnummer (BAG) | Gebaeudenummer | ✅ | ✅ |
+| Objektname (BAG) | Objektname | ✅ | ✅ |
+| Symbolposition (BAG) | BoFlaecheSymbol | ✅ | ✅ |
+| Entstehung (Ref) | Entstehung | ✅ | ✅ |
+
+### Einzelpunkt / Messpunkt
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
+|---|---|---|---|
+| Nummer | Identifikator | ✅ | ✅ |
+| Geometrie | Geometrie | ✅ | ✅ |
+| Lagegenauigkeit | LageGen | ✅ | ✅ |
+| IstLagezuverlaessig | LageZuv | ✅ | ✅ |
+| Hoehengeometrie | — | ❌ | ❌ |
+| Hoehengenauigkeit | — | ❌ | ❌ |
+| IstHoehenzuverlaessig | — | ❌ | ❌ |
+| IstExaktDefiniert | ExaktDefiniert | ✅ | ✅ |
+| Entstehung (Ref) | Entstehung | ✅ | ✅ |
+
+---
+
+## Liegenschaften / Grundstücke
+
+### Grenzpunkt – 🟡
 
 | Status | DM01→DMAV | DMAV→DM01 |
 |---|---|---|
-| Gesamt | ❌ | ❌ |
+| Profil | ❌ | ❌ |
+| Generierte Kandidaten | 🟡 | ❌ |
 
-## Bodenbedeckung
-
-| Status | DM01→DMAV | DMAV→DM01 |
-|---|---|---|
-| Gesamt | ❌ | ❌ |
-
-Bemerkung: AREA-Topologie und SURFACE-Konvertierung sind komplex. Nicht in MVP.
-
-## Einzelobjekte
+### Grundstück / Liegenschaft – ❌
 
 | Status | DM01→DMAV | DMAV→DM01 |
 |---|---|---|
-| Gesamt | ❌ | ❌ |
+| Profil | ❌ | ❌ |
 
-## Nomenklatur, Gebäudeadressen, Toleranzstufen, Rohrleitungen, Hoheitsgrenzen
+---
+
+## Einzelobjekte – ❌
 
 | Status | DM01→DMAV | DMAV→DM01 |
 |---|---|---|
-| Gesamt | ❌ | ❌ |
+| Profil | ❌ | ❌ |
+
+---
+
+## Nomenklatur – ❌
+
+| Status | DM01→DMAV | DMAV→DM01 |
+|---|---|---|
+| Profil | ❌ | ❌ |
+
+---
+
+## Gebäudeadressen – ❌
+
+| Status | DM01→DMAV | DMAV→DM01 |
+|---|---|---|
+| Profil | ❌ | ❌ |
+
+---
+
+## Toleranzstufen – ❌
+
+| Status | DM01→DMAV | DMAV→DM01 |
+|---|---|---|
+| Profil | ❌ | ❌ |
+
+---
+
+## Rohrleitungen – ❌
+
+| Status | DM01→DMAV | DMAV→DM01 |
+|---|---|---|
+| Profil | ❌ | ❌ |
+
+---
+
+## Hoheitsgrenzen – ❌
+
+| Status | DM01→DMAV | DMAV→DM01 |
+|---|---|---|
+| Profil | ❌ | ❌ |
+
+---
 
 ## Generierte Mapping-Kandidaten
 

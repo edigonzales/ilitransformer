@@ -45,22 +45,14 @@ public final class RuleDispatchIndex {
             for (BagPlan bag : rule.bags()) {
                 if (bag.fromSource().sourceClass() == null) continue;
                 for (String inputId : bag.fromSource().inputIds()) {
-                    String className = TypeSystemFacade.getScopedName(bag.fromSource().sourceClass());
-                    String key = key(inputId, className);
-                    if (bag.isEmbed()) {
-                        embedMap.computeIfAbsent(key, k -> new ArrayList<>()).add(bag);
-                    } else if (bag.isExpand()) {
-                        SourcePlan parentSource = null;
-                        for (SourcePlan rsp : rule.sources()) {
-                            if (rsp.inputIds().contains(inputId)) {
-                                parentSource = rsp;
-                                break;
-                            }
-                        }
-                        if (parentSource != null) {
-                            expandList.add(new BagExpansionEntry(bag, parentSource, rule));
+                    SourcePlan parentSource = null;
+                    for (SourcePlan rsp : rule.sources()) {
+                        if (rsp.inputIds().contains(inputId)) {
+                            parentSource = rsp;
+                            break;
                         }
                     }
+                    collectBagsRecursive(bag, inputId, embedMap, expandList, parentSource, rule);
                 }
             }
         }
@@ -93,6 +85,25 @@ public final class RuleDispatchIndex {
 
     private static String key(String inputId, String sourceClass) {
         return (inputId != null ? inputId : "*") + "::" + sourceClass;
+    }
+
+    private static void collectBagsRecursive(BagPlan bag, String inputId,
+                                              Map<String, List<BagPlan>> embedMap,
+                                              List<BagExpansionEntry> expandList,
+                                              SourcePlan parentSource, RulePlan rule) {
+        if (bag.fromSource().sourceClass() == null) return;
+        String className = TypeSystemFacade.getScopedName(bag.fromSource().sourceClass());
+        String key = key(inputId, className);
+        if (bag.isEmbed()) {
+            embedMap.computeIfAbsent(key, k -> new ArrayList<>()).add(bag);
+        } else if (bag.isExpand()) {
+            if (parentSource != null) {
+                expandList.add(new BagExpansionEntry(bag, parentSource, rule));
+            }
+        }
+        for (BagPlan nested : bag.nestedBags()) {
+            collectBagsRecursive(nested, inputId, embedMap, expandList, parentSource, rule);
+        }
     }
 
     public record BagExpansionEntry(BagPlan bag, SourcePlan parentSource, RulePlan parentRule) {}

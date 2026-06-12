@@ -1,0 +1,87 @@
+INTERLIS 2.4;
+
+MODEL Dm01BbTestModel (de)
+  AT "http://test.ili-transformer.ch" VERSION "2026-06-07" =
+  TOPIC Bodenbedeckung =
+    BASKET OID AS INTERLIS.STANDARDOID;
+    OID AS INTERLIS.STANDARDOID;
+
+    DOMAIN
+      Zuverlaessigkeit = (ja, nein);
+      BBArt = (Gebaeude, befestigt, humusiert, Gewaesser, bestockt, vegetationslos);
+      Qualitaetsstandard = (AV93, AV03);
+      ExaktDefiniert = (Ja, Nein);
+      Schriftgroesse = (klein, mittel, gross);
+
+    DOMAIN
+      HAlignment = (Left, Center, Right);
+      VAlignment = (Top, Cap, Half, Baseline, Bottom);
+
+    CLASS BBNachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;
+      Beschreibung: MANDATORY TEXT*30;
+      GueltigerEintrag: INTERLIS.XMLDateTime;
+    END BBNachfuehrung;
+
+    CLASS BoFlaeche =
+      Geometrie: MANDATORY TEXT*30;
+      Qualitaet: MANDATORY Qualitaetsstandard;
+      Art: MANDATORY BBArt;
+    END BoFlaeche;
+
+    CLASS Gebaeudenummer =
+      Gebaeudenummer_von: REFERENCE TO BoFlaeche;
+      Nummer: TEXT*12;
+      GWR_EGID: 1 .. 999999999;
+    END Gebaeudenummer;
+
+    CLASS GebaeudenummerPos =
+      GebaeudenummerPos_von: REFERENCE TO Gebaeudenummer;
+      Pos: TEXT*30;
+      Ori: 0.0 .. 400.0;
+      HAli: HAlignment;
+      VAli: VAlignment;
+      Groesse: Schriftgroesse;
+    END GebaeudenummerPos;
+
+    CLASS Objektname =
+      Objektname_von: REFERENCE TO BoFlaeche;
+      Name: TEXT*30;
+    END Objektname;
+
+    CLASS ObjektnamePos =
+      ObjektnamePos_von: REFERENCE TO Objektname;
+      Pos: TEXT*30;
+      Ori: 0.0 .. 400.0;
+      HAli: HAlignment;
+      VAli: VAlignment;
+      Groesse: Schriftgroesse;
+    END ObjektnamePos;
+
+    CLASS BoFlaecheSymbol =
+      BoFlaecheSymbol_von: REFERENCE TO BoFlaeche;
+      Pos: TEXT*30;
+      Ori: 0.0 .. 400.0;
+    END BoFlaecheSymbol;
+
+    CLASS Einzelpunkt =
+      Identifikator: TEXT*12;
+      Geometrie: TEXT*30;
+      LageGen: 0.0 .. 700.0;
+      LageZuv: Zuverlaessigkeit;
+      ExaktDefiniert: ExaktDefiniert;
+    END Einzelpunkt;
+
+    ASSOCIATION Entstehung_BoFlaeche =
+      Entstehung -- {1} BBNachfuehrung;
+      entstehende_BoFlaeche -- {0..*} BoFlaeche;
+    END Entstehung_BoFlaeche;
+
+    ASSOCIATION Entstehung_Einzelpunkt =
+      Entstehung -- {0..1} BBNachfuehrung;
+      entstehender_Einzelpunkt -- {0..*} Einzelpunkt;
+    END Entstehung_Einzelpunkt;
+
+  END Bodenbedeckung;
+END Dm01BbTestModel.

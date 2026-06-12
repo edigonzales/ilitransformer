@@ -416,6 +416,10 @@ public final class TransformationEngine {
             TypeSystemFacade targetTs = outputBinding != null ? outputBinding.typeSystem() : null;
             if (targetTs == null) continue;
             String targetClassScoped = TypeSystemFacade.getScopedName(rule.targetClass());
+            // Skip rules that produced no targets (no deferred refs for this class)
+            boolean ruleExecuted = stateStore.deferredRefs().stream()
+                    .anyMatch(dr -> dr.ownerTargetClass().equals(targetClassScoped));
+            if (!ruleExecuted) continue;
             for (var ref : rule.refs()) {
                 if (!ref.required()) continue;
                 RoleResolver roleResolver = new RoleResolver(targetTs);
