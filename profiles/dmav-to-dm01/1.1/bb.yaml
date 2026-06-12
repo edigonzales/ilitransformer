@@ -91,6 +91,7 @@ mapping:
                 class: "DMAVTYM_Grafik_V1_0.Textposition"
               parentRef:
                 role: GebaeudenummerPos_von
+                parentAlias: gn
               assign:
                 Pos: "gnp.Position"
                 Ori: "coalesce(gnp.Orientierung, 100.0)"
@@ -118,6 +119,7 @@ mapping:
                 class: "DMAVTYM_Grafik_V1_0.Textposition"
               parentRef:
                 role: ObjektnamePos_von
+                parentAlias: onItem
               assign:
                 Pos: "onp.Position"
                 Ori: "coalesce(onp.Orientierung, 100.0)"

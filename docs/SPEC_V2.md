@@ -1,3 +1,5 @@
+> Historisches Arbeitsdokument. Nicht führend für den aktuellen Repo-Zustand.
+
 # ili-transformer: Stabilisierung, Härtung und anschliessende DM01↔DMAV-Vervollständigung
 
 ## Verbindliche Spezifikation und Arbeitsauftrag für einen LLM-Coding-Agenten

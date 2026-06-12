@@ -7,14 +7,14 @@ public final class MappingCandidateTask {
     public static void main(String[] args) throws Exception {
         Path hints = null;
         Path synonyms = null;
-        Path out = Path.of("build/generated/dm01-dmav/mapping-candidates.json");
-        Path report = Path.of("build/reports/dm01-dmav/candidate-report.md");
-        Path yamlDm01Dmav = Path.of("build/generated/dm01-dmav/dm01-to-dmav.generated.yaml");
-        Path yamlDmavDm01 = Path.of("build/generated/dm01-dmav/dmav-to-dm01.generated.yaml");
+        Path out = Dm01DmavPaths.GENERATED_CANDIDATES;
+        Path report = Dm01DmavPaths.CANDIDATE_REPORT;
+        Path yamlDm01Dmav = Dm01DmavPaths.GENERATED_DM01_TO_DMAV_YAML;
+        Path yamlDmavDm01 = Dm01DmavPaths.GENERATED_DMAV_TO_DM01_YAML;
         String dm01Model = "DM01AVCH24LV95D";
-        String dm01Dir = "src/test/data/av/models/";
+        String dm01Dir = Dm01DmavPaths.LOCAL_MODEL_DIR;
         String dmavModel = null;
-        String dmavDir = "src/test/data/av/models/";
+        String dmavDir = Dm01DmavPaths.LOCAL_MODEL_DIR;
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {

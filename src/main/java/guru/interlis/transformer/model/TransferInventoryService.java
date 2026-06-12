@@ -13,6 +13,7 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox.StartBasketEvent;
+import guru.interlis.transformer.dmav.Dm01DmavFixtures;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.testutil.TransferDatasetDescriptor;
 import ch.interlis.iom_j.itf.ItfReader2;
@@ -79,7 +80,9 @@ public final class TransferInventoryService {
                     String tag = iom.getobjecttag();
                     if (tag != null) {
                         classCounts.merge(tag, 1L, Long::sum);
-                        detectLfp3(tag, lfp3Classes);
+                        if (Dm01DmavFixtures.isLfp3RelevantClass(tag)) {
+                            lfp3Classes.add(tag);
+                        }
                         if (collectedModelNames.isEmpty()) {
                             String modelPart = extractModelName(tag);
                             if (modelPart != null) {
@@ -296,10 +299,4 @@ public final class TransferInventoryService {
         return table.getName();
     }
 
-    private static void detectLfp3(String className, Set<String> lfp3Classes) {
-        String upper = className.toUpperCase();
-        if (upper.contains("LFP3") || upper.contains("FIXPUNKT")) {
-            lfp3Classes.add(className);
-        }
-    }
 }

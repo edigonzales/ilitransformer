@@ -19,13 +19,10 @@ import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.CanonicalValue;
-import guru.interlis.transformer.state.DeferredRef;
-import guru.interlis.transformer.state.DeferredReference;
 import guru.interlis.transformer.state.DuplicateTargetOidException;
 import guru.interlis.transformer.state.OidGenerationRequest;
 import guru.interlis.transformer.state.OidGenerationService;
 import guru.interlis.transformer.state.OidStrategy;
-import guru.interlis.transformer.state.SourceReferenceSelector;
 import guru.interlis.transformer.state.SourceRecord;
 import guru.interlis.transformer.state.TargetObjectKey;
 
@@ -295,34 +292,7 @@ public final class BagTransformationService {
                         e.getMessage(), bag.structureName(), "This indicates a bug in OID generation"));
             }
 
-            // Back-reference: expanded target -> parent target
-            if (bag.parentRefPlan() != null) {
-                ctx.stateStore().addDeferredRef(new DeferredRef(
-                        bag.structureName(),
-                        bagTarget.getobjectoid(),
-                        bag.parentRefPlan().targetRoleName(),
-                        parentRecord.sourceClass(),
-                        parentTarget.getobjectoid(),
-                        parentRecord.sourceFileId(),
-                        parentRecord.sourceBasketId(),
-                        parentTarget.getobjecttag()
-                ));
-                if (ctx.referenceIndex() != null) {
-                    ctx.stateStore().addDeferredReference(new DeferredReference(
-                            new TargetObjectKey(outputId, bag.structureName(), bagTarget.getobjectoid()),
-                            bag.parentRefPlan().targetRoleName(),
-                            bag.parentRefPlan().association(),
-                            new SourceReferenceSelector(
-                                    parentRecord.sourceFileId(),
-                                    parentRecord.sourceBasketId(),
-                                    parentRecord.sourceClass(),
-                                    parentObj.getobjectoid()),
-                            bag.parentRefPlan().targetRuleId(),
-                            parentTarget.getobjecttag(),
-                            new DeferredReference.Cardinality(1, 1),
-                            true));
-                }
-            }
+            bindParentReference(bag, bagTarget, parentTarget, ctx);
 
             // Nested bags (EXPAND only)
             for (BagPlan nestedBag : bag.nestedBags()) {
@@ -354,6 +324,23 @@ public final class BagTransformationService {
                         bag.bagAttrName(), "Check bag assignment coverage"));
             }
         }
+    }
+
+    private void bindParentReference(BagPlan bag, Iom_jObject bagTarget,
+                                     Iom_jObject parentTarget, BagExecutionContext ctx) {
+        if (bag.parentRefPlan() == null) {
+            return;
+        }
+        String parentTargetOid = parentTarget.getobjectoid();
+        if (parentTargetOid == null || parentTargetOid.isBlank()) {
+            ctx.diagnostics().add(new Diagnostic(DiagnosticCode.RUN_REF_MISSING_MANDATORY, Severity.ERROR,
+                    "Expanded BAG parent target has no OID for role '" + bag.parentRefPlan().targetRoleName() + "'",
+                    bag.structureName() + "/" + bagTarget.getobjectoid(),
+                    "Check BAG OID generation and parent target materialization"));
+            return;
+        }
+        IomObject ref = bagTarget.addattrobj(bag.parentRefPlan().targetRoleName(), Iom_jObject.REF);
+        ref.setobjectrefoid(parentTargetOid);
     }
 
     static String extractTopic(String qualifiedClassName) {

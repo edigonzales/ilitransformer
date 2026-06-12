@@ -1,6 +1,6 @@
 # Topic-Workflow: DM01 ↔ DMAV Transformation
 
-Für jedes Topic wird dieser Workflow durchlaufen. Eine Transformation gilt als **erledigt**, wenn Schritt 6 (ilivalidator) für beide Richtungen grün ist.
+Für jedes Topic wird dieser Workflow durchlaufen. Eine Transformation gilt als **erledigt**, wenn die synthetischen Integrationstests, die minimalen validierten Fixtures und die relevanten `realDataTest`-Regressionen für beide Richtungen grün sind.
 
 ## Voraussetzungen
 
@@ -84,10 +84,11 @@ src/test/resources/real-dm01-dmav/<topic>/dmav-input.xtf   (minimal, validiert)
 ```
 
 Jeder Fixture muss mit ilivalidator geprüft sein (Schritt 6). Minimal bedeutet: 1-2 Objekte pro Klasse, die alle Mapping-Regeln abdecken.
+Die zugehörigen Fixture-Extraktionstests validieren standardmässig nur im Temp-Verzeichnis; ein Update der eingecheckten Fixtures erfolgt bewusst mit `-PupdateFixtures=true`.
 
 ### Schritt 8: Matrix aktualisieren
 
-In `docs/dm01-dmav/status-matrix.md` das Topic auf ✅ setzen, Datum ergänzen.
+In `docs/dm01-dmav/status-matrix.md` das Topic erst dann auf ✅ setzen, wenn auch die relevanten `realDataTest`-Gates grün sind. Andernfalls `⚠️` verwenden.
 
 ### Schritt 9: Lossiness dokumentieren (falls Rückrichtung)
 
@@ -107,6 +108,8 @@ In `docs/dm01-dmav/lossiness.md` dokumentieren, welche Informationen bei DMAV→
 - [ ] **ilivalidator** DMAV-Output validiert
 - [ ] **Minimal-Fixture** DM01-ITF valide
 - [ ] **Minimal-Fixture** DMAV-XTF valide
+- [ ] **realDataTest** Forward-/End-to-End-Gate grün
+- [ ] **realDataTest** Reverse-/Roundtrip-Gate grün
 - [ ] **Status-Matrix** aktualisiert
 - [ ] **Lossiness** dokumentiert (DMAV→DM01)
 
@@ -121,7 +124,7 @@ In `docs/dm01-dmav/lossiness.md` dokumentieren, welche Informationen bei DMAV→
 | Grundstück/Liegenschaft | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Einzelobjekte | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-Legende: ✅=valide, 🔧=Profil vorhanden, ❌=offen, ⚠️=eingeschränkt
+Legende: ✅=Profil + Integration + Fixtures + reale Regression grün, ⚠️=Integration/Fixtures grün aber reale Regression noch unvollständig, 🔧=Profil vorhanden, ❌=offen
 
 ## Bekannte Einschränkungen
 

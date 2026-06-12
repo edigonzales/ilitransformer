@@ -114,6 +114,6 @@ Beide Richtungen werden mit `ilivalidator` validiert. Die Validierung ist im Int
 
 ## Referenzen
 
-- Mapping-Dateien: `src/test/resources/mappings/dm01-to-dmav-lfp3.yaml`, `dmav-to-dm01-lfp3.yaml`
+- Mapping-Dateien: `profiles/dm01-to-dmav/1.1/lfp3.yaml`, `profiles/dmav-to-dm01/1.1/lfp3.yaml`
 - Testdaten: `src/test/data/av/models/so_2549.itf`
 - SPEC §20-21: Fachliche Mindestregeln

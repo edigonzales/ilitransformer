@@ -1,6 +1,7 @@
 package guru.interlis.transformer.cli;
 
 import guru.interlis.transformer.dmav.Direction;
+import guru.interlis.transformer.dmav.Dm01DmavPaths;
 import guru.interlis.transformer.dmav.MappingCandidateExporter;
 import guru.interlis.transformer.dmav.MappingCandidateGenerator;
 
@@ -33,13 +34,13 @@ public final class GenerateMappingCommand implements Callable<Integer> {
             names = {"--out"},
             description = "Output path for mapping-candidates.json (default: build/generated/dm01-dmav/mapping-candidates.json)"
     )
-    private Path out = Path.of("build/generated/dm01-dmav/mapping-candidates.json");
+    private Path out = Dm01DmavPaths.GENERATED_CANDIDATES;
 
     @Option(
             names = {"--report"},
             description = "Output path for candidate report (default: build/reports/dm01-dmav/candidate-report.md)"
     )
-    private Path report = Path.of("build/reports/dm01-dmav/candidate-report.md");
+    private Path report = Dm01DmavPaths.CANDIDATE_REPORT;
 
     @Option(
             names = {"--dm01-model"},
@@ -51,7 +52,7 @@ public final class GenerateMappingCommand implements Callable<Integer> {
             names = {"--dm01-dir"},
             description = "Model directory for DM01 resolution"
     )
-    private String dm01Dir = "src/test/data/av/models/";
+    private String dm01Dir = Dm01DmavPaths.LOCAL_MODEL_DIR;
 
     @Option(
             names = {"--dmav-model"},
@@ -63,19 +64,19 @@ public final class GenerateMappingCommand implements Callable<Integer> {
             names = {"--dmav-dir"},
             description = "Model directory for DMAV resolution"
     )
-    private String dmavDir = "src/test/data/av/models/";
+    private String dmavDir = Dm01DmavPaths.LOCAL_MODEL_DIR;
 
     @Option(
             names = {"--yaml-dm01-dmav"},
             description = "Output path for generated DM01→DMAV YAML mapping"
     )
-    private Path yamlDm01Dmav = Path.of("build/generated/dm01-dmav/dm01-to-dmav.generated.yaml");
+    private Path yamlDm01Dmav = Dm01DmavPaths.GENERATED_DM01_TO_DMAV_YAML;
 
     @Option(
             names = {"--yaml-dmav-dm01"},
             description = "Output path for generated DMAV→DM01 YAML mapping"
     )
-    private Path yamlDmavDm01 = Path.of("build/generated/dm01-dmav/dmav-to-dm01.generated.yaml");
+    private Path yamlDmavDm01 = Dm01DmavPaths.GENERATED_DMAV_TO_DM01_YAML;
 
     @Override
     public Integer call() throws Exception {

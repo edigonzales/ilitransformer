@@ -38,13 +38,13 @@ Examples:
 
 ```bash
 # Basic transformation
-ili-transformer transform -m dm01-to-dmav-lfp3.yaml
+ili-transformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml
 
 # With model directory
-ili-transformer transform -m dm01-to-dmav-lfp3.yaml --modeldir "src/test/data/av/models/;https://models.interlis.ch"
+ili-transformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml --modeldir "src/test/data/av/models/;https://models.interlis.ch"
 
 # With validation
-ili-transformer transform -m dm01-to-dmav-lfp3.yaml --modeldir "src/test/data/av/models/" --validate --report build/reports/lfp3
+ili-transformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml --modeldir "src/test/data/av/models/" --validate --report build/reports/lfp3
 ```
 
 Exit codes:
@@ -170,3 +170,4 @@ Additional Gradle-only tasks:
 - Output directories are created automatically
 - Generated files go to `build/generated/`
 - Reports go to `build/reports/`
+- Produktive DM01/DMAV-Profile liegen unter `profiles/`

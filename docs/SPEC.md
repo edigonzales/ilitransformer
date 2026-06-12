@@ -1,3 +1,5 @@
+> Historisches Arbeitsdokument. Nicht führend für den aktuellen Repo-Zustand.
+
 # Spezifikation und Anforderungen für einen generischen INTERLIS-Transformer
 
 **Arbeitsname:** `ili-transformer`  

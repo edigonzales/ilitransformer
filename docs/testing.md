@@ -1,127 +1,83 @@
 # Testing
 
-## Test strategy
+## Testsuiten
 
-The project uses a layered testing approach:
+| Suite | Zweck | Code | Zugehörige Dateien |
+|---|---|---|---|
+| `test` | Unit-Tests plus schnelle Repo-Vertrags-/Artefakt-Checks | `src/test/java/` | `src/test/data/`, `src/test/resources/` |
+| `integrationTest` | synthetische End-to-End-, CLI- und Validator-Integration | `src/integrationTest/java/` | primär kleine Testmodelle und kuratierte Fixtures |
+| `realDataTest` | langsame Profil-, Fixture- und Echtdaten-Regression | `src/realDataTest/java/` | `profiles/`, `src/test/data/DMAV_Version_1_1/`, `src/test/resources/real-dm01-dmav/` |
 
-| Level | Scope | Location |
-|---|---|---|
-| **Unit tests** | Individual classes and functions | `src/test/java/` |
-| **Integration tests** | Multi-component flows with files | `src/test/java/` |
-| **Golden tests** | Stable I/O comparison | `src/test/java/` |
-| **Snapshot tests** | Report structure validation | `src/test/java/` |
-| **ilivalidator tests** | Output validation against INTERLIS models | `src/test/java/` |
-
-## Gradle commands
+## Gradle-Integration
 
 ```bash
-./gradlew test                    # Run all tests
-./gradlew integrationTest         # Run integration tests (separate source set)
-./gradlew validateGoldenTransfers # Validate golden test output with ilivalidator
+./gradlew test
+./gradlew integrationTest
+./gradlew realDataTest
+./gradlew check
 ```
 
-## Test data structure
+- `check` hängt an `integrationTest`, aber bewusst nicht an `realDataTest`.
+- `realDataTest` ist für langsame Echtdaten- und Profil-Regression separat ausführbar.
 
-### Test models (`src/test/data/models/`)
+## Ressourcenablage
 
-Small, standalone ILI models for unit and integration tests:
-
-| File | Purpose |
+| Pfad | Rolle |
 |---|---|
-| `minimal.ili` | Minimal model with one class/attribute |
-| `with-enums.ili` | Model with enum types |
-| `with-references.ili` | Model with classes and associations |
-| `with-structures.ili` | Model with STRUCTURE types |
-| `with-bags.ili` | Model with BAG OF STRUCTURE |
-| `p5-test.ili` | Phase 5 scalar mapping test model |
+| `profiles/` | autoritative, versionierte DM01/DMAV-Profile |
+| `src/test/data/models/` | kleine lokale `.ili`-Modelle für Unit- und Integrationstests |
+| `src/test/data/av/models/` | eingecheckte AV-Modelle für DM01/DMAV-Tests |
+| `src/test/data/DMAV_Version_1_1/` | vollständige reale DM01- und DMAV-Datensätze |
+| `src/test/resources/mappings/` | Test-Mappings für synthetische Modelle und CLI-Tests |
+| `src/test/resources/transfers/` | kleine kuratierte Transfer-Fixtures |
+| `src/test/resources/real-dm01-dmav/` | aus realen Datensätzen extrahierte, validierte Minimal-Fixtures |
+| `src/test/resources/dm01-dmav/` | Snapshots für Report-Tests |
 
-### AV models (`src/test/data/av/models/`)
+## Was `realDataTest` abdeckt
 
-Official DM01/DMAV INTERLIS models and real transfer data:
+`realDataTest` ist die Suite für alles, was nicht mehr als schneller synthetischer Test gelten soll:
 
-- `DM01AVCH24LV95D.ili` — DM01 model definition
-- `DMAV_FixpunkteAVKategorie3_V1_1.ili` — DMAV fix points model
-- `DMAV_Grundstuecke_V1_1.ili` — DMAV parcels model
-- `DM01AVCH24LV95D_*.ili` — DM01 supporting models
-- `so_2549.itf` — Real DM01 test data (municipality SO 2549)
-- `DM01_Grundstuecke_449.itf` — Real parcel data
-- `DMAV_Grundstuecke_V1_0.449.xtf` — Real DMAV parcel data
+- Lesen und Inventarisieren vollständiger Echtdatensätze
+- End-to-End-Läufe gegen produktive Profile unter `profiles/`
+- semantische Roundtrips mit realen Fixtures
+- Extraktion und Validierung kleiner Fixtures aus den vollständigen Datensätzen
 
-### Mapping test files (`src/test/resources/mappings/`)
+Die Suite ist absichtlich separat, damit `check` lokal und in CI schnell bleibt.
 
-Valid and invalid YAML mapping configurations for compiler and engine tests.
+## Wichtige Testklassen
 
-### Transfer test files (`src/test/resources/transfers/`)
+### `test`
 
-Test ITF/XTF files for golden and integration tests.
+- `CheckedInModelsCompileTest`: kompiliert die eingecheckten `.ili`-Modelle und schützt den Repo-Vertrag für Modelle unter `src/test/data/`.
+- `CheckedInTransfersValidateTest`: validiert kleine kuratierte ITF-/XTF-Fixtures und Golden-Files unter `src/test/resources/`.
+- `MappingLoaderTest`: lädt produktive Profile aus `profiles/` sowie gezielte Test-Mappings und prüft Compiler-/Loader-Verträge.
+- `BagTransformationTest`, `NestedBagTransformationTest`, `ReferenceResolutionServiceTest`: Kerntests für BAG-Expansion, verschachtelte Strukturen und Referenzauflösung.
 
-## Unit tests
+### `integrationTest`
 
-Coverage requirements per component:
+- `ValidateMappingTypedCliTest`: deckt CLI- und Compiler-Validierung für Mapping-Dateien ab.
+- `Dm01ToDmavLfp3IntegrationTest` und `DmavToDm01Lfp3IntegrationTest`: synthetische End-to-End-Integration für LFP3.
+- `Dm01ToDmavBbIntegrationTest` und `DmavToDm01BbIntegrationTest`: synthetische End-to-End-Integration für BB inklusive verschachtelter BAG-Pfade.
+- `ScalarMappingIntegrationTest` und `AssociationXtfIntegrationTest`: gezielte Verträge für Skalare, OIDs und Referenzen.
 
-- YAML loading and DSL versioning
-- IliPath parsing
-- Model service and TypeSystemFacade queries
-- MappingCompiler validation (all error codes)
-- Expression parser and all builtin functions
-- Enum mapping logic
-- OID strategy (deterministic UUID stability)
-- Basket strategy
-- CorrelationWorkbookImporter (small synthetic XLSX)
-- MappingCandidateGenerator (score calculation, classification)
-- StateStore CRUD operations
-- ReferenceResolver
-- IomObjectFactory
+### `realDataTest`
 
-## Integration tests
+- `RealDm01ToDmavLfp3EndToEndTest` und `RealLfp3SemanticRoundtripTest`: produktiver LFP3-Gate auf echten Fixtures/Echtdaten.
+- `RealBbSemanticRoundtripTest`, `RealBbReverseSemanticRoundtripTest` und `ItfAreaReadDiagnosticTest`: produktiver BB-Forward-/Reverse-/Lesegate.
+- `ExtractedDm01FixtureValidationTest` und `ExtractedDmavFixtureValidationTest`: extrahieren kleine LFP3-Fixtures aus den Volldatensätzen und validieren sie.
+- `FullDatasetInventoryTest` und `RealDatasetGeometrySmokeTest`: Inventar- und Geometrie-Smoke-Checks auf den vollständigen Datensätzen.
 
-End-to-end tests with real files:
+## Fixture-Updates
 
-1. ITF → XTF without references (minimal model)
-2. ITF → XTF with references
-3. XTF → ITF with references
-4. BAG OF STRUCTURE from separate table
-5. DM01 → DMAV LFP3 golden test
-6. DMAV → DM01 LFP3 golden test
-7. Validator pass test
-8. Validator fail test (deliberately wrong mapping)
+- Normale Läufe von `realDataTest` validieren extrahierte Fixtures nur im Temp-Verzeichnis und lassen eingecheckte Dateien unverändert.
+- Ein bewusstes Update der eingecheckten LFP3-Fixtures erfolgt nur mit `-PupdateFixtures=true`.
 
-## Golden tests
-
-Golden tests ensure stable, reproducible output:
-
-```
-src/test/resources/transfers/p5/
-  input/input.xtf
-  expected/expected.xtf
+```bash
+./gradlew realDataTest -PupdateFixtures=true --tests "guru.interlis.transformer.ExtractedDm01FixtureValidationTest"
+./gradlew realDataTest -PupdateFixtures=true --tests "guru.interlis.transformer.ExtractedDmavFixtureValidationTest"
 ```
 
-Comparisons:
-- Not blind XML/string comparison
-- XTF content normalization
-- OID stability check (deterministic strategies)
-- Object count comparison
-- Attribute value comparison
-- Reference integrity check
+## Hinweise
 
-## Snapshot tests
-
-Used for reports (Topic Gap Report, Correlation Import Report) to detect unintended changes in report structure or content.
-
-## ilivalidator integration
-
-The `IlivalidatorRunner` validates transfer files against INTERLIS models:
-
-```java
-IlivalidatorRunner runner = new IlivalidatorRunner();
-runner.validate(file, modelDir, modelName, logPath);
-```
-
-Tests confirm:
-- Valid output passes validation
-- Deliberately wrong output fails validation
-- Validation report is generated
-
-## CI / local execution
-
-All tests must pass on macOS ARM64 (development platform). The `junite-jupiter` test framework is used with AssertJ for assertions and Mockito for mocking.
+- Produktive DM01/DMAV-Profile werden nicht mehr unter `src/test/resources/mappings/` gespiegelt.
+- Phasenbezeichnungen bleiben in historischer Doku und in der `FeatureMatrix`, nicht in aktiven Ressourcenpfaden.

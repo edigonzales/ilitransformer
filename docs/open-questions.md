@@ -1,3 +1,5 @@
+> Historisches Arbeitsdokument. Nicht führend für den aktuellen Repo-Zustand.
+
 # Open Questions
 
 ## Phase 1 (DSL-/Config-Modell stabilisieren)

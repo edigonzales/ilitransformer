@@ -115,6 +115,7 @@ class Dm01ToDmavLfp3IntegrationTest {
         lfp.setattrvalue("Hoehengenauigkeit", "2.0");
         lfp.setattrvalue("IstHoehenzuverlaessig", "nein");
         lfp.setattrvalue("Punktzeichen", "Stein");
+        Iom_jObject symbol = lfp3Symbol("200", "10", "15.0");
 
         Path outputPath = Files.createTempFile("dmav-lfp3-", ".xtf");
         try {
@@ -124,10 +125,10 @@ class Dm01ToDmavLfp3IntegrationTest {
             DiagnosticCollector engineDiag = new DiagnosticCollector();
             TransformationEngine engine = new TransformationEngine(
                     new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp),
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp, symbol),
                     Map.of("dmav", writer));
 
-            assertThat(result.sourceRecordsRead()).isEqualTo(2);
+            assertThat(result.sourceRecordsRead()).isEqualTo(3);
             assertThat(result.targetsCreated()).isEqualTo(2);
             assertThat(result.targetsWritten()).isEqualTo(2);
             assertThat(result.errors()).isEqualTo(0);
@@ -179,6 +180,7 @@ class Dm01ToDmavLfp3IntegrationTest {
         lfp.setattrvalue("Lagegenauigkeit", "5.0");
         lfp.setattrvalue("IstLagezuverlaessig", "ja");
         lfp.setattrvalue("Punktzeichen", "UNBEKANNT");
+        Iom_jObject symbol = lfp3Symbol("200", "10", "15.0");
 
         Path outputPath = Files.createTempFile("dmav-lfp3-unknown-", ".xtf");
         try {
@@ -188,7 +190,7 @@ class Dm01ToDmavLfp3IntegrationTest {
             DiagnosticCollector engineDiag = new DiagnosticCollector();
             TransformationEngine engine = new TransformationEngine(
                     new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dmav", writer));
+            engine.runTyped(plan, onceReaderFactory(nf, lfp, symbol), Map.of("dmav", writer));
 
             boolean hasWarning = engineDiag.all().stream()
                     .anyMatch(d -> d.message().contains("no mapping for source value")
@@ -222,6 +224,7 @@ class Dm01ToDmavLfp3IntegrationTest {
         lfp.setattrvalue("Lagegenauigkeit", "5.0");
         lfp.setattrvalue("IstLagezuverlaessig", "ja");
         lfp.setattrvalue("Punktzeichen", "Stein");
+        Iom_jObject symbol = lfp3Symbol("200", "10", "15.0");
 
         Path outputPath = Files.createTempFile("dmav-lfp3-now-", ".xtf");
         try {
@@ -231,7 +234,7 @@ class Dm01ToDmavLfp3IntegrationTest {
             DiagnosticCollector engineDiag = new DiagnosticCollector();
             TransformationEngine engine = new TransformationEngine(
                     new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dmav", writer));
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp, symbol), Map.of("dmav", writer));
 
             assertThat(result.errors()).isZero();
             String content = Files.readString(outputPath);
@@ -266,6 +269,7 @@ class Dm01ToDmavLfp3IntegrationTest {
         lfp.setattrvalue("Lagegenauigkeit", "5.0");
         lfp.setattrvalue("IstLagezuverlaessig", "ja");
         lfp.setattrvalue("Punktzeichen", "Stein");
+        Iom_jObject symbol = lfp3Symbol("200", "10", "15.0");
 
         Path outputPath = Files.createTempFile("dmav-lfp3-ref-", ".xtf");
         try {
@@ -275,7 +279,7 @@ class Dm01ToDmavLfp3IntegrationTest {
             DiagnosticCollector engineDiag = new DiagnosticCollector();
             TransformationEngine engine = new TransformationEngine(
                     new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp),
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp, symbol),
                     Map.of("dmav", writer));
 
             assertThat(result.targetsWritten()).isEqualTo(2);
@@ -322,6 +326,7 @@ class Dm01ToDmavLfp3IntegrationTest {
         lfp.setattrvalue("Hoehengenauigkeit", "2.0");
         lfp.setattrvalue("IstHoehenzuverlaessig", "nein");
         lfp.setattrvalue("Punktzeichen", "Stein");
+        Iom_jObject symbol = lfp3Symbol("200", "10", "15.0");
 
         // LFP3Pos objects to become Textposition BAG items
         Iom_jObject pos1 = new Iom_jObject("Dm01TestModel.Fixpunkte.LFP3Pos", "100");
@@ -349,10 +354,10 @@ class Dm01ToDmavLfp3IntegrationTest {
             TransformationEngine engine = new TransformationEngine(
                     new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
             TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(nf, lfp, pos1, pos2),
+                    onceReaderFactory(nf, lfp, symbol, pos1, pos2),
                     Map.of("dmav", writer));
 
-            assertThat(result.sourceRecordsRead()).isEqualTo(4);
+            assertThat(result.sourceRecordsRead()).isEqualTo(5);
             assertThat(result.targetsCreated()).isEqualTo(2);
             assertThat(result.targetsWritten()).isEqualTo(2);
             assertThat(result.errors()).isEqualTo(0);
@@ -398,6 +403,7 @@ class Dm01ToDmavLfp3IntegrationTest {
         lfp.setattrvalue("Lagegenauigkeit", "5.0");
         lfp.setattrvalue("IstLagezuverlaessig", "ja");
         lfp.setattrvalue("Punktzeichen", "Stein");
+        Iom_jObject symbol = lfp3Symbol("200", "10", "15.0");
 
         // No LFP3Pos records
 
@@ -410,7 +416,7 @@ class Dm01ToDmavLfp3IntegrationTest {
             TransformationEngine engine = new TransformationEngine(
                     new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
             TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(nf, lfp),
+                    onceReaderFactory(nf, lfp, symbol),
                     Map.of("dmav", writer));
 
             assertThat(result.targetsWritten()).isEqualTo(2);
@@ -483,5 +489,13 @@ class Dm01ToDmavLfp3IntegrationTest {
                 return createMockReader(objects);
             }
         };
+    }
+
+    private static Iom_jObject lfp3Symbol(String oid, String lfpOid, String ori) {
+        Iom_jObject symbol = new Iom_jObject("Dm01TestModel.Fixpunkte.LFP3Symbol", oid);
+        IomObject symbolRef = symbol.addattrobj("LFP3Symbol_von", Iom_jObject.REF);
+        symbolRef.setobjectrefoid(lfpOid);
+        symbol.setattrvalue("Ori", ori);
+        return symbol;
     }
 }

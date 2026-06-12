@@ -7,14 +7,26 @@ import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.expr.ExpressionParser;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.BagPlan;
+import guru.interlis.transformer.mapping.plan.BasketPlan;
 import guru.interlis.transformer.mapping.plan.CompiledExpression;
+import guru.interlis.transformer.mapping.plan.CompileMode;
+import guru.interlis.transformer.mapping.plan.IdentityPlan;
+import guru.interlis.transformer.mapping.plan.OidPlan;
+import guru.interlis.transformer.mapping.plan.RefPlan;
 import guru.interlis.transformer.mapping.plan.RulePlan;
 import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
+import guru.interlis.transformer.mapping.plan.FailPolicy;
+import guru.interlis.transformer.state.BasketStrategy;
 import guru.interlis.transformer.state.InMemoryParentChildIndex;
+import guru.interlis.transformer.state.InMemoryReferenceIndex;
 import guru.interlis.transformer.state.InMemoryStateStore;
+import guru.interlis.transformer.state.OidGenerationRequest;
+import guru.interlis.transformer.state.OidGenerationService;
+import guru.interlis.transformer.state.OidStrategy;
 import guru.interlis.transformer.state.SourceRecord;
+import guru.interlis.transformer.state.TargetObjectKey;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -188,5 +200,112 @@ class NestedBagTransformationTest {
 
         IomObject gcStruct2 = childWithGc2.getattrobj("GrandChildren", 0);
         assertThat(gcStruct2.getattrvalue("Detail")).isEqualTo("DetailC");
+    }
+
+    @Test
+    void expandBindsNestedBackreferenceToExpandedParent() {
+        Iom_jObject parentTarget = new Iom_jObject("Target.Parent", "parent-target-1");
+
+        Iom_jObject nestedItem = new Iom_jObject("Source.NestedItem", null);
+        nestedItem.setattrvalue("Detail", "NestedDetail");
+
+        Iom_jObject childStruct = new Iom_jObject("Source.Child", null);
+        childStruct.setattrvalue("Name", "Child1");
+        childStruct.addattrobj("NestedItems", nestedItem);
+
+        Iom_jObject parentSourceObj = new Iom_jObject("Source.Parent", "parent-source-1");
+        parentSourceObj.addattrobj("Children", childStruct);
+
+        SourceRecord parentRecord = new SourceRecord("in1", "b1", "Source.Parent", parentSourceObj);
+        SourcePlan parentSourcePlan = new SourcePlan("p", null, List.of("in1"), null);
+
+        CompiledExpression childName = new CompiledExpression("${ch.Name}",
+                ExpressionParser.parse("${ch.Name}"), TypeInfo.TEXT, true, java.util.Set.of());
+        CompiledExpression nestedDetail = new CompiledExpression("${gc.Detail}",
+                ExpressionParser.parse("${gc.Detail}"), TypeInfo.TEXT, true, java.util.Set.of());
+
+        BagPlan nestedExpand = new BagPlan(
+                "NestedItems",
+                new SourcePlan("gc", null, List.of("in1"), null),
+                "Target.GrandChild",
+                List.of(new AssignmentPlan("Detail", null, nestedDetail)),
+                null,
+                BagPlan.BagMode.EXPAND,
+                null,
+                "ch",
+                null,
+                null,
+                null,
+                new IdentityPlan(OidStrategy.INTEGER, "test", List.of()),
+                new RefPlan("Child", null, "ch", "expand-rule", true),
+                List.of());
+
+        BagPlan outerExpand = new BagPlan(
+                "Children",
+                new SourcePlan("ch", null, List.of("in1"), null),
+                "Target.Child",
+                List.of(new AssignmentPlan("Name", null, childName)),
+                null,
+                BagPlan.BagMode.EXPAND,
+                null,
+                "p",
+                null,
+                null,
+                null,
+                new IdentityPlan(OidStrategy.INTEGER, "test", List.of()),
+                new RefPlan("Parent", null, "p", "expand-rule", true),
+                List.of(nestedExpand));
+
+        TransformPlan transformPlan = new TransformPlan(
+                "test", "test", FailPolicy.STRICT, CompileMode.COMPATIBLE,
+                List.of(), Map.of(), Map.of(), new DiagnosticCollector(),
+                new OidPlan(OidStrategy.INTEGER, "test"),
+                new BasketPlan(BasketStrategy.PRESERVE),
+                Map.of());
+
+        RulePlan rulePlan = new RulePlan(
+                "expand-rule", "out1", null,
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
+                null, List.of(), List.of());
+
+        InMemoryStateStore stateStore = new InMemoryStateStore();
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        BagExecutionContext ctx = new BagExecutionContext(
+                outerExpand,
+                new BoundSourceObject(parentSourcePlan, parentRecord),
+                parentTarget,
+                transformPlan,
+                stateStore,
+                new InMemoryParentChildIndex(),
+                diagnostics,
+                rulePlan,
+                new LinkedHashMap<>(),
+                null,
+                Map.of(),
+                new InMemoryReferenceIndex());
+
+        OidGenerationService oidGenerator = new OidGenerationService() {
+            private int next = 0;
+
+            @Override
+            public String generate(OidGenerationRequest request) {
+                next++;
+                return "oid-" + next;
+            }
+        };
+
+        BagTransformationService service = new BagTransformationService(new ExpressionEngine(), oidGenerator);
+        service.expand(ctx);
+
+        IomObject childTarget = stateStore.findTarget(new TargetObjectKey("out1", "Target.Child", "oid-1"))
+                .orElseThrow();
+        IomObject grandChildTarget = stateStore.findTarget(new TargetObjectKey("out1", "Target.GrandChild", "oid-2"))
+                .orElseThrow();
+
+        assertThat(childTarget.getattrobj("Parent", 0).getobjectrefoid()).isEqualTo("parent-target-1");
+        assertThat(grandChildTarget.getattrobj("Child", 0).getobjectrefoid()).isEqualTo("oid-1");
+        assertThat(stateStore.deferredRefs()).isEmpty();
+        assertThat(stateStore.deferredReferences()).isEmpty();
+        assertThat(diagnostics.all()).isEmpty();
     }
 }

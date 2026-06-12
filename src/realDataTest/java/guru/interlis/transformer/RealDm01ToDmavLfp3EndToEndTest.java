@@ -7,6 +7,7 @@ import guru.interlis.transformer.app.JobRunner;
 import guru.interlis.transformer.app.RunOptions;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.dmav.Dm01DmavPaths;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.model.MappingLoader;
@@ -14,10 +15,6 @@ import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.ModelRegistry;
-import guru.interlis.transformer.testutil.TransferFormat;
-import guru.interlis.transformer.validation.InProcessIlivalidatorService;
-import guru.interlis.transformer.validation.TransferValidationService;
-import guru.interlis.transformer.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -28,7 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -38,9 +34,8 @@ class RealDm01ToDmavLfp3EndToEndTest {
     private static final String MODEL_DIR = "src/test/data/av/models/";
     private static final String DM01_MODEL = "DM01AVCH24LV95D";
     private static final String DMAV_MODEL = "DMAV_FixpunkteAVKategorie3_V1_1";
-    private static final String MAPPING_FILE = "src/test/resources/mappings/dm01-to-dmav-lfp3-real.yaml";
-    private static final String DM01_INPUT = "src/test/resources/real-dm01-dmav/lfp3/dm01-input.itf";
-    private static final Path OUTPUT_PATH = Path.of("build/out/dmav-lfp3-real.xtf");
+    private static final Path PROFILE = Path.of("profiles/dm01-to-dmav/1.1/lfp3.yaml");
+    private static final Path DM01_INPUT = Path.of("src/test/resources/real-dm01-dmav/lfp3/dm01-input.itf");
 
     private static IliModelService modelService;
     private static TransferDescription dm01Td;
@@ -51,13 +46,8 @@ class RealDm01ToDmavLfp3EndToEndTest {
 
     @BeforeAll
     static void compileModels() {
-        try {
-            Files.createDirectories(OUTPUT_PATH.getParent());
-        } catch (java.io.IOException e) {
-            throw new RuntimeException(e);
-        }
         modelService = new IliModelService();
-        List<String> modelDirs = List.of(MODEL_DIR, "https://models.interlis.ch");
+        List<String> modelDirs = Dm01DmavPaths.defaultModelDirs();
 
         IliModelCompileResult dm01Result = modelService.compileModel(DM01_MODEL, MODEL_DIR);
         if (dm01Result.hasErrors()) {
@@ -93,16 +83,16 @@ class RealDm01ToDmavLfp3EndToEndTest {
     @Test
     void compilesProductiveMapping() throws Exception {
         MappingLoader loader = new MappingLoader();
-        JobConfig config = loader.load(Path.of(MAPPING_FILE));
+        JobConfig config = loader.load(PROFILE);
 
         List<String> modelDirs = new ArrayList<>(List.of(MODEL_DIR));
-        modelDirs.add("https://models.interlis.ch");
+        modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
 
         ModelRegistry registry = ModelRegistry.builder()
                 .config(config)
                 .modelDirs(config.job.modeldir)
                 .modelDirs(modelDirs)
-                .baseDirectory(Path.of(MAPPING_FILE).toAbsolutePath().getParent())
+                .baseDirectory(PROFILE.toAbsolutePath().getParent())
                 .build();
 
         TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
@@ -124,11 +114,10 @@ class RealDm01ToDmavLfp3EndToEndTest {
     @Test
     void fullTransformationProducesValidOutput() throws Exception {
         Path outputPath = tempDir.resolve("dmav-lfp3-output.xtf");
-
-        Path mappingPath = Path.of(MAPPING_FILE).toAbsolutePath();
+        Path mappingPath = materializeProfile(outputPath);
 
         List<String> modelDirs = new ArrayList<>(List.of(MODEL_DIR));
-        modelDirs.add("https://models.interlis.ch");
+        modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
 
         RunOptions options = new RunOptions(modelDirs, true, tempDir, false);
 
@@ -155,8 +144,8 @@ class RealDm01ToDmavLfp3EndToEndTest {
         assertThat(errors).as("Transformation should produce no errors").isEmpty();
 
         // Verify output was committed (not rolled back)
-        if (Files.exists(OUTPUT_PATH)) {
-            String content = Files.readString(OUTPUT_PATH, StandardCharsets.UTF_8);
+        if (Files.exists(outputPath)) {
+            String content = Files.readString(outputPath, StandardCharsets.UTF_8);
             System.out.println("Output size: " + content.length() + " chars");
             assertThat(content).contains("LFP3Nachfuehrung");
             assertThat(content).contains("LFP3");
@@ -167,13 +156,11 @@ class RealDm01ToDmavLfp3EndToEndTest {
 
     @Test
     void outputValidatesWithIlivalidator() throws Exception {
-        Path outputPath = tempDir.resolve("dmav-lfp3-output-validate.xtf");
-        Path mappingPath = Path.of(MAPPING_FILE).toAbsolutePath();
+        Path mappingPath = materializeProfile(tempDir.resolve("dmav-lfp3-output-validate.xtf"));
 
         List<String> modelDirs = new ArrayList<>(List.of(MODEL_DIR));
-        modelDirs.add("https://models.interlis.ch");
+        modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
 
-        Path logFile = tempDir.resolve("validation.log");
         RunOptions options = new RunOptions(modelDirs, true, buildDir(tempDir), false);
 
         JobRunner runner = new JobRunner();
@@ -192,34 +179,24 @@ class RealDm01ToDmavLfp3EndToEndTest {
 
     @Test
     void deterministicOidsAcrossTwoRuns() throws Exception {
-        Path mappingPath = Path.of(MAPPING_FILE).toAbsolutePath();
-
         List<String> modelDirs = new ArrayList<>(List.of(MODEL_DIR));
-        modelDirs.add("https://models.interlis.ch");
+        modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
 
         Path output1 = tempDir.resolve("run1.xtf");
         Path output2 = tempDir.resolve("run2.xtf");
 
         JobRunner runner1 = new JobRunner();
         RunOptions opts1 = new RunOptions(modelDirs, false, tempDir, false);
-        DiagnosticCollector diag1 = runner1.run(mappingPath, opts1);
+        DiagnosticCollector diag1 = runner1.run(materializeProfile(output1), opts1);
 
         assertThat(diag1.hasErrors()).isFalse();
-
-        if (Files.exists(OUTPUT_PATH)) {
-            Files.copy(OUTPUT_PATH, output1, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-        }
 
         // Second run
         JobRunner runner2 = new JobRunner();
         RunOptions opts2 = new RunOptions(modelDirs, false, tempDir, false);
-        DiagnosticCollector diag2 = runner2.run(mappingPath, opts2);
+        DiagnosticCollector diag2 = runner2.run(materializeProfile(output2), opts2);
 
         assertThat(diag2.hasErrors()).isFalse();
-
-        if (Files.exists(OUTPUT_PATH)) {
-            Files.copy(OUTPUT_PATH, output2, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-        }
 
         // Both outputs should exist and be equivalent
         assertThat(output1).exists();
@@ -240,10 +217,11 @@ class RealDm01ToDmavLfp3EndToEndTest {
 
     @Test
     void outputContainsExpectedAttributes() throws Exception {
-        Path mappingPath = Path.of(MAPPING_FILE).toAbsolutePath();
+        Path outputPath = tempDir.resolve("dmav-lfp3-attrs.xtf");
+        Path mappingPath = materializeProfile(outputPath);
 
         List<String> modelDirs = new ArrayList<>(List.of(MODEL_DIR));
-        modelDirs.add("https://models.interlis.ch");
+        modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
 
         JobRunner runner = new JobRunner();
         RunOptions options = new RunOptions(modelDirs, true, tempDir, false);
@@ -251,9 +229,9 @@ class RealDm01ToDmavLfp3EndToEndTest {
 
         assertThat(diagnostics.hasErrors()).isFalse();
 
-        assertThat(OUTPUT_PATH).exists();
+        assertThat(outputPath).exists();
 
-        String content = Files.readString(OUTPUT_PATH, StandardCharsets.UTF_8);
+        String content = Files.readString(outputPath, StandardCharsets.UTF_8);
 
         assertThat(content).contains("NBIdent");
         assertThat(content).contains("Identifikator");
@@ -274,10 +252,11 @@ class RealDm01ToDmavLfp3EndToEndTest {
 
     @Test
     void outputCanBeReRead() throws Exception {
-        Path mappingPath = Path.of(MAPPING_FILE).toAbsolutePath();
+        Path outputPath = tempDir.resolve("dmav-lfp3-reread.xtf");
+        Path mappingPath = materializeProfile(outputPath);
 
         List<String> modelDirs = new ArrayList<>(List.of(MODEL_DIR));
-        modelDirs.add("https://models.interlis.ch");
+        modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
 
         JobRunner runner = new JobRunner();
         RunOptions options = new RunOptions(modelDirs, false, tempDir, false);
@@ -285,12 +264,12 @@ class RealDm01ToDmavLfp3EndToEndTest {
 
         assertThat(diagnostics.hasErrors()).isFalse();
 
-        assertThat(OUTPUT_PATH).exists();
+        assertThat(outputPath).exists();
 
         // Read output back using XTF reader
         guru.interlis.transformer.interlis.InterlisIoFactory ioFactory =
                 new guru.interlis.transformer.interlis.InterlisIoFactory();
-        IoxReader reader = ioFactory.createReader(OUTPUT_PATH, dmavTd);
+        IoxReader reader = ioFactory.createReader(outputPath, dmavTd);
 
         int lfp3Count = 0;
         int lfp3nfCount = 0;
@@ -332,5 +311,16 @@ class RealDm01ToDmavLfp3EndToEndTest {
 
     private static Path buildDir(Path tempDir) {
         return tempDir.resolve("build/out");
+    }
+
+    private Path materializeProfile(Path outputPath) throws Exception {
+        Path mappingPath = tempDir.resolve(outputPath.getFileName() + "-mapping.yaml");
+        String yaml = Files.readString(PROFILE, StandardCharsets.UTF_8)
+                .replace("path: \"input/dm01.itf\"",
+                        "path: \"" + DM01_INPUT.toAbsolutePath() + "\"")
+                .replace("path: \"build/out/dmav-lfp3.xtf\"",
+                        "path: \"" + outputPath.toAbsolutePath() + "\"");
+        Files.writeString(mappingPath, yaml, StandardCharsets.UTF_8);
+        return mappingPath;
     }
 }

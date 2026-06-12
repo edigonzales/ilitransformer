@@ -37,7 +37,7 @@ class ValidateMappingTypedCliTest {
     void validateMappingWithModeldirsPerformsFullValidation() {
         int exitCode = new CommandLine(new CliMain()).execute(
                 "validate-mapping",
-                "--mapping", "src/test/resources/mappings/p25/simple-identity.yaml",
+                "--mapping", "src/test/resources/mappings/fail-policy/simple-identity.yaml",
                 "--modeldir", "src/test/data/models"
         );
 
@@ -49,7 +49,7 @@ class ValidateMappingTypedCliTest {
     void validateMappingWithoutModeldirsPerformsBasicValidation() {
         int exitCode = new CommandLine(new CliMain()).execute(
                 "validate-mapping",
-                "--mapping", "src/test/resources/mappings/p25/simple-identity.yaml"
+                "--mapping", "src/test/resources/mappings/fail-policy/simple-identity.yaml"
         );
 
         assertThat(exitCode).isZero();

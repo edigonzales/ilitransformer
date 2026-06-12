@@ -97,7 +97,7 @@ class MappingLoaderTest {
 
     @Test
     void loadsFullDslExample() throws Exception {
-        Path path = Path.of("src/test/resources/mappings/dm01-to-dmav-lfp3.yaml");
+        Path path = Path.of("profiles/dm01-to-dmav/1.1/lfp3.yaml");
         JobConfig config = loader.load(path);
 
         assertThat(config.version).isEqualTo(1);
@@ -108,7 +108,7 @@ class MappingLoaderTest {
 
         assertThat(config.mapping.oidStrategy.defaultStrategy).isEqualTo("deterministicUuid");
         assertThat(config.mapping.oidStrategy.namespace).isEqualTo("dm01-to-dmav-lfp3");
-        assertThat(config.mapping.basketStrategy.defaultStrategy).isEqualTo("preserveOrGenerateUuid");
+        assertThat(config.mapping.basketStrategy.defaultStrategy).isEqualTo("byTopic");
 
         assertThat(config.mapping.rules).hasSize(2);
         assertThat(config.mapping.rules.get(0).id).isEqualTo("lfp3-nachfuehrung");

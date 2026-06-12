@@ -23,13 +23,14 @@ ExtractionRequest request = new ExtractionRequest(
 
 ### Result
 
-The generated fixture is saved to `src/test/resources/real-dm01-dmav/lfp3/dmav-input.xtf`.
-It is automatically validated with `ilivalidator` against the `DMAVTYM_Alles_V1_1` umbrella model.
+The generated fixture is validated in a temporary directory by default.
+The checked-in fixture `src/test/resources/real-dm01-dmav/lfp3/dmav-input.xtf` is only refreshed with an explicit opt-in.
 
 ### Validation
 
 ```bash
 ./gradlew realDataTest --tests "guru.interlis.transformer.ExtractedDmavFixtureValidationTest"
+./gradlew realDataTest -PupdateFixtures=true --tests "guru.interlis.transformer.ExtractedDmavFixtureValidationTest"
 ```
 
 The fixture includes:
@@ -71,8 +72,8 @@ ExtractionRequest request = new ExtractionRequest(
 
 ### Result
 
-The generated fixture is saved to `src/test/resources/real-dm01-dmav/lfp3/dm01-input.itf`.
-It is automatically validated with `ilivalidator` against `DM01AVCH24LV95D`.
+The generated fixture is validated in a temporary directory by default.
+The checked-in fixture `src/test/resources/real-dm01-dmav/lfp3/dm01-input.itf` is only refreshed with an explicit opt-in.
 
 ### Verified
 

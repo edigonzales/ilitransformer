@@ -1,5 +1,6 @@
 package guru.interlis.transformer;
 
+import guru.interlis.transformer.dmav.Dm01DmavFixtures;
 import guru.interlis.transformer.model.ConnectedSubgraphExtractor;
 import guru.interlis.transformer.model.ExtractedTransfer;
 import guru.interlis.transformer.model.ExtractionRequest;
@@ -75,13 +76,9 @@ class ExtractedDm01FixtureValidationTest {
         Path fixtureDir = tempDir.resolve("fixtures");
         Files.createDirectories(fixtureDir);
 
-        ExtractionRequest request = new ExtractionRequest(
-                List.of("LFP3Nachfuehrung", "LFP3"),
-                List.of(MODEL_DIR),
-                2,
-                200,
-                true,
-                fixtureDir);
+        ExtractionRequest request = Dm01DmavFixtures.lfp3ExtractionRequest(
+                fixtureDir,
+                List.of(MODEL_DIR));
 
         ExtractedTransfer result = extractor.extract(source, request);
 
@@ -111,12 +108,15 @@ class ExtractedDm01FixtureValidationTest {
         assertThat(content).contains("TABL LFP3Nachfuehrung_Perimeter");
 
         Path targetPath = Path.of("src/test/resources/real-dm01-dmav/lfp3/dm01-input.itf");
-        Files.createDirectories(targetPath.getParent());
-        Files.copy(result.transferFile(), targetPath,
-                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        boolean updated = FixtureUpdateSupport.syncCheckedInFixture(result.transferFile(), targetPath);
 
         assertThat(targetPath).exists();
         assertThat(Files.size(targetPath)).isGreaterThan(0);
-        System.out.println("Fixture saved to: " + targetPath.toAbsolutePath());
+        if (updated) {
+            System.out.println("Fixture updated: " + targetPath.toAbsolutePath());
+        } else {
+            System.out.println("Fixture validated without overwriting checked-in file. "
+                    + "Use -PupdateFixtures=true to refresh " + targetPath.toAbsolutePath());
+        }
     }
 }

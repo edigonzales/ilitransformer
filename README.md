@@ -1,61 +1,59 @@
-# Agent/Skills Template für Java-, Gradle- und INTERLIS-Projekte
+# ili-transformer
 
-Diese Vorlage ist für Repositories gedacht, die mit Coding Agents wie **OpenCode** und **Codex** bearbeitet werden.
+Java/Gradle-Werkzeug zur modellbewussten Transformation von INTERLIS-Transferdaten. Der aktuelle Referenz-Use-Case ist DM01 ↔ DMAV, die Engine bleibt aber generisch und darf keine DM01/DMAV-Sonderlogik in die generischen Laufzeitpfade ziehen.
 
-Die Struktur ist bewusst portabel:
+## Wichtige Verzeichnisse
 
-- `AGENTS.md` ist der zentrale Projektvertrag.
-- `docs/agent/*` enthält Definition of Done, Commit-Regeln, Entscheidungen und bekannte Risiken.
-- `.skills/*/SKILL.md` enthält wiederverwendbare Arbeitsabläufe.
-- `opencode/README.md` enthält Prompt-Vorlagen für OpenCode.
-- `codex/README.md` enthält Prompt-Vorlagen für Codex.
-- `.skills/interlis1-testdata/snippets/*` enthält INTERLIS-1-Snippets, inklusive AREA-Hinweisen.
+- `profiles/` enthält die autoritativen, versionierten DM01/DMAV-Profile auf Root-Ebene.
+- `src/test/data/` enthält Modelle, offizielle AV-Artefakte und vollständige Echtdatensätze.
+- `src/test/resources/` enthält kleine kuratierte Fixtures, Test-Mappings und Snapshots.
+- `docs/` enthält die aktive Benutzer- und Projektdokumentation.
+- `docs/dev/`, `docs/SPEC.md`, `docs/SPEC_V2.md` und `docs/open-questions.md` sind historische Arbeitsdokumente.
 
-## Installation
+## Testsuiten
 
-Kopiere den Inhalt dieses Ordners in die Wurzel deines Git-Repositories:
+| Suite | Zweck | Pfad | Gradle-Task |
+|---|---|---|---|
+| `test` | Unit-Tests plus schnelle Repo-Vertrags-/Artefakt-Checks | `src/test/java/` | `./gradlew test` |
+| `integrationTest` | synthetische End-to-End-, CLI- und Validator-Integration | `src/integrationTest/java/` | `./gradlew integrationTest` |
+| `realDataTest` | langsame Profil-, Fixture- und Echtdaten-Regression | `src/realDataTest/java/` | `./gradlew realDataTest` |
+
+`./gradlew check` führt bewusst `test` und `integrationTest` aus. `realDataTest` bleibt separat.
+
+## Zentrale Kommandos
 
 ```bash
-cp -R agent-skill-template-interlis-java-codex-opencode/* /path/to/repo/
-cp -R agent-skill-template-interlis-java-codex-opencode/.skills /path/to/repo/
+./gradlew test
+./gradlew integrationTest
+./gradlew realDataTest
+./gradlew check
+./gradlew installDist
 ```
 
-Danach anpassen:
+DM01/DMAV-spezifische Hilfstasks:
 
-- Projektname in `AGENTS.md`
-- Gradle-Kommandos in `.skills/gradle-verification/SKILL.md`
-- lokale INTERLIS-Toolpfade in `.skills/interlis-validation/SKILL.md`
-- bekannte Issues in `docs/agent/KNOWN_ISSUES.md`
-- Entscheidungen in `docs/agent/DECISIONS.md`
+```bash
+./gradlew importDmavCorrelation
+./gradlew generateDm01DmavMappings
+./gradlew topicGapReport
+./gradlew produceDm01BbItf
+```
 
-## OpenCode / Codex
+## Produktive Profile
 
-Bei beiden Clients explizit im Prompt referenzieren:
+Produktive DM01/DMAV-Profile liegen unter:
 
 ```text
-Lies zuerst AGENTS.md.
-
-Verwende diese Skills:
-- .skills/java-test-gap/SKILL.md
-- .skills/gradle-verification/SKILL.md
-- .skills/done-and-commit/SKILL.md
-
-Aufgabe:
-...
-
-Committe nur, wenn die Commit Policy erfüllt ist.
+profiles/dm01-to-dmav/1.1/
+profiles/dmav-to-dm01/1.1/
 ```
 
-Für INTERLIS-1-AREA-Testdaten zusätzlich:
+Tests, die produktive Profile prüfen, laden diese Dateien direkt und materialisieren nur Ein-/Ausgabepfade für die jeweilige Testumgebung.
 
-```text
-Verwende zusätzlich:
-- .skills/interlis-validation/SKILL.md
-- .skills/interlis1-testdata/SKILL.md
+## Aktive Dokumentation
 
-Wichtig:
-AREA-Roh-ITF nicht frei erfinden.
-Geometrie-Hilfstabelle vor Haupttabelle.
-Gemeinsame AREA-Kanten nur einmal.
-Alles mit ili2c/ilivalidator prüfen.
-```
+- `docs/testing.md`
+- `docs/cli.md`
+- `docs/mapping-dsl.md`
+- `docs/dm01-dmav/README.md`
+- `docs/dm01-dmav/status-matrix.md`

@@ -10,11 +10,11 @@ import java.util.Map;
 public final class TopicGapReportTask {
 
     public static void main(String[] args) throws Exception {
-        Path hintsPath = Path.of("build/generated/dm01-dmav/correlation-hints.json");
-        Path candidatesPath = Path.of("build/generated/dm01-dmav/mapping-candidates.json");
-        Path reportPath = Path.of("build/reports/dm01-dmav/topic-gap-report.md");
+        Path hintsPath = Dm01DmavPaths.GENERATED_HINTS;
+        Path candidatesPath = Dm01DmavPaths.GENERATED_CANDIDATES;
+        Path reportPath = Dm01DmavPaths.TOPIC_GAP_REPORT;
         String dm01Model = "DM01AVCH24LV95D";
-        String dm01Dir = "src/test/data/av/models/";
+        String dm01Dir = Dm01DmavPaths.LOCAL_MODEL_DIR;
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {

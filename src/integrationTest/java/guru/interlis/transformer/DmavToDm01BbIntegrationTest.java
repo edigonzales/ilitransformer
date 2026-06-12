@@ -17,6 +17,7 @@ import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
+import guru.interlis.transformer.geometry.IoxGeometryAdapter;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
@@ -24,6 +25,8 @@ import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.state.DefaultOidGenerationService;
+import guru.interlis.transformer.state.InMemoryReferenceIndex;
 import guru.interlis.transformer.state.InMemoryStateStore;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -153,7 +156,12 @@ class DmavToDm01BbIntegrationTest {
 
             DiagnosticCollector engineDiag = new DiagnosticCollector();
             TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+                    new ExpressionEngine(),
+                    new InMemoryStateStore(),
+                    engineDiag,
+                    new IoxGeometryAdapter(),
+                    new DefaultOidGenerationService(),
+                    new InMemoryReferenceIndex());
             TransformResult result = engine.runTyped(plan,
                     onceReaderFactory(nf, bb), Map.of("dm01", writer));
 
@@ -161,6 +169,16 @@ class DmavToDm01BbIntegrationTest {
                 System.out.println("  Rev Engine: [" + d.severity() + "] " + d.code() + ": " + d.message());
             }
 
+            boolean hasErrors = engineDiag.all().stream()
+                    .anyMatch(d -> "ERROR".equals(d.severity().name()));
+            boolean hasAmbiguousRefs = engineDiag.all().stream()
+                    .anyMatch(d -> "ILITRF-RUN-REF-AMBIGUOUS".equals(d.code()));
+            assertThat(hasErrors)
+                    .as("Engine diagnostics: %s", engineDiag.all())
+                    .isFalse();
+            assertThat(hasAmbiguousRefs)
+                    .as("Engine diagnostics: %s", engineDiag.all())
+                    .isFalse();
             assertThat(result.errors()).isEqualTo(0);
 
             String content = Files.readString(outputPath);
@@ -169,6 +187,8 @@ class DmavToDm01BbIntegrationTest {
             assertThat(content).contains("BoFlaeche");
             assertThat(content).contains("Gebaeude");
             assertThat(content).contains("ETAB");
+            assertThat(content).contains("GebaeudenummerPos");
+            assertThat(content).contains("ObjektnamePos");
 
         } finally {
             Files.deleteIfExists(outputPath);

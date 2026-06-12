@@ -78,6 +78,10 @@ sourceSets {
 
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
+    systemProperty 'updateFixtures', String.valueOf(
+            project.findProperty('updateFixtures')
+                    ?: System.getProperty('updateFixtures')
+                    ?: 'false')
 }
 
 // -- DM01/DMAV tasks --------------------------------------------------------
@@ -154,6 +158,13 @@ tasks.register('topicGapReport', JavaExec) {
         '--dm01-model', 'DM01AVCH24LV95D',
         '--dm01-dir', 'src/test/data/av/models/'
     ]
+}
+
+tasks.register('produceDm01BbItf', JavaExec) {
+    group = 'dm01-dmav'
+    description = 'Produce dm01-bb.itf from the real DM01 dataset via the productive BB profiles'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'guru.interlis.transformer.dmav.ProduceDm01BbItfTask'
 }
 
 tasks.register('validateGoldenTransfers', JavaExec) {

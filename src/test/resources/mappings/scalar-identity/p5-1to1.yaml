@@ -1,13 +1,13 @@
 version: 1
 
 job:
-  name: "Phase 5 1:1 scalar test"
+  name: "scalar-identity-test"
   description: "Copy SourceClass -> TargetClass with scalar attributes"
   modeldir:
     - "src/test/data/models/"
   inputs:
     - id: source-input
-      path: "src/test/resources/transfers/p5/input.xtf"
+      path: "src/test/resources/transfers/scalar-identity/input.xtf"
       model: "P5Model"
   outputs:
     - id: target-output

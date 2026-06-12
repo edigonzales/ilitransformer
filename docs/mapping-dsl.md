@@ -2,6 +2,11 @@
 
 Die Mapping-Datei ist eine YAML-Konfiguration, die die Transformation von INTERLIS-Transferdaten steuert. Sie wird durch den `MappingCompiler` in einen typisierten Ausführungsplan (`TransformPlan`) übersetzt.
 
+Für DM01/DMAV gilt:
+
+- produktive, versionierte Profile liegen unter `profiles/`
+- synthetische Test-Mappings liegen unter `src/test/resources/mappings/`
+
 ## Version
 
 ```yaml

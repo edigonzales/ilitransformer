@@ -345,7 +345,7 @@ public final class MappingCompiler {
 
         // Compile bags
         List<BagPlan> bagPlans = compileBags(rule, sourcePlans, sourcesByAlias, targetClass, targetTs,
-                ruleId, modelRegistry, enumMaps, diag);
+                ruleId, modelRegistry, enumMaps, diag, null);
 
         // Compile declared lossiness
         List<LossPlan> lossPlans = compileLosses(rule, sourcesByAlias, ruleId, enumMaps, diag);
@@ -974,7 +974,8 @@ public final class MappingCompiler {
                                        String ruleId,
                                        ModelRegistry modelRegistry,
                                        Map<String, Map<String, String>> enumMaps,
-                                       DiagnosticCollector diag) {
+                                       DiagnosticCollector diag,
+                                       String fallbackParentAlias) {
         if (rule.bags == null || rule.bags.isEmpty()) {
             return List.of();
         }
@@ -1176,6 +1177,9 @@ public final class MappingCompiler {
                 }
             }
             // Fallback for parentAlias: use first source alias
+            if (parentAlias == null && fallbackParentAlias != null && !fallbackParentAlias.isBlank()) {
+                parentAlias = fallbackParentAlias;
+            }
             if (parentAlias == null && !sourcePlans.isEmpty()) {
                 parentAlias = sourcePlans.get(0).alias();
             }
@@ -1232,8 +1236,11 @@ public final class MappingCompiler {
                 nestedRule.id = ruleId + "-nested-" + bagAttrName;
                 nestedRule.output = rule.getEffectiveTargetOutput();
                 nestedRule.bags = bagSpec.nestedBags;
-                nestedBagPlans = compileBags(nestedRule, sourcePlans, sourcesByAlias,
-                        componentTable, targetTs, ruleId, modelRegistry, enumMaps, diag);
+                Map<String, SourcePlan> nestedSourcesByAlias = new HashMap<>(sourcesByAlias);
+                nestedSourcesByAlias.put(bagSourcePlan.alias(), bagSourcePlan);
+                nestedBagPlans = compileBags(nestedRule, sourcePlans, nestedSourcesByAlias,
+                        componentTable, targetTs, ruleId, modelRegistry, enumMaps, diag,
+                        bagSourcePlan.alias());
             }
 
             BagPlan bp = new BagPlan(bagAttrName, bagSourcePlan, effectiveStructureName,
