@@ -112,13 +112,18 @@ In `docs/dm01-dmav/lossiness.md` dokumentieren, welche Informationen bei DMAV→
 
 ## Übersicht Topics
 
-| Topic | DM01→DMAV | DMAV→DM01 | Tests | Fixtures |
+| Topic | DM01→DMAV | DMAV→DM01 | Tests | ITF-Fixture | XTF-Fixture |
 |---|---|---|---|---|
-| LFP3 | ✅ | ✅ | ✅ | ✅ |
-| BB | ✅ | ✅ | ✅ | ❌ |
-| HFP3 | 🔧 | ❌ | ❌ | ❌ |
-| Grenzpunkt | ❌ | ❌ | ❌ | ❌ |
-| Grundstück/Liegenschaft | ❌ | ❌ | ❌ | ❌ |
-| Einzelobjekte | ❌ | ❌ | ❌ | ❌ |
+| LFP3 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| BB | ✅ | ✅ | ✅ | ✅ | ✅ |
+| HFP3 | 🔧 | ❌ | ❌ | ❌ | ❌ |
+| Grenzpunkt | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Grundstück/Liegenschaft | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Einzelobjekte | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-Legende: ✅=valide, 🔧=Profil vorhanden, ❌=offen
+Legende: ✅=valide, 🔧=Profil vorhanden, ❌=offen, ⚠️=eingeschränkt
+
+## Bekannte Einschränkungen
+
+### XTF: Topic/Klassen-Namenskollision "Bodenbedeckung"
+Da Topic und Klasse denselben Namen haben, muss die Klasse im XTF als `Bodenbedeckung.Bodenbedeckung` geschrieben werden (Topic.Class-Notation). `BBNachfuehrung` und `Messpunkt` sind nicht betroffen.

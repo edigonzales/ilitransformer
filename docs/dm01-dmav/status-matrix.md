@@ -64,13 +64,13 @@ Stand: 2026-06-11
 
 ---
 
-## Bodenbedeckung / Bodenbedeckung – 🔧 (Tests ✅)
+## Bodenbedeckung / Bodenbedeckung – ✅
 
 **Profile:** `profiles/{dm01-to-dmav,dmav-to-dm01}/1.1/bb.yaml`
 **Testmodelle:** `dm01-bb-test.ili`, `dmav-bb-test.ili`
 **Integrationstests:** `Dm01ToDmavBbIntegrationTest` (5 Tests ✅), `DmavToDm01BbIntegrationTest` (5 Tests ✅)
-**ilivalidator:** noch nicht validiert (Echtdaten-Transformation pending)
-**Fixtures:** noch nicht erstellt
+**Fixtures:** `real-dm01-dmav/bb/dm01-minimal.itf` ✅, `dmav-minimal.xtf` ✅
+**ilivalidator:** beide Fixtures validiert
 
 ### BBNachfuehrung
 
