@@ -9,6 +9,8 @@ public final class Dm01DmavFixtures {
 
     private static final List<String> LFP3_TARGET_CLASSES =
             List.of("LFP3Nachfuehrung", "LFP3", "LFP3Pos", "LFP3Symbol");
+    private static final List<String> HFP3_TARGET_CLASSES =
+            List.of("HFP3Nachfuehrung", "HFP3", "HFP3Pos");
     private static final List<String> BB_DM01_TARGET_CLASSES =
             List.of("Bodenbedeckung.BBNachfuehrung", "Bodenbedeckung.BoFlaeche",
                     "Bodenbedeckung.ProjBoFlaeche", "Bodenbedeckung.Gebaeudenummer",
@@ -31,6 +33,18 @@ public final class Dm01DmavFixtures {
             true
     );
 
+    public static final TopicFixtureSpec HFP3 = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_HFP3,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_LFP3_MODEL,
+            Dm01DmavPaths.DMAV_UMBRELLA_MODEL,
+            HFP3_TARGET_CLASSES,
+            HFP3_TARGET_CLASSES,
+            2,
+            200,
+            true
+    );
+
     public static final TopicFixtureSpec BB = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_BB,
             Dm01DmavPaths.DM01_MODEL,
@@ -48,6 +62,7 @@ public final class Dm01DmavFixtures {
     public static TopicFixtureSpec topic(String topicId) {
         return switch (topicId) {
             case Dm01DmavPaths.TOPIC_LFP3 -> LFP3;
+            case Dm01DmavPaths.TOPIC_HFP3 -> HFP3;
             case Dm01DmavPaths.TOPIC_BB -> BB;
             default -> throw new IllegalArgumentException("Unknown DM01/DMAV topic: " + topicId);
         };
@@ -59,6 +74,14 @@ public final class Dm01DmavFixtures {
 
     public static ExtractionRequest lfp3DmavExtractionRequest(Path targetDir) {
         return LFP3.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest hfp3Dm01ExtractionRequest(Path targetDir) {
+        return HFP3.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest hfp3DmavExtractionRequest(Path targetDir) {
+        return HFP3.dmavExtractionRequest(targetDir);
     }
 
     public static ExtractionRequest bbDm01ExtractionRequest(Path targetDir) {

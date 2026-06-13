@@ -57,12 +57,37 @@ Stand: 2026-06-13
 | Entstehung (Ref) | Entstehung | ✅ | ✅ |
 | Textposition (BAG) | LFP3Pos | ✅ | ✅ |
 
-#### HFP3 (HFP3Nachfuehrung + HFP3) – 🟡
+#### HFP3 (HFP3Nachfuehrung + HFP3) – ✅
 
-| Status | DM01→DMAV | DMAV→DM01 |
-|---|---|---|
-| Profil | ❌ | ❌ |
-| Generierte Kandidaten | 🟡 | ❌ |
+**Profile:** `profiles/{dm01-to-dmav,dmav-to-dm01}/1.1/hfp3.yaml`
+**Tests:** `Dm01ToDmavHfp3IntegrationTest`, `DmavToDm01Hfp3IntegrationTest`
+**Real-Data-Tests:** `Hfp3MinimalFixtureRoundtripTest`, `RealDm01ToDmavHfp3EndToEndTest`, `RealDmavToDm01Hfp3EndToEndTest`, `Hfp3RealExtractRoundtripTest`, `ExtractedHfp3Dm01FixtureValidationTest`, `ExtractedHfp3DmavFixtureValidationTest`
+**Fixtures:** `src/test/resources/fixtures/dm01-dmav/hfp3/{dm01-minimal.itf,dmav-minimal.xtf,dm01-real-extract.itf,dmav-real-extract.xtf}`
+
+##### HFP3Nachfuehrung
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
+|---|---|---|---|
+| NBIdent | NBIdent | ✅ | ✅ |
+| Identifikator | Identifikator | ✅ | ✅ |
+| Beschreibung | Beschreibung | ✅ | ✅ |
+| Perimeter | Perimeter | ✅ | ✅ |
+| GueltigerEintrag | GueltigerEintrag / Datum1 | ✅ | ✅ |
+
+##### HFP3
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
+|---|---|---|---|
+| NBIdent | NBIdent | ✅ | ✅ |
+| Nummer | Nummer | ✅ | ✅ |
+| Geometrie | Geometrie | ✅ | ✅ |
+| Hoehengeometrie | HoeheGeom | ✅ | ✅ |
+| Lagegenauigkeit | LageGen | ✅ | ✅ |
+| IstLagezuverlaessig | LageZuv | ✅ | ✅ |
+| Hoehengenauigkeit | HoeheGen | ✅ | ✅ |
+| IstHoehenzuverlaessig | HoeheZuv | ✅ | ✅ |
+| Entstehung (Ref) | Entstehung | ✅ | ✅ |
+| Textposition (BAG) | HFP3Pos | ✅ | ✅ |
 
 ---
 

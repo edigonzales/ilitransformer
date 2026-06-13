@@ -126,7 +126,7 @@ In `docs/dm01-dmav/lossiness.md` dokumentieren, welche Informationen bei DMAV→
 |---|---|---|---|---|
 | LFP3 | ✅ | ✅ | ✅ | ✅ | ✅ |
 | BB | ✅ | ✅ | ✅ | ✅ | ✅ |
-| HFP3 | 🔧 | ❌ | ❌ | ❌ | ❌ |
+| HFP3 | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Grenzpunkt | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Grundstück/Liegenschaft | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Einzelobjekte | ❌ | ❌ | ❌ | ❌ | ❌ |

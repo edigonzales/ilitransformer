@@ -50,5 +50,29 @@ MODEL DmavTestModel (de)
       entstehender_LFP3 -- {0..*} LFP3;
     END Entstehung_LFP3;
 
+    CLASS HFP3Nachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;
+      Beschreibung: MANDATORY TEXT*60;
+      GueltigerEintrag: MANDATORY INTERLIS.XMLDateTime;
+    END HFP3Nachfuehrung;
+
+    CLASS HFP3 =
+      NBIdent: MANDATORY TEXT*12;
+      Nummer: MANDATORY TEXT*12;
+      Geometrie: MANDATORY TEXT*30;
+      Hoehengeometrie: 0.0 .. 9999.9;
+      Lagegenauigkeit: MANDATORY 0.001 .. 7.000;
+      IstLagezuverlaessig: MANDATORY Zuverlaessigkeit;
+      Hoehengenauigkeit: 0.001 .. 7.000;
+      IstHoehenzuverlaessig: Zuverlaessigkeit;
+      Textposition: BAG {0..*} OF Textposition;
+    END HFP3;
+
+    ASSOCIATION Entstehung_HFP3 =
+      Entstehung -- {1} HFP3Nachfuehrung;
+      entstehender_HFP3 -- {0..*} HFP3;
+    END Entstehung_HFP3;
+
   END Fixpunkte;
 END DmavTestModel.

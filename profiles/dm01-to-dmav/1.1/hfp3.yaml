@@ -1,0 +1,92 @@
+version: 1
+
+# Produktives Mapping-Profil: DM01 → DMAV HFP3
+# Pfade sind relativ zur Mapping-Datei (profiles/dm01-to-dmav/1.1/)
+# oder koennen via CLI --modeldir ueberschrieben werden.
+job:
+  name: dm01-to-dmav-hfp3
+  description: "Transformation DM01 FixpunkteKategorie3.HFP3 nach DMAV FixpunkteAVKategorie3.HFP3"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "models/"
+  inputs:
+    - id: dm01
+      path: "input/dm01.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-hfp3.xtf"
+      model: "DMAV_FixpunkteAVKategorie3_V1_1"
+      format: "xtf"
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "dm01-to-dmav-hfp3"
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Zuverlaessigkeit_DM01_DMAV:
+      ja: "true"
+      nein: "false"
+
+  rules:
+    - id: hfp3-nachfuehrung
+      target:
+        output: dmav
+        class: "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.HFP3Nachfuehrung"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie3.HFP3Nachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 60)"
+        Perimeter: "nf.Perimeter"
+        GueltigerEintrag: "toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1))"
+
+    - id: hfp3
+      target:
+        output: dmav
+        class: "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.HFP3"
+      sources:
+        - alias: p
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie3.HFP3"
+      identity:
+        sourceKey: ["p.NBIdent", "p.Nummer"]
+      assign:
+        NBIdent: "p.NBIdent"
+        Nummer: "p.Nummer"
+        Geometrie: "p.Geometrie"
+        Hoehengeometrie: "p.HoeheGeom"
+        Lagegenauigkeit: "div(p.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(p.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        Hoehengenauigkeit: "div(p.HoeheGen, 100.0)"
+        IstHoehenzuverlaessig: "enumMap(p.HoeheZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+      bags:
+        Textposition:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.FixpunkteKategorie3.HFP3Pos"
+            alias: pos
+            where: "refEquals(pos.HFP3Pos_von, p)"
+          assign:
+            Position: "pos.Pos"
+            Orientierung: "coalesce(pos.Ori, 100.0)"
+            HReferenzpunkt: "coalesce(pos.HAli, 'Left')"
+            VReferenzpunkt: "coalesce(pos.VAli, 'Bottom')"
+      refs:
+        - association: "Entstehung_HFP3"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: hfp3-nachfuehrung
+            sourceRef: "p.Entstehung"

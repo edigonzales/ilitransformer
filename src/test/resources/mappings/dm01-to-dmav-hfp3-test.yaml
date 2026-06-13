@@ -1,0 +1,85 @@
+version: 1
+
+job:
+  name: dm01-to-dmav-hfp3-test
+  description: "Test transformation DM01→DMAV HFP3"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  inputs:
+    - id: dm01
+      path: "input/test.itf"
+      model: "Dm01TestModel"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-test.xtf"
+      model: "DmavTestModel"
+      format: "xtf"
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "test-hfp3"
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Zuverlaessigkeit_DM01_DMAV:
+      ja: "true"
+      nein: "false"
+
+  rules:
+    - id: hfp3-nachfuehrung
+      target:
+        output: dmav
+        class: "DmavTestModel.Fixpunkte.HFP3Nachfuehrung"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "Dm01TestModel.Fixpunkte.HFP3Nachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 60)"
+        GueltigerEintrag: "toXmlDateTime(nf.GueltigerEintrag)"
+
+    - id: hfp3
+      target:
+        output: dmav
+        class: "DmavTestModel.Fixpunkte.HFP3"
+      sources:
+        - alias: p
+          input: dm01
+          class: "Dm01TestModel.Fixpunkte.HFP3"
+      identity:
+        sourceKey: ["p.NBIdent", "p.Nummer"]
+      assign:
+        NBIdent: "p.NBIdent"
+        Nummer: "p.Nummer"
+        Geometrie: "p.Geometrie"
+        Hoehengeometrie: "p.HoeheGeom"
+        Lagegenauigkeit: "div(p.Lagegenauigkeit, 100.0)"
+        IstLagezuverlaessig: "enumMap(p.IstLagezuverlaessig, 'Zuverlaessigkeit_DM01_DMAV')"
+        Hoehengenauigkeit: "div(p.Hoehengenauigkeit, 100.0)"
+        IstHoehenzuverlaessig: "enumMap(p.IstHoehenzuverlaessig, 'Zuverlaessigkeit_DM01_DMAV')"
+      bags:
+        Textposition:
+          from:
+            input: dm01
+            class: "Dm01TestModel.Fixpunkte.HFP3Pos"
+            alias: pos
+            where: "refEquals(pos.HFP3Pos_von, p)"
+          assign:
+            Position: "pos.Pos"
+            Orientierung: "coalesce(pos.Ori, 100.0)"
+            HReferenzpunkt: "coalesce(pos.HAli, 'Left')"
+            VReferenzpunkt: "coalesce(pos.VAli, 'Bottom')"
+      refs:
+        - association: "Entstehung_HFP3"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: hfp3-nachfuehrung
+            sourceRef: "p.Entstehung"

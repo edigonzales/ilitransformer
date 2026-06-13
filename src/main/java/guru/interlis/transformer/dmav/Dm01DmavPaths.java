@@ -6,6 +6,7 @@ import java.util.List;
 public final class Dm01DmavPaths {
 
     public static final String TOPIC_LFP3 = "lfp3";
+    public static final String TOPIC_HFP3 = "hfp3";
     public static final String TOPIC_BB = "bb";
 
     public static final String LOCAL_MODEL_DIR = "src/test/data/av/models/";

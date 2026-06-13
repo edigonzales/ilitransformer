@@ -53,5 +53,36 @@ MODEL Dm01TestModel (de)
       entstehender_LFP3 -- {0..*} LFP3;
     END Entstehung_LFP3;
 
+    CLASS HFP3Nachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;
+      Beschreibung: MANDATORY TEXT*30;
+      GueltigerEintrag: INTERLIS.XMLDateTime;
+    END HFP3Nachfuehrung;
+
+    CLASS HFP3 =
+      NBIdent: MANDATORY TEXT*12;
+      Nummer: MANDATORY TEXT*12;
+      Geometrie: MANDATORY TEXT*30;
+      HoeheGeom: 0.0 .. 9999.9;
+      Lagegenauigkeit: MANDATORY 0.0 .. 700.0;
+      IstLagezuverlaessig: MANDATORY Zuverlaessigkeit;
+      Hoehengenauigkeit: 0.0 .. 700.0;
+      IstHoehenzuverlaessig: Zuverlaessigkeit;
+    END HFP3;
+
+    CLASS HFP3Pos =
+      HFP3Pos_von: MANDATORY REFERENCE TO HFP3;
+      Pos: MANDATORY 0.0 .. 9999999.0;
+      Ori: MANDATORY 0.0 .. 400.0;
+      HAli: HAlignment;
+      VAli: VAlignment;
+    END HFP3Pos;
+
+    ASSOCIATION Entstehung_HFP3 =
+      Entstehung -- {1} HFP3Nachfuehrung;
+      entstehender_HFP3 -- {0..*} HFP3;
+    END Entstehung_HFP3;
+
   END Fixpunkte;
 END Dm01TestModel.

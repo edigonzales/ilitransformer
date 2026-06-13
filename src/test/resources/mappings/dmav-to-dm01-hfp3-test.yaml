@@ -1,0 +1,69 @@
+version: 1
+
+job:
+  name: dmav-to-dm01-hfp3-test
+  description: "Test transformation DMAV→DM01 HFP3"
+  direction: dmav-to-dm01
+  failPolicy: strict
+  inputs:
+    - id: dmav
+      path: "input/test.xtf"
+      model: "DmavTestModel"
+      format: "xtf"
+  outputs:
+    - id: dm01
+      path: "build/out/dm01-test.itf"
+      model: "Dm01TestModel"
+      format: "itf"
+
+mapping:
+  oidStrategy:
+    default: integer
+  basketStrategy:
+    default: preserveOrGenerateUuid
+
+  enums:
+    Zuverlaessigkeit_DMAV_DM01:
+      "true": "ja"
+      "false": "nein"
+
+  rules:
+    - id: hfp3-nachfuehrung
+      target:
+        output: dm01
+        class: "Dm01TestModel.Fixpunkte.HFP3Nachfuehrung"
+      sources:
+        - alias: nf
+          input: dmav
+          class: "DmavTestModel.Fixpunkte.HFP3Nachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 30)"
+        GueltigerEintrag: "toDate(nf.GueltigerEintrag)"
+
+    - id: hfp3
+      target:
+        output: dm01
+        class: "Dm01TestModel.Fixpunkte.HFP3"
+      sources:
+        - alias: p
+          input: dmav
+          class: "DmavTestModel.Fixpunkte.HFP3"
+      identity:
+        sourceKey: ["p.NBIdent", "p.Nummer"]
+      assign:
+        NBIdent: "p.NBIdent"
+        Nummer: "p.Nummer"
+        Geometrie: "p.Geometrie"
+        Lagegenauigkeit: "mul(p.Lagegenauigkeit, 100.0)"
+        IstLagezuverlaessig: "enumMap(p.IstLagezuverlaessig, 'Zuverlaessigkeit_DMAV_DM01')"
+      refs:
+        - association: "Entstehung_HFP3"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: hfp3-nachfuehrung
+            sourceRef: "p.Entstehung"
