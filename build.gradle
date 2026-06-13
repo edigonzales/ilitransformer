@@ -6,6 +6,10 @@ plugins {
 group = 'guru.interlis'
 version = '0.1.0'
 
+base {
+    archivesName = 'ilitransformer'
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
@@ -51,6 +55,12 @@ dependencies {
 
 application {
     mainClass = 'guru.interlis.transformer.app.CliMain'
+}
+
+distributions {
+    main {
+        distributionBaseName = 'ilitransformer'
+    }
 }
 
 sourceSets {
@@ -194,7 +204,7 @@ tasks.register('validateOutput', JavaExec) {
 }
 
 tasks.register('generateModelInventory', JavaExec) {
-    group = 'ili-transformer'
+    group = 'ilitransformer'
     description = 'Generate INTERLIS model inventory as JSON and Markdown via inspect-model'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'guru.interlis.transformer.app.CliMain'

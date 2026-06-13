@@ -27,7 +27,7 @@ class IliModelServiceTest {
         ModelInventory inv = service.buildInventory(result.transferDescription(), "minimal");
         assertThat(inv.modelName()).isEqualTo("TestModel");
         assertThat(inv.modelVersion()).isEqualTo("2026-06-07");
-        assertThat(inv.issuer()).isEqualTo("http://test.ili-transformer.ch");
+        assertThat(inv.issuer()).isEqualTo("http://test.ilitransformer.ch");
         assertThat(inv.topics()).isNotEmpty();
 
         ModelInventory.TopicInventory topic = inv.topics().get(0);

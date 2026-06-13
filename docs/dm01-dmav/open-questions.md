@@ -51,4 +51,4 @@ Stand: Phase 14.
 2. Sollen Modellfiles aus dem Internet geladen oder lokal vendored werden?
 3. Soll der Mapping-Generator generierte YAMLs ins Repo schreiben oder nur nach `build/generated`?
 4. Welche Java-Version ist langfristig Ziel: 21 LTS oder 25?
-5. Soll das Package `guru.interlis.ilinexus` → `guru.interlis.transformer` umbenannt werden? (Fertiger Code ist bereits `guru.interlis.transformer`)
+5. Namensentscheidung ist getroffen: Package `guru.interlis.transformer`, CLI/Artefakt `ilitransformer`.

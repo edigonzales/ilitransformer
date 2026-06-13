@@ -2,7 +2,7 @@
 
 # Spezifikation und Anforderungen für einen generischen INTERLIS-Transformer
 
-**Arbeitsname:** `ili-transformer`  
+**Arbeitsname:** `ilitransformer`  
 **Ausgangsrepo:** `https://github.com/edigonzales/ilinexus/`  
 **Bisheriger Codename:** `ilinexus`  
 **Primärer Use Case:** generische Transformation von INTERLIS-Transferdaten von einem Quellmodell in ein Zielmodell, insbesondere **DM01 ↔ DMAV**  
@@ -56,14 +56,14 @@ Der aktuelle Name `ilinexus` ist als Codename brauchbar, aber für ein öffentli
 Empfohlener Name:
 
 ```text
-ili-transformer
+ilitransformer
 ```
 
 Begründung:
 
 - sofort verständlich,
 - gute Auffindbarkeit,
-- passt zu CLI: `ili-transformer` oder kürzer `ili-transform`,
+- passt zu CLI: `ilitransformer` oder kürzer `ili-transform`,
 - neutral genug für generische Modelltransformationen,
 - nicht auf DM01/DMAV beschränkt.
 
@@ -71,7 +71,7 @@ Alternative Namen:
 
 | Name | Einschätzung |
 |---|---|
-| `ili-transformer` | bevorzugt, klar und generisch |
+| `ilitransformer` | bevorzugt, klar und generisch |
 | `ili-transform` | gut als CLI-Name |
 | `interlis-transformer` | sehr klar, aber länger |
 | `ili-mapper` | gut, aber stärker DSL-/Mapping-fokussiert |
@@ -79,7 +79,7 @@ Alternative Namen:
 | `ili-crosswalk` | passend zu Korrelationstabellen, aber weniger generisch |
 | `ilinexus` | als Codename ok, als Toolname weniger klar |
 
-**Anforderung:** Falls umbenannt wird, soll das Repo optional `ili-transformer` heissen. Das Java-Package kann zunächst `guru.interlis.ilinexus` bleiben, soll aber mittelfristig zu `guru.interlis.transformer` oder `guru.interlis.ili.transformer` migriert werden. Die Umbenennung darf nicht mit fachlichen Änderungen vermischt werden; sie soll in einem separaten Commit erfolgen.
+**Anforderung:** Das Tool- und Artefakt-Branding soll `ilitransformer` heissen. Das Java-Package soll `guru.interlis.transformer` bleiben. Ein externer Repository-Rename bleibt optional und getrennt von fachlichen Änderungen.
 
 ---
 
@@ -1514,7 +1514,7 @@ Die Phasen 0 bis 7 bilden den generischen Kern. Die Phasen 8 bis 14 kümmern sic
 
 #### Ziel
 
-Den Ausgangszustand reproduzierbar machen, Build und Tests stabilisieren und entscheiden, ob das Repository sofort oder später von `ilinexus` zu `ili-transformer` umbenannt wird.
+Den Ausgangszustand reproduzierbar machen, Build und Tests stabilisieren und die Namensentscheidung für Package `guru.interlis.transformer` und Deliverable `ilitransformer` festziehen.
 
 #### Artefakt
 
@@ -1527,7 +1527,7 @@ Den Ausgangszustand reproduzierbar machen, Build und Tests stabilisieren und ent
 - Bestehende Tests ausführen und reparieren, falls sie wegen trivialer Inkonsistenzen fehlschlagen.
 - Gradle-Konfiguration vereinheitlichen.
 - README mit aktuellem Status abgleichen.
-- Entscheiden, ob CLI-Name `ilinexus` vorerst bleibt oder `ili-transformer` eingeführt wird.
+- CLI-/Artefaktname auf `ilitransformer` festlegen, ohne den externen Repository-Namen zu ändern.
 
 #### Nicht-Scope
 
@@ -2473,10 +2473,10 @@ validation:
 ### 22.3 Berichte
 
 ```text
-build/reports/ili-transformer/<job-name>/compile-report.json
-build/reports/ili-transformer/<job-name>/compile-report.md
-build/reports/ili-transformer/<job-name>/transform-report.json
-build/reports/ili-transformer/<job-name>/validation.log
+build/reports/ilitransformer/<job-name>/compile-report.json
+build/reports/ilitransformer/<job-name>/compile-report.md
+build/reports/ilitransformer/<job-name>/transform-report.json
+build/reports/ilitransformer/<job-name>/validation.log
 ```
 
 ---
@@ -2553,17 +2553,17 @@ DEBUG
 ### 24.1 Hauptbefehle
 
 ```bash
-ili-transformer transform --mapping mapping.yaml
-ili-transformer validate-mapping --mapping mapping.yaml
-ili-transformer inspect-model --model DMAV_FixpunkteAVKategorie3_V1_1 --modeldir https://models.geo.admin.ch/
-ili-transformer import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
-ili-transformer generate-mapping --profile dm01-to-dmav-lfp3
+ilitransformer transform --mapping mapping.yaml
+ilitransformer validate-mapping --mapping mapping.yaml
+ilitransformer inspect-model --model DMAV_FixpunkteAVKategorie3_V1_1 --modeldir https://models.geo.admin.ch/
+ilitransformer import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
+ilitransformer generate-mapping --profile dm01-to-dmav-lfp3
 ```
 
 ### 24.2 Transform
 
 ```bash
-ili-transformer transform \
+ilitransformer transform \
   --mapping profiles/dm01-to-dmav/lfp3.yaml \
   --modeldir "https://models.geo.admin.ch/;models" \
   --validate \
@@ -2579,7 +2579,7 @@ Soll nur Mapping kompilieren und Reports erzeugen, ohne Transferdaten zu lesen.
 Soll Modellinventar als JSON/Markdown ausgeben.
 
 ```bash
-ili-transformer inspect-model \
+ilitransformer inspect-model \
   --model DMAV_FixpunkteAVKategorie3_V1_1 \
   --output build/model-inventory/dmav-fp3.json
 ```
@@ -2587,7 +2587,7 @@ ili-transformer inspect-model \
 ### 24.5 Import Correlation
 
 ```bash
-ili-transformer import-correlation \
+ilitransformer import-correlation \
   --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx \
   --out build/generated/dm01-dmav/correlation-hints.json
 ```
@@ -2595,7 +2595,7 @@ ili-transformer import-correlation \
 ### 24.6 Generate Mapping
 
 ```bash
-ili-transformer generate-mapping \
+ilitransformer generate-mapping \
   --direction dm01-to-dmav \
   --slice lfp3 \
   --correlation build/generated/dm01-dmav/correlation-hints.json \

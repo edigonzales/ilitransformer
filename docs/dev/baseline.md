@@ -9,7 +9,7 @@ Stand nach Abschluss von Phase 16 (2026-06-09).
 | **Build-Tool** | Gradle 9.0 |
 | **Java** | 25 (OpenJDK Temurin-25.0.3+9-LTS) |
 | **Package** | `guru.interlis.transformer` |
-| **Projektname** | `ili-transformer` |
+| **Projektname** | `ilitransformer` |
 | **Group** | `guru.interlis` |
 | **Version** | `0.1.0` |
 

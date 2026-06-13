@@ -4,6 +4,7 @@ import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.StartTransferEvent;
 import ch.interlis.iox.IoxWriter;
 import ch.interlis.iox.ObjectEvent;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -94,6 +95,9 @@ class TransformationEngineIntegrationTest {
 
         List<IomObject> writtenObjects = new ArrayList<>();
         for (IoxEvent event : events.getAllValues()) {
+            if (event instanceof StartTransferEvent startTransferEvent) {
+                assertThat(startTransferEvent.getSender()).isEqualTo("ilitransformer");
+            }
             if (event instanceof ObjectEvent objectEvent) {
                 writtenObjects.add(objectEvent.getIomObject());
             }

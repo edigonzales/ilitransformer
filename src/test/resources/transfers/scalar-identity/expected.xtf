@@ -5,7 +5,7 @@
     <ili:models>
       <ili:model>P5Model</ili:model>
     </ili:models>
-    <ili:sender>ili-transformer</ili:sender>
+    <ili:sender>ilitransformer</ili:sender>
   </ili:headersection>
   <ili:datasection>
     <ili:P5Model.P5Topic bid="1">

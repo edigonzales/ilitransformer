@@ -2,7 +2,7 @@
 
 Die produktiven, versionierten Profile für diesen Use Case liegen unter `profiles/`. Kleine validierte Test-Fixtures liegen unter `src/test/resources/real-dm01-dmav/`, die vollständigen Echtdatensätze unter `src/test/data/DMAV_Version_1_1/`.
 
-Der primäre produktionsnahe Use Case des ili-transformer ist die Transformation von INTERLIS-Transferdaten zwischen **DM01** (AV93, INTERLIS 1, ITF) und **DMAV** (INTERLIS 2.4, XTF).
+Der primäre produktionsnahe Use Case des ilitransformer ist die Transformation von INTERLIS-Transferdaten zwischen **DM01** (AV93, INTERLIS 1, ITF) und **DMAV** (INTERLIS 2.4, XTF).
 
 ## Modelle
 

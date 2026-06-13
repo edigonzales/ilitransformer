@@ -210,7 +210,7 @@ mapping:
 Der `MappingCompiler` validiert die Mapping-Datei und erzeugt einen `TransformPlan`. Fehlerhafte Mappings werden diagnostiziert:
 
 ```bash
-ili-transformer validate-mapping --mapping my-mapping.yaml
+ilitransformer validate-mapping --mapping my-mapping.yaml
 ```
 
 ## Nicht unterstützte Konstrukte

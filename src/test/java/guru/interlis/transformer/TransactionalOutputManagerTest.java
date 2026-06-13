@@ -94,6 +94,7 @@ class TransactionalOutputManagerTest {
 
         assertThat(target).doesNotExist();
         assertThat(tempDirPath).exists();
+        assertThat(tempDirPath.getFileName().toString()).startsWith("ilitransformer-");
     }
 
     @Test

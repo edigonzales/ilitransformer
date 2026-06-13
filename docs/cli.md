@@ -6,7 +6,7 @@
 ./gradlew installDist
 ```
 
-The CLI entry point is `ili-transformer` (via `guru.interlis.transformer.app.CliMain`).
+The CLI entry point is `ilitransformer` (via `guru.interlis.transformer.app.CliMain`).
 
 ## Global options
 
@@ -24,7 +24,7 @@ All commands support:
 Run an INTERLIS transformation.
 
 ```bash
-ili-transformer transform --mapping mapping.yaml [--modeldir <dir>] [--validate] [--report <dir>]
+ilitransformer transform --mapping mapping.yaml [--modeldir <dir>] [--validate] [--report <dir>]
 ```
 
 | Option | Required | Description |
@@ -38,13 +38,13 @@ Examples:
 
 ```bash
 # Basic transformation
-ili-transformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml
+ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml
 
 # With model directory
-ili-transformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml --modeldir "src/test/data/av/models/;https://models.interlis.ch"
+ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml --modeldir "src/test/data/av/models/;https://models.interlis.ch"
 
 # With validation
-ili-transformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml --modeldir "src/test/data/av/models/" --validate --report build/reports/lfp3
+ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml --modeldir "src/test/data/av/models/" --validate --report build/reports/lfp3
 ```
 
 Exit codes:
@@ -56,7 +56,7 @@ Exit codes:
 Validate a mapping configuration without executing a transformation.
 
 ```bash
-ili-transformer validate-mapping --mapping mapping.yaml
+ilitransformer validate-mapping --mapping mapping.yaml
 ```
 
 | Option | Required | Description |
@@ -68,7 +68,7 @@ ili-transformer validate-mapping --mapping mapping.yaml
 Compile an INTERLIS model and output its inventory as JSON and/or Markdown.
 
 ```bash
-ili-transformer inspect-model --model <model> [--modeldir <dir>] [--output <path>] [--format <fmt>]
+ilitransformer inspect-model --model <model> [--modeldir <dir>] [--output <path>] [--format <fmt>]
 ```
 
 | Option | Required | Description |
@@ -82,10 +82,10 @@ Examples:
 
 ```bash
 # Print inventory to stdout
-ili-transformer inspect-model --model DMAV_FixpunkteAVKategorie3_V1_1 --modeldir "src/test/data/av/models/"
+ilitransformer inspect-model --model DMAV_FixpunkteAVKategorie3_V1_1 --modeldir "src/test/data/av/models/"
 
 # Write to files
-ili-transformer inspect-model --model DMAV_FixpunkteAVKategorie3_V1_1 --modeldir "src/test/data/av/models/" --output build/reports/dmav-fp3 --format both
+ilitransformer inspect-model --model DMAV_FixpunkteAVKategorie3_V1_1 --modeldir "src/test/data/av/models/" --output build/reports/dmav-fp3 --format both
 ```
 
 ### import-correlation
@@ -93,7 +93,7 @@ ili-transformer inspect-model --model DMAV_FixpunkteAVKategorie3_V1_1 --modeldir
 Import DM01/DMAV correlation hints from XLSX.
 
 ```bash
-ili-transformer import-correlation --xlsx <path> [--out <path>] [--report <path>]
+ilitransformer import-correlation --xlsx <path> [--out <path>] [--report <path>]
 ```
 
 | Option | Required | Description |
@@ -105,7 +105,7 @@ ili-transformer import-correlation --xlsx <path> [--out <path>] [--report <path>
 Example:
 
 ```bash
-ili-transformer import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
+ilitransformer import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
 ```
 
 ### generate-mapping
@@ -113,7 +113,7 @@ ili-transformer import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabell
 Generate DM01/DMAV mapping candidates from correlation hints and model inventory.
 
 ```bash
-ili-transformer generate-mapping --hints <path> [options...]
+ilitransformer generate-mapping --hints <path> [options...]
 ```
 
 | Option | Required | Description |
@@ -132,7 +132,7 @@ ili-transformer generate-mapping --hints <path> [options...]
 Example:
 
 ```bash
-ili-transformer generate-mapping \
+ilitransformer generate-mapping \
   --hints build/generated/dm01-dmav/correlation-hints.json \
   --dm01-dir "src/test/data/av/models/;https://models.interlis.ch" \
   --dmav-dir "src/test/data/av/models/;https://models.interlis.ch"

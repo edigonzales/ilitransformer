@@ -1,4 +1,4 @@
-# ili-transformer
+# ilitransformer
 
 Java/Gradle-Werkzeug zur modellbewussten Transformation von INTERLIS-Transferdaten. Der aktuelle Referenz-Use-Case ist DM01 ↔ DMAV, die Engine bleibt aber generisch und darf keine DM01/DMAV-Sonderlogik in die generischen Laufzeitpfade ziehen.
 

@@ -20,7 +20,7 @@ public final class TransactionalOutputManager implements AutoCloseable {
     public TransactionalOutputManager(boolean keepTemporaryFiles) {
         this.keepTemporaryFiles = keepTemporaryFiles;
         try {
-            this.tempDir = Files.createTempDirectory("ili-transformer-");
+            this.tempDir = Files.createTempDirectory("ilitransformer-");
         } catch (IOException e) {
             throw new RuntimeException("Failed to create temp directory", e);
         }

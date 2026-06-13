@@ -37,7 +37,7 @@ class CliMainTest {
         assertThat(exitCode).isZero();
         String output = outContent.toString();
         assertThat(output).contains("Usage:");
-        assertThat(output).contains("ili-transformer");
+        assertThat(output).contains("ilitransformer");
         assertThat(output).contains("transform");
         assertThat(output).contains("validate-mapping");
     }
@@ -47,6 +47,7 @@ class CliMainTest {
         int exitCode = new CommandLine(new CliMain()).execute("--version");
         assertThat(exitCode).isZero();
         String output = outContent.toString();
+        assertThat(output).contains("ilitransformer");
         assertThat(output).contains("0.1.0");
     }
 

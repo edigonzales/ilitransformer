@@ -56,7 +56,7 @@
 ## 3. Konkrete Module / Packages
 
 ```text
-com.company.ilinexus
+com.company.transformer
   ├─ app
   │   ├─ CliMain
   │   └─ JobRunner

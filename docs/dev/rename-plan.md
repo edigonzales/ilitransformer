@@ -1,16 +1,16 @@
-# Rename Plan: ilinexus → ili-transformer
+# Rename Plan: ilinexus → ilitransformer
 
 **Status:** Executed in Phase 0 (2026-06-07)
 
 ## Decision
 
-The project is renamed from `ilinexus` to `ili-transformer`.
+The project is renamed from `ilinexus` to `ilitransformer`.
 
 ## Rationale
 
-- `ili-transformer` is immediately understandable as a generic INTERLIS transformation tool
+- `ilitransformer` is immediately understandable as a generic INTERLIS transformation tool
 - Good discoverability
-- Fits CLI name: `ili-transformer`
+- Fits CLI name: `ilitransformer`
 - Not limited to DM01/DMAV
 - The old name `ilinexus` served as a codename during initial scaffolding
 
@@ -18,15 +18,16 @@ The project is renamed from `ilinexus` to `ili-transformer`.
 
 | Change | Before | After |
 |---|---|---|
-| Project name | `ilinexus` | `ili-transformer` |
+| Project name | `ilinexus` | `ilitransformer` |
+| Build artifact | `ili-transformer` | `ilitransformer` |
 | Java package | `guru.interlis.ilinexus` | `guru.interlis.transformer` |
-| CLI name | `ilinexus` | `ili-transformer` |
+| CLI name | `ilinexus` | `ilitransformer` |
 | Main class | `guru.interlis.ilinexus.app.CliMain` | `guru.interlis.transformer.app.CliMain` |
 
 ## Files Changed
 
 - `settings.gradle` — `rootProject.name`
-- `build.gradle` — `mainClass`
+- `build.gradle` — `mainClass`, artifact/distribution naming
 - All 23 Java source files — package declarations and imports
 - All 5 Java test files — package declarations and imports
 - `src/main/java/guru/interlis/ilinexus/` → `src/main/java/guru/interlis/transformer/`
@@ -37,7 +38,7 @@ The project is renamed from `ilinexus` to `ili-transformer`.
 
 | Name | Assessment |
 |---|---|
-| `ili-transformer` | **chosen** — clear and generic |
+| `ilitransformer` | **chosen** — clear and generic |
 | `ili-transform` | good as CLI name, less descriptive as project name |
 | `interlis-transformer` | very clear, but longer |
 | `ili-mapper` | good, but more DSL/mapping-focused |
@@ -49,4 +50,5 @@ The project is renamed from `ilinexus` to `ili-transformer`.
 
 - The rename was done as a single commit without mixing in functional changes
 - No backward compatibility is maintained (the old package name is removed entirely)
-- The CLI usage text now shows `ili-transformer` instead of `ilinexus`
+- The CLI usage text now shows `ilitransformer` instead of `ilinexus`
+- The external GitHub repository name remains `edigonzales/ilinexus`

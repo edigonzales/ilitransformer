@@ -1,7 +1,7 @@
 INTERLIS 2.4;
 
 MODEL BagFlatSource (en)
-  AT "http://test.ili-transformer.ch" VERSION "2026-06-07" =
+  AT "http://test.ilitransformer.ch" VERSION "2026-06-07" =
   TOPIC FlatTopic =
     BASKET OID AS INTERLIS.UUIDOID;
     OID AS INTERLIS.STANDARDOID;

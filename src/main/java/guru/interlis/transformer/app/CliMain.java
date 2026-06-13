@@ -19,10 +19,10 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @Command(
-    name = "ili-transformer",
+    name = "ilitransformer",
     description = "Generic INTERLIS transformation engine",
     mixinStandardHelpOptions = true,
-    version = "ili-transformer 0.1.0",
+    version = "ilitransformer 0.1.0",
     subcommands = {
         CliMain.TransformCommand.class,
         CliMain.ValidateMappingCommand.class,
