@@ -158,11 +158,55 @@ Stand: 2026-06-13
 
 ---
 
-## Einzelobjekte – ❌
+## Einzelobjekte – 🔧
 
 | Status | DM01→DMAV | DMAV→DM01 |
 |---|---|---|
-| Profil | ❌ | ❌ |
+| Profil | 🔧 | 🔧 |
+
+**Profile:** `profiles/{dm01-to-dmav,dmav-to-dm01}/1.1/eo.yaml`
+**Real-Data-Tests:** `EoMinimalFixtureRoundtripTest`, `ExtractedEoDm01FixtureValidationTest`, `ExtractedEoDmavFixtureValidationTest`
+**Fixtures:** `src/test/resources/fixtures/dm01-dmav/eo/{dm01-minimal.itf,dmav-minimal.xtf,README.md}`
+
+### EONachfuehrung
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
+|---|---|---|---|
+| NBIdent | NBIdent | 🔧 | 🔧 |
+| Identifikator | Identifikator | 🔧 | 🔧 |
+| Beschreibung | Beschreibung | 🔧 | 🔧 |
+| Perimeter | Perimeter | 🔧 | 🔧 |
+| GueltigerEintrag | GueltigerEintrag / Datum1 | 🔧 | 🔧 |
+
+### Einzelobjekt
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
+|---|---|---|---|
+| Qualitaetsstandard | Qualitaet | 🔧 | 🔧 |
+| Einzelobjektart | Art | 🔧 | 🔧 |
+| Fiktiv | — | 🔧 (Default false) | 🔧 (Reverse filtert Fiktiv=true) |
+| Objektstatus | Gueltigkeit (via EONachfuehrung) | 🔧 | 🔧 |
+| EGID | lookup(GWR_EGID) | 🔧 | 🔧 |
+| Flaechenelement (BAG) | Flaechenelement | 🔧 | 🔧 |
+| Linienelement (BAG) | Linienelement | 🔧 | 🔧 |
+| Punktelement (BAG) | Punktelement | 🔧 | 🔧 |
+| Objektname (BAG) | Objektname | 🔧 | 🔧 |
+| Objektnummer (BAG) | Objektnummer | 🔧 | 🔧 |
+| Entstehung (Ref) | Entstehung | 🔧 | 🔧 |
+
+### Einzelpunkt / Messpunkt
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
+|---|---|---|---|
+| Nummer | Identifikator | 🔧 | 🔧 |
+| Geometrie | Geometrie | 🔧 | 🔧 |
+| Lagegenauigkeit | LageGen | 🔧 | 🔧 |
+| IstLagezuverlaessig | LageZuv | 🔧 | 🔧 |
+| IstExaktDefiniert | ExaktDefiniert | 🔧 | 🔧 |
+| Hoehengeometrie | — | ❌ | ❌ |
+| Hoehengenauigkeit | — | ❌ | ❌ |
+| IstHoehenzuverlaessig | — | ❌ | ❌ |
+| Entstehung (Ref) | Entstehung | 🔧 | 🔧 |
 
 ---
 

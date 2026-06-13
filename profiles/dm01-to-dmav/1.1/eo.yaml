@@ -1,0 +1,270 @@
+version: 1
+
+job:
+  name: dm01-to-dmav-eo
+  description: "Pilot-Transformation DM01 Einzelobjekte nach DMAV Einzelobjekte"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "models/"
+  inputs:
+    - id: dm01
+      path: "input/dm01.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-eo.xtf"
+      model: "DMAV_Einzelobjekte_V1_1"
+      format: "xtf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "dm01-to-dmav-eo"
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Zuverlaessigkeit_DM01_DMAV:
+      ja: true
+      nein: false
+    ExaktDefiniert_DM01_DMAV:
+      Ja: true
+      Nein: false
+    Schriftgroesse_DM01_DMAV:
+      klein: Klein
+      mittel: Mittel
+      gross: Gross
+    EOArt_DM01_DMAV:
+      Mauer: Mauer
+      unterirdisches_Gebaeude: unterirdisches_Gebaeude
+      uebriger_Gebaeudeteil: uebriger_Gebaeudeteil
+      eingedoltes_oeffentliches_Gewaesser: eingedoltes_oeffentliches_Gewaesser
+      wichtige_Treppe: wichtige_Treppe
+      Tunnel_Unterfuehrung_Galerie: Tunnel_Unterfuehrung_Galerie
+      Bruecke_Passerelle: Bruecke_Passerelle
+      Bahnsteig: Bahnsteig
+      Brunnen: Brunnen
+      Reservoir: Reservoir
+      Pfeiler: Pfeiler
+      Unterstand: Unterstand
+      Silo_Turm_Gasometer: Silo_Turm_Gasometer
+      Hochkamin: Hochkamin
+      Denkmal: Denkmal
+      Mast_Antenne: Mast_Antenne
+      Aussichtsturm: Aussichtsturm
+      Uferverbauung: Uferverbauung
+      Schwelle: Schwelle
+      Lawinenverbauung: Lawinenverbauung
+      massiver_Sockel: massiver_Sockel
+      Ruine_archaeologisches_Objekt: Ruine_archaeologisches_Objekt
+      Landungssteg: Landungssteg
+      einzelner_Fels: einzelner_Fels
+      schmale_bestockte_Flaeche: schmale_bestockte_Flaeche
+      Rinnsal: Rinnsal
+      schmaler_Weg: schmaler_Weg
+      Hochspannungsfreileitung: Hochspannungsfreileitung
+      Druckleitung: Druckleitung
+      Bahngeleise: Bahngeleise
+      Luftseilbahn: Luftseilbahn
+      Gondelbahn_Sesselbahn: Gondelbahn_Sesselbahn
+      Materialseilbahn: Materialseilbahn
+      Skilift: Skilift
+      Faehre: Faehre
+      Grotte_Hoehleneingang: Grotte_Hoehleneingang
+      Achse: Achse
+      wichtiger_Einzelbaum: wichtiger_Einzelbaum
+      Bildstock_Kruzifix: Bildstock_Kruzifix
+      Quelle: Quelle
+      Bezugspunkt: Bezugspunkt
+
+  rules:
+    - id: eo-nachfuehrung-gueltig
+      target:
+        output: dmav
+        class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.EONachfuehrung"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
+          where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 60)"
+        Perimeter: "nf.Perimeter"
+        GueltigerEintrag: "toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1))"
+
+    - id: eo-nachfuehrung-projektiert
+      target:
+        output: dmav
+        class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.EONachfuehrung"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
+          where: "nf.Gueltigkeit == #projektiert"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 60)"
+        Perimeter: "nf.Perimeter"
+        GueltigerEintrag: "toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1))"
+
+    - id: einzelobjekt
+      target:
+        output: dmav
+        class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Einzelobjekt"
+      sources:
+        - alias: eo
+          input: dm01
+          class: "DM01AVCH24LV95D.Einzelobjekte.Einzelobjekt"
+      assign:
+        Qualitaetsstandard: "eo.Qualitaet"
+        Einzelobjektart: "enumMap(eo.Art, 'EOArt_DM01_DMAV')"
+        Objektstatus: "#real"
+        EGID: "lookup('DM01AVCH24LV95D.Einzelobjekte.Objektnummer', 'Objektnummer_von', oid(eo), 'GWR_EGID')"
+      bags:
+        Flaechenelement:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Einzelobjekte.Flaechenelement"
+            alias: fe
+          parentRef:
+            attribute: Flaechenelement_von
+            parentAlias: eo
+          assign:
+            Geometrie: "fe.Geometrie"
+          nestedBags:
+            Symbolposition:
+              from:
+                input: dm01
+                class: "DM01AVCH24LV95D.Einzelobjekte.FlaechenelementSymbol"
+                alias: fes
+              parentRef:
+                attribute: FlaechenelementSymbol_von
+                parentAlias: fe
+              assign:
+                Position: "fes.Pos"
+                Orientierung: "coalesce(fes.Ori, 100.0)"
+        Linienelement:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Einzelobjekte.Linienelement"
+            alias: le
+          parentRef:
+            attribute: Linienelement_von
+            parentAlias: eo
+          assign:
+            Geometrie: "le.Geometrie"
+          nestedBags:
+            Symbolposition:
+              from:
+                input: dm01
+                class: "DM01AVCH24LV95D.Einzelobjekte.LinienelementSymbol"
+                alias: les
+              parentRef:
+                attribute: LinienelementSymbol_von
+                parentAlias: le
+              assign:
+                Position: "les.Pos"
+                Orientierung: "les.Ori"
+        Punktelement:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Einzelobjekte.Punktelement"
+            alias: pe
+          parentRef:
+            attribute: Punktelement_von
+            parentAlias: eo
+          assign:
+            Geometrie: "pe.Geometrie"
+            SymbolOri: "pe.Ori"
+        Objektname:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Einzelobjekte.Objektname"
+            alias: on
+          parentRef:
+            attribute: Objektname_von
+            parentAlias: eo
+          assign:
+            Name: "on.Name"
+          nestedBags:
+            Textposition:
+              from:
+                input: dm01
+                class: "DM01AVCH24LV95D.Einzelobjekte.ObjektnamePos"
+                alias: onp
+              parentRef:
+                attribute: ObjektnamePos_von
+                parentAlias: on
+              assign:
+                Position: "onp.Pos"
+                Orientierung: "coalesce(onp.Ori, 100.0)"
+                HReferenzpunkt: "coalesce(onp.HAli, 'Center')"
+                VReferenzpunkt: "coalesce(onp.VAli, 'Half')"
+                Textgroesse: "enumMap(coalesce(onp.Groesse, 'mittel'), 'Schriftgroesse_DM01_DMAV')"
+        Objektnummer:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Einzelobjekte.Objektnummer"
+            alias: onu
+          parentRef:
+            attribute: Objektnummer_von
+            parentAlias: eo
+          assign:
+            Nummer: "onu.Nummer"
+          nestedBags:
+            Textposition:
+              from:
+                input: dm01
+                class: "DM01AVCH24LV95D.Einzelobjekte.ObjektnummerPos"
+                alias: onup
+              parentRef:
+                attribute: ObjektnummerPos_von
+                parentAlias: onu
+              assign:
+                Position: "onup.Pos"
+                Orientierung: "coalesce(onup.Ori, 100.0)"
+                HReferenzpunkt: "coalesce(onup.HAli, 'Center')"
+                VReferenzpunkt: "coalesce(onup.VAli, 'Half')"
+                Textgroesse: "enumMap(coalesce(onup.Groesse, 'mittel'), 'Schriftgroesse_DM01_DMAV')"
+      refs:
+        - association: "Entstehung_Einzelobjekt"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: eo-nachfuehrung-gueltig
+            sourceRef: "eo.Entstehung"
+
+    - id: messpunkt
+      target:
+        output: dmav
+        class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Messpunkt"
+      sources:
+        - alias: ep
+          input: dm01
+          class: "DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt"
+      identity:
+        sourceKey: ["ep.Identifikator"]
+      assign:
+        Nummer: "ep.Identifikator"
+        Geometrie: "ep.Geometrie"
+        Lagegenauigkeit: "div(ep.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(ep.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        IstExaktDefiniert: "enumMap(ep.ExaktDefiniert, 'ExaktDefiniert_DM01_DMAV')"
+      refs:
+        - association: "Entstehung_Messpunkt"
+          role: "Entstehung"
+          required: false
+          targetObject:
+            rule: eo-nachfuehrung-gueltig
+            sourceRef: "ep.Entstehung"
