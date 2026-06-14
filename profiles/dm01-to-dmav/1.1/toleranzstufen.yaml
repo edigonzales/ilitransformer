@@ -1,0 +1,77 @@
+version: 1
+
+job:
+  name: dm01-to-dmav-toleranzstufen
+  description: "Pilot-Transformation DM01 TSEinteilung nach DMAV Toleranzstufen"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "models/"
+  inputs:
+    - id: dm01
+      path: "input/dm01.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-toleranzstufen.xtf"
+      model: "DMAV_Toleranzstufen_V1_1"
+      format: "xtf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "dm01-to-dmav-toleranzstufen"
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Toleranzstufe_DM01_DMAV:
+      TS1: "TS1"
+      TS2: "TS2"
+      TS3: "TS3"
+      TS4: "TS4"
+      TS5: "TS5"
+
+  rules:
+    - id: ts-nachfuehrung
+      target:
+        output: dmav
+        class: "DMAV_Toleranzstufen_V1_1.Toleranzstufen.TSNachfuehrung"
+      sources:
+        - alias: ts
+          input: dm01
+          class: "DM01AVCH24LV95D.TSEinteilung.Toleranzstufe"
+      identity:
+        sourceKey: ["ts.NBIdent", "ts.Identifikator"]
+      assign:
+        NBIdent: "ts.NBIdent"
+        Identifikator: "ts.Identifikator"
+        Beschreibung: "truncate(ts.Identifikator, 60)"
+        GueltigerEintrag: "toXmlDateTime(coalesce(ts.GueltigerEintrag, '2024-01-01'))"
+
+    - id: toleranzstufe
+      target:
+        output: dmav
+        class: "DMAV_Toleranzstufen_V1_1.Toleranzstufen.Toleranzstufe"
+      sources:
+        - alias: ts
+          input: dm01
+          class: "DM01AVCH24LV95D.TSEinteilung.Toleranzstufe"
+      identity:
+        sourceKey: ["ts.NBIdent", "ts.Identifikator"]
+      assign:
+        NBIdent: "ts.NBIdent"
+        Identifikator: "ts.Identifikator"
+        Geometrie: "ts.Geometrie"
+        Toleranzstufe: "enumMap(ts.Art, 'Toleranzstufe_DM01_DMAV')"
+        Fiktiv: "false"
+      refs:
+        - association: "Entstehung_Toleranzstufe"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: ts-nachfuehrung
+            sourceRef: "ts"

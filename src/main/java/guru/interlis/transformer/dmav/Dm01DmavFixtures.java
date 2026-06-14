@@ -42,6 +42,10 @@ public final class Dm01DmavFixtures {
     private static final List<String> NOMENKLATUR_DMAV_TARGET_CLASSES =
             List.of("Nomenklatur.NKNachfuehrung", "Nomenklatur.Flurname",
                     "Nomenklatur.Ortsname", "Nomenklatur.Gelaendename");
+    private static final List<String> TOLERANZSTUFEN_DM01_TARGET_CLASSES =
+            List.of("TSEinteilung.Toleranzstufe", "TSEinteilung.ToleranzstufePos");
+    private static final List<String> TOLERANZSTUFEN_DMAV_TARGET_CLASSES =
+            List.of("Toleranzstufen.TSNachfuehrung", "Toleranzstufen.Toleranzstufe");
 
     public static final TopicFixtureSpec LFP3 = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_LFP3,
@@ -115,6 +119,18 @@ public final class Dm01DmavFixtures {
             true
     );
 
+    public static final TopicFixtureSpec TOLERANZSTUFEN = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_TOLERANZSTUFEN,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_TOLERANZSTUFEN_MODEL,
+            Dm01DmavPaths.DMAV_UMBRELLA_MODEL,
+            TOLERANZSTUFEN_DM01_TARGET_CLASSES,
+            TOLERANZSTUFEN_DMAV_TARGET_CLASSES,
+            2,
+            200,
+            true
+    );
+
     private Dm01DmavFixtures() {}
 
     public static TopicFixtureSpec topic(String topicId) {
@@ -125,6 +141,7 @@ public final class Dm01DmavFixtures {
             case Dm01DmavPaths.TOPIC_EO -> EO;
             case Dm01DmavPaths.TOPIC_GS -> GS;
             case Dm01DmavPaths.TOPIC_NOMENKLATUR -> NOMENKLATUR;
+            case Dm01DmavPaths.TOPIC_TOLERANZSTUFEN -> TOLERANZSTUFEN;
             default -> throw new IllegalArgumentException("Unknown DM01/DMAV topic: " + topicId);
         };
     }
@@ -175,6 +192,14 @@ public final class Dm01DmavFixtures {
 
     public static ExtractionRequest nomenklaturDmavExtractionRequest(Path targetDir) {
         return NOMENKLATUR.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest toleranzstufenDm01ExtractionRequest(Path targetDir) {
+        return TOLERANZSTUFEN.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest toleranzstufenDmavExtractionRequest(Path targetDir) {
+        return TOLERANZSTUFEN.dmavExtractionRequest(targetDir);
     }
 
     public static boolean isLfp3RelevantClass(String className) {
