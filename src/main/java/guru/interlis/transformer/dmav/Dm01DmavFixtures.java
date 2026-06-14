@@ -34,6 +34,14 @@ public final class Dm01DmavFixtures {
     private static final List<String> GS_DMAV_TARGET_CLASSES =
             List.of("Grundstuecke.GSNachfuehrung", "Grundstuecke.Grenzpunkt",
                     "Grundstuecke.Grundstueck", "Grundstuecke.Liegenschaft");
+    private static final List<String> NOMENKLATUR_DM01_TARGET_CLASSES =
+            List.of("Nomenklatur.NKNachfuehrung", "Nomenklatur.Flurname",
+                    "Nomenklatur.Flurname_Geometrie", "Nomenklatur.FlurnamePos",
+                    "Nomenklatur.Ortsname", "Nomenklatur.OrtsnamePos",
+                    "Nomenklatur.Gelaendename", "Nomenklatur.GelaendenamePos");
+    private static final List<String> NOMENKLATUR_DMAV_TARGET_CLASSES =
+            List.of("Nomenklatur.NKNachfuehrung", "Nomenklatur.Flurname",
+                    "Nomenklatur.Ortsname", "Nomenklatur.Gelaendename");
 
     public static final TopicFixtureSpec LFP3 = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_LFP3,
@@ -95,6 +103,18 @@ public final class Dm01DmavFixtures {
             true
     );
 
+    public static final TopicFixtureSpec NOMENKLATUR = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_NOMENKLATUR,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_NOMENKLATUR_MODEL,
+            Dm01DmavPaths.DMAV_UMBRELLA_MODEL,
+            NOMENKLATUR_DM01_TARGET_CLASSES,
+            NOMENKLATUR_DMAV_TARGET_CLASSES,
+            2,
+            200,
+            true
+    );
+
     private Dm01DmavFixtures() {}
 
     public static TopicFixtureSpec topic(String topicId) {
@@ -104,6 +124,7 @@ public final class Dm01DmavFixtures {
             case Dm01DmavPaths.TOPIC_BB -> BB;
             case Dm01DmavPaths.TOPIC_EO -> EO;
             case Dm01DmavPaths.TOPIC_GS -> GS;
+            case Dm01DmavPaths.TOPIC_NOMENKLATUR -> NOMENKLATUR;
             default -> throw new IllegalArgumentException("Unknown DM01/DMAV topic: " + topicId);
         };
     }
@@ -146,6 +167,14 @@ public final class Dm01DmavFixtures {
 
     public static ExtractionRequest gsDmavExtractionRequest(Path targetDir) {
         return GS.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest nomenklaturDm01ExtractionRequest(Path targetDir) {
+        return NOMENKLATUR.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest nomenklaturDmavExtractionRequest(Path targetDir) {
+        return NOMENKLATUR.dmavExtractionRequest(targetDir);
     }
 
     public static boolean isLfp3RelevantClass(String className) {

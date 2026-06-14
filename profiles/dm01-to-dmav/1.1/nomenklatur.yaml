@@ -1,0 +1,131 @@
+version: 1
+
+job:
+  name: dm01-to-dmav-nomenklatur
+  description: "Pilot-Transformation DM01 Nomenklatur nach DMAV Nomenklatur"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "models/"
+  inputs:
+    - id: dm01
+      path: "input/dm01.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-nomenklatur.xtf"
+      model: "DMAV_Nomenklatur_V1_1"
+      format: "xtf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "dm01-to-dmav-nomenklatur"
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Schriftgroesse_DM01_DMAV:
+      klein: Klein
+      mittel: Mittel
+      gross: Gross
+
+  rules:
+    - id: nk-nachfuehrung-gueltig
+      target:
+        output: dmav
+        class: "DMAV_Nomenklatur_V1_1.Nomenklatur.NKNachfuehrung"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.Nomenklatur.NKNachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 60)"
+        Perimeter: "nf.Perimeter"
+        GueltigerEintrag: "toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1))"
+
+    - id: flurname
+      target:
+        output: dmav
+        class: "DMAV_Nomenklatur_V1_1.Nomenklatur.Flurname"
+      sources:
+        - alias: fn
+          input: dm01
+          class: "DM01AVCH24LV95D.Nomenklatur.Flurname"
+      identity:
+        sourceKey: ["fn.Name"]
+      assign:
+        Name: "fn.Name"
+        Geometrie: "fn.Geometrie"
+        Fiktiv: "false"
+      bags:
+        Textposition:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Nomenklatur.FlurnamePos"
+            alias: fnp
+          parentRef:
+            attribute: FlurnamePos_von
+            parentAlias: fn
+          assign:
+            Position: "fnp.Pos"
+            Orientierung: "coalesce(fnp.Ori, 100.0)"
+            HReferenzpunkt: "coalesce(fnp.HAli, 'Center')"
+            VReferenzpunkt: "coalesce(fnp.VAli, 'Half')"
+            Textgroesse: "enumMap(coalesce(fnp.Groesse, 'mittel'), 'Schriftgroesse_DM01_DMAV')"
+      refs:
+        - association: "Entstehung_Flurname"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: nk-nachfuehrung-gueltig
+            sourceRef: "fn.Entstehung"
+
+    - id: ortsname
+      target:
+        output: dmav
+        class: "DMAV_Nomenklatur_V1_1.Nomenklatur.Ortsname"
+      sources:
+        - alias: on
+          input: dm01
+          class: "DM01AVCH24LV95D.Nomenklatur.Ortsname"
+      identity:
+        sourceKey: ["on.Name"]
+      assign:
+        Name: "on.Name"
+        Geometrie: "on.Geometrie"
+        Typ: "on.Typ"
+      bags:
+        Textposition:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Nomenklatur.OrtsnamePos"
+            alias: onp
+          parentRef:
+            attribute: OrtsnamePos_von
+            parentAlias: on
+          assign:
+            Position: "onp.Pos"
+            Orientierung: "coalesce(onp.Ori, 100.0)"
+            HReferenzpunkt: "coalesce(onp.HAli, 'Center')"
+            VReferenzpunkt: "coalesce(onp.VAli, 'Half')"
+            Textgroesse: "enumMap(coalesce(onp.Groesse, 'mittel'), 'Schriftgroesse_DM01_DMAV')"
+      refs:
+        - association: "Entstehung_Ortsname"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: nk-nachfuehrung-gueltig
+            sourceRef: "on.Entstehung"
+
+    # Gelaendename omitted from forward mapping because DMAV Gelaendename.Geometrie
+    # (MANDATORY Coord2) cannot be populated from DM01 GelaendenamePos child table
+    # via lookup() due to NO IDENT OID resolution limitation. Gelaendename round-trip
+    # is deferred until the engine supports child-to-parent lookups for NO IDENT tables.

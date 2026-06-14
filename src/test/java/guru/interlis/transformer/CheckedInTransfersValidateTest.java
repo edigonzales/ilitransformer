@@ -50,7 +50,9 @@ class CheckedInTransfersValidateTest {
             Map.entry(relativeFixturePath(Dm01DmavFixtures.EO.dm01MinimalFixture()), Dm01DmavFixtures.EO.dm01Model()),
             Map.entry(relativeFixturePath(Dm01DmavFixtures.EO.dmavMinimalFixture()), Dm01DmavFixtures.EO.dmavMinimalModel()),
             Map.entry(relativeFixturePath(Dm01DmavFixtures.GS.dm01MinimalFixture()), Dm01DmavFixtures.GS.dm01Model()),
-            Map.entry(relativeFixturePath(Dm01DmavFixtures.GS.dmavMinimalFixture()), Dm01DmavFixtures.GS.dmavMinimalModel())
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.GS.dmavMinimalFixture()), Dm01DmavFixtures.GS.dmavMinimalModel()),
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.NOMENKLATUR.dm01MinimalFixture()), Dm01DmavFixtures.NOMENKLATUR.dm01Model()),
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.NOMENKLATUR.dmavMinimalFixture()), Dm01DmavFixtures.NOMENKLATUR.dmavMinimalModel())
     );
 
     @Test

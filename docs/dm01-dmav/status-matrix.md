@@ -210,11 +210,57 @@ Stand: 2026-06-14
 
 ---
 
-## Nomenklatur – ❌
+## Nomenklatur – ⚠️
+
+**Profile:** `profiles/{dm01-to-dmav,dmav-to-dm01}/1.1/nomenklatur.yaml`
+**Real-Data-Tests:** `NomenklaturMinimalFixtureRoundtripTest`
+**Fixtures:** `src/test/resources/fixtures/dm01-dmav/nomenklatur/{dm01-minimal.itf,dmav-minimal.xtf,README.md}`
+**ilivalidator / realDataTest:** Round trip (SemanticTransferComparator) beide Richtungen validiert. Gelaendename wegen Engine-Limitation (NO IDENT parent-child lookup) nicht im Round Trip enthalten.
 
 | Status | DM01→DMAV | DMAV→DM01 |
 |---|---|---|
-| Profil | ❌ | ❌ |
+| Profil | ✅ | ✅ |
+
+### NKNachfuehrung
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
+|---|---|---|---|
+| NBIdent | NBIdent | ✅ | ✅ |
+| Identifikator | Identifikator | ✅ | ✅ |
+| Beschreibung | Beschreibung | ✅ | ✅ |
+| Perimeter | Perimeter | ✅ | ✅ |
+| GueltigerEintrag | GueltigerEintrag / Datum1 | ✅ | ✅ |
+
+### Flurname
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
+|---|---|---|---|
+| Name | Name | ✅ | ✅ |
+| Geometrie | Geometrie (AREA) | ✅ | ✅ |
+| Fiktiv | — | ✅ (Default false) | ⚫ (DM01 hat kein Fiktiv) |
+| Textposition (BAG) | FlurnamePos | ✅ (Expand-Mode) | ⚠️ (Round Trip Count, NO IDENT Limitation) |
+| Entstehung (Ref) | Entstehung | ✅ | ✅ |
+
+### Ortsname
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
+|---|---|---|---|
+| Name | Name | ✅ | ✅ |
+| Geometrie | Geometrie (SURFACE) | ✅ | ✅ |
+| Typ | Typ | ✅ | ✅ |
+| Textposition (BAG) | OrtsnamePos | ✅ (Expand-Mode) | ⚠️ (Round Trip Count, NO IDENT Limitation) |
+| Entstehung (Ref) | Entstehung | ✅ | ✅ |
+
+### Gelaendename
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
+|---|---|---|---|
+| Name | Name | ❌ (Engine-Limitation) | ❌ (Engine-Limitation) |
+| Geometrie (Coord2) | GelaendenamePos.Pos | ❌ (NO IDENT Lookup) | ❌ |
+| Textposition (BAG) | GelaendenamePos | ❌ | ❌ |
+| Entstehung (Ref) | Entstehung | ❌ | ❌ |
+
+> **Bekannte Engine-Limitation:** Gelaendename kann nicht gemappt werden, weil DM01 Gelaendename (NO IDENT) keine Geometrie trägt und der `lookup()`-Zugriff auf GelaendenamePos (NO IDENT child) nicht funktioniert. `Joins` DSL-Feature ist vorbereitet aber noch nicht implementiert.
 
 ---
 
