@@ -66,7 +66,7 @@ mapping:
         Name: "f.Name"
         Geometrie: "f.Geometrie"
       bags:
-        FlurnamePos:
+        Textposition:
           mode: expand
           structure: "DM01AVCH24LV95D.Nomenklatur.FlurnamePos"
           from:
@@ -105,7 +105,7 @@ mapping:
         Geometrie: "o.Geometrie"
         Typ: "o.Typ"
       bags:
-        OrtsnamePos:
+        Textposition:
           mode: expand
           structure: "DM01AVCH24LV95D.Nomenklatur.OrtsnamePos"
           from:
@@ -129,5 +129,39 @@ mapping:
             rule: nk-nachfuehrung-gueltig
             sourceRef: "o.Entstehung"
 
-    # Gelaendename omitted from reverse mapping (same NO IDENT lookup limitation
-    # as forward mapping — see dm01-to-dmav nomenklatur.yaml for details).
+    - id: gelaendename-gueltig
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Nomenklatur.Gelaendename"
+      sources:
+        - alias: g
+          input: dmav
+          class: "DMAV_Nomenklatur_V1_1.Nomenklatur.Gelaendename"
+      identity:
+        sourceKey: ["g.Name"]
+      assign:
+        Name: "g.Name"
+      bags:
+        Textposition:
+          mode: expand
+          structure: "DM01AVCH24LV95D.Nomenklatur.GelaendenamePos"
+          from:
+            input: dmav
+            alias: gpItem
+            class: "DMAVTYM_Grafik_V1_0.Textposition"
+          parentRef:
+            role: GelaendenamePos_von
+            parentAlias: g
+          assign:
+            Pos: "coalesce(gpItem.Position, g.Geometrie)"
+            Ori: "coalesce(gpItem.Orientierung, 100.0)"
+            HAli: "coalesce(gpItem.HReferenzpunkt, 'Center')"
+            VAli: "coalesce(gpItem.VReferenzpunkt, 'Half')"
+            Groesse: "enumMap(coalesce(gpItem.Textgroesse, 'Mittel'), 'Schriftgroesse_DMAV_DM01')"
+      refs:
+        - association: "GelaendenameEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: nk-nachfuehrung-gueltig
+            sourceRef: "g.Entstehung"

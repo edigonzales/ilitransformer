@@ -255,12 +255,12 @@ Stand: 2026-06-14
 
 | DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
 |---|---|---|---|
-| Name | Name | ❌ (Engine-Limitation) | ❌ (Engine-Limitation) |
-| Geometrie (Coord2) | GelaendenamePos.Pos | ❌ (NO IDENT Lookup) | ❌ |
-| Textposition (BAG) | GelaendenamePos | ❌ | ❌ |
-| Entstehung (Ref) | Entstehung | ❌ | ❌ |
+| Name | Name | ✅ | ✅ |
+| Geometrie (Coord2) | GelaendenamePos.Pos | ✅ (per Ref→Object Join) | ✅ |
+| Textposition (BAG) | GelaendenamePos | ✅ (Expand-Mode) | ⚠️ (Round Trip Count, NO IDENT Limitation) |
+| Entstehung (Ref) | Entstehung | ✅ | ✅ |
 
-> **Bekannte Engine-Limitation:** Gelaendename kann nicht gemappt werden, weil DM01 Gelaendename (NO IDENT) keine Geometrie trägt und der `lookup()`-Zugriff auf GelaendenamePos (NO IDENT child) nicht funktioniert. `Joins` DSL-Feature ist vorbereitet aber noch nicht implementiert.
+> **Hinweis:** Gelaendename DM01→DMAV verwendet einen Ref-to-Object-Join (`eq(gnp.GelaendenamePos_von, gn)`) um die Geometrie aus GelaendenamePos zu ziehen. Dieses Join-Feature ist ab Phase 24 implementiert (`processJoinedRule()` mit OID-Map für Bare-Alias rechte Seite).
 
 ---
 

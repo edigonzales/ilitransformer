@@ -186,6 +186,22 @@ bags:
       Position: "pos.Pos"
 ```
 
+### JoinSpec (unterstützt ab Phase 24)
+
+Equi-Joins zwischen zwei Source-Aliases. Unterstützt `INNER` und `LEFT`.
+
+```yaml
+joins:
+  - left: src1        # Pflicht: Alias der linken Source
+    right: src2       # Pflicht: Alias der rechten Source
+    on: "eq(src1.attr, src2)"  # Pflicht: equi-join condition
+    type: inner       # Optional: "inner" (default) oder "left"
+```
+
+Die `on`-Condition muss ein `eq()`-Aufruf sein:
+- `eq(leftPath, rightPath)` — beide PathExpr mit unterschiedlichen Aliases
+- `eq(leftPath, rightAlias)` — **Ref-to-Object-Join**: rechte Seite ist ein Bare-Alias. Die linke Attribut-Referenz-OID wird mit der rechten Objekt-OID verglichen. Nützlich für INTERLIS 1 Parent-Child-Beziehungen (z.B. `eq(gnp.GelaendenamePos_von, gn)`).
+
 ### MetadataSpec
 
 ```yaml
@@ -215,7 +231,6 @@ ilitransformer validate-mapping --mapping my-mapping.yaml
 
 ## Nicht unterstützte Konstrukte
 
-- `joins` — DSL-Feld vorbereitet, Runtime noch nicht (komplexe Joins)
 - `create` — DSL-Feld vorbereitet, noch nicht implementiert
 - Externe OID-Strategie (`external`) — Stub
 - Expression-basierte Basket-Strategie — Stub

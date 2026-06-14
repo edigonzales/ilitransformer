@@ -187,8 +187,26 @@ public final class RuleExecutionService {
         FunctionCallExpr call = (FunctionCallExpr) join.condition().ast();
         PathExpr leftPath = (PathExpr) call.arguments().get(0);
         PathExpr rightPath = (PathExpr) call.arguments().get(1);
-        String leftAttr = leftPath.attributeName();
-        String rightAttr = rightPath.attributeName();
+
+        boolean leftMatchesLeftPlan = leftPath.alias().equals(leftPlan.alias());
+        PathExpr leftSidePath = leftMatchesLeftPlan ? leftPath : rightPath;
+        PathExpr rightSidePath = leftMatchesLeftPlan ? rightPath : leftPath;
+        String leftAttr = leftSidePath.attributeName();
+        String rightAttr = rightSidePath.attributeName();
+
+        boolean rightIsObject = rightAttr == null || rightAttr.isBlank();
+
+        Map<String, SourceRecord> rightByOid = null;
+        if (rightIsObject) {
+            rightByOid = new LinkedHashMap<>();
+            for (SourceRecord r : stateStore.sourceRecords()) {
+                if (!sourceMatchesPlan(r, rightPlan)) continue;
+                String oid = r.sourceObject().getobjectoid();
+                if (oid != null && !oid.isBlank()) {
+                    rightByOid.put(oid, r);
+                }
+            }
+        }
 
         for (SourceRecord leftRecord : stateStore.sourceRecords()) {
             if (!sourceMatchesPlan(leftRecord, leftPlan)) continue;
@@ -196,7 +214,7 @@ public final class RuleExecutionService {
             Map<String, IomObject> sources = new LinkedHashMap<>();
             sources.put(leftPlan.alias(), leftRecord.sourceObject());
 
-            String leftAttrValue = leftRecord.sourceObject().getattrvalue(leftAttr);
+            String leftAttrValue = readAttributeOrRefOid(leftRecord.sourceObject(), leftAttr);
             if (leftAttrValue == null) {
                 if (join.type() == JoinType.INNER) {
                     diagnostics.add(new Diagnostic(DiagnosticCode.RUN_JOIN_MISSING, Severity.WARNING,
@@ -208,10 +226,16 @@ public final class RuleExecutionService {
             }
 
             metrics.recordJoinLookup();
-            LookupKey lookupKey = new LookupKey(null,
-                    TargetObjectFactory.getScopedName(rightPlan.sourceClass()),
-                    rightAttr, new CanonicalValue("text", leftAttrValue, true));
-            List<SourceRecord> rightMatches = sourceLookupIndex.lookup(lookupKey);
+            List<SourceRecord> rightMatches;
+            if (rightIsObject) {
+                SourceRecord match = rightByOid.get(leftAttrValue);
+                rightMatches = match != null ? List.of(match) : List.of();
+            } else {
+                LookupKey lookupKey = new LookupKey(null,
+                        TargetObjectFactory.getScopedName(rightPlan.sourceClass()),
+                        rightAttr, new CanonicalValue("text", leftAttrValue, true));
+                rightMatches = sourceLookupIndex.lookup(lookupKey);
+            }
 
             rightMatches = rightMatches.stream()
                     .filter(r -> rightPlan.inputIds().isEmpty() || rightPlan.inputIds().contains(r.sourceFileId()))
@@ -252,7 +276,7 @@ public final class RuleExecutionService {
                 joinedSources.put(rightPlan.alias(), rightRecord.sourceObject());
 
                 EvalContext joinCtx = new EvalContext(joinedSources, diagnostics, rule.ruleId(), plan.enumMaps(),
-                        null, sourceAttrTypes).withLookupIndex(sourceLookupIndex);
+                        geometryAdapter, sourceAttrTypes).withLookupIndex(sourceLookupIndex);
 
                 Value joinResult = expressionEngine.evaluate(join.condition(), joinCtx);
                 if (!isFilterTruthy(joinResult)) {
@@ -268,6 +292,19 @@ public final class RuleExecutionService {
                 metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
             }
         }
+    }
+
+    private static String readAttributeOrRefOid(IomObject obj, String attrName) {
+        if (attrName == null || attrName.isBlank()) return obj.getobjectoid();
+        String scalar = obj.getattrvalue(attrName);
+        if (scalar != null) return scalar;
+        if (obj.getattrvaluecount(attrName) > 0) {
+            IomObject refObj = obj.getattrobj(attrName, 0);
+            if (refObj != null && refObj.getobjectrefoid() != null) {
+                return refObj.getobjectrefoid();
+            }
+        }
+        return null;
     }
 
     private void processCreatePlan(CreatePlan create, RulePlan parentRule, TransformPlan plan,

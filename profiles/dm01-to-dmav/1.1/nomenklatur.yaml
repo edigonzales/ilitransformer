@@ -125,7 +125,46 @@ mapping:
             rule: nk-nachfuehrung-gueltig
             sourceRef: "on.Entstehung"
 
-    # Gelaendename omitted from forward mapping because DMAV Gelaendename.Geometrie
-    # (MANDATORY Coord2) cannot be populated from DM01 GelaendenamePos child table
-    # via lookup() due to NO IDENT OID resolution limitation. Gelaendename round-trip
-    # is deferred until the engine supports child-to-parent lookups for NO IDENT tables.
+    - id: gelaendename
+      target:
+        output: dmav
+        class: "DMAV_Nomenklatur_V1_1.Nomenklatur.Gelaendename"
+      sources:
+        - alias: gnp
+          input: dm01
+          class: "DM01AVCH24LV95D.Nomenklatur.GelaendenamePos"
+        - alias: gn
+          input: dm01
+          class: "DM01AVCH24LV95D.Nomenklatur.Gelaendename"
+      joins:
+        - left: gn
+          right: gnp
+          on: "eq(gnp.GelaendenamePos_von, gn)"
+          type: inner
+      identity:
+        sourceKey: ["gn.Name"]
+      assign:
+        Name: "gn.Name"
+        Geometrie: "gnp.Pos"
+      bags:
+        Textposition:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Nomenklatur.GelaendenamePos"
+            alias: gnpBag
+          parentRef:
+            attribute: GelaendenamePos_von
+            parentAlias: gn
+          assign:
+            Position: "gnpBag.Pos"
+            Orientierung: "coalesce(gnpBag.Ori, 100.0)"
+            HReferenzpunkt: "coalesce(gnpBag.HAli, 'Center')"
+            VReferenzpunkt: "coalesce(gnpBag.VAli, 'Half')"
+            Textgroesse: "enumMap(coalesce(gnpBag.Groesse, 'mittel'), 'Schriftgroesse_DM01_DMAV')"
+      refs:
+        - association: "Entstehung_Gelaendename"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: nk-nachfuehrung-gueltig
+            sourceRef: "gn.Entstehung"

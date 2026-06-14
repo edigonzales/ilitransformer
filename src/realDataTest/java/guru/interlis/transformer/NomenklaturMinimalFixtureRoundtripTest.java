@@ -145,7 +145,8 @@ class NomenklaturMinimalFixtureRoundtripTest {
         return readObjects(path, dm01Td).stream()
                 .filter(obj -> hasSuffix(obj, ".NKNachfuehrung")
                         || hasSuffix(obj, ".Flurname")
-                        || hasSuffix(obj, ".Ortsname"))
+                        || hasSuffix(obj, ".Ortsname")
+                        || hasSuffix(obj, ".Gelaendename"))
                 .toList();
     }
 
@@ -153,7 +154,8 @@ class NomenklaturMinimalFixtureRoundtripTest {
         return readObjects(path, dmavTd).stream()
                 .filter(obj -> hasSuffix(obj, ".NKNachfuehrung")
                         || hasSuffix(obj, ".Flurname")
-                        || hasSuffix(obj, ".Ortsname"))
+                        || hasSuffix(obj, ".Ortsname")
+                        || hasSuffix(obj, ".Gelaendename"))
                 .toList();
     }
 
@@ -179,9 +181,9 @@ class NomenklaturMinimalFixtureRoundtripTest {
                 .businessKey("NKNachfuehrung", "NBIdent", "Identifikator")
                 .businessKey("Flurname", "Name")
                 .businessKey("Ortsname", "Name")
+                .businessKey("Gelaendename", "Name")
                 .numericTolerance(5.0)
                 .ignore("Entstehung")
-                .ignore("Gelaendename")
                 .ignore("Datum1")
                 .build();
     }
@@ -191,10 +193,10 @@ class NomenklaturMinimalFixtureRoundtripTest {
                 .businessKey("NKNachfuehrung", "NBIdent", "Identifikator")
                 .businessKey("Flurname", "Name")
                 .businessKey("Ortsname", "Name")
+                .businessKey("Gelaendename", "Name")
                 .numericTolerance(5.0)
                 .ignore("Entstehung")
                 .ignore("Fiktiv")
-                .ignore("Gelaendename")
                 .ignore("Textposition")
                 .build();
     }
