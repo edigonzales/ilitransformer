@@ -14,6 +14,11 @@ public record BooleanValue(boolean value) implements Value {
     }
 
     @Override
+    public String asText() {
+        return Boolean.toString(value);
+    }
+
+    @Override
     public Object toNative() {
         return value;
     }

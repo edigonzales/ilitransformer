@@ -110,10 +110,11 @@ class ReferenceIndexTest {
         index.add(new SourceObjectKey("in1", "b1", "Model.T.ClassA", "oid1"),
                 new TargetReference("out1", "Model.T.ClassA", "t1", "rule-a"));
 
-        // Global OID-only lookup (all nulls except OID) should not match
+        // Global OID-only lookup (all nulls except OID) matches via cross-basket fallback
         List<TargetReference> result = index.find(
                 new SourceReferenceSelector(null, null, null, "oid1"));
-        assertThat(result).isEmpty();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).targetOid()).isEqualTo("t1");
     }
 
     @Test

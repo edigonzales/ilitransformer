@@ -99,6 +99,118 @@ mapping:
             rule: gs-nachfuehrung-gueltig
             sourceRef: "gp.Entstehung"
 
+    - id: proj-grundstueck
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck"
+      sources:
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
+          where: "gs.Fiktiv == true"
+      identity:
+        sourceKey: ["gs.NBIdent", "gs.Nummer"]
+      assign:
+        NBIdent: "gs.NBIdent"
+        Nummer: "gs.Nummer"
+        EGRIS_EGRID: "gs.EGRID"
+        Art: "#Liegenschaft"
+        Gueltigkeit: "#rechtskraeftig"
+        Vollstaendigkeit: "#Vollstaendig"
+        GesamteFlaechenmass: "gs.Gesamtflaechenmass"
+      bags:
+        ProjGrundstueckPos:
+          mode: expand
+          structure: "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueckPos"
+          from:
+            input: dmav
+            alias: tp
+            class: "DMAVTYM_Grafik_V1_0.Textposition"
+          parentRef:
+            role: ProjGrundstueckPos_von
+            parentAlias: gs
+          assign:
+            Pos: "tp.Position"
+            Ori: "coalesce(tp.Orientierung, 100.0)"
+            HAli: "coalesce(tp.HReferenzpunkt, 'Center')"
+            VAli: "coalesce(tp.VReferenzpunkt, 'Half')"
+            Groesse: "enumMap(coalesce(tp.Textgroesse, 'Mittel'), 'Schriftgroesse_DMAV_DM01')"
+      refs:
+        - association: "ProjGrundstueckEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-gueltig
+            sourceRef: "gs.Entstehung"
+
+    - id: proj-liegenschaft
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.ProjLiegenschaft"
+      sources:
+        - alias: ls
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft"
+          where: "ls.Fiktiv == true"
+      assign:
+        NummerTeilGrundstueck: "ls.NummerTeilgrundstueck"
+        Geometrie: "ls.Geometrie"
+        Flaechenmass: "ls.Flaechenmass"
+      refs:
+        - association: "ProjLiegenschaftProjLiegenschaft_von"
+          role: "ProjLiegenschaft_von"
+          required: true
+          targetObject:
+            rule: proj-grundstueck
+            sourceRef: "ls.Grundstueck"
+
+    - id: selbstrecht-grundstueck
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.Grundstueck"
+      sources:
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
+          where: "gs.Grundstuecksart == #SelbstaendigesDauerndesRecht"
+      identity:
+        sourceKey: ["gs.NBIdent", "gs.Nummer"]
+      assign:
+        NBIdent: "gs.NBIdent"
+        Nummer: "gs.Nummer"
+        EGRIS_EGRID: "gs.EGRID"
+        Art: "#Baurecht"
+        Gueltigkeit: "#rechtskraeftig"
+        Vollstaendigkeit: "#Vollstaendig"
+        GesamteFlaechenmass: "gs.Gesamtflaechenmass"
+      refs:
+        - association: "GrundstueckEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-gueltig
+            sourceRef: "gs.Entstehung"
+
+    - id: selbstrecht
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.SelbstRecht"
+      sources:
+        - alias: sr
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.SelbstaendigesDauerndesRecht"
+      assign:
+        NummerTeilGrundstueck: "sr.NummerTeilgrundstueck"
+        Geometrie: "sr.Geometrie"
+        Flaechenmass: "sr.Flaechenmass"
+      refs:
+        - association: "SelbstRechtSelbstRecht_von"
+          role: "SelbstRecht_von"
+          required: true
+          targetObject:
+            rule: selbstrecht-grundstueck
+            sourceRef: "sr.Grundstueck"
+
     - id: grundstueck-gueltig
       target:
         output: dm01
@@ -107,7 +219,7 @@ mapping:
         - alias: gs
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
-          where: "gs.Grundstuecksart == #Liegenschaft"
+          where: "gs.Grundstuecksart == #Liegenschaft AND gs.Fiktiv == false"
       identity:
         sourceKey: ["gs.NBIdent", "gs.Nummer"]
       assign:
@@ -151,6 +263,7 @@ mapping:
         - alias: ls
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft"
+          where: "ls.Fiktiv == false"
       assign:
         NummerTeilGrundstueck: "ls.NummerTeilgrundstueck"
         Geometrie: "ls.Geometrie"

@@ -8,6 +8,8 @@ import ch.interlis.ili2c.metamodel.CompositionType;
 import ch.interlis.ili2c.metamodel.Container;
 import ch.interlis.ili2c.metamodel.Domain;
 import ch.interlis.ili2c.metamodel.Element;
+import ch.interlis.ili2c.metamodel.Enumeration;
+import ch.interlis.ili2c.metamodel.EnumerationType;
 import ch.interlis.ili2c.metamodel.Extendable;
 import ch.interlis.ili2c.metamodel.Model;
 import ch.interlis.ili2c.metamodel.ReferenceType;
@@ -15,6 +17,7 @@ import ch.interlis.ili2c.metamodel.RoleDef;
 import ch.interlis.ili2c.metamodel.Table;
 import ch.interlis.ili2c.metamodel.Topic;
 import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.ili2c.metamodel.Type;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -320,6 +323,22 @@ public final class TypeSystemFacade {
         if (attr == null) return null;
         ch.interlis.ili2c.metamodel.Type type = attr.getDomain();
         return type != null ? type.toString() : null;
+    }
+
+    public String resolveEnumName(AttributeDef targetAttr, String bareName) {
+        if (targetAttr == null || bareName == null) return bareName;
+        Type type = Type.findReal(targetAttr.getDomain());
+        if (!(type instanceof EnumerationType enumType)) return bareName;
+        // Try exact match first
+        for (String v : enumType.getValues()) {
+            if (v.equals(bareName)) return v;
+        }
+        // Try suffix match: bareName like "Baurecht" matches "SelbstRecht.Baurecht"
+        String suffix = "." + bareName;
+        for (String v : enumType.getValues()) {
+            if (v.endsWith(suffix)) return v;
+        }
+        return bareName;
     }
 
     public boolean isMandatory(String classPath, String attrName) {

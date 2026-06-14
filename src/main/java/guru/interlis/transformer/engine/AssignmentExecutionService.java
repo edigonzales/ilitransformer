@@ -57,7 +57,11 @@ public final class AssignmentExecutionService {
         }
         Object nativeValue = value.toNative();
         if (nativeValue != null) {
-            target.setattrvalue(ap.targetAttrName(), nativeValue.toString());
+            String stringValue = nativeValue.toString();
+            if (value instanceof guru.interlis.transformer.expr.EnumValue && ap.targetAttr() != null) {
+                stringValue = targetTs.resolveEnumName(ap.targetAttr(), stringValue);
+            }
+            target.setattrvalue(ap.targetAttrName(), stringValue);
         }
     }
 

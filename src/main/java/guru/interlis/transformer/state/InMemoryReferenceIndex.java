@@ -32,7 +32,7 @@ public final class InMemoryReferenceIndex implements ReferenceIndex {
         }
 
         // 2. Cross-basket: inputId, class, OID (ignore basketId)
-        if (crossBasketFallback && selector.inputId() != null && selector.expectedSourceClass() != null) {
+        if (crossBasketFallback) {
             List<TargetReference> matches = findMatchingEntries(
                     selector.inputId(), selector.expectedSourceClass(), selector.referencedSourceOid(), false);
             if (!matches.isEmpty()) {

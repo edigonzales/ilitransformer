@@ -214,6 +214,12 @@ public final class ExpressionEngine {
             }
             return NullValue.INSTANCE;
         }
+        if (attrType == TypeInfo.BOOLEAN) {
+            return BooleanValue.of(Boolean.parseBoolean(attrValue));
+        }
+        if (attrType == TypeInfo.ENUM) {
+            return new EnumValue(attrValue, null);
+        }
         return new TextValue(attrValue);
     }
 

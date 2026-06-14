@@ -87,10 +87,16 @@ class GsMinimalFixtureRoundtripTest {
                 .isTrue();
         assertThat(countBySuffix(readObjects(DM01_INPUT, dm01Td), ".Grenzpunkt"))
                 .isEqualTo(countBySuffix(readObjects(dm01Roundtrip, dm01Td), ".Grenzpunkt"));
-        assertThat(countBySuffix(readObjects(dm01Roundtrip, dm01Td), ".Grundstueck"))
-                .isGreaterThanOrEqualTo(1);
-        assertThat(countBySuffix(readObjects(dm01Roundtrip, dm01Td), ".Liegenschaft"))
-                .isGreaterThanOrEqualTo(1);
+        assertThat(countBySuffix(readObjects(DM01_INPUT, dm01Td), ".Grundstueck"))
+                .isEqualTo(countBySuffix(readObjects(dm01Roundtrip, dm01Td), ".Grundstueck"));
+        assertThat(countBySuffix(readObjects(DM01_INPUT, dm01Td), ".Liegenschaft"))
+                .isEqualTo(countBySuffix(readObjects(dm01Roundtrip, dm01Td), ".Liegenschaft"));
+        assertThat(countBySuffix(readObjects(DM01_INPUT, dm01Td), ".ProjGrundstueck"))
+                .isEqualTo(countBySuffix(readObjects(dm01Roundtrip, dm01Td), ".ProjGrundstueck"));
+        assertThat(countBySuffix(readObjects(DM01_INPUT, dm01Td), ".ProjLiegenschaft"))
+                .isEqualTo(countBySuffix(readObjects(dm01Roundtrip, dm01Td), ".ProjLiegenschaft"));
+        assertThat(countBySuffix(readObjects(DM01_INPUT, dm01Td), ".SelbstRecht"))
+                .isEqualTo(countBySuffix(readObjects(dm01Roundtrip, dm01Td), ".SelbstRecht"));
     }
 
     @Test
@@ -114,10 +120,12 @@ class GsMinimalFixtureRoundtripTest {
                 .isTrue();
         assertThat(countBySuffix(readObjects(DMAV_INPUT, dmavTd), ".Grenzpunkt"))
                 .isEqualTo(countBySuffix(readObjects(dmavRoundtrip, dmavTd), ".Grenzpunkt"));
-        assertThat(countBySuffix(readObjects(dmavRoundtrip, dmavTd), ".Grundstueck"))
-                .isGreaterThanOrEqualTo(1);
-        assertThat(countBySuffix(readObjects(dmavRoundtrip, dmavTd), ".Liegenschaft"))
-                .isGreaterThanOrEqualTo(1);
+        assertThat(countBySuffix(readObjects(DMAV_INPUT, dmavTd), ".Grundstueck"))
+                .isEqualTo(countBySuffix(readObjects(dmavRoundtrip, dmavTd), ".Grundstueck"));
+        assertThat(countBySuffix(readObjects(DMAV_INPUT, dmavTd), ".Liegenschaft"))
+                .isEqualTo(countBySuffix(readObjects(dmavRoundtrip, dmavTd), ".Liegenschaft"));
+        assertThat(countBySuffix(readObjects(DMAV_INPUT, dmavTd), ".SelbstaendigesDauerndesRecht"))
+                .isEqualTo(countBySuffix(readObjects(dmavRoundtrip, dmavTd), ".SelbstaendigesDauerndesRecht"));
     }
 
     private void run(Path mappingPath, Path reportDir) throws Exception {
@@ -151,10 +159,13 @@ class GsMinimalFixtureRoundtripTest {
 
     private List<IomObject> semanticDm01Objects(Path path) throws Exception {
         return readObjects(path, dm01Td).stream()
-                .filter(obj -> (hasSuffix(obj, ".LSNachfuehrung") && hasAttr(obj, "NBIdent", "GSNB"))
+                .filter(obj -> hasSuffix(obj, ".LSNachfuehrung")
                         || hasSuffix(obj, ".Grenzpunkt")
-                        || (hasSuffix(obj, ".Grundstueck") && hasAttr(obj, "Art", "Liegenschaft"))
-                        || hasSuffix(obj, ".Liegenschaft"))
+                        || hasSuffix(obj, ".ProjGrundstueck")
+                        || hasSuffix(obj, ".Grundstueck")
+                        || hasSuffix(obj, ".ProjLiegenschaft")
+                        || hasSuffix(obj, ".Liegenschaft")
+                        || hasSuffix(obj, ".SelbstRecht"))
                 .toList();
     }
 
@@ -162,8 +173,9 @@ class GsMinimalFixtureRoundtripTest {
         return readObjects(path, dmavTd).stream()
                 .filter(obj -> hasSuffix(obj, ".GSNachfuehrung")
                         || hasSuffix(obj, ".Grenzpunkt")
-                        || (hasSuffix(obj, ".Grundstueck") && hasAttr(obj, "Grundstuecksart", "Liegenschaft"))
-                        || hasSuffix(obj, ".Liegenschaft"))
+                        || hasSuffix(obj, ".Grundstueck")
+                        || hasSuffix(obj, ".Liegenschaft")
+                        || hasSuffix(obj, ".SelbstaendigesDauerndesRecht"))
                 .toList();
     }
 
@@ -188,14 +200,20 @@ class GsMinimalFixtureRoundtripTest {
         return ComparisonProfile.builder()
                 .businessKey("LSNachfuehrung", "NBIdent", "Identifikator")
                 .businessKey("Grenzpunkt", "Identifikator", "Geometrie")
+                .businessKey("ProjGrundstueck", "NBIdent", "Nummer")
                 .businessKey("Grundstueck", "NBIdent", "Nummer")
+                .businessKey("ProjLiegenschaft", "Flaechenmass", "Geometrie")
                 .businessKey("Liegenschaft", "Flaechenmass", "Geometrie")
+                .businessKey("SelbstRecht", "Flaechenmass", "Geometrie")
                 .numericTolerance(0.001)
                 .ignore("Entstehung")
                 .ignore("GrenzpunktPos")
                 .ignore("GrenzpunktSymbol")
                 .ignore("GrundstueckPos")
+                .ignore("ProjGrundstueckPos")
                 .ignore("Liegenschaft_von")
+                .ignore("ProjLiegenschaft_von")
+                .ignore("SelbstRecht_von")
                 .build();
     }
 
@@ -205,6 +223,7 @@ class GsMinimalFixtureRoundtripTest {
                 .businessKey("Grenzpunkt", "Nummer")
                 .businessKey("Grundstueck", "NBIdent", "Nummer")
                 .businessKey("Liegenschaft", "Flaechenmass")
+                .businessKey("SelbstaendigesDauerndesRecht", "Flaechenmass")
                 .numericTolerance(0.001)
                 .ignore("Entstehung")
                 .ignore("Untergang")
@@ -218,6 +237,7 @@ class GsMinimalFixtureRoundtripTest {
                 .ignore("IstHoehenzuverlaessig")
                 .ignore("Grundbucheintrag")
                 .ignore("Qualitaetsstandard")
+                .ignore("IstBaurecht")
                 .build();
     }
 
