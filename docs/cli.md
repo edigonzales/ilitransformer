@@ -108,36 +108,6 @@ Example:
 ilitransformer import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
 ```
 
-### generate-mapping
-
-Generate DM01/DMAV mapping candidates from correlation hints and model inventory.
-
-```bash
-ilitransformer generate-mapping --hints <path> [options...]
-```
-
-| Option | Required | Description |
-|---|---|---|
-| `--hints` | Yes | Path to `correlation-hints.json` |
-| `--synonyms` | No | Path to `synonyms.json` |
-| `--out` | No | Output path for `mapping-candidates.json` (default: `build/generated/dm01-dmav/mapping-candidates.json`) |
-| `--report` | No | Output path for candidate report (default: `build/reports/dm01-dmav/candidate-report.md`) |
-| `--dm01-model` | No | DM01 model name (default: `DM01AVCH24LV95D`) |
-| `--dm01-dir` | No | Model directory for DM01 resolution |
-| `--dmav-model` | No | DMAV model name (default: `DMAV_FixpunkteAVKategorie3_V1_1`) |
-| `--dmav-dir` | No | Model directory for DMAV resolution |
-| `--yaml-dm01-dmav` | No | Output path for generated DM01→DMAV YAML |
-| `--yaml-dmav-dm01` | No | Output path for generated DMAV→DM01 YAML |
-
-Example:
-
-```bash
-ilitransformer generate-mapping \
-  --hints build/generated/dm01-dmav/correlation-hints.json \
-  --dm01-dir "src/test/data/av/models/;https://models.interlis.ch" \
-  --dmav-dir "src/test/data/av/models/;https://models.interlis.ch"
-```
-
 ## Gradle tasks
 
 Equivalent Gradle tasks:
@@ -148,12 +118,10 @@ Equivalent Gradle tasks:
 | `validate-mapping` | `./gradlew run --args="validate-mapping ..."` |
 | `inspect-model` | `./gradlew generateModelInventory` (pre-configured) |
 | `import-correlation` | `./gradlew importDmavCorrelation` |
-| `generate-mapping` | `./gradlew generateDm01DmavMappings` |
 
 Additional Gradle-only tasks:
 
 ```bash
-./gradlew topicGapReport
 ./gradlew validateTransfer -Ptransfer=build/out/dmav-lfp3.xtf -Pmodel=DMAV_FixpunkteAVKategorie3_V1_1
 ```
 

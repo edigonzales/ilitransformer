@@ -508,7 +508,6 @@ src/main/java/guru/interlis/transformer/
     JobRunner.java
   cli/
     TransformCommand.java
-    GenerateMappingCommand.java
     ValidateMappingCommand.java
     InspectModelCommand.java
     ImportCorrelationCommand.java
@@ -598,7 +597,6 @@ src/main/java/guru/interlis/transformer/
     CorrelationWorkbookImporter.java
     CorrelationHint.java
     CorrelationHintExporter.java
-    MappingCandidateGenerator.java
     Dm01DmavProfiles.java
   diag/
     Diagnostic.java
@@ -1871,48 +1869,6 @@ Die Datei `docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx` soll reproduzi
 
 ---
 
-### 18.12 Phase 9: Mapping-Kandidatengenerator
-
-#### Ziel
-
-Aus Model Inventory und Correlation Hints sollen Mapping-Vorschläge generiert werden, damit DM01↔DMAV nicht komplett manuell geschrieben werden muss.
-
-#### Artefakt
-
-- CLI-Befehl `generate-mapping`.
-- `mapping-candidates.json`.
-- `candidate-report.md`.
-- Erste generierte YAML-Fragmente für LFP3.
-
-#### Scope
-
-- Kandidaten aus XLSX-Hints erzeugen.
-- Kandidaten aus Namens-/Synonymähnlichkeit ergänzen.
-- Typkompatibilität prüfen.
-- Confidence Score berechnen.
-- `high`, `medium`, `low`, `manual`, `rejected` klassifizieren.
-- TODOs im YAML ausgeben, wenn Bedingungen/Geometrie/Default unklar sind.
-
-#### Nicht-Scope
-
-- Kein blindes Überschreiben handgeschriebener Mappings.
-- Keine automatische Freigabe von Low-Confidence-Kandidaten.
-
-#### Tests
-
-- Unit-Tests für Score-Berechnung.
-- Tests für Synonymlisten.
-- Snapshot-Test für generierte Kandidaten bei kleinem Modellpaar.
-- Test, dass nicht existierende Pfade zu `rejected` oder `manual` werden.
-
-#### Akzeptanzkriterien
-
-- Generator erzeugt validierbares YAML oder klar markierte TODO-Fragmente.
-- Jeder Kandidat enthält Herkunft: XLSX-Zeile, Heuristik oder Synonym.
-- Report trennt sichere Vorschläge von manuellen Entscheidungen.
-
----
-
 ### 18.13 Phase 10: DM01→DMAV LFP3 Minimalpilot
 
 #### Ziel
@@ -2071,41 +2027,6 @@ Ein erster robuster Geometrie-Layer soll vorhanden sein. Er muss noch nicht alle
 
 - Geometrien sind im TypedValue-System sichtbar.
 - Der Transformationsreport weist Geometriefelder und Behandlung aus.
-
----
-
-### 18.17 Phase 14: Erweiterter DM01↔DMAV-Analysebericht
-
-#### Ziel
-
-Nach dem LFP3-Pilot soll nicht sofort alles implementiert werden. Zuerst soll ein systematischer Gap-Report für weitere Topics entstehen.
-
-#### Artefakt
-
-- `build/reports/dm01-dmav/topic-gap-report.md`.
-- Priorisierte Liste weiterer Slices.
-- Risiko-/Aufwandsklassifikation pro Topic.
-
-#### Scope
-
-- Kandidatenanalyse für weitere DM01/DMAV-Topics.
-- Einstufung: einfach, mittel, schwierig, sehr schwierig.
-- Markierung von Geometrie-/Topologie-/LINEATTR-Problemen.
-- Vorschlag der nächsten 2–3 fachlichen Slices.
-
-#### Nicht-Scope
-
-- Noch keine vollständige Umsetzung der neuen Slices.
-
-#### Tests
-
-- Snapshot-Test für Report-Struktur.
-- Test, dass bekannte Hochrisikothemen wie Bodenbedeckung/Grundstücke als hochriskant markiert werden, falls entsprechende Hints erkannt werden.
-
-#### Akzeptanzkriterien
-
-- Der Bericht ist für Projektplanung nutzbar.
-- Er trennt generisch lösbare Aufgaben von fachlich offenen Fragen.
 
 ---
 
@@ -2301,10 +2222,6 @@ Klassen:
 
 ```text
 build/generated/dm01-dmav/correlation-hints.json
-build/generated/dm01-dmav/mapping-candidates.json
-build/generated/dm01-dmav/dm01-to-dmav-lfp3.generated.yaml
-build/generated/dm01-dmav/dmav-to-dm01-lfp3.generated.yaml
-build/reports/dm01-dmav/candidate-report.md
 ```
 
 ---
@@ -2557,7 +2474,6 @@ ilitransformer transform --mapping mapping.yaml
 ilitransformer validate-mapping --mapping mapping.yaml
 ilitransformer inspect-model --model DMAV_FixpunkteAVKategorie3_V1_1 --modeldir https://models.geo.admin.ch/
 ilitransformer import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
-ilitransformer generate-mapping --profile dm01-to-dmav-lfp3
 ```
 
 ### 24.2 Transform
@@ -2592,16 +2508,6 @@ ilitransformer import-correlation \
   --out build/generated/dm01-dmav/correlation-hints.json
 ```
 
-### 24.6 Generate Mapping
-
-```bash
-ilitransformer generate-mapping \
-  --direction dm01-to-dmav \
-  --slice lfp3 \
-  --correlation build/generated/dm01-dmav/correlation-hints.json \
-  --out profiles/dm01-to-dmav/lfp3.generated.yaml
-```
-
 ---
 
 ## 25. Gradle-Anforderungen
@@ -2613,7 +2519,6 @@ ilitransformer generate-mapping \
 ./gradlew integrationTest
 ./gradlew generateModelInventory
 ./gradlew importDmavCorrelation
-./gradlew generateDm01DmavMappings
 ./gradlew validateGoldenTransfers
 ```
 
@@ -2657,7 +2562,6 @@ Pflichtbereiche:
 - OID Strategy,
 - Basket Strategy,
 - CorrelationWorkbookImporter,
-- MappingCandidateGenerator,
 - StateStore,
 - ReferenceResolver,
 - IomObjectFactory.
@@ -2921,7 +2825,6 @@ Sie soll enthalten:
 - `inventory`,
 - `compile-mapping`,
 - `import-correlation`,
-- `generate-mapping`,
 - `validate-output`,
 - gemeinsame Optionen,
 - Exit Codes,

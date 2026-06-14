@@ -134,28 +134,6 @@
 - Sollen zusammengeführte Zellen (merged cells) aufgelöst werden?
 - Soll der Import bei künftigen Änderungen der XLSX-Spaltenstruktur über Header-Namen statt Indizes robuster werden?
 
-## Phase 9 (Mapping-Kandidatengenerator)
-
-### Resolved
-- **`MappingCandidate`-Record**: Enthält `id`, `direction`, `sourceClass`, `sourceAttribute`, `targetClass`, `targetAttribute`, `expression`, `transformCode`, `confidence`, `classification`, `origin`, `warnings`.
-- **`MappingCandidateGenerator`**: Pipeline aus Hints laden, Modelle kompilieren, Inventar bauen, Klassennamen auflösen, Candidates generieren, Synonyms ergänzen, deduplizieren, klassifizieren.
-- **Klassifizierung**: `high` (≥0.85), `medium` (0.60-0.84), `low` (0.30-0.59), `manual` (<0.30).
-- **Confidence-Berechnung**: Basis aus Hint + Modell-Validierung (+0.20 beide Attribute gefunden, +0.10 eines gefunden, −0.10 keines; +0.10 wenn target mandatory; K=+0.10, V=0, I=−0.10).
-- **Synonym-Liste**: `src/main/resources/dmav/synonyms.json` — editierbare JSON-Datei mit DM01↔DMAV Attribut-Paaren.
-- **Deduplizierung**: Pro `key()` (sourceClass::attr::targetClass::attr) wird der Candidate mit höchster Confidence behalten.
-- **YAML-Generierung**: `MappingCandidateExporter` baut `JobConfig`-Objekte und serialisiert via Jackson YAMLFactory. High + medium Candidates werden als `assign`-Map geschrieben.
-- **Gradle-Task**: `generateMappingCandidates` (analog Phase 8, kein CLI-Befehl).
-- **`InterlisModelLoader`-Fix**: Modell-Pfade werden jetzt an `DEFAULT_ILIDIRS` angehängt statt ersetzt.
-- **Tests**: 4 Tests (Klassifizierung, Generator-Pipeline gegen `with-references.ili`, Dedup-Prüfung, Synonym-Ladung).
-- **Ausgabe**: `build/generated/dm01-dmav/mapping-candidates.json` (175 Candidates aus DM01-Modell), `build/reports/dm01-dmav/candidate-report.md`.
-
-### Open
-- **DMAV-Modell-Kompilierung**: `DMAV_FixpunkteAVKategorie3_V1_1` scheitert an fehlendem `GeometryCHLV95_V2`. Dieses Modell liegt auf `https://models.geo.admin.ch/` — wird von ili2c aufgelöst, wenn `modeldir` auf `https://models.geo.admin.ch/;src/test/data/av/models/` gesetzt ist? Oder ist das Modell in den ili2c-JARs enthalten?
-- Soll die Confidence-Skalierung für `transformCode` (K=+0.10, I=−0.10) aus den SPEC-Werten (§19.5) feiner abgestimmt werden (+0.40 für expliziten XLSX-Hint statt nur +0.10)?
-- Soll der Generator die generierten YAML-Fragmente automatisch durch `MappingCompiler.compileTyped()` validieren und die Ergebnisse in den Report aufnehmen?
-- Wie granular soll die Klassennamen-Auflösung sein: reine Namengleichheit (aktuell) oder zusätzlich Topic-Matching über `sourceTopic`/`targetTopic` aus den Hints?
-- Soll der Generator auch `refs`-Candidates aus Role-Hints und Assoziationen erzeugen (aktuell nur Attribut-Mappings)?
-
 ## Phase 10 (DM01→DMAV LFP3 Minimalpilot)
 
 ### Resolved
@@ -167,22 +145,13 @@
 ### Open
 - Bleiben als dokumentierte Lossiness/Einschränkungen im DM01/DMAV-Doc (siehe `docs/dm01-dmav/lossiness.md`).
 
-## Phase 14 (Erweiterter DM01↔DMAV-Analysebericht)
-
-### Resolved
-- **Topic Gap Report**: `docs/dm01-dmav/topic-gap-report-snapshot.md` als Snapshot-Test.
-- **Priorisierte Slices**: HFP3 → Grenzpunkt → Grundstück → Bodenbedeckung.
-
-### Open
-- Bleiben als offene fachliche Fragen im DM01/DMAV-Doc (siehe `docs/dm01-dmav/open-questions.md`).
-
 ## Phase 15 (Stabilisierung, CLI-UX und Dokumentation)
 
 ### Resolved
-- **CLI-Kommandos**: Alle 5 Commands sind picocli-Subcommands: `transform`, `validate-mapping`, `inspect-model`, `import-correlation`, `generate-mapping`.
+- **CLI-Kommandos**: Alle 4 Commands sind picocli-Subcommands: `transform`, `validate-mapping`, `inspect-model`, `import-correlation`.
 - **`transform --validate`**: Flag für optionalen ilivalidator-Lauf nach Transformation.
 - **`transform --report`**: Flag für Report-Ausgabepfad.
-- **Gradle-Tasks**: `importDmavCorrelation`, `generateDm01DmavMappings`, `generateModelInventory`, `validateGoldenTransfers`, `integrationTest`.
+- **Gradle-Tasks**: `importDmavCorrelation`, `generateModelInventory`, `validateGoldenTransfers`, `integrationTest`.
 - **Dokumentation**: ~18 Dokumentationsdateien erstellt/aktualisiert.
 
 ### Offene Fragen (als bekannte Limitationen akzeptiert)

@@ -35,8 +35,6 @@ DM01/DMAV-spezifische Hilfstasks:
 
 ```bash
 ./gradlew importDmavCorrelation
-./gradlew generateDm01DmavMappings
-./gradlew topicGapReport
 ./gradlew produceDm01BbItf
 ./gradlew validateTransfer -Ptransfer=build/out/dmav-lfp3.xtf -Pmodel=DMAV_FixpunkteAVKategorie3_V1_1
 ```

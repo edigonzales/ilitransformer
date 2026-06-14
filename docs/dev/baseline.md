@@ -36,7 +36,7 @@ Stand nach Abschluss von Phase 16 (2026-06-09).
 
 ### Core Engine (Phasen 0–7)
 - Gradle-Java-Projekt mit Java 25 Toolchain
-- CLI-Kommandos: `transform`, `validate-mapping`, `inspect-model`, `import-correlation`, `generate-mapping`
+- CLI-Kommandos: `transform`, `validate-mapping`, `inspect-model`, `import-correlation`
 - `IliModelService` + `TypeSystemFacade` + `IliPath` + `RoleResolver`
 - `ModelInventory` + `InventorySerializer`
 - `MappingCompiler.compileTyped()` → `TransformPlan`
@@ -53,13 +53,9 @@ Stand nach Abschluss von Phase 16 (2026-06-09).
 - `InMemoryStateStore` mit Cross-Class IdMapping
 - `DiagnosticCollector` mit ERROR/WARNING/INFO
 
-### DM01 ↔ DMAV (Phasen 8–14)
+### DM01 ↔ DMAV (Phasen 8, 10–14)
 - XLSX-Import: Gradle-Task `importDmavCorrelation` + CLI `import-correlation`
 - `CorrelationHint`-Record + Importer/Exporter (~250 Hints)
-- Mapping Candidate Generator: `generateDm01DmavMappings` + CLI `generate-mapping`
-- Klassifizierung: high/medium/low/manual mit Confidence-Score
-- Synonym-Liste: `src/main/resources/dmav/synonyms.json`
-- YAML-Generierung: `MappingCandidateExporter` via Jackson
 - DM01→DMAV LFP3 Pilot mit Golden Test + ilivalidator
 - DMAV→DM01 LFP3 Pilot mit Golden Test + Loss-Dokumentation
 - BAG OF STRUCTURE: Textpositionen in beide Richtungen

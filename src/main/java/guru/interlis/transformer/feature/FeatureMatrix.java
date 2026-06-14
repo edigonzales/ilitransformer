@@ -249,11 +249,6 @@ public final class FeatureMatrix {
                 "Parse DM01/DMAV correlation workbook",
                 "CorrelationWorkbookImporterTest"));
 
-        entries.add(FeatureEntry.of("Mapping candidate generator", "9",
-                FeatureStatus.SUPPORTED,
-                "Generate mapping candidates from correlation hints",
-                "MappingCandidateGeneratorTest"));
-
         entries.add(FeatureEntry.of("DM01→DMAV LFP3 pilot", "10",
                 FeatureStatus.SUPPORTED,
                 "LFP3 transformation DM01 to DMAV with golden test",
@@ -268,11 +263,6 @@ public final class FeatureMatrix {
                 FeatureStatus.SUPPORTED,
                 "Pos tables to BAG OF Textposition in both directions",
                 "Dm01ToDmavLfp3IntegrationTest"));
-
-        entries.add(FeatureEntry.of("Topic gap report", "14",
-                FeatureStatus.SUPPORTED,
-                "Systematic analysis of DM01/DMAV topic coverage",
-                "TopicGapReportGeneratorTest"));
 
         entries.add(FeatureEntry.of("enumMap()", "15",
                 FeatureStatus.STUB,

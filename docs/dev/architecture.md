@@ -61,7 +61,6 @@ Entry point via picocli. Subcommands:
 - `validate-mapping` — compile mapping without executing
 - `inspect-model` — model inventory as JSON/Markdown
 - `import-correlation` — XLSX correlation hints import
-- `generate-mapping` — mapping candidate generation
 
 ### JobRunner
 

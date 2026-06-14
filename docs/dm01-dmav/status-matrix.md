@@ -293,22 +293,3 @@ Stand: 2026-06-14
 | Status | DM01→DMAV | DMAV→DM01 |
 |---|---|---|
 | Profil | ❌ | ❌ |
-
----
-
-## Generierte Mapping-Kandidaten
-
-Der Mapping Candidate Generator (Phase 9) hat folgende Kandidatenmengen erzeugt:
-
-| Klassifizierung | Anzahl |
-|---|---|
-| high (≥0.85) | wert aus Report |
-| medium (0.60–0.84) | wert aus Report |
-| low (0.30–0.59) | wert aus Report |
-| manual (<0.30) | wert aus Report |
-
-Generierte YAML-Fragmente:
-- `build/generated/dm01-dmav/dm01-to-dmav.generated.yaml`
-- `build/generated/dm01-dmav/dmav-to-dm01.generated.yaml`
-
-Siehe `build/reports/dm01-dmav/candidate-report.md` für Details.

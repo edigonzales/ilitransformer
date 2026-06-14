@@ -2233,8 +2233,6 @@ Die weitere fachliche Arbeit datenbasiert planen.
 ### Bestehende Klassen weiterverwenden
 
 - `CorrelationWorkbookImporter`
-- `MappingCandidateGenerator`
-- `TopicGapReportGenerator`
 - `IliModelService`
 - `ModelInventory`
 
