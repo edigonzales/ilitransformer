@@ -12,6 +12,7 @@ public final class Dm01DmavPaths {
     public static final String TOPIC_GS = "gs";
     public static final String TOPIC_NOMENKLATUR = "nomenklatur";
     public static final String TOPIC_TOLERANZSTUFEN = "toleranzstufen";
+    public static final String TOPIC_GA = "gebaeudeadressen";
 
     public static final String LOCAL_MODEL_DIR = "src/test/data/av/models/";
     public static final String REMOTE_MODEL_DIR = "https://models.interlis.ch";
@@ -24,6 +25,7 @@ public final class Dm01DmavPaths {
     public static final String DMAV_GS_MODEL = "DMAV_Grundstuecke_V1_1";
     public static final String DMAV_NOMENKLATUR_MODEL = "DMAV_Nomenklatur_V1_1";
     public static final String DMAV_TOLERANZSTUFEN_MODEL = "DMAV_Toleranzstufen_V1_1";
+    public static final String DMAV_GA_MODEL = "DMAV_Gebaeudeadressen_V1_1";
 
     public static final Path PROFILE_ROOT = Path.of("profiles");
     public static final Path FIXTURE_ROOT = Path.of("src/test/resources/fixtures/dm01-dmav");

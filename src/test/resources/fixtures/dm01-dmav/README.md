@@ -14,3 +14,4 @@
 - `bb/`: BB-Minimal- und Real-Extract-Fixtures.
 - `eo/`: EO-Minimal-Fixtures.
 - `gs/`: GS-Minimal-Fixtures.
+- `gebaeudeadressen/`: Gebaeudeadressen-Minimal-Fixtures.

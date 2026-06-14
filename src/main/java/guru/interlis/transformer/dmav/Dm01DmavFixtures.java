@@ -46,6 +46,16 @@ public final class Dm01DmavFixtures {
             List.of("TSEinteilung.Toleranzstufe", "TSEinteilung.ToleranzstufePos");
     private static final List<String> TOLERANZSTUFEN_DMAV_TARGET_CLASSES =
             List.of("Toleranzstufen.TSNachfuehrung", "Toleranzstufen.Toleranzstufe");
+    private static final List<String> GA_DM01_TARGET_CLASSES =
+            List.of("Gebaeudeadressen.GEBNachfuehrung", "Gebaeudeadressen.Lokalisation",
+                    "Gebaeudeadressen.LokalisationsName", "Gebaeudeadressen.LokalisationsNamePos",
+                    "Gebaeudeadressen.BenanntesGebiet", "Gebaeudeadressen.Strassenstueck",
+                    "Gebaeudeadressen.Gebaeudeeingang", "Gebaeudeadressen.HausnummerPos",
+                    "Gebaeudeadressen.GebaeudeName", "Gebaeudeadressen.GebaeudeNamePos",
+                    "Gebaeudeadressen.GebaeudeBeschreibung");
+    private static final List<String> GA_DMAV_TARGET_CLASSES =
+            List.of("Gebaeudeadressen.GANachfuehrung", "Gebaeudeadressen.Lokalisation",
+                    "Gebaeudeadressen.Gebaeudeeingang");
 
     public static final TopicFixtureSpec LFP3 = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_LFP3,
@@ -131,6 +141,18 @@ public final class Dm01DmavFixtures {
             true
     );
 
+    public static final TopicFixtureSpec GA = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_GA,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_GA_MODEL,
+            Dm01DmavPaths.DMAV_UMBRELLA_MODEL,
+            GA_DM01_TARGET_CLASSES,
+            GA_DMAV_TARGET_CLASSES,
+            2,
+            200,
+            true
+    );
+
     private Dm01DmavFixtures() {}
 
     public static TopicFixtureSpec topic(String topicId) {
@@ -142,6 +164,7 @@ public final class Dm01DmavFixtures {
             case Dm01DmavPaths.TOPIC_GS -> GS;
             case Dm01DmavPaths.TOPIC_NOMENKLATUR -> NOMENKLATUR;
             case Dm01DmavPaths.TOPIC_TOLERANZSTUFEN -> TOLERANZSTUFEN;
+            case Dm01DmavPaths.TOPIC_GA -> GA;
             default -> throw new IllegalArgumentException("Unknown DM01/DMAV topic: " + topicId);
         };
     }
@@ -200,6 +223,14 @@ public final class Dm01DmavFixtures {
 
     public static ExtractionRequest toleranzstufenDmavExtractionRequest(Path targetDir) {
         return TOLERANZSTUFEN.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest gaDm01ExtractionRequest(Path targetDir) {
+        return GA.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest gaDmavExtractionRequest(Path targetDir) {
+        return GA.dmavExtractionRequest(targetDir);
     }
 
     public static boolean isLfp3RelevantClass(String className) {

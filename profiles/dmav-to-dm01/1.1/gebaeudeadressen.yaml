@@ -1,0 +1,152 @@
+version: 1
+
+job:
+  name: dmav-to-dm01-gebaeudeadressen
+  description: "Pilot-Transformation DMAV Gebaeudeadressen nach DM01 Gebaeudeadressen"
+  direction: dmav-to-dm01
+  failPolicy: strict
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "https://models.interlis.ch"
+    - "models/"
+  inputs:
+    - id: dmav
+      path: "input/dmav.xtf"
+      model: "DMAV_Gebaeudeadressen_V1_1"
+      format: "xtf"
+  outputs:
+    - id: dm01
+      path: "build/out/dm01-gebaeudeadressen.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: integer
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    JaNein_DMAV_DM01:
+      true: ja
+      false: nein
+    ImModul_DMAV_DM01:
+      Bodenbedeckung: BB
+      Einzelobjekte: EO
+    IstAchse_DMAV_DM01:
+      true: ja
+      false: nein
+    Schriftgroesse_DMAV_DM01:
+      Klein: klein
+      Mittel: mittel
+      Gross: gross
+
+  rules:
+    - id: ga-nachfuehrung-gueltig
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Gebaeudeadressen.GEBNachfuehrung"
+      sources:
+        - alias: nf
+          input: dmav
+          class: "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.GANachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 30)"
+        GueltigerEintrag: "toDate(nf.GueltigerEintrag)"
+        Gueltigkeit: "#gueltig"
+
+    - id: lokalisation-gueltig
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Gebaeudeadressen.Lokalisation"
+      sources:
+        - alias: l
+          input: dmav
+          class: "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Lokalisation"
+      identity:
+        sourceKey: ["l.Nummerierungsprinzip", "l.Lokalisationsart"]
+      assign:
+        Nummerierungsprinzip: "l.Nummerierungsprinzip"
+        AttributeProvisorisch: "enumMap(l.AttributeProvisorisch, 'JaNein_DMAV_DM01')"
+        IstOffizielleBezeichnung: "enumMap(l.IstOffizielleBezeichnung, 'JaNein_DMAV_DM01')"
+        Status: "l.Lokalisationsstatus"
+        InAenderung: "enumMap(l.InAenderung, 'JaNein_DMAV_DM01')"
+        Art: "l.Lokalisationsart"
+      bags:
+        LokalisationName:
+          mode: expand
+          structure: "DM01AVCH24LV95D.Gebaeudeadressen.LokalisationsName"
+          from:
+            input: dmav
+            alias: lnItem
+            class: "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Lokalisationsname"
+          parentRef:
+            role: Benannte
+            parentAlias: l
+          assign:
+            Text: "lnItem.Name"
+            KurzText: "lnItem.NameKurz"
+            IndexText: "lnItem.NameAlsIndex"
+            Sprache: "lnItem.Sprache"
+      refs:
+        - association: "LokalisationEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: ga-nachfuehrung-gueltig
+            sourceRef: "l.Entstehung"
+
+    - id: gebaeudeeingang-gueltig
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Gebaeudeadressen.Gebaeudeeingang"
+      sources:
+        - alias: ge
+          input: dmav
+          class: "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Gebaeudeeingang"
+      identity:
+        sourceKey: ["ge.Hausnummer"]
+      assign:
+        Status: "ge.Gebaeudestatus"
+        InAenderung: "enumMap(ge.InAenderung, 'JaNein_DMAV_DM01')"
+        AttributeProvisorisch: "enumMap(ge.AttributeProvisorisch, 'JaNein_DMAV_DM01')"
+        IstOffizielleBezeichnung: "enumMap(ge.IstOffizielleGebaeudeadresse, 'JaNein_DMAV_DM01')"
+        Lage: "ge.Geometrie"
+        Hausnummer: "ge.Hausnummer"
+        Im_Gebaeude: "enumMap(ge.ImModul, 'ImModul_DMAV_DM01')"
+        GWR_EGID: "ge.EGID"
+        GWR_EDID: "ge.EDID"
+      bags:
+        GebaeudeName:
+          mode: expand
+          structure: "DM01AVCH24LV95D.Gebaeudeadressen.GebaeudeName"
+          from:
+            input: dmav
+            alias: gnItem
+            class: "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Gebaeudename"
+          parentRef:
+            role: GebaeudeName_von
+            parentAlias: ge
+          assign:
+            Text: "gnItem.Name"
+            KurzText: "gnItem.NameKurz"
+            IndexText: "gnItem.NameAlsIndex"
+            Sprache: "gnItem.Sprache"
+      refs:
+        - association: "GebaeudeeingangEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: ga-nachfuehrung-gueltig
+            sourceRef: "ge.Entstehung"
+        - association: "GebaeudeeingangGebaeudeeingang_von"
+          role: "Gebaeudeeingang_von"
+          required: false
+          targetObject:
+            rule: lokalisation-gueltig
+            sourceRef: "ge.Lokalisation"
