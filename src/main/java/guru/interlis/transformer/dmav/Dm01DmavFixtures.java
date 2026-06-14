@@ -28,6 +28,12 @@ public final class Dm01DmavFixtures {
     private static final List<String> EO_DMAV_TARGET_CLASSES =
             List.of("Einzelobjekte.EONachfuehrung", "Einzelobjekte.Einzelobjekt",
                     "Einzelobjekte.Messpunkt");
+    private static final List<String> GS_DM01_TARGET_CLASSES =
+            List.of("Liegenschaften.LSNachfuehrung", "Liegenschaften.Grenzpunkt",
+                    "Liegenschaften.Grundstueck", "Liegenschaften.Liegenschaft");
+    private static final List<String> GS_DMAV_TARGET_CLASSES =
+            List.of("Grundstuecke.GSNachfuehrung", "Grundstuecke.Grenzpunkt",
+                    "Grundstuecke.Grundstueck", "Grundstuecke.Liegenschaft");
 
     public static final TopicFixtureSpec LFP3 = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_LFP3,
@@ -77,6 +83,18 @@ public final class Dm01DmavFixtures {
             true
     );
 
+    public static final TopicFixtureSpec GS = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_GS,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_GS_MODEL,
+            Dm01DmavPaths.DMAV_UMBRELLA_MODEL,
+            GS_DM01_TARGET_CLASSES,
+            GS_DMAV_TARGET_CLASSES,
+            2,
+            200,
+            true
+    );
+
     private Dm01DmavFixtures() {}
 
     public static TopicFixtureSpec topic(String topicId) {
@@ -85,6 +103,7 @@ public final class Dm01DmavFixtures {
             case Dm01DmavPaths.TOPIC_HFP3 -> HFP3;
             case Dm01DmavPaths.TOPIC_BB -> BB;
             case Dm01DmavPaths.TOPIC_EO -> EO;
+            case Dm01DmavPaths.TOPIC_GS -> GS;
             default -> throw new IllegalArgumentException("Unknown DM01/DMAV topic: " + topicId);
         };
     }
@@ -119,6 +138,14 @@ public final class Dm01DmavFixtures {
 
     public static ExtractionRequest eoDmavExtractionRequest(Path targetDir) {
         return EO.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest gsDm01ExtractionRequest(Path targetDir) {
+        return GS.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest gsDmavExtractionRequest(Path targetDir) {
+        return GS.dmavExtractionRequest(targetDir);
     }
 
     public static boolean isLfp3RelevantClass(String className) {

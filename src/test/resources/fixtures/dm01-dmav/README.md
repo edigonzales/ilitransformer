@@ -10,4 +10,7 @@
 ## Topic-Ablage
 
 - `lfp3/`: LFP3-Minimal- und Real-Extract-Fixtures.
+- `hfp3/`: HFP3-Minimal- und Real-Extract-Fixtures.
 - `bb/`: BB-Minimal- und Real-Extract-Fixtures.
+- `eo/`: EO-Minimal-Fixtures.
+- `gs/`: GS-Minimal-Fixtures.

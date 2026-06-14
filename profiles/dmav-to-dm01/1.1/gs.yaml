@@ -1,0 +1,164 @@
+version: 1
+
+job:
+  name: dmav-to-dm01-gs
+  description: "Pilot-Transformation DMAV Grundstuecke nach DM01 Liegenschaften"
+  direction: dmav-to-dm01
+  failPolicy: strict
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "https://models.interlis.ch"
+    - "models/"
+  inputs:
+    - id: dmav
+      path: "input/dmav.xtf"
+      model: "DMAV_Grundstuecke_V1_1"
+      format: "xtf"
+  outputs:
+    - id: dm01
+      path: "build/out/dm01-gs.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: integer
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Zuverlaessigkeit_DMAV_DM01:
+      "true": "ja"
+      "false": "nein"
+    JaNein_DMAV_DM01:
+      "true": "Ja"
+      "false": "Nein"
+    ja_nein_DMAV_DM01:
+      "true": "ja"
+      "false": "nein"
+    Versicherungsart_DMAV_DM01:
+      Stein: "Stein"
+      Kunststoffzeichen: "Kunststoffzeichen"
+      Bolzen: "Bolzen"
+      Rohr: "Rohr"
+      Pfahl: "Pfahl"
+      Kreuz: "Kreuz"
+      unversichert: "unversichert"
+      weitere: "weitere"
+    Mutationsart_Status:
+      Normal: "gueltig"
+      Projektmutation: "projektiert"
+      AbschlussProjektmutation: "projektiert"
+    Schriftgroesse_DMAV_DM01:
+      Klein: "klein"
+      Mittel: "mittel"
+      Gross: "gross"
+
+  rules:
+    - id: gs-nachfuehrung-gueltig
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
+      sources:
+        - alias: nf
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 30)"
+        Gueltigkeit: "enumMap(coalesce(nf.Mutationsart, 'Normal'), 'Mutationsart_Status')"
+        GueltigerEintrag: "toDate(nf.GueltigerEintrag)"
+
+    - id: grenzpunkt
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.Grenzpunkt"
+      sources:
+        - alias: gp
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
+      identity:
+        sourceKey: ["gp.Nummer"]
+      assign:
+        Identifikator: "gp.Nummer"
+        Geometrie: "gp.Geometrie"
+        LageGen: "div(gp.Lagegenauigkeit, 0.01)"
+        LageZuv: "enumMap(gp.IstLagezuverlaessig, 'Zuverlaessigkeit_DMAV_DM01')"
+        Punktzeichen: "enumMap(gp.Punktzeichen, 'Versicherungsart_DMAV_DM01')"
+        ExaktDefiniert: "enumMap(gp.IstExaktDefiniert, 'JaNein_DMAV_DM01')"
+        HoheitsgrenzsteinAlt: "enumMap(gp.IstHoheitsgrenzsteinAlt, 'ja_nein_DMAV_DM01')"
+      refs:
+        - association: "GrenzpunktEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-gueltig
+            sourceRef: "gp.Entstehung"
+
+    - id: grundstueck-gueltig
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.Grundstueck"
+      sources:
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
+          where: "gs.Grundstuecksart == #Liegenschaft"
+      identity:
+        sourceKey: ["gs.NBIdent", "gs.Nummer"]
+      assign:
+        NBIdent: "gs.NBIdent"
+        Nummer: "gs.Nummer"
+        EGRIS_EGRID: "gs.EGRID"
+        Art: "#Liegenschaft"
+        Gueltigkeit: "#rechtskraeftig"
+        Vollstaendigkeit: "#Vollstaendig"
+        GesamteFlaechenmass: "gs.Gesamtflaechenmass"
+      bags:
+        GrundstueckPos:
+          mode: expand
+          structure: "DM01AVCH24LV95D.Liegenschaften.GrundstueckPos"
+          from:
+            input: dmav
+            alias: tp
+            class: "DMAVTYM_Grafik_V1_0.Textposition"
+          parentRef:
+            role: GrundstueckPos_von
+            parentAlias: gs
+          assign:
+            Pos: "tp.Position"
+            Ori: "coalesce(tp.Orientierung, 100.0)"
+            HAli: "coalesce(tp.HReferenzpunkt, 'Center')"
+            VAli: "coalesce(tp.VReferenzpunkt, 'Half')"
+            Groesse: "enumMap(coalesce(tp.Textgroesse, 'Mittel'), 'Schriftgroesse_DMAV_DM01')"
+      refs:
+        - association: "GrundstueckEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-gueltig
+            sourceRef: "gs.Entstehung"
+
+    - id: liegenschaft
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.Liegenschaft"
+      sources:
+        - alias: ls
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft"
+      assign:
+        NummerTeilGrundstueck: "ls.NummerTeilgrundstueck"
+        Geometrie: "ls.Geometrie"
+        Flaechenmass: "ls.Flaechenmass"
+      refs:
+        - association: "LiegenschaftLiegenschaft_von"
+          role: "Liegenschaft_von"
+          required: true
+          targetObject:
+            rule: grundstueck-gueltig
+            sourceRef: "ls.Grundstueck"

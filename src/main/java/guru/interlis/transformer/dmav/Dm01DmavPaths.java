@@ -9,6 +9,7 @@ public final class Dm01DmavPaths {
     public static final String TOPIC_HFP3 = "hfp3";
     public static final String TOPIC_BB = "bb";
     public static final String TOPIC_EO = "eo";
+    public static final String TOPIC_GS = "gs";
 
     public static final String LOCAL_MODEL_DIR = "src/test/data/av/models/";
     public static final String REMOTE_MODEL_DIR = "https://models.interlis.ch";
@@ -18,6 +19,7 @@ public final class Dm01DmavPaths {
     public static final String DMAV_LFP3_MODEL = "DMAV_FixpunkteAVKategorie3_V1_1";
     public static final String DMAV_BB_MODEL = "DMAV_Bodenbedeckung_V1_1";
     public static final String DMAV_EO_MODEL = "DMAV_Einzelobjekte_V1_1";
+    public static final String DMAV_GS_MODEL = "DMAV_Grundstuecke_V1_1";
 
     public static final Path PROFILE_ROOT = Path.of("profiles");
     public static final Path FIXTURE_ROOT = Path.of("src/test/resources/fixtures/dm01-dmav");

@@ -48,7 +48,9 @@ class CheckedInTransfersValidateTest {
             Map.entry(relativeFixturePath(Dm01DmavFixtures.BB.dm01RealExtractFixture()), Dm01DmavFixtures.BB.dm01Model()),
             Map.entry(relativeFixturePath(Dm01DmavFixtures.BB.dmavRealExtractFixture()), Dm01DmavFixtures.BB.dmavRealExtractModel()),
             Map.entry(relativeFixturePath(Dm01DmavFixtures.EO.dm01MinimalFixture()), Dm01DmavFixtures.EO.dm01Model()),
-            Map.entry(relativeFixturePath(Dm01DmavFixtures.EO.dmavMinimalFixture()), Dm01DmavFixtures.EO.dmavMinimalModel())
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.EO.dmavMinimalFixture()), Dm01DmavFixtures.EO.dmavMinimalModel()),
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.GS.dm01MinimalFixture()), Dm01DmavFixtures.GS.dm01Model()),
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.GS.dmavMinimalFixture()), Dm01DmavFixtures.GS.dmavMinimalModel())
     );
 
     @Test
