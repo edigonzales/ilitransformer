@@ -63,7 +63,6 @@ mapping:
         - alias: nf
           input: dm01
           class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
-          where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
       assign:
