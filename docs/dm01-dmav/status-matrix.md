@@ -11,7 +11,7 @@
 | ❌ | Offen / nicht implementiert |
 | ⚫ | Bewusst nicht unterstützt / fachlich unklar |
 
-Stand: 2026-06-13
+Stand: 2026-06-14
 
 ---
 
@@ -158,55 +158,55 @@ Stand: 2026-06-13
 
 ---
 
-## Einzelobjekte – 🔧
-
-| Status | DM01→DMAV | DMAV→DM01 |
-|---|---|---|
-| Profil | 🔧 | 🔧 |
+## Einzelobjekte – ⚠️
 
 **Profile:** `profiles/{dm01-to-dmav,dmav-to-dm01}/1.1/eo.yaml`
 **Real-Data-Tests:** `EoMinimalFixtureRoundtripTest`, `ExtractedEoDm01FixtureValidationTest`, `ExtractedEoDmavFixtureValidationTest`
 **Fixtures:** `src/test/resources/fixtures/dm01-dmav/eo/{dm01-minimal.itf,dmav-minimal.xtf,README.md}`
+**ilivalidator / realDataTest:** Round trip (SemanticTransferComparator + count verification) beide Richtungen grün, Fixtures validiert
+
+| Status | DM01→DMAV | DMAV→DM01 |
+|---|---|---|
+| Profil | ✅ | ✅ |
 
 ### EONachfuehrung
 
 | DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
 |---|---|---|---|
-| NBIdent | NBIdent | 🔧 | 🔧 |
-| Identifikator | Identifikator | 🔧 | 🔧 |
-| Beschreibung | Beschreibung | 🔧 | 🔧 |
-| Perimeter | Perimeter | 🔧 | 🔧 |
-| GueltigerEintrag | GueltigerEintrag / Datum1 | 🔧 | 🔧 |
+| NBIdent | NBIdent | ✅ | ✅ |
+| Identifikator | Identifikator | ✅ | ✅ |
+| Beschreibung | Beschreibung | ✅ | ✅ |
+| Perimeter | Perimeter | ✅ | ✅ |
+| GueltigerEintrag | GueltigerEintrag | ✅ | ✅ |
 
 ### Einzelobjekt
 
 | DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
 |---|---|---|---|
-| Qualitaetsstandard | Qualitaet | 🔧 | 🔧 |
-| Einzelobjektart | Art | 🔧 | 🔧 |
-| Fiktiv | — | 🔧 (Default false) | 🔧 (Reverse filtert Fiktiv=true) |
-| Objektstatus | Gueltigkeit (via EONachfuehrung) | 🔧 | 🔧 |
-| EGID | lookup(GWR_EGID) | 🔧 | 🔧 |
-| Flaechenelement (BAG) | Flaechenelement | 🔧 | 🔧 |
-| Linienelement (BAG) | Linienelement | 🔧 | 🔧 |
-| Punktelement (BAG) | Punktelement | 🔧 | 🔧 |
-| Objektname (BAG) | Objektname | 🔧 | 🔧 |
-| Objektnummer (BAG) | Objektnummer | 🔧 | 🔧 |
-| Entstehung (Ref) | Entstehung | 🔧 | 🔧 |
+| Qualitaetsstandard | Qualitaet | ✅ | ✅ |
+| Einzelobjektart | Art | ✅ | ✅ |
+| Objektstatus | Gueltigkeit (via EONachfuehrung) | ✅ (statisch #real) | ✅ (filtert #projektiert) |
+| EGID | lookup(GWR_EGID) | ✅ | ✅ |
+| Flaechenelement (BAG) | Flaechenelement | ✅ | ✅ |
+| Linienelement (BAG) | Linienelement | ✅ | ✅ |
+| Punktelement (BAG) | Punktelement | ✅ | ✅ |
+| Objektname (BAG) | Objektname | ✅ | ✅ |
+| Objektnummer (BAG) | Objektnummer | ✅ | ✅ |
+| Entstehung (Ref) | Entstehung | ✅ | ✅ |
 
 ### Einzelpunkt / Messpunkt
 
 | DMAV-Attribut | DM01-Attribut | DM01→DMAV | DMAV→DM01 |
 |---|---|---|---|
-| Nummer | Identifikator | 🔧 | 🔧 |
-| Geometrie | Geometrie | 🔧 | 🔧 |
-| Lagegenauigkeit | LageGen | 🔧 | 🔧 |
-| IstLagezuverlaessig | LageZuv | 🔧 | 🔧 |
-| IstExaktDefiniert | ExaktDefiniert | 🔧 | 🔧 |
+| Nummer | Identifikator | ✅ | ✅ |
+| Geometrie | Geometrie | ✅ | ✅ |
+| Lagegenauigkeit | LageGen | ✅ | ✅ |
+| IstLagezuverlaessig | LageZuv | ✅ | ✅ |
+| IstExaktDefiniert | ExaktDefiniert | ✅ | ✅ |
 | Hoehengeometrie | — | ❌ | ❌ |
 | Hoehengenauigkeit | — | ❌ | ❌ |
 | IstHoehenzuverlaessig | — | ❌ | ❌ |
-| Entstehung (Ref) | Entstehung | 🔧 | 🔧 |
+| Entstehung (Ref) | Entstehung | ✅ | ✅ |
 
 ---
 
