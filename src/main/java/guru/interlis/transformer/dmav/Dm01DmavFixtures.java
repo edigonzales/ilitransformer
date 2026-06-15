@@ -56,6 +56,16 @@ public final class Dm01DmavFixtures {
     private static final List<String> GA_DMAV_TARGET_CLASSES =
             List.of("Gebaeudeadressen.GANachfuehrung", "Gebaeudeadressen.Lokalisation",
                     "Gebaeudeadressen.Gebaeudeeingang");
+    private static final List<String> HOHEITSGRENZEN_DM01_TARGET_CLASSES =
+            List.of("Gemeindegrenzen.GEMNachfuehrung", "Gemeindegrenzen.Gemeinde",
+                    "Gemeindegrenzen.ProjGemeindegrenze", "Gemeindegrenzen.Gemeindegrenze",
+                    "Bezirksgrenzen.Bezirksgrenzabschnitt",
+                    "Kantonsgrenzen.Kantonsgrenzabschnitt");
+    private static final List<String> HOHEITSGRENZEN_DMAV_TARGET_CLASSES =
+            List.of("HoheitsgrenzenAV.HHGNachfuehrung", "HoheitsgrenzenAV.Gemeinde",
+                    "HoheitsgrenzenAV.ProjGemeindegrenzabschnitt", "HoheitsgrenzenAV.Gemeindegrenze",
+                    "HoheitsgrenzenAV.Bezirksgrenzabschnitt",
+                    "HoheitsgrenzenAV.Kantonsgrenzabschnitt");
 
     public static final TopicFixtureSpec LFP3 = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_LFP3,
@@ -153,6 +163,18 @@ public final class Dm01DmavFixtures {
             true
     );
 
+    public static final TopicFixtureSpec HOHEITSGRENZEN = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_HOHEITSGRENZEN,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_HOHEITSGRENZEN_MODEL,
+            Dm01DmavPaths.DMAV_UMBRELLA_MODEL,
+            HOHEITSGRENZEN_DM01_TARGET_CLASSES,
+            HOHEITSGRENZEN_DMAV_TARGET_CLASSES,
+            2,
+            200,
+            true
+    );
+
     private Dm01DmavFixtures() {}
 
     public static TopicFixtureSpec topic(String topicId) {
@@ -165,6 +187,7 @@ public final class Dm01DmavFixtures {
             case Dm01DmavPaths.TOPIC_NOMENKLATUR -> NOMENKLATUR;
             case Dm01DmavPaths.TOPIC_TOLERANZSTUFEN -> TOLERANZSTUFEN;
             case Dm01DmavPaths.TOPIC_GA -> GA;
+            case Dm01DmavPaths.TOPIC_HOHEITSGRENZEN -> HOHEITSGRENZEN;
             default -> throw new IllegalArgumentException("Unknown DM01/DMAV topic: " + topicId);
         };
     }
@@ -231,6 +254,14 @@ public final class Dm01DmavFixtures {
 
     public static ExtractionRequest gaDmavExtractionRequest(Path targetDir) {
         return GA.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest hoheitsgrenzenDm01ExtractionRequest(Path targetDir) {
+        return HOHEITSGRENZEN.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest hoheitsgrenzenDmavExtractionRequest(Path targetDir) {
+        return HOHEITSGRENZEN.dmavExtractionRequest(targetDir);
     }
 
     public static boolean isLfp3RelevantClass(String className) {

@@ -1,0 +1,162 @@
+version: 1
+
+job:
+  name: dmav-to-dm01-hoheitsgrenzen
+  description: "Pilot-Transformation DMAV HoheitsgrenzenAV nach DM01 Hoheitsgrenzen"
+  direction: dmav-to-dm01
+  failPolicy: strict
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "https://models.interlis.ch"
+    - "models/"
+  inputs:
+    - id: dmav
+      path: "input/dmav.xtf"
+      model: "DMAV_HoheitsgrenzenAV_V1_0"
+      format: "xtf"
+  outputs:
+    - id: dm01
+      path: "build/out/dm01-hoheitsgrenzen.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: integer
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Gueltigkeit_DMAV_DM01:
+      rechtskraeftig: rechtskraeftig
+      streitig: streitig
+      provisorisch: provisorisch
+      undefiniert: undefiniert
+
+  rules:
+    - id: gem-nachfuehrung-gueltig
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
+      sources:
+        - alias: nf
+          input: dmav
+          class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.HHGNachfuehrung"
+          where: "defined(nf.GenehmigtAm)"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 30)"
+        Perimeter: "nf.Perimeter"
+        Gueltigkeit: "#gueltig"
+        GueltigerEintrag: "toDate(nf.GueltigerEintrag)"
+        Datum1: "toDate(nf.GueltigerEintrag)"
+
+    - id: gem-nachfuehrung-projektiert
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
+      sources:
+        - alias: nf
+          input: dmav
+          class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.HHGNachfuehrung"
+          where: "notDefined(nf.GenehmigtAm)"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 30)"
+        Perimeter: "nf.Perimeter"
+        Gueltigkeit: "#projektiert"
+        GueltigerEintrag: "toDate(nf.GueltigerEintrag)"
+        Datum1: "toDate(nf.GueltigerEintrag)"
+
+    - id: gemeinde-to-dm01
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Gemeindegrenzen.Gemeinde"
+      sources:
+        - alias: gm
+          input: dmav
+          class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Gemeinde"
+      identity:
+        sourceKey: ["gm.BFSNummer"]
+      assign:
+        Name: "truncate(gm.Name, 30)"
+        BFSNr: "gm.BFSNummer"
+
+    - id: projgemeindegrenze-to-dm01
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Gemeindegrenzen.ProjGemeindegrenze"
+      sources:
+        - alias: pg
+          input: dmav
+          class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.ProjGemeindegrenzabschnitt"
+      assign:
+        Geometrie: "pg.Geometrie"
+      refs:
+        - association: "ProjGemeindegrenzeEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gem-nachfuehrung-projektiert
+            sourceRef: "pg.Entstehung"
+        - association: "ProjGemeindegrenzeProjGemeindegrenze_von"
+          role: "ProjGemeindegrenze_von"
+          required: true
+          targetObject:
+            rule: gemeinde-to-dm01
+            sourceRef: "pg.Gemeinde"
+
+    - id: gemeindegrenze-to-dm01
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Gemeindegrenzen.Gemeindegrenze"
+      sources:
+        - alias: gg
+          input: dmav
+          class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Gemeindegrenze"
+      assign:
+        Geometrie: "gg.Geometrie"
+      refs:
+        - association: "GemeindegrenzeEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gem-nachfuehrung-gueltig
+            sourceRef: "gg.Entstehung"
+        - association: "GemeindegrenzeGemeindegrenze_von"
+          role: "Gemeindegrenze_von"
+          required: true
+          targetObject:
+            rule: gemeinde-to-dm01
+            sourceRef: "gg.Gemeinde"
+
+    - id: bezirksgrenzabschnitt-to-dm01
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Bezirksgrenzen.Bezirksgrenzabschnitt"
+      sources:
+        - alias: bga
+          input: dmav
+          class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Bezirksgrenzabschnitt"
+      assign:
+        Geometrie: "bga.Geometrie"
+        Gueltigkeit: "enumMap(bga.Gueltigkeit, 'Gueltigkeit_DMAV_DM01')"
+
+    - id: kantonsgrenzabschnitt-to-dm01
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Kantonsgrenzen.Kantonsgrenzabschnitt"
+      sources:
+        - alias: kga
+          input: dmav
+          class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Kantonsgrenzabschnitt"
+      assign:
+        Geometrie: "kga.Geometrie"
+        Gueltigkeit: "enumMap(kga.Gueltigkeit, 'Gueltigkeit_DMAV_DM01')"

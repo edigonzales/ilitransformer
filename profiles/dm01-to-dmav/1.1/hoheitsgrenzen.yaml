@@ -1,0 +1,161 @@
+version: 1
+
+job:
+  name: dm01-to-dmav-hoheitsgrenzen
+  description: "Pilot-Transformation DM01 Hoheitsgrenzen nach DMAV HoheitsgrenzenAV"
+  direction: dm01-to-dmav
+  failPolicy: lenient
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "models/"
+  inputs:
+    - id: dm01
+      path: "input/dm01.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-hoheitsgrenzen.xtf"
+      model: "DMAV_HoheitsgrenzenAV_V1_0"
+      format: "xtf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "dm01-to-dmav-hoheitsgrenzen"
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Gueltigkeit_DM01_DMAV:
+      rechtskraeftig: rechtskraeftig
+      streitig: streitig
+      provisorisch: provisorisch
+      undefiniert: undefiniert
+
+  rules:
+    - id: hhg-nachfuehrung-gueltig
+      target:
+        output: dmav
+        class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.HHGNachfuehrung"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
+          where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 60)"
+        Perimeter: "nf.Perimeter"
+        GueltigerEintrag: "toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1))"
+        GenehmigtAm: "toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1))"
+
+    - id: hhg-nachfuehrung-projektiert
+      target:
+        output: dmav
+        class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.HHGNachfuehrung"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
+          where: "nf.Gueltigkeit == #projektiert"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 60)"
+        Perimeter: "nf.Perimeter"
+        GueltigerEintrag: "toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1))"
+
+    - id: gemeinde-to-dmav
+      target:
+        output: dmav
+        class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Gemeinde"
+      sources:
+        - alias: gm
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.Gemeinde"
+      identity:
+        sourceKey: ["gm.BFSNr"]
+      assign:
+        Name: "truncate(gm.Name, 60)"
+        BFSNummer: "gm.BFSNr"
+        Fiktiv: "false"
+
+    - id: projgemeindegrenzabschnitt-to-dmav
+      target:
+        output: dmav
+        class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.ProjGemeindegrenzabschnitt"
+      sources:
+        - alias: pg
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.ProjGemeindegrenze"
+      assign:
+        Geometrie: "pg.Geometrie"
+      refs:
+        - association: "Entstehung_ProjGemeindegrenzabschnitt"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: hhg-nachfuehrung-projektiert
+            sourceRef: "pg.Entstehung"
+        - association: "GemeindeProjGemeindegrenzabschnitt"
+          role: "Gemeinde"
+          required: true
+          targetObject:
+            rule: gemeinde-to-dmav
+            sourceRef: "pg.ProjGemeindegrenze_von"
+
+    - id: gemeindegrenze-to-dmav
+      target:
+        output: dmav
+        class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Gemeindegrenze"
+      sources:
+        - alias: gg
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.Gemeindegrenze"
+      assign:
+        Geometrie: "gg.Geometrie"
+        Fiktiv: "false"
+      refs:
+        - association: "Entstehung_Gemeindegrenze"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: hhg-nachfuehrung-gueltig
+            sourceRef: "gg.Entstehung"
+        - association: "GemeindeGemeindegrenze"
+          role: "Gemeinde"
+          required: true
+          targetObject:
+            rule: gemeinde-to-dmav
+            sourceRef: "gg.Gemeindegrenze_von"
+
+    - id: bezirksgrenzabschnitt-to-dmav
+      target:
+        output: dmav
+        class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Bezirksgrenzabschnitt"
+      sources:
+        - alias: bga
+          input: dm01
+          class: "DM01AVCH24LV95D.Bezirksgrenzen.Bezirksgrenzabschnitt"
+      assign:
+        Geometrie: "bga.Geometrie"
+        Gueltigkeit: "enumMap(bga.Gueltigkeit, 'Gueltigkeit_DM01_DMAV')"
+
+    - id: kantonsgrenzabschnitt-to-dmav
+      target:
+        output: dmav
+        class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Kantonsgrenzabschnitt"
+      sources:
+        - alias: kga
+          input: dm01
+          class: "DM01AVCH24LV95D.Kantonsgrenzen.Kantonsgrenzabschnitt"
+      assign:
+        Geometrie: "kga.Geometrie"
+        Gueltigkeit: "enumMap(kga.Gueltigkeit, 'Gueltigkeit_DM01_DMAV')"

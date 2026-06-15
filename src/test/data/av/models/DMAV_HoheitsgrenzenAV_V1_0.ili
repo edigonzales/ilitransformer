@@ -1,0 +1,213 @@
+INTERLIS 2.4;
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! Datenmodell der amtlichen Vermessung "Bund" (DMAV)
+!! beschrieben in INTERLIS Version 2.4
+!!
+!! Bundesamt fuer Landestopographie (swisstopo)
+!! Fachstelle Eidgenoessische Vermessungsdirektion (V+D)
+!! CH-3084 Wabern
+!! www.cadastre.ch und www.interlis.ch
+!!
+!! Version: 1 deutsch
+!! Dateiname: DMAV_HoheitsgrenzenAV_V1_0.ili
+!!
+!! Das vorliegende Datenmodell gilt fuer den Bezugsrahmen "Landesvermessung 1903+
+!! (LV95)".
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!@ technicalContact = mailto:dmav@swisstopo.ch
+!!@ furtherInformation = https://www.cadastre-manual.admin.ch/de/modelldokumentation-dmav
+!!@ IDGeoIV = "228.3"
+MODEL DMAV_HoheitsgrenzenAV_V1_0 (de)
+  AT "https://models.geo.admin.ch/V_D/" VERSION "2024-09-20" =
+  IMPORTS GeometryCHLV95_V2;
+  IMPORTS CHAdminCodes_V2;
+  IMPORTS DMAVTYM_Topologie_V1_0;
+  
+  TOPIC HoheitsgrenzenAV =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS HHGNachfuehrung =
+      NBIdent: MANDATORY TEXT*12;
+      Identifikator: MANDATORY TEXT*12;  !! z.B. Nummer des technischen Dossiers
+      Beschreibung: MANDATORY TEXT*60;
+      Perimeter:  SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      GueltigerEintrag: MANDATORY INTERLIS.XMLDateTime;      
+      GenehmigtAm: INTERLIS.XMLDateTime;      
+    UNIQUE CH030101: NBIdent, Identifikator;
+    END HHGNachfuehrung;
+    
+    CLASS Gemeinde =
+      Name: MANDATORY TEXT*60;
+      BFSNummer: MANDATORY CHAdminCodes_V2.CHMunicipalityCode;
+      Fiktiv : MANDATORY BOOLEAN;
+    END Gemeinde;
+
+    ASSOCIATION Entstehung_Gemeinde =
+        Entstehung -- {1} HHGNachfuehrung;
+        entstehende_Gemeinde -- {0..*} Gemeinde;
+    END Entstehung_Gemeinde;
+
+    ASSOCIATION Untergang_Gemeinde =
+        Untergang -- {0..1} HHGNachfuehrung;
+        untergehende_Gemeinde -- {0..*} Gemeinde;
+    END Untergang_Gemeinde;
+
+    ASSOCIATION Vorgaenger_Nachfolger_Gemeinde =
+        Vorgaenger -- {0..1} Gemeinde;
+        Nachfolger -- {0..*} Gemeinde;
+    END Vorgaenger_Nachfolger_Gemeinde;
+    
+    VIEW Gemeinde_Gueltig
+     	PROJECTION OF Gemeinde;
+    	WHERE DEFINED(Gemeinde->Entstehung) AND DEFINED(Gemeinde->Entstehung->GenehmigtAm) AND (NOT(DEFINED(Gemeinde->Untergang)) OR NOT(DEFINED(Gemeinde->Untergang->GenehmigtAm)));
+    	=
+    	ALL OF Gemeinde;
+    UNIQUE CH030601: BFSNummer;
+    END Gemeinde_Gueltig;
+    
+    CLASS Gemeindegrenze =  !! auch als Exklave moeglich
+      Geometrie: MANDATORY SURFACE WITH (STRAIGHTS, ARCS) VERTEX GeometryCHLV95_V2.Coord2
+        WITHOUT OVERLAPS > 0.002;
+      Fiktiv : MANDATORY BOOLEAN;
+      Streitig: GeometryCHLV95_V2.MultiLine;
+      Provisorisch: GeometryCHLV95_V2.MultiLine;
+      Undefiniert: GeometryCHLV95_V2.MultiLine;
+      !! Verlauf einer streitigen Grenze muss auf derselben Geometrie liegen
+      MANDATORY CONSTRAINT CH030701: NOT(DEFINED(Streitig)) OR DMAVTYM_Topologie_V1_0.covers(THIS,>>Geometrie,THIS,>>Streitig);
+      MANDATORY CONSTRAINT CH030702: NOT(DEFINED(Provisorisch)) OR DMAVTYM_Topologie_V1_0.covers(THIS,>>Geometrie,THIS,>>Provisorisch);
+      MANDATORY CONSTRAINT CH030703: NOT(DEFINED(Undefiniert)) OR DMAVTYM_Topologie_V1_0.covers(THIS,>>Geometrie,THIS,>>Undefiniert);
+    END Gemeindegrenze;
+
+    ASSOCIATION Entstehung_Gemeindegrenze =
+        Entstehung -- {1} HHGNachfuehrung;
+        entstehende_Gemeindegrenze -- {0..*} Gemeindegrenze;
+    END Entstehung_Gemeindegrenze;
+
+    ASSOCIATION Untergang_Gemeindegrenze =
+        Untergang -- {0..1} HHGNachfuehrung;
+        untergehende_Gemeindegrenze -- {0..*} Gemeindegrenze;
+    END Untergang_Gemeindegrenze;
+
+    ASSOCIATION Vorgaenger_Nachfolger_Gemeindegrenze =
+        Vorgaenger -- {0..1} Gemeindegrenze;
+        Nachfolger -- {0..*} Gemeindegrenze;
+    END Vorgaenger_Nachfolger_Gemeindegrenze;
+    
+    VIEW Gemeindegrenze_Gueltig
+     	PROJECTION OF Gemeindegrenze;
+    	WHERE DEFINED(Gemeindegrenze->Entstehung) AND DEFINED(Gemeindegrenze->Entstehung->GenehmigtAm) AND (NOT(DEFINED(Gemeindegrenze->Untergang)) OR NOT(DEFINED(Gemeindegrenze->Untergang->GenehmigtAm)));
+    	=
+    	ALL OF Gemeindegrenze;
+    SET CONSTRAINT CH031101: INTERLIS.areAreas(ALL, UNDEFINED, >> Geometrie);
+    END Gemeindegrenze_Gueltig;
+
+    ASSOCIATION GemeindeGemeindegrenze =
+      Gemeinde -- {1} Gemeinde;
+      Gemeindegrenze -- {1..*} Gemeindegrenze;
+      MANDATORY CONSTRAINT CH031201: Gemeindegrenze->Fiktiv == Gemeinde->Fiktiv;
+    END GemeindeGemeindegrenze;
+    
+    CLASS ProjGemeindegrenzabschnitt =  !! auch als Exklave moeglich
+      Geometrie: MANDATORY GeometryCHLV95_V2.Line;
+    END ProjGemeindegrenzabschnitt;
+
+   ASSOCIATION Entstehung_ProjGemeindegrenzabschnitt =
+        Entstehung -- {1} HHGNachfuehrung;
+        entstehender_ProjGemeindegrenzabschnitt -- {0..*} ProjGemeindegrenzabschnitt;
+    END Entstehung_ProjGemeindegrenzabschnitt;
+
+   ASSOCIATION Untergang_ProjGemeindegrenzabschnitt =
+        Untergang -- {0..1} HHGNachfuehrung;
+        untergehender_ProjGemeindegrenzabschnitt -- {0..*} ProjGemeindegrenzabschnitt;
+    END Untergang_ProjGemeindegrenzabschnitt;
+    
+    ASSOCIATION GemeindeProjGemeindegrenzabschnitt =
+      Gemeinde -- {1} Gemeinde;
+      ProjGemeindeGrenzabschnitt -- {0..*} ProjGemeindegrenzabschnitt;
+    END GemeindeProjGemeindegrenzabschnitt;
+
+    ASSOCIATION Vorgaenger_Nachfolger_ProjGemeindegrenzabschnitt =
+        Vorgaenger -- {0..1} ProjGemeindegrenzabschnitt;
+        Nachfolger -- {0..*} ProjGemeindegrenzabschnitt;
+    END Vorgaenger_Nachfolger_ProjGemeindegrenzabschnitt;
+    
+    VIEW Gemeindegrenzabschnitt_Projektiert
+     	PROJECTION OF ProjGemeindegrenzabschnitt;
+    	WHERE DEFINED(ProjGemeindegrenzabschnitt->Entstehung) AND NOT(DEFINED(ProjGemeindegrenzabschnitt->Entstehung->GenehmigtAm));
+    	=
+    	ALL OF ProjGemeindegrenzabschnitt;
+    END Gemeindegrenzabschnitt_Projektiert;
+    
+    CLASS Bezirksgrenzabschnitt =
+      Geometrie: MANDATORY GeometryCHLV95_V2.Line;
+        !! // Geometrie nur Hoheitsgrenzpunkt //
+      Gueltigkeit: MANDATORY (
+        rechtskraeftig, !! exakte Grenze aus Amtl. Vermessung
+        streitig,       !! streitige Grenze
+        provisorisch,   !! definierte Grenze, aber qualitativ ungenuegend
+        undefiniert);   !! z.B. unbekannter Seeabschluss
+    END Bezirksgrenzabschnitt;
+    
+    ASSOCIATION Entstehung_Bezirksgrenzabschnitt =
+        Entstehung -- {1} HHGNachfuehrung;
+        entstehender_Bezirksgrenzabschnitt -- {0..*} Bezirksgrenzabschnitt;
+    END Entstehung_Bezirksgrenzabschnitt;
+
+    ASSOCIATION Untergang_Bezirksgrenzabschnitt =
+        Untergang -- {0..1} HHGNachfuehrung;
+        untergehender_Bezirksgrenzabschnitt -- {0..*} Bezirksgrenzabschnitt;
+    END Untergang_Bezirksgrenzabschnitt;
+
+    ASSOCIATION Vorgaenger_Nachfolger_Bezirksgrenzabschnitt =
+        Vorgaenger -- {0..1} Bezirksgrenzabschnitt;
+        Nachfolger -- {0..*} Bezirksgrenzabschnitt;
+    END Vorgaenger_Nachfolger_Bezirksgrenzabschnitt;
+    
+    VIEW Bezirksgrenzabschnitt_Gueltig
+     	PROJECTION OF Bezirksgrenzabschnitt;
+    	WHERE DEFINED(Bezirksgrenzabschnitt->Entstehung) AND DEFINED(Bezirksgrenzabschnitt->Entstehung->GenehmigtAm) AND (NOT(DEFINED(Bezirksgrenzabschnitt->Untergang)) OR NOT(DEFINED(Bezirksgrenzabschnitt->Untergang->GenehmigtAm)));
+    	=
+    	ALL OF Bezirksgrenzabschnitt;
+    END Bezirksgrenzabschnitt_Gueltig;
+
+    CLASS Kantonsgrenzabschnitt =
+      Geometrie: MANDATORY GeometryCHLV95_V2.Line;
+        !! // Geometrie nur Hoheitsgrenzpunkt //
+      Gueltigkeit: MANDATORY (
+        rechtskraeftig, !! exakte Grenze aus Amtl. Vermessung
+        streitig,       !! streitige Grenze
+        provisorisch,   !! definierte Grenze, aber qualitativ ungenuegend
+        undefiniert);   !! z.B. unbekannter Seeabschluss
+    END Kantonsgrenzabschnitt;
+
+    ASSOCIATION Entstehung_Kantonsgrenzabschnitt =
+        Entstehung -- {1} HHGNachfuehrung;
+        entstehender_Kantonsgrenzabschnitt -- {0..*} Kantonsgrenzabschnitt;
+    END Entstehung_Kantonsgrenzabschnitt;
+
+    ASSOCIATION Untergang_Kantonsgrenzabschnitt =
+        Untergang -- {0..1} HHGNachfuehrung;
+        untergehender_Kantonsgrenzabschnitt -- {0..*} Kantonsgrenzabschnitt;
+    END Untergang_Kantonsgrenzabschnitt;
+
+    ASSOCIATION Vorgaenger_Nachfolger_Kantonsgrenzabschnitt =
+        Vorgaenger -- {0..1} Kantonsgrenzabschnitt;
+        Nachfolger -- {0..*} Kantonsgrenzabschnitt;
+    END Vorgaenger_Nachfolger_Kantonsgrenzabschnitt;
+    
+    VIEW Kantonsgrenzabschnitt_Gueltig
+     	PROJECTION OF Kantonsgrenzabschnitt;
+    	WHERE DEFINED(Kantonsgrenzabschnitt->Entstehung) AND DEFINED(Kantonsgrenzabschnitt->Entstehung->GenehmigtAm) AND (NOT(DEFINED(Kantonsgrenzabschnitt->Untergang)) OR NOT(DEFINED(Kantonsgrenzabschnitt->Untergang->GenehmigtAm)));
+    	=
+    	ALL OF Kantonsgrenzabschnitt;
+    END Kantonsgrenzabschnitt_Gueltig;
+    
+  END HoheitsgrenzenAV;
+ 
+END DMAV_HoheitsgrenzenAV_V1_0.

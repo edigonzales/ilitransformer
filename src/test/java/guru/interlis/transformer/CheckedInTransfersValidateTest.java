@@ -56,7 +56,9 @@ class CheckedInTransfersValidateTest {
             Map.entry(relativeFixturePath(Dm01DmavFixtures.TOLERANZSTUFEN.dm01MinimalFixture()), Dm01DmavFixtures.TOLERANZSTUFEN.dm01Model()),
             Map.entry(relativeFixturePath(Dm01DmavFixtures.TOLERANZSTUFEN.dmavMinimalFixture()), Dm01DmavFixtures.TOLERANZSTUFEN.dmavMinimalModel()),
             Map.entry(relativeFixturePath(Dm01DmavFixtures.GA.dm01MinimalFixture()), Dm01DmavFixtures.GA.dm01Model()),
-            Map.entry(relativeFixturePath(Dm01DmavFixtures.GA.dmavMinimalFixture()), Dm01DmavFixtures.GA.dmavMinimalModel())
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.GA.dmavMinimalFixture()), Dm01DmavFixtures.GA.dmavMinimalModel()),
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.HOHEITSGRENZEN.dm01MinimalFixture()), Dm01DmavFixtures.HOHEITSGRENZEN.dm01Model()),
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.HOHEITSGRENZEN.dmavMinimalFixture()), Dm01DmavFixtures.HOHEITSGRENZEN.dmavMinimalModel())
     );
 
     @Test
