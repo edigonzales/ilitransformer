@@ -235,9 +235,51 @@ Der `MappingCompiler` validiert die Mapping-Datei und erzeugt einen `TransformPl
 ilitransformer validate-mapping --mapping my-mapping.yaml
 ```
 
+### create / CreateSpec (experimentell)
+
+`create` erzeugt zusätzliche Zielobjekte im Kontext einer Rule. Pro SourceRecord wird ein Create-Zielobjekt erzeugt.
+
+```yaml
+mapping:
+  rules:
+    - id: my-rule
+      target:
+        output: out1
+        class: "TargetModel.Topic.MainClass"
+      sources:
+        - alias: s
+          input: in1
+          class: "SourceModel.Topic.Class"
+      assign:
+        Name: "${s.Name}"
+      create:
+        - class: "TargetModel.Topic.AdditionalClass"
+          assign:
+            ExtraAttr: "${s.SomeField}"
+```
+
+| Feld | Typ | Pflicht | Beschreibung |
+|---|---|---|---|
+| `create[].class` | `string` | Ja | Qualifizierte Zielklasse |
+| `create[].assign` | `map[string, string]` | Nein | Attributzuweisungen (Expressions) |
+
+**Unterstützt:**
+- Zielklasse aus registriertem Modell
+- Einfache `assign`-Zuweisungen mit Expressions
+- Diagnostik: `MAP_CREATE_UNKNOWN_CLASS`, `MAP_CREATE_INVALID`, `MAP_CREATE_DUPLICATE`
+
+**Noch nicht unterstützt:**
+- `where`-Filter für Create-Objekte
+- Referenzen (`refs`) in Create-Objekten
+- BAGs in Create-Objekten
+- Eigene OID-Strategie (immer INTEGER, unabhängig von `mapping.oidStrategy`)
+- OID-Mapping-Registrierung (Source→Target-Verknüpfung)
+- Duplikat-OID-Erkennung
+
+Die Semantik ist experimentell und muss pro Produktprofil getestet werden.
+
 ## Nicht unterstützte Konstrukte
 
-- `create` — DSL-Feld vorbereitet, noch nicht implementiert
 - Externe OID-Strategie (`external`) — Stub
 - Expression-basierte Basket-Strategie — Stub
 

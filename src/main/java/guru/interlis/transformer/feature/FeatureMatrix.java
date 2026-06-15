@@ -272,7 +272,7 @@ public final class FeatureMatrix {
         entries.add(FeatureEntry.of("Joins / Splits / Merge", "22",
                 FeatureStatus.EXPERIMENTAL,
                 "Multi-source equi-joins, create directives, rule dependency ordering",
-                "JoinCompilationTest", "CreateCompilationTest"));
+                "JoinCompilationTest", "CreateCompilationTest", "CreateAdditionalObjectIntegrationTest"));
 
         entries.add(FeatureEntry.of("RuleDispatchIndex", "26",
                 FeatureStatus.SUPPORTED,
