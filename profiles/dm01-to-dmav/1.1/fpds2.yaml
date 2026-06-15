@@ -4,7 +4,7 @@ job:
   name: dm01-to-dmav-fpds2
   description: "Pilot-Transformation DM01 FixpunkteKategorie2 nach KGKCGC FPDS2"
   direction: dm01-to-dmav
-  failPolicy: report
+  failPolicy: strict
   modeldir:
     - "https://models.geo.admin.ch/"
     - "https://models.kgk-cgc.ch/"
@@ -34,6 +34,92 @@ mapping:
       nicht_begehbar: nicht_begehbar
 
   rules:
+    # --- Stammdaten (synthetische Referenzobjekte, werden dedupliziert) ---
+
+    - id: fpds2-zustaendigkeit
+      target:
+        output: dmav
+        class: "KGKCGC_FPDS2_V1_1.FPDS2.Zustaendigkeit"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent"]
+      assign:
+        Kanton: "'BE'"
+        Name: "'Amtliche Vermessung'"
+
+    - id: fpds2-zustaendigkeit-hfp2
+      target:
+        output: dmav
+        class: "KGKCGC_FPDS2_V1_1.FPDS2.Zustaendigkeit"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent"]
+      assign:
+        Kanton: "'BE'"
+        Name: "'Amtliche Vermessung'"
+
+    - id: fpds2-massstab
+      target:
+        output: dmav
+        class: "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtMassstab"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent"]
+      assign:
+        Massstabszahl: "25000.0"
+
+    - id: fpds2-massstab-hfp2
+      target:
+        output: dmav
+        class: "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtMassstab"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent"]
+      assign:
+        Massstabszahl: "25000.0"
+
+    - id: fpds2-geodienst
+      target:
+        output: dmav
+        class: "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtGeodienst"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent"]
+      assign:
+        Bezeichnung: "'FPDS2 Geodienst'"
+        URL: "'https://www.kgk-cgc.ch'"
+
+    - id: fpds2-geodienst-hfp2
+      target:
+        output: dmav
+        class: "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtGeodienst"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent"]
+      assign:
+        Bezeichnung: "'FPDS2 Geodienst'"
+        URL: "'https://www.kgk-cgc.ch'"
+
+    # --- Nachführungen ---
+
     - id: fpds2-nachfuehrung-lfp2
       target:
         output: dmav
@@ -48,8 +134,8 @@ mapping:
         NBIdent: "nf.NBIdent"
         Identifikator: "nf.Identifikator"
         Beschreibung: "truncate(nf.Beschreibung, 60)"
-        GueltigerEintrag: "coalesce(nf.GueltigerEintrag, '2024-01-01')"
-        DatumEroeffnung: "coalesce(nf.GueltigerEintrag, nf.Datum1, '2024-01-01')"
+        GueltigerEintrag: "'2024-01-01'"
+        DatumEroeffnung: "'2024-01-01'"
         Status: "#in_Bearbeitung"
 
     - id: fpds2-nachfuehrung-hfp2
@@ -66,9 +152,11 @@ mapping:
         NBIdent: "nf.NBIdent"
         Identifikator: "nf.Identifikator"
         Beschreibung: "truncate(nf.Beschreibung, 60)"
-        GueltigerEintrag: "coalesce(nf.GueltigerEintrag, '2024-01-01')"
-        DatumEroeffnung: "coalesce(nf.GueltigerEintrag, nf.Datum1, '2024-01-01')"
+        GueltigerEintrag: "'2024-01-01'"
+        DatumEroeffnung: "'2024-01-01'"
         Status: "#in_Bearbeitung"
+
+    # --- Fixpunkte ---
 
     - id: fixpunkt-lfp2
       target:
@@ -90,6 +178,25 @@ mapping:
         SymbolOri: "100.0"
         TSP: "true"
         Unterhaltsstrategie: "#aktiv"
+      refs:
+        - association: "FP_Zustaendigkeit"
+          role: "ZS"
+          required: true
+          targetObject:
+            rule: fpds2-zustaendigkeit
+            sourceRef: "p.Entstehung"
+        - association: "FP_UebersichtMassstab"
+          role: "UM"
+          required: true
+          targetObject:
+            rule: fpds2-massstab
+            sourceRef: "p.Entstehung"
+        - association: "FP_UebersichtGeodienst"
+          role: "UG"
+          required: true
+          targetObject:
+            rule: fpds2-geodienst
+            sourceRef: "p.Entstehung"
 
     - id: fixpunkt-hfp2
       target:
@@ -110,3 +217,22 @@ mapping:
         ProtokollSprache: "#deutsch"
         TSP: "true"
         Unterhaltsstrategie: "#aktiv"
+      refs:
+        - association: "FP_Zustaendigkeit"
+          role: "ZS"
+          required: true
+          targetObject:
+            rule: fpds2-zustaendigkeit-hfp2
+            sourceRef: "p.Entstehung"
+        - association: "FP_UebersichtMassstab"
+          role: "UM"
+          required: true
+          targetObject:
+            rule: fpds2-massstab-hfp2
+            sourceRef: "p.Entstehung"
+        - association: "FP_UebersichtGeodienst"
+          role: "UG"
+          required: true
+          targetObject:
+            rule: fpds2-geodienst-hfp2
+            sourceRef: "p.Entstehung"

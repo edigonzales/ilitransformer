@@ -76,7 +76,7 @@ class Fpds2MinimalFixtureForwardTest {
         modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
         modelDirs.add(Dm01DmavPaths.REMOTE_KGK_MODEL_DIR);
 
-        RunOptions options = new RunOptions(modelDirs, false, tempDir, false);
+        RunOptions options = new RunOptions(modelDirs, true, tempDir, false);
         JobRunner runner = new JobRunner();
         DiagnosticCollector diagnostics = runner.run(mappingPath, options);
 
@@ -89,6 +89,9 @@ class Fpds2MinimalFixtureForwardTest {
         String content = Files.readString(outputPath, StandardCharsets.UTF_8);
         assertThat(content).contains("Fixpunkt");
         assertThat(content).contains("FixpunkteNachfuehrung");
+        assertThat(content).contains("Zustaendigkeit");
+        assertThat(content).contains("UebersichtMassstab");
+        assertThat(content).contains("UebersichtGeodienst");
         assertThat(content).contains("Art");
     }
 
@@ -101,7 +104,7 @@ class Fpds2MinimalFixtureForwardTest {
         modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
         modelDirs.add(Dm01DmavPaths.REMOTE_KGK_MODEL_DIR);
 
-        RunOptions options = new RunOptions(modelDirs, false, tempDir, false);
+        RunOptions options = new RunOptions(modelDirs, true, tempDir, false);
         JobRunner runner = new JobRunner();
         DiagnosticCollector diagnostics = runner.run(mappingPath, options);
 
