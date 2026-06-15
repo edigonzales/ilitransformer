@@ -95,6 +95,22 @@ class CompileModeTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         assertThat(plan.compileMode()).isEqualTo(CompileMode.STRICT);
+        assertThat(plan.diagnostics().warnings()).isGreaterThan(0);
+    }
+
+    @Test
+    void allowTodosFallsBackToStrictWithWarning() {
+        JobConfig config = minimalConfig();
+        config.mapping.compileMode = "allowTodos";
+
+        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
+        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+
+        assertThat(plan.compileMode()).isEqualTo(CompileMode.STRICT);
+        assertThat(plan.diagnostics().all()).anyMatch(d ->
+                d.severity() == Severity.WARNING
+                        && d.message().contains("Unknown compileMode")
+                        && d.message().contains("allowTodos"));
     }
 
     private static JobConfig minimalConfig() {

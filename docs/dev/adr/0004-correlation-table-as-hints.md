@@ -24,5 +24,5 @@ Die XLSX dient ausschließlich als **Mapping-Hint-Quelle**. Sie wird nicht direk
 - Mapping-Pipeline: XLSX → `CorrelationHint` → manuelle Prüfung → gültiges Mapping
 - Kein direkter `JobConfig`-Export aus XLSX
 - Confidence-Score pro Candidate (hoch für klare Korrelationen, niedrig für unklare)
-- Generierte Mappings enthalten `TODO(...)` für unklare Fälle (nur im `allowTodos`-Mode kompilierbar)
+- Generierte Mappings enthalten `TODO(...)` für unklare Fälle (im `compatible`-CompileMode als Warning, nicht als Fehler)
 - Die XLSX kann jederzeit durch eine aktuellere Version ersetzt werden, ohne dass bestehende Mappings brechen

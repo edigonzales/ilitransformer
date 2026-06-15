@@ -824,11 +824,7 @@ assign:
       row: 350
 ```
 
-Der Compiler muss `TODO(...)` als Fehler behandeln, ausser der Job läuft explizit im Modus:
-
-```yaml
-compileMode: allowTodos
-```
+Der Compiler behandelt `TODO(...)`-Platzhalter als Fehler. In der Praxis wurde das `allowTodos`-Konzept nicht umgesetzt; stattdessen steuert `compileMode: compatible` (bzw. `strict`/`report`) das Verhalten bei Warnungen (siehe `docs/mapping-dsl.md`).
 
 ---
 

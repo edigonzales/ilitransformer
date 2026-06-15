@@ -83,8 +83,14 @@ mapping:
 | `mapping.basketStrategy` | `BasketStrategySpec` | Nein | Basket-Strategie |
 | `mapping.enums` | `map[string, map[string, string]]` | Nein | Enum-Mapping-Tabellen |
 | `mapping.defaults` | `map[string, string]` | Nein | Default-Werte |
-| `mapping.compileMode` | `string` | Nein | `strict` (default) oder `allowTodos` |
+| `mapping.compileMode` | `string` | Nein | `strict` (default), `compatible`, `report` |
 | `mapping.rules` | `list[RuleSpec]` | Ja | Transformationsregeln |
+
+#### compileMode Semantik
+
+- `strict` (Default): Warnungen aus der Mapping-Kompilierung werden als Fehler hochgestuft. Typ-Inkompatibilitäten, fehlende Enum-Coverage und Pflichtattributlücken verhindern die Ausführung.
+- `compatible`: Erlaubt bewusst bekannte/kompatible Abweichungen, sofern sie nicht runtime-kritisch sind. Warnungen bleiben Warnungen.
+- `report`: Plan nur zu Analysezwecken kompilieren (Inventarisierung, Abhängigkeitsprüfung), keine produktive Transformation. `TransformPlan.isReportOnly()` liefert `true`.
 
 ### OidStrategySpec
 
