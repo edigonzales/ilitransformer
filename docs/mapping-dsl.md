@@ -266,13 +266,13 @@ mapping:
 **Unterstützt:**
 - Zielklasse aus registriertem Modell
 - Einfache `assign`-Zuweisungen mit Expressions
+- OID-Strategie aus `mapping.oidStrategy` (die globale OID-Strategie gilt auch für Create-Objekte)
 - Diagnostik: `MAP_CREATE_UNKNOWN_CLASS`, `MAP_CREATE_INVALID`, `MAP_CREATE_DUPLICATE`
 
 **Noch nicht unterstützt:**
 - `where`-Filter für Create-Objekte
 - Referenzen (`refs`) in Create-Objekten
 - BAGs in Create-Objekten
-- Eigene OID-Strategie (immer INTEGER, unabhängig von `mapping.oidStrategy`)
 - OID-Mapping-Registrierung (Source→Target-Verknüpfung)
 - Duplikat-OID-Erkennung
 

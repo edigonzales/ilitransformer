@@ -113,19 +113,7 @@ public final class MappingCompiler {
         // Phase 21: Validate unsupported DSL features
         new DslCapabilityValidator().validateSupportedFeatures(config, diagnostics);
 
-        // Compile rules
-        Map<String, Map<String, String>> enumMaps = extractEnumMaps(config);
-        List<RulePlan> rulePlans = new ArrayList<>();
-        for (JobConfig.RuleSpec rule : config.mapping.rules) {
-            RulePlan rp = compileRule(rule, diagnostics, modelRegistry, enumMaps, config.mapping.defaults);
-            if (rp != null) {
-                rulePlans.add(rp);
-            }
-        }
-
-        checkRuleDependencies(rulePlans, diagnostics);
-
-        // Compile OID strategy
+        // Compile OID strategy (before rules, so create/bag directives can use it)
         OidStrategy oidStrategy = OidStrategy.INTEGER;
         String oidNamespace = null;
         if (config.mapping.oidStrategy != null) {
@@ -145,6 +133,19 @@ public final class MappingCompiler {
                     null, "Use one of: preserve, integer, uuid, deterministicUuid"));
             oidStrategy = OidStrategy.INTEGER;
         }
+
+        // Compile rules
+        Map<String, Map<String, String>> enumMaps = extractEnumMaps(config);
+        List<RulePlan> rulePlans = new ArrayList<>();
+        for (JobConfig.RuleSpec rule : config.mapping.rules) {
+            RulePlan rp = compileRule(rule, diagnostics, modelRegistry, enumMaps, config.mapping.defaults,
+                    oidStrategy, oidNamespace);
+            if (rp != null) {
+                rulePlans.add(rp);
+            }
+        }
+
+        checkRuleDependencies(rulePlans, diagnostics);
 
         validateOidTypeCompatibility(oidStrategy, rulePlans, modelRegistry, diagnostics);
 
@@ -225,7 +226,8 @@ public final class MappingCompiler {
     private RulePlan compileRule(JobConfig.RuleSpec rule, DiagnosticCollector diag,
                                   ModelRegistry modelRegistry,
                                   Map<String, Map<String, String>> enumMaps,
-                                  Map<String, String> mappingDefaults) {
+                                  Map<String, String> mappingDefaults,
+                                  OidStrategy oidStrategy, String oidNamespace) {
         String ruleId = rule.id;
         String targetOutput = rule.getEffectiveTargetOutput();
         String targetClassName = rule.getEffectiveTargetClass();
@@ -361,7 +363,7 @@ public final class MappingCompiler {
 
         // Phase 22: Compile creates
         List<CreatePlan> createPlans = compileCreates(rule, targetOutput, sourcePlans, sourcesByAlias,
-                ruleId, modelRegistry, enumMaps, mappingDefaults, diag);
+                ruleId, modelRegistry, enumMaps, mappingDefaults, oidStrategy, oidNamespace, diag);
 
         return new RulePlan(
                 ruleId,
@@ -476,6 +478,7 @@ public final class MappingCompiler {
                                              String ruleId, ModelRegistry modelRegistry,
                                              Map<String, Map<String, String>> enumMaps,
                                              Map<String, String> mappingDefaults,
+                                             OidStrategy oidStrategy, String oidNamespace,
                                              DiagnosticCollector diag) {
         if (rule.create == null || rule.create.isEmpty()) {
             return List.of();
@@ -517,7 +520,7 @@ public final class MappingCompiler {
                 }
             }
 
-            IdentityPlan identity = new IdentityPlan(OidStrategy.INTEGER, null, List.of());
+            IdentityPlan identity = new IdentityPlan(oidStrategy, oidNamespace, List.of());
 
             result.add(new CreatePlan(createId, targetOutput != null ? targetOutput : "",
                     targetClass, Optional.empty(), assignments, List.of(),
