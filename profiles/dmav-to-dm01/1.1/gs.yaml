@@ -81,6 +81,7 @@ mapping:
         - alias: gp
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
+          where: "gp.IstHoheitsgrenzpunkt == false"
       identity:
         sourceKey: ["gp.Nummer"]
       assign:
@@ -94,10 +95,30 @@ mapping:
       refs:
         - association: "GrenzpunktEntstehung"
           role: "Entstehung"
-          required: true
+          required: false
           targetObject:
             rule: gs-nachfuehrung-gueltig
             sourceRef: "gp.Entstehung"
+
+    - id: hoheitsgrenzpunkt-from-dmav
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
+      sources:
+        - alias: gp
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
+          where: "gp.IstHoheitsgrenzpunkt == true"
+      identity:
+        sourceKey: ["gp.Nummer"]
+      assign:
+        Identifikator: "gp.Nummer"
+        Geometrie: "gp.Geometrie"
+        LageGen: "div(gp.Lagegenauigkeit, 0.01)"
+        LageZuv: "enumMap(gp.IstLagezuverlaessig, 'Zuverlaessigkeit_DMAV_DM01')"
+        Punktzeichen: "enumMap(gp.Punktzeichen, 'Versicherungsart_DMAV_DM01')"
+        ExaktDefiniert: "enumMap(gp.IstExaktDefiniert, 'JaNein_DMAV_DM01')"
+        Hoheitsgrenzstein: "enumMap(gp.IstHoheitsgrenzsteinAlt, 'ja_nein_DMAV_DM01')"
 
     - id: proj-grundstueck
       target:

@@ -44,6 +44,8 @@ class HoheitsgrenzenMinimalFixtureRoundtripTest {
         String content = Files.readString(dm01Roundtrip, StandardCharsets.ISO_8859_1);
         assertThat(content).contains("TOPI Gemeindegrenzen");
         assertThat(content).contains("TABL GEMNachfuehrung");
+        assertThat(content).contains("TABL Hoheitsgrenzpunkt");
+        assertThat(content).contains("TABL HoheitsgrenzpunktSymbol");
         assertThat(content).contains("TABL Gemeinde");
         assertThat(content).contains("TABL ProjGemeindegrenze");
         assertThat(content).contains("TABL Gemeindegrenze");

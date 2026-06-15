@@ -121,6 +121,27 @@ mapping:
             rule: gs-nachfuehrung-gueltig
             sourceRef: "gp.Entstehung"
 
+    - id: hoheitsgrenzpunkt
+      target:
+        output: dmav
+        class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
+      sources:
+        - alias: hgp
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
+      identity:
+        sourceKey: ["hgp.Identifikator"]
+      assign:
+        Nummer: "hgp.Identifikator"
+        Geometrie: "hgp.Geometrie"
+        Lagegenauigkeit: "div(hgp.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(hgp.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        Punktzeichen: "enumMap(hgp.Punktzeichen, 'Versicherungsart_DM01_DMAV')"
+        IstExaktDefiniert: "enumMap(hgp.ExaktDefiniert, 'JaNein_DM01_DMAV')"
+        IstHoheitsgrenzpunkt: "true"
+        IstHoheitsgrenzsteinAlt: "enumMap(hgp.Hoheitsgrenzstein, 'ja_nein_DM01_DMAV')"
+        SymbolOri: "lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori')"
+
     - id: proj-grundstueck
       target:
         output: dmav

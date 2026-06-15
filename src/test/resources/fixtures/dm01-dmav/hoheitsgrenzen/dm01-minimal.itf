@@ -7,6 +7,14 @@ TABL GEMNachfuehrung
 OBJE 1 HG_NB HG_ID001 HoheitsgrenzenMinimalTest 1 20250315 @
 OBJE 2 HG_NB HG_ID002 ProjGemeindegrenzeTest  0 20250315 @
 ETAB
+TABL Hoheitsgrenzpunkt
+OBJE 50 1 HGP001 2585050.000 1228050.000 5.0 0 2 0 0
+OBJE 51 1 HGP002 2585350.000 1228050.000 5.0 0 2 0 0
+ETAB
+TABL HoheitsgrenzpunktSymbol
+OBJE 60 50 0.0
+OBJE 61 51 0.0
+ETAB
 TABL Gemeinde
 OBJE 10 Musterhausen 1
 OBJE 11 Beispielikon 2
