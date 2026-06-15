@@ -4,7 +4,7 @@ job:
   name: dm01-to-dmav-hoheitsgrenzen
   description: "Pilot-Transformation DM01 Hoheitsgrenzen nach DMAV HoheitsgrenzenAV"
   direction: dm01-to-dmav
-  failPolicy: lenient
+  failPolicy: strict
   modeldir:
     - "https://models.geo.admin.ch/"
     - "models/"
@@ -86,6 +86,13 @@ mapping:
         Name: "truncate(gm.Name, 60)"
         BFSNummer: "gm.BFSNr"
         Fiktiv: "false"
+      refs:
+        - association: "Entstehung_Gemeinde"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: hhg-nachfuehrung-gueltig
+            sourceRef: "#first"
 
     - id: projgemeindegrenzabschnitt-to-dmav
       target:
@@ -147,6 +154,13 @@ mapping:
       assign:
         Geometrie: "bga.Geometrie"
         Gueltigkeit: "enumMap(bga.Gueltigkeit, 'Gueltigkeit_DM01_DMAV')"
+      refs:
+        - association: "Entstehung_Bezirksgrenzabschnitt"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: hhg-nachfuehrung-gueltig
+            sourceRef: "#first"
 
     - id: kantonsgrenzabschnitt-to-dmav
       target:
@@ -159,3 +173,10 @@ mapping:
       assign:
         Geometrie: "kga.Geometrie"
         Gueltigkeit: "enumMap(kga.Gueltigkeit, 'Gueltigkeit_DM01_DMAV')"
+      refs:
+        - association: "Entstehung_Kantonsgrenzabschnitt"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: hhg-nachfuehrung-gueltig
+            sourceRef: "#first"

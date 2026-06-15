@@ -64,4 +64,18 @@ public final class InMemoryReferenceIndex implements ReferenceIndex {
         }
         return result;
     }
+
+    @Override
+    public List<TargetReference> findByRuleId(String ruleId) {
+        if (ruleId == null || ruleId.isBlank()) return List.of();
+        List<TargetReference> result = new ArrayList<>();
+        for (List<TargetReference> refs : index.values()) {
+            for (TargetReference ref : refs) {
+                if (ruleId.equals(ref.producingRuleId())) {
+                    result.add(ref);
+                }
+            }
+        }
+        return result;
+    }
 }

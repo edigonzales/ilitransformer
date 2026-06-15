@@ -308,6 +308,7 @@ public final class TransformationEngine {
                                 sourceRefOid,
                                 record.sourceFileId(),
                                 record.sourceBasketId(),
+                                null,
                                 null));
                     }
                 }
@@ -366,6 +367,11 @@ public final class TransformationEngine {
 
     private void resolveDeferredRefs(TransformPlan plan) {
         for (DeferredRef deferredRef : stateStore.deferredRefs()) {
+            String refOid = deferredRef.sourceReferencedOid();
+            if (refOid != null && refOid.startsWith("#")) {
+                resolveSingletonRef(deferredRef, plan);
+                continue;
+            }
             List<TargetRefValue> candidates = stateStore.findIdMappings(
                     null, deferredRef.sourceReferencedOid(),
                     deferredRef.sourceFileId(), deferredRef.sourceBasketId());
@@ -407,6 +413,15 @@ public final class TransformationEngine {
                         ref.setobjectrefoid(resolved.targetOid());
                     });
         }
+    }
+
+    private void resolveSingletonRef(DeferredRef deferredRef, TransformPlan plan) {
+        diagnostics.add(new Diagnostic(DiagnosticCode.RUN_REF_UNRESOLVED,
+                failPolicySeverity(plan, Severity.WARNING),
+                "Singleton reference " + deferredRef.sourceReferencedOid()
+                        + " cannot be resolved in legacy mode (use reference index)",
+                deferredRef.ownerTargetClass() + "/" + deferredRef.ownerTargetOid(),
+                "Ensure reference index is enabled"));
     }
 
     private void checkRequiredRefs(TransformPlan plan) {

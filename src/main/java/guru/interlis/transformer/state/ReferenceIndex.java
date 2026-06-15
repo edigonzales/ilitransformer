@@ -8,4 +8,6 @@ public interface ReferenceIndex {
     List<TargetReference> find(SourceReferenceSelector selector);
 
     List<TargetReference> find(SourceReferenceSelector selector, boolean crossBasketFallback, boolean globalFallback);
+
+    List<TargetReference> findByRuleId(String ruleId);
 }

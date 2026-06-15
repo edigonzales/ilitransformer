@@ -45,11 +45,18 @@ public final class ReferenceResolutionService {
 
         for (DeferredReference ref : deferredRefs) {
             SourceReferenceSelector selector = ref.sourceSelector();
-            List<TargetReference> candidates = referenceIndex.find(selector);
-            if (ref.targetRuleId() != null && !ref.targetRuleId().isBlank()) {
-                candidates = candidates.stream()
-                        .filter(candidate -> ref.targetRuleId().equals(candidate.producingRuleId()))
-                        .toList();
+            List<TargetReference> candidates;
+            if (selector.referencedSourceOid() != null && selector.referencedSourceOid().startsWith("#")) {
+                candidates = ref.targetRuleId() != null && !ref.targetRuleId().isBlank()
+                        ? referenceIndex.findByRuleId(ref.targetRuleId())
+                        : List.of();
+            } else {
+                candidates = referenceIndex.find(selector);
+                if (ref.targetRuleId() != null && !ref.targetRuleId().isBlank()) {
+                    candidates = candidates.stream()
+                            .filter(candidate -> ref.targetRuleId().equals(candidate.producingRuleId()))
+                            .toList();
+                }
             }
 
             if (candidates.isEmpty()) {

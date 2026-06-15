@@ -35,7 +35,7 @@ class HoheitsgrenzenMinimalFixtureRoundtripTest {
         Path dmavIntermediate = tempDir.resolve("hoheitsgrenzen-minimal-forward.xtf");
         Path dm01Roundtrip = tempDir.resolve("hoheitsgrenzen-minimal-roundtrip.itf");
 
-        runWithoutValidation(materializeDm01ToDmav(DM01_INPUT, dmavIntermediate),
+        run(materializeDm01ToDmav(DM01_INPUT, dmavIntermediate),
                 tempDir.resolve("reports-dm01-forward"));
         run(materializeDmavToDm01(dmavIntermediate, dm01Roundtrip),
                 tempDir.resolve("reports-dmav-reverse"));
@@ -68,7 +68,7 @@ class HoheitsgrenzenMinimalFixtureRoundtripTest {
 
         run(materializeDmavToDm01(DMAV_INPUT, dm01Intermediate),
                 tempDir.resolve("reports-dmav-reverse"));
-        runWithoutValidation(materializeDm01ToDmav(dm01Intermediate, dmavRoundtrip),
+        run(materializeDm01ToDmav(dm01Intermediate, dmavRoundtrip),
                 tempDir.resolve("reports-dmav-forward"));
 
         assertThat(dmavRoundtrip).exists();

@@ -153,7 +153,8 @@ public final class TargetObjectFactory {
                     sourceRefOid,
                     driverRecord.sourceFileId(),
                     driverRecord.sourceBasketId(),
-                    expectedTargetClass));
+                    expectedTargetClass,
+                    ref.targetRuleId()));
 
             ReferenceIndex refIndex = ctx.referenceIndex();
             if (refIndex != null) {
@@ -314,7 +315,8 @@ public final class TargetObjectFactory {
                         sourceRefOid,
                         record.sourceFileId(),
                         record.sourceBasketId(),
-                        null));
+                        null,
+                        ref.targetRuleId()));
             }
         }
 
@@ -346,6 +348,9 @@ public final class TargetObjectFactory {
                                                      SourceRecord driverRecord) {
         if (sourceRef == null || sourceRef.isBlank()) return null;
         String trimmed = sourceRef.trim();
+        if (trimmed.startsWith("#")) {
+            return trimmed;
+        }
         if (matchedSource != null && trimmed.equals(matchedSource.alias())) {
             return driverRecord.sourceObject().getobjectoid();
         }
