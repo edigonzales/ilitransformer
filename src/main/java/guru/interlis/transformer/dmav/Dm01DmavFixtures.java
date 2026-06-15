@@ -66,6 +66,23 @@ public final class Dm01DmavFixtures {
                     "HoheitsgrenzenAV.ProjGemeindegrenzabschnitt", "HoheitsgrenzenAV.Gemeindegrenze",
                     "HoheitsgrenzenAV.Bezirksgrenzabschnitt",
                     "HoheitsgrenzenAV.Kantonsgrenzabschnitt");
+    private static final List<String> FIXPUNKTELV_DM01_TARGET_CLASSES =
+            List.of("FixpunkteKategorie1.LFP1", "FixpunkteKategorie1.HFP1");
+    private static final List<String> FIXPUNKTELV_DMAV_TARGET_CLASSES =
+            List.of("FixpunkteLV.LFP1", "FixpunkteLV.HFP1");
+    private static final List<String> FPDS2_DM01_TARGET_CLASSES =
+            List.of("FixpunkteKategorie2.LFP2", "FixpunkteKategorie2.HFP2",
+                    "FixpunkteKategorie2.LFP2Nachfuehrung", "FixpunkteKategorie2.HFP2Nachfuehrung");
+    private static final List<String> FPDS2_DMAV_TARGET_CLASSES =
+            List.of("FPDS2.Fixpunkt", "FPDS2.FixpunktVersion", "FPDS2.FixpunkteNachfuehrung");
+    private static final List<String> HOHEITSGRENZENLV_DM01_TARGET_CLASSES =
+            List.of("Landesgrenzen.Landesgrenzabschnitt");
+    private static final List<String> HOHEITSGRENZENLV_DMAV_TARGET_CLASSES =
+            List.of("HoheitsgrenzenLV.Landesgrenze");
+    private static final List<String> PLZORTSCHAFT_DM01_TARGET_CLASSES =
+            List.of("PLZOrtschaft.Ortschaft", "PLZOrtschaft.OrtschaftsName", "PLZOrtschaft.PLZ6");
+    private static final List<String> PLZORTSCHAFT_DMAV_TARGET_CLASSES =
+            List.of("PLZ_Ortschaft.Ortschaft", "PLZ_Ortschaft.PLZ");
 
     public static final TopicFixtureSpec LFP3 = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_LFP3,
@@ -175,6 +192,54 @@ public final class Dm01DmavFixtures {
             true
     );
 
+    public static final TopicFixtureSpec FIXPUNKTELV = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_FIXPUNKTELV,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_FIXPUNKTELV_MODEL,
+            Dm01DmavPaths.DMAV_FIXPUNKTELV_MODEL,
+            FIXPUNKTELV_DM01_TARGET_CLASSES,
+            FIXPUNKTELV_DMAV_TARGET_CLASSES,
+            2,
+            200,
+            true
+    );
+
+    public static final TopicFixtureSpec FPDS2 = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_FPDS2,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_FPDS2_MODEL,
+            Dm01DmavPaths.DMAV_FPDS2_MODEL,
+            FPDS2_DM01_TARGET_CLASSES,
+            FPDS2_DMAV_TARGET_CLASSES,
+            2,
+            200,
+            true
+    );
+
+    public static final TopicFixtureSpec HOHEITSGRENZENLV = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_HOHEITSGRENZENLV,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_HOHEITSGRENZENLV_MODEL,
+            Dm01DmavPaths.DMAV_HOHEITSGRENZENLV_MODEL,
+            HOHEITSGRENZENLV_DM01_TARGET_CLASSES,
+            HOHEITSGRENZENLV_DMAV_TARGET_CLASSES,
+            2,
+            200,
+            true
+    );
+
+    public static final TopicFixtureSpec PLZORTSCHAFT = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_PLZORTSCHAFT,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_PLZORTSCHAFT_MODEL,
+            Dm01DmavPaths.DMAV_PLZORTSCHAFT_MODEL,
+            PLZORTSCHAFT_DM01_TARGET_CLASSES,
+            PLZORTSCHAFT_DMAV_TARGET_CLASSES,
+            2,
+            200,
+            true
+    );
+
     private Dm01DmavFixtures() {}
 
     public static TopicFixtureSpec topic(String topicId) {
@@ -188,6 +253,10 @@ public final class Dm01DmavFixtures {
             case Dm01DmavPaths.TOPIC_TOLERANZSTUFEN -> TOLERANZSTUFEN;
             case Dm01DmavPaths.TOPIC_GA -> GA;
             case Dm01DmavPaths.TOPIC_HOHEITSGRENZEN -> HOHEITSGRENZEN;
+            case Dm01DmavPaths.TOPIC_FIXPUNKTELV -> FIXPUNKTELV;
+            case Dm01DmavPaths.TOPIC_FPDS2 -> FPDS2;
+            case Dm01DmavPaths.TOPIC_HOHEITSGRENZENLV -> HOHEITSGRENZENLV;
+            case Dm01DmavPaths.TOPIC_PLZORTSCHAFT -> PLZORTSCHAFT;
             default -> throw new IllegalArgumentException("Unknown DM01/DMAV topic: " + topicId);
         };
     }
@@ -262,6 +331,38 @@ public final class Dm01DmavFixtures {
 
     public static ExtractionRequest hoheitsgrenzenDmavExtractionRequest(Path targetDir) {
         return HOHEITSGRENZEN.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest fixpunktelvDm01ExtractionRequest(Path targetDir) {
+        return FIXPUNKTELV.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest fixpunktelvDmavExtractionRequest(Path targetDir) {
+        return FIXPUNKTELV.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest fpds2Dm01ExtractionRequest(Path targetDir) {
+        return FPDS2.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest fpds2DmavExtractionRequest(Path targetDir) {
+        return FPDS2.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest hoheitsgrenzenlvDm01ExtractionRequest(Path targetDir) {
+        return HOHEITSGRENZENLV.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest hoheitsgrenzenlvDmavExtractionRequest(Path targetDir) {
+        return HOHEITSGRENZENLV.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest plzortschaftDm01ExtractionRequest(Path targetDir) {
+        return PLZORTSCHAFT.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest plzortschaftDmavExtractionRequest(Path targetDir) {
+        return PLZORTSCHAFT.dmavExtractionRequest(targetDir);
     }
 
     public static boolean isLfp3RelevantClass(String className) {

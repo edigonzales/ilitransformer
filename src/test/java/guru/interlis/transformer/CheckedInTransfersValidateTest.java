@@ -58,7 +58,11 @@ class CheckedInTransfersValidateTest {
             Map.entry(relativeFixturePath(Dm01DmavFixtures.GA.dm01MinimalFixture()), Dm01DmavFixtures.GA.dm01Model()),
             Map.entry(relativeFixturePath(Dm01DmavFixtures.GA.dmavMinimalFixture()), Dm01DmavFixtures.GA.dmavMinimalModel()),
             Map.entry(relativeFixturePath(Dm01DmavFixtures.HOHEITSGRENZEN.dm01MinimalFixture()), Dm01DmavFixtures.HOHEITSGRENZEN.dm01Model()),
-            Map.entry(relativeFixturePath(Dm01DmavFixtures.HOHEITSGRENZEN.dmavMinimalFixture()), Dm01DmavFixtures.HOHEITSGRENZEN.dmavMinimalModel())
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.HOHEITSGRENZEN.dmavMinimalFixture()), Dm01DmavFixtures.HOHEITSGRENZEN.dmavMinimalModel()),
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.FIXPUNKTELV.dm01MinimalFixture()), Dm01DmavFixtures.FIXPUNKTELV.dm01Model()),
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.FPDS2.dm01MinimalFixture()), Dm01DmavFixtures.FPDS2.dm01Model()),
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.HOHEITSGRENZENLV.dm01MinimalFixture()), Dm01DmavFixtures.HOHEITSGRENZENLV.dm01Model()),
+            Map.entry(relativeFixturePath(Dm01DmavFixtures.PLZORTSCHAFT.dm01MinimalFixture()), Dm01DmavFixtures.PLZORTSCHAFT.dm01Model())
     );
 
     @Test

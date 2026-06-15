@@ -1,0 +1,48 @@
+version: 1
+
+job:
+  name: dm01-to-dmav-hoheitsgrenzenlv
+  description: "Pilot-Transformation DM01 Landesgrenzen nach DMAV HoheitsgrenzenLV"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "models/"
+  inputs:
+    - id: dm01
+      path: "input/dm01.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-hoheitsgrenzenlv.xtf"
+      model: "DMAV_HoheitsgrenzenLV_V1_0"
+      format: "xtf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "dm01-to-dmav-hoheitsgrenzenlv"
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Gueltigkeit_DM01_DMAV:
+      rechtskraeftig: rechtskraeftig
+      streitig: streitig
+      provisorisch: provisorisch
+      undefiniert: festgelegt
+
+  rules:
+    - id: landesgrenze
+      target:
+        output: dmav
+        class: "DMAV_HoheitsgrenzenLV_V1_0.HoheitsgrenzenLV.Landesgrenze"
+      sources:
+        - alias: lg
+          input: dm01
+          class: "DM01AVCH24LV95D.Landesgrenzen.Landesgrenzabschnitt"
+      assign:
+        Geometrie: "lg.Geometrie"
+        Gueltigkeit: "enumMap(lg.Gueltigkeit, 'Gueltigkeit_DM01_DMAV')"

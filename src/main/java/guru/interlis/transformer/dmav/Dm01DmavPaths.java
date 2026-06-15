@@ -14,10 +14,16 @@ public final class Dm01DmavPaths {
     public static final String TOPIC_TOLERANZSTUFEN = "toleranzstufen";
     public static final String TOPIC_GA = "gebaeudeadressen";
     public static final String TOPIC_HOHEITSGRENZEN = "hoheitsgrenzen";
+    public static final String TOPIC_FIXPUNKTELV = "fixpunktelv";
+    public static final String TOPIC_FPDS2 = "fpds2";
+    public static final String TOPIC_HOHEITSGRENZENLV = "hoheitsgrenzenlv";
+    public static final String TOPIC_PLZORTSCHAFT = "plzortschaft";
 
     public static final String LOCAL_MODEL_DIR = "src/test/data/av/models/";
     public static final String REMOTE_MODEL_DIR = "https://models.interlis.ch";
+    public static final String REMOTE_KGK_MODEL_DIR = "https://models.kgk-cgc.ch";
     public static final String LOCAL_AND_REMOTE_MODEL_DIRS = LOCAL_MODEL_DIR + ";" + REMOTE_MODEL_DIR;
+    public static final String LOCAL_AND_REMOTE_KGK_MODEL_DIRS = LOCAL_MODEL_DIR + ";" + REMOTE_MODEL_DIR + ";" + REMOTE_KGK_MODEL_DIR;
     public static final String DM01_MODEL = "DM01AVCH24LV95D";
     public static final String DMAV_UMBRELLA_MODEL = "DMAVTYM_Alles_V1_1";
     public static final String DMAV_LFP3_MODEL = "DMAV_FixpunkteAVKategorie3_V1_1";
@@ -28,6 +34,10 @@ public final class Dm01DmavPaths {
     public static final String DMAV_TOLERANZSTUFEN_MODEL = "DMAV_Toleranzstufen_V1_1";
     public static final String DMAV_GA_MODEL = "DMAV_Gebaeudeadressen_V1_1";
     public static final String DMAV_HOHEITSGRENZEN_MODEL = "DMAV_HoheitsgrenzenAV_V1_0";
+    public static final String DMAV_FIXPUNKTELV_MODEL = "DMAV_FixpunkteLV_V1_0";
+    public static final String DMAV_FPDS2_MODEL = "KGKCGC_FPDS2_V1_1";
+    public static final String DMAV_HOHEITSGRENZENLV_MODEL = "DMAV_HoheitsgrenzenLV_V1_0";
+    public static final String DMAV_PLZORTSCHAFT_MODEL = "DMAV_PLZ_Ortschaft_V1_0";
 
     public static final Path PROFILE_ROOT = Path.of("profiles");
     public static final Path FIXTURE_ROOT = Path.of("src/test/resources/fixtures/dm01-dmav");

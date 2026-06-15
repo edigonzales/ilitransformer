@@ -1,0 +1,70 @@
+version: 1
+
+job:
+  name: dm01-to-dmav-plzortschaft
+  description: "Pilot-Transformation DM01 PLZOrtschaft nach DMAV PLZ_Ortschaft"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "models/"
+  inputs:
+    - id: dm01
+      path: "input/dm01.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-plzortschaft.xtf"
+      model: "DMAV_PLZ_Ortschaft_V1_0"
+      format: "xtf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "dm01-to-dmav-plzortschaft"
+  basketStrategy:
+    default: byTopic
+
+  rules:
+    - id: ortschaft
+      target:
+        output: dmav
+        class: "DMAV_PLZ_Ortschaft_V1_0.PLZ_Ortschaft.Ortschaft"
+      sources:
+        - alias: os
+          input: dm01
+          class: "DM01AVCH24LV95D.PLZOrtschaft.Ortschaft"
+        - alias: osn
+          input: dm01
+          class: "DM01AVCH24LV95D.PLZOrtschaft.OrtschaftsName"
+          where: "eq(osn.Sprache, #de)"
+      joins:
+        - left: os
+          right: osn
+          on: "eq(osn.OrtschaftsName_von, os)"
+          type: inner
+      assign:
+        Geometrie: "os.Flaeche"
+        AmtlicherOrtschaftsname: "osn.Text"
+
+    - id: plz
+      target:
+        output: dmav
+        class: "DMAV_PLZ_Ortschaft_V1_0.PLZ_Ortschaft.PLZ"
+      sources:
+        - alias: plz6
+          input: dm01
+          class: "DM01AVCH24LV95D.PLZOrtschaft.PLZ6"
+      assign:
+        Geometrie: "plz6.Flaeche"
+        PLZ4: "plz6.PLZ"
+        Zusatzziffer: "plz6.Zusatzziffern"
+      refs:
+        - association: "OrtschaftPLZ"
+          role: "Ortschaft"
+          required: true
+          targetObject:
+            rule: ortschaft
+            sourceRef: "plz6.PLZ6_von"

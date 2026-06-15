@@ -272,6 +272,137 @@ Stand: 2026-06-14
 
 ---
 
+## FixpunkteLV (DM01 FixpunkteKategorie1 → DMAV_FixpunkteLV_V1_0) – ⚠️
+
+| Status | DM01→DMAV | DMAV→DM01 |
+|---|---|---|
+| Profil | ✅ | ❌ |
+| Minimal-Forward-Test | ✅ | ❌ |
+
+**Profile:** `profiles/dm01-to-dmav/1.1/fixpunktelv.yaml`
+**Real-Data-Tests:** `FixpunkteLVMinimalFixtureForwardTest`
+**Fixtures:** `src/test/resources/fixtures/dm01-dmav/fixpunktelv/dm01-minimal.itf`
+
+> **Hinweis:** Das DMAV-Modell hat keine Nachführungsklassen. Nur LFP1/HFP1-Objekte werden ohne Entstehung transformiert. DMAV→DM01 ist nicht implementiert.
+
+### LFP1
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV |
+|---|---|---|
+| Nummer | Nummer | ✅ |
+| Geometrie | Geometrie | ✅ |
+| Hoehengeometrie | HoeheGeom | ✅ |
+| Lagegenauigkeit | LageGen (div 100) | ✅ |
+| IstLagezuverlaessig | LageZuv | ✅ |
+| Hoehengenauigkeit | HoeheGen (div 100) | ✅ |
+| IstHoehenzuverlaessig | HoeheZuv | ✅ |
+| Begehbar | Begehbarkeit | ✅ |
+| Punktzeichen | Punktzeichen | ✅ |
+
+### HFP1
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV |
+|---|---|---|
+| Nummer | Nummer | ✅ |
+| Geometrie | Geometrie | ✅ |
+| Hoehengeometrie | HoeheGeom | ✅ |
+| Lagegenauigkeit | LageGen (div 100) | ✅ |
+| IstLagezuverlaessig | LageZuv | ✅ |
+| Hoehengenauigkeit | HoeheGen (div 100) | ✅ |
+| IstHoehenzuverlaessig | HoeheZuv | ✅ |
+
+---
+
+## FPDS2 (DM01 FixpunkteKategorie2 → KGKCGC_FPDS2_V1_1) – ⚠️
+
+| Status | DM01→DMAV | DMAV→DM01 |
+|---|---|---|
+| Profil | ✅ | ❌ |
+| Minimal-Forward-Test | ✅ | ❌ |
+
+**Profile:** `profiles/dm01-to-dmav/1.1/fpds2.yaml`
+**Real-Data-Tests:** `Fpds2MinimalFixtureForwardTest`
+**Fixtures:** `src/test/resources/fixtures/dm01-dmav/fpds2/dm01-minimal.itf`
+
+> **Hinweis:** Vereinfachtes Mapping. FixpunktVersion, Zustaendigkeit, UebersichtGeodienst und UebersichtMassstab werden nicht abgebildet. Die Ausgabe validiert daher nicht vollständig gegen das KGK-Modell (missing mandatory associations).
+
+### Fixpunkt
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV |
+|---|---|---|
+| Art | — (LFP2→#LFP2, HFP2→#HFP2) | ✅ |
+| NBIdent | NBIdent | ✅ |
+| Nummer | Nummer | ✅ |
+| Begehbarkeit | Begehbarkeit | ✅ |
+| GNSSSichtbarkeit | — (Default #keine_Angabe) | ✅ |
+| ProtokollSprache | — (Default #deutsch) | ✅ |
+| SymbolOri | — (Default 100.0 für LFP2) | ✅ |
+| TSP | — (Default true) | ✅ |
+| Unterhaltsstrategie | — (Default #aktiv) | ✅ |
+
+### FixpunkteNachfuehrung
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV |
+|---|---|---|
+| NBIdent | NBIdent | ✅ |
+| Identifikator | Identifikator | ✅ |
+| Beschreibung | Beschreibung | ✅ |
+| GueltigerEintrag | GueltigerEintrag / Default | ✅ |
+| DatumEroeffnung | GueltigerEintrag / Datum1 / Default | ✅ |
+| Status | — (Default #in_Bearbeitung) | ✅ |
+
+---
+
+## HoheitsgrenzenLV (DM01 Landesgrenzen → DMAV_HoheitsgrenzenLV_V1_0) – ⚠️
+
+| Status | DM01→DMAV | DMAV→DM01 |
+|---|---|---|
+| Profil | ✅ | ❌ |
+| Minimal-Forward-Test | ✅ | ❌ |
+
+**Profile:** `profiles/dm01-to-dmav/1.1/hoheitsgrenzenlv.yaml`
+**Real-Data-Tests:** `HoheitsgrenzenLVMinimalFixtureForwardTest`
+**Fixtures:** `src/test/resources/fixtures/dm01-dmav/hoheitsgrenzenlv/dm01-minimal.itf`
+
+### Landesgrenze
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV |
+|---|---|---|
+| Geometrie | Geometrie | ✅ |
+| Gueltigkeit | Gueltigkeit (enumMap) | ✅ |
+
+
+---
+
+## PLZ_Ortschaft (DM01 PLZOrtschaft → DMAV_PLZ_Ortschaft_V1_0) – ⚠️
+
+| Status | DM01→DMAV | DMAV→DM01 |
+|---|---|---|
+| Profil | ✅ | ❌ |
+| Minimal-Forward-Test | ✅ | ❌ |
+
+**Profile:** `profiles/dm01-to-dmav/1.1/plzortschaft.yaml`
+**Real-Data-Tests:** `PlzOrtschaftMinimalFixtureForwardTest`
+**Fixtures:** `src/test/resources/fixtures/dm01-dmav/plzortschaft/dm01-minimal.itf`
+
+### Ortschaft
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV |
+|---|---|---|
+| Geometrie | Flaeche | ✅ |
+| AmtlicherOrtschaftsname | OrtschaftsName.Text (Sprache=de) | ✅ |
+
+### PLZ
+
+| DMAV-Attribut | DM01-Attribut | DM01→DMAV |
+|---|---|---|
+| Geometrie | Flaeche | ✅ |
+| PLZ4 | PLZ | ✅ |
+| Zusatzziffer | Zusatzziffern | ✅ |
+| Ortschaft (Ref) | PLZ6_von | ✅ |
+
+---
+
 ## Toleranzstufen – ❌
 
 | Status | DM01→DMAV | DMAV→DM01 |

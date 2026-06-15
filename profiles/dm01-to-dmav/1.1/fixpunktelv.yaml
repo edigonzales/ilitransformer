@@ -1,0 +1,74 @@
+version: 1
+
+job:
+  name: dm01-to-dmav-fixpunktelv
+  description: "Pilot-Transformation DM01 FixpunkteKategorie1 nach DMAV FixpunkteLV"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "models/"
+  inputs:
+    - id: dm01
+      path: "input/dm01.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-fixpunktelv.xtf"
+      model: "DMAV_FixpunkteLV_V1_0"
+      format: "xtf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "dm01-to-dmav-fixpunktelv"
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Zuverlaessigkeit_DM01_DMAV:
+      ja: "true"
+      nein: "false"
+
+  rules:
+    - id: lfp1
+      target:
+        output: dmav
+        class: "DMAV_FixpunkteLV_V1_0.FixpunkteLV.LFP1"
+      sources:
+        - alias: p
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie1.LFP1"
+      identity:
+        sourceKey: ["p.NBIdent", "p.Nummer"]
+      assign:
+        Nummer: "p.Nummer"
+        Geometrie: "p.Geometrie"
+        Hoehengeometrie: "p.HoeheGeom"
+        Lagegenauigkeit: "div(p.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(p.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        Hoehengenauigkeit: "div(p.HoeheGen, 100.0)"
+        IstHoehenzuverlaessig: "enumMap(p.HoeheZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        Begehbar: "eq(p.Begehbarkeit, #begehbar)"
+        Punktzeichen: "p.Punktzeichen"
+
+    - id: hfp1
+      target:
+        output: dmav
+        class: "DMAV_FixpunkteLV_V1_0.FixpunkteLV.HFP1"
+      sources:
+        - alias: p
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie1.HFP1"
+      identity:
+        sourceKey: ["p.NBIdent", "p.Nummer"]
+      assign:
+        Nummer: "p.Nummer"
+        Geometrie: "p.Geometrie"
+        Hoehengeometrie: "p.HoeheGeom"
+        Lagegenauigkeit: "div(p.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(p.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        Hoehengenauigkeit: "div(p.HoeheGen, 100.0)"
+        IstHoehenzuverlaessig: "enumMap(p.HoeheZuv, 'Zuverlaessigkeit_DM01_DMAV')"

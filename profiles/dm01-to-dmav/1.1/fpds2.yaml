@@ -1,0 +1,112 @@
+version: 1
+
+job:
+  name: dm01-to-dmav-fpds2
+  description: "Pilot-Transformation DM01 FixpunkteKategorie2 nach KGKCGC FPDS2"
+  direction: dm01-to-dmav
+  failPolicy: report
+  modeldir:
+    - "https://models.geo.admin.ch/"
+    - "https://models.kgk-cgc.ch/"
+    - "models/"
+  inputs:
+    - id: dm01
+      path: "input/dm01.itf"
+      model: "DM01AVCH24LV95D"
+      format: "itf"
+  outputs:
+    - id: dmav
+      path: "build/out/dmav-fpds2.xtf"
+      model: "KGKCGC_FPDS2_V1_1"
+      format: "xtf"
+
+mapping:
+  compileMode: compatible
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "dm01-to-dmav-fpds2"
+  basketStrategy:
+    default: byTopic
+
+  enums:
+    Begehbarkeit_DM01_KGK:
+      begehbar: begehbar
+      nicht_begehbar: nicht_begehbar
+
+  rules:
+    - id: fpds2-nachfuehrung-lfp2
+      target:
+        output: dmav
+        class: "KGKCGC_FPDS2_V1_1.FPDS2.FixpunkteNachfuehrung"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 60)"
+        GueltigerEintrag: "coalesce(nf.GueltigerEintrag, '2024-01-01')"
+        DatumEroeffnung: "coalesce(nf.GueltigerEintrag, nf.Datum1, '2024-01-01')"
+        Status: "#in_Bearbeitung"
+
+    - id: fpds2-nachfuehrung-hfp2
+      target:
+        output: dmav
+        class: "KGKCGC_FPDS2_V1_1.FPDS2.FixpunkteNachfuehrung"
+      sources:
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung"
+      identity:
+        sourceKey: ["nf.NBIdent", "nf.Identifikator"]
+      assign:
+        NBIdent: "nf.NBIdent"
+        Identifikator: "nf.Identifikator"
+        Beschreibung: "truncate(nf.Beschreibung, 60)"
+        GueltigerEintrag: "coalesce(nf.GueltigerEintrag, '2024-01-01')"
+        DatumEroeffnung: "coalesce(nf.GueltigerEintrag, nf.Datum1, '2024-01-01')"
+        Status: "#in_Bearbeitung"
+
+    - id: fixpunkt-lfp2
+      target:
+        output: dmav
+        class: "KGKCGC_FPDS2_V1_1.FPDS2.Fixpunkt"
+      sources:
+        - alias: p
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2"
+      identity:
+        sourceKey: ["p.NBIdent", "p.Nummer"]
+      assign:
+        Art: "#LFP2"
+        Begehbarkeit: "enumMap(p.Begehbarkeit, 'Begehbarkeit_DM01_KGK')"
+        GNSSSichtbarkeit: "#keine_Angabe"
+        NBIdent: "p.NBIdent"
+        Nummer: "p.Nummer"
+        ProtokollSprache: "#deutsch"
+        SymbolOri: "100.0"
+        TSP: "true"
+        Unterhaltsstrategie: "#aktiv"
+
+    - id: fixpunkt-hfp2
+      target:
+        output: dmav
+        class: "KGKCGC_FPDS2_V1_1.FPDS2.Fixpunkt"
+      sources:
+        - alias: p
+          input: dm01
+          class: "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2"
+      identity:
+        sourceKey: ["p.NBIdent", "p.Nummer"]
+      assign:
+        Art: "#HFP2"
+        Begehbarkeit: "#begehbar"
+        GNSSSichtbarkeit: "#keine_Angabe"
+        NBIdent: "p.NBIdent"
+        Nummer: "p.Nummer"
+        ProtokollSprache: "#deutsch"
+        TSP: "true"
+        Unterhaltsstrategie: "#aktiv"
