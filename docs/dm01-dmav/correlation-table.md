@@ -96,5 +96,5 @@ Nicht vollständig abgedeckt:
 ./gradlew importDmavCorrelation
 
 # CLI-Kommando
-ilitransformer import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
+ilitransformer dm01-dmav import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
 ```

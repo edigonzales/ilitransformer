@@ -148,7 +148,7 @@
 ## Phase 15 (Stabilisierung, CLI-UX und Dokumentation)
 
 ### Resolved
-- **CLI-Kommandos**: Alle 4 Commands sind picocli-Subcommands: `transform`, `validate-mapping`, `inspect-model`, `import-correlation`.
+- **CLI-Kommandos**: Alle 4 Commands sind picocli-Subcommands: `transform`, `validate-mapping`, `inspect-model`, `dm01-dmav`.
 - **`transform --validate`**: Flag für optionalen ilivalidator-Lauf nach Transformation.
 - **`transform --report`**: Flag für Report-Ausgabepfad.
 - **Gradle-Tasks**: `importDmavCorrelation`, `generateModelInventory`, `validateGoldenTransfers`, `integrationTest`.

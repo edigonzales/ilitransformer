@@ -1,6 +1,6 @@
 package guru.interlis.transformer.app;
 
-import guru.interlis.transformer.cli.ImportCorrelationCommand;
+import guru.interlis.transformer.cli.Dm01DmavCommand;
 import guru.interlis.transformer.cli.InspectModelCommand;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -29,7 +29,7 @@ import picocli.CommandLine.Parameters;
         CliMain.ValidateMappingCommand.class,
         CliMain.ValidateTransferCommand.class,
         InspectModelCommand.class,
-        ImportCorrelationCommand.class
+        Dm01DmavCommand.class
     }
 )
 public final class CliMain implements Callable<Integer> {

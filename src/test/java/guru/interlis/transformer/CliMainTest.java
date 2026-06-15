@@ -40,6 +40,8 @@ class CliMainTest {
         assertThat(output).contains("ilitransformer");
         assertThat(output).contains("transform");
         assertThat(output).contains("validate-mapping");
+        assertThat(output).contains("dm01-dmav");
+        assertThat(output).doesNotContain("import-correlation");
     }
 
     @Test
@@ -97,5 +99,24 @@ class CliMainTest {
         assertThat(exitCode).isZero();
         String output = outContent.toString();
         assertThat(output).contains("valid");
+    }
+
+    @Test
+    void dm01DmavSubcommandShowsHelp() {
+        int exitCode = new CommandLine(new CliMain()).execute("dm01-dmav", "--help");
+        assertThat(exitCode).isZero();
+        String output = outContent.toString();
+        assertThat(output).contains("dm01-dmav");
+        assertThat(output).contains("DM01");
+        assertThat(output).contains("DMAV");
+    }
+
+    @Test
+    void dm01DmavImportCorrelationShowsHelp() {
+        int exitCode = new CommandLine(new CliMain()).execute("dm01-dmav", "import-correlation", "--help");
+        assertThat(exitCode).isZero();
+        String output = outContent.toString();
+        assertThat(output).contains("import-correlation");
+        assertThat(output).contains("--xlsx");
     }
 }

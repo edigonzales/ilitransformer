@@ -88,12 +88,20 @@ ilitransformer inspect-model --model DMAV_FixpunkteAVKategorie3_V1_1 --modeldir 
 ilitransformer inspect-model --model DMAV_FixpunkteAVKategorie3_V1_1 --modeldir "src/test/data/av/models/" --output build/reports/dmav-fp3 --format both
 ```
 
-### import-correlation
+### dm01-dmav
+
+DM01 ↔ DMAV product profile utilities.
+
+```bash
+ilitransformer dm01-dmav [command]
+```
+
+#### import-correlation
 
 Import DM01/DMAV correlation hints from XLSX.
 
 ```bash
-ilitransformer import-correlation --xlsx <path> [--out <path>] [--report <path>]
+ilitransformer dm01-dmav import-correlation --xlsx <path> [--out <path>] [--report <path>]
 ```
 
 | Option | Required | Description |
@@ -105,7 +113,7 @@ ilitransformer import-correlation --xlsx <path> [--out <path>] [--report <path>]
 Example:
 
 ```bash
-ilitransformer import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
+ilitransformer dm01-dmav import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
 ```
 
 ## Gradle tasks
@@ -117,7 +125,7 @@ Equivalent Gradle tasks:
 | `transform` | `./gradlew run --args="transform ..."` |
 | `validate-mapping` | `./gradlew run --args="validate-mapping ..."` |
 | `inspect-model` | `./gradlew generateModelInventory` (pre-configured) |
-| `import-correlation` | `./gradlew importDmavCorrelation` |
+| `dm01-dmav import-correlation` | `./gradlew importDmavCorrelation` |
 
 Additional Gradle-only tasks:
 

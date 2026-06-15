@@ -36,7 +36,7 @@ Stand nach Abschluss von Phase 16 (2026-06-09).
 
 ### Core Engine (Phasen 0–7)
 - Gradle-Java-Projekt mit Java 25 Toolchain
-- CLI-Kommandos: `transform`, `validate-mapping`, `inspect-model`, `import-correlation`
+- CLI-Kommandos: `transform`, `validate-mapping`, `inspect-model`, `dm01-dmav`
 - `IliModelService` + `TypeSystemFacade` + `IliPath` + `RoleResolver`
 - `ModelInventory` + `InventorySerializer`
 - `MappingCompiler.compileTyped()` → `TransformPlan`
@@ -54,7 +54,7 @@ Stand nach Abschluss von Phase 16 (2026-06-09).
 - `DiagnosticCollector` mit ERROR/WARNING/INFO
 
 ### DM01 ↔ DMAV (Phasen 8, 10–14)
-- XLSX-Import: Gradle-Task `importDmavCorrelation` + CLI `import-correlation`
+- XLSX-Import: Gradle-Task `importDmavCorrelation` + CLI `dm01-dmav import-correlation`
 - `CorrelationHint`-Record + Importer/Exporter (~250 Hints)
 - DM01→DMAV LFP3 Pilot mit Golden Test + ilivalidator
 - DMAV→DM01 LFP3 Pilot mit Golden Test + Loss-Dokumentation

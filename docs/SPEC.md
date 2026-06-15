@@ -1832,7 +1832,7 @@ Die Datei `docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx` soll reproduzi
 
 #### Artefakt
 
-- CLI-Befehl `import-correlation`.
+- CLI-Befehl `dm01-dmav import-correlation`.
 - `build/generated/dm01-dmav/correlation-hints.json`.
 - `build/reports/dm01-dmav/correlation-import-report.md`.
 
@@ -2469,7 +2469,7 @@ DEBUG
 ilitransformer transform --mapping mapping.yaml
 ilitransformer validate-mapping --mapping mapping.yaml
 ilitransformer inspect-model --model DMAV_FixpunkteAVKategorie3_V1_1 --modeldir https://models.geo.admin.ch/
-ilitransformer import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
+ilitransformer dm01-dmav import-correlation --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx
 ```
 
 ### 24.2 Transform
@@ -2499,7 +2499,7 @@ ilitransformer inspect-model \
 ### 24.5 Import Correlation
 
 ```bash
-ilitransformer import-correlation \
+ilitransformer dm01-dmav import-correlation \
   --xlsx docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx \
   --out build/generated/dm01-dmav/correlation-hints.json
 ```
@@ -2820,7 +2820,7 @@ Sie soll enthalten:
 - `transform`,
 - `inventory`,
 - `compile-mapping`,
-- `import-correlation`,
+- `dm01-dmav import-correlation`,
 - `validate-output`,
 - gemeinsame Optionen,
 - Exit Codes,

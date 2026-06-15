@@ -60,7 +60,7 @@ Entry point via picocli. Subcommands:
 - `transform` — run a transformation
 - `validate-mapping` — compile mapping without executing
 - `inspect-model` — model inventory as JSON/Markdown
-- `import-correlation` — XLSX correlation hints import
+- `dm01-dmav import-correlation` — XLSX correlation hints import
 
 ### JobRunner
 
