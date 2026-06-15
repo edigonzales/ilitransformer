@@ -13,7 +13,6 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox.StartBasketEvent;
-import guru.interlis.transformer.dmav.Dm01DmavFixtures;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.testutil.TransferDatasetDescriptor;
 import ch.interlis.iom_j.itf.ItfReader2;
@@ -30,9 +29,16 @@ import java.util.Set;
 public final class TransferInventoryService {
 
     private final IliModelService modelService;
+    private final TransferInventoryClassifier classifier;
 
     public TransferInventoryService(IliModelService modelService) {
+        this(modelService, TransferInventoryClassifier.none());
+    }
+
+    public TransferInventoryService(IliModelService modelService,
+                                    TransferInventoryClassifier classifier) {
         this.modelService = modelService;
+        this.classifier = classifier != null ? classifier : TransferInventoryClassifier.none();
     }
 
     public TransferInventory inspect(TransferDatasetDescriptor descriptor) {
@@ -49,7 +55,7 @@ public final class TransferInventoryService {
         Map<String, Long> classCounts = new LinkedHashMap<>();
         Set<String> geometryObservation = new LinkedHashSet<>();
         Map<String, Integer> refCounts = new LinkedHashMap<>();
-        Set<String> lfp3Classes = new LinkedHashSet<>();
+        Map<String, Set<String>> classifications = new LinkedHashMap<>();
 
         IoxReader reader = null;
         try {
@@ -80,9 +86,9 @@ public final class TransferInventoryService {
                     String tag = iom.getobjecttag();
                     if (tag != null) {
                         classCounts.merge(tag, 1L, Long::sum);
-                        if (Dm01DmavFixtures.isLfp3RelevantClass(tag)) {
-                            lfp3Classes.add(tag);
-                        }
+                        classifier.classify(iom, (category, value) -> classifications
+                                .computeIfAbsent(category, ignored -> new LinkedHashSet<>())
+                                .add(value));
                         if (collectedModelNames.isEmpty()) {
                             String modelPart = extractModelName(tag);
                             if (modelPart != null) {
@@ -128,8 +134,17 @@ public final class TransferInventoryService {
                 classStats,
                 List.copyOf(geometryObservation),
                 refCounts,
-                List.copyOf(lfp3Classes)
+                toImmutableClassifications(classifications)
         );
+    }
+
+    private static Map<String, List<String>> toImmutableClassifications(
+            Map<String, Set<String>> classifications) {
+        Map<String, List<String>> result = new LinkedHashMap<>();
+        for (var entry : classifications.entrySet()) {
+            result.put(entry.getKey(), List.copyOf(entry.getValue()));
+        }
+        return java.util.Collections.unmodifiableMap(result);
     }
 
     private static String extractModelName(String qualifiedClassName) {

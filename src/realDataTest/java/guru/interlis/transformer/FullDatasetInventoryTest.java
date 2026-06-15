@@ -3,6 +3,7 @@ package guru.interlis.transformer;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TransferInventory;
 import guru.interlis.transformer.model.TransferInventoryService;
+import guru.interlis.transformer.dmav.Dm01DmavTransferInventoryClassifier;
 import guru.interlis.transformer.testutil.RealDatasetCatalog;
 import guru.interlis.transformer.testutil.TransferDatasetDescriptor;
 import guru.interlis.transformer.testutil.TransferFormat;
@@ -28,7 +29,8 @@ class FullDatasetInventoryTest {
     @BeforeAll
     static void setUp() {
         modelService = new IliModelService();
-        inventoryService = new TransferInventoryService(modelService);
+        inventoryService = new TransferInventoryService(modelService,
+                new Dm01DmavTransferInventoryClassifier());
     }
 
     @Test
@@ -58,7 +60,8 @@ class FullDatasetInventoryTest {
                 .sorted((a, b) -> Long.compare(b.count(), a.count()))
                 .limit(20)
                 .forEach(cs -> System.out.printf("  %s: %d%n", cs.className(), cs.count()));
-        System.out.println("LFP3-related: " + inventory.lfp3RelatedClasses());
+        System.out.println("LFP3-related: " + inventory.classifications()
+                .getOrDefault(Dm01DmavTransferInventoryClassifier.CATEGORY_LFP3, List.of()));
 
         long lfp3Count = inventory.classStats().stream()
                 .filter(cs -> cs.className().toUpperCase().contains("LFP3"))
@@ -96,7 +99,8 @@ class FullDatasetInventoryTest {
                 .sorted((a, b) -> Long.compare(b.count(), a.count()))
                 .limit(20)
                 .forEach(cs -> System.out.printf("  %s: %d%n", cs.className(), cs.count()));
-        System.out.println("LFP3-related: " + inventory.lfp3RelatedClasses());
+        System.out.println("LFP3-related: " + inventory.classifications()
+                .getOrDefault(Dm01DmavTransferInventoryClassifier.CATEGORY_LFP3, List.of()));
 
         long lfp3Count = inventory.classStats().stream()
                 .filter(cs -> cs.className().toUpperCase().contains("LFP3"))

@@ -3,7 +3,6 @@ package guru.interlis.transformer.model;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public record TransferInventory(
         Path transferFile,
@@ -15,7 +14,7 @@ public record TransferInventory(
         List<ClassStats> classStats,
         List<String> geometryTypes,
         Map<String, Integer> referenceCounts,
-        List<String> lfp3RelatedClasses
+        Map<String, List<String>> classifications
 ) {
     public record BasketSummary(
             String bid,
