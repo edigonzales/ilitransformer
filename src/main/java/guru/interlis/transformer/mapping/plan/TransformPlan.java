@@ -19,4 +19,20 @@ public record TransformPlan(
     public boolean isReportOnly() {
         return compileMode == CompileMode.REPORT;
     }
+
+    public TransformPlan withFailPolicy(FailPolicy failPolicy) {
+        return new TransformPlan(
+                name,
+                direction,
+                failPolicy,
+                compileMode,
+                rules,
+                inputsById,
+                outputsById,
+                diagnostics,
+                oidPlan,
+                basketPlan,
+                enumMaps
+        );
+    }
 }

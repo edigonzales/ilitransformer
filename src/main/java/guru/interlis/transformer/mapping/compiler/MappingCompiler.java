@@ -34,6 +34,7 @@ import guru.interlis.transformer.mapping.plan.CreatePlan;
 import guru.interlis.transformer.mapping.plan.ExpressionCompileContext;
 import guru.interlis.transformer.mapping.plan.ExpressionKind;
 import guru.interlis.transformer.mapping.plan.FailPolicy;
+import guru.interlis.transformer.mapping.plan.FailPolicyParser;
 import guru.interlis.transformer.mapping.plan.IdentityPlan;
 import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.JoinCardinality;
@@ -1564,10 +1565,7 @@ public final class MappingCompiler {
     // -- Helpers -----------------------------------------------------------
 
     private static FailPolicy parseFailPolicy(String failPolicy) {
-        if (failPolicy == null) return FailPolicy.STRICT;
-        if (failPolicy.equalsIgnoreCase("lenient")) return FailPolicy.LENIENT;
-        if (failPolicy.equalsIgnoreCase("report_only") || failPolicy.equalsIgnoreCase("reportOnly")) return FailPolicy.REPORT_ONLY;
-        return FailPolicy.STRICT;
+        return FailPolicyParser.parseOrDefault(failPolicy, FailPolicy.STRICT);
     }
 
     private static CompileMode parseCompileMode(String compileMode, DiagnosticCollector diag) {

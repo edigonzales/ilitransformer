@@ -75,6 +75,10 @@ class CliMainTest {
         String output = outContent.toString();
         assertThat(output).contains("transform");
         assertThat(output).contains("--mapping");
+        assertThat(output).contains("--fail-policy");
+        assertThat(output).contains("--keep-temp");
+        assertThat(output).contains("--validate");
+        assertThat(output).contains("--report");
     }
 
     @Test

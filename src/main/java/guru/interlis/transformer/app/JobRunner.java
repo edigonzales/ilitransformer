@@ -79,6 +79,10 @@ public final class JobRunner {
 
         TransformPlan plan = new MappingCompiler().compileTyped(config, modelRegistry);
 
+        if (options.failPolicyOverrideOptional().isPresent()) {
+            plan = plan.withFailPolicy(options.failPolicyOverrideOptional().get());
+        }
+
         return new PreparedJob(config, plan, modelRegistry, baseDirectory);
     }
 

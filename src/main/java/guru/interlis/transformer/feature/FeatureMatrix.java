@@ -156,8 +156,8 @@ public final class FeatureMatrix {
         entries.add(FeatureEntry.of("Same OID different context resolution", "19",
                 FeatureStatus.SUPPORTED,
                 "Same OID in different baskets/inputs/classes correctly disambiguated; no global OID-only fallback by default",
-                "SameOidDifferentBasketTest", "SameOidDifferentInputTest",
-                "SameOidDifferentClassTest"));
+                "ReferenceIndexTest", "ReferenceResolutionServiceTest",
+                "ReferenceResolutionIntegrationTest"));
 
         entries.add(FeatureEntry.of("Association-aware role resolution", "19",
                 FeatureStatus.SUPPORTED,
@@ -272,7 +272,7 @@ public final class FeatureMatrix {
         entries.add(FeatureEntry.of("Joins / Splits / Merge", "22",
                 FeatureStatus.EXPERIMENTAL,
                 "Multi-source equi-joins, create directives, rule dependency ordering",
-                "InnerJoinTest, LeftJoinTest, CreateAdditionalObjectTest"));
+                "JoinCompilationTest", "CreateCompilationTest"));
 
         entries.add(FeatureEntry.of("RuleDispatchIndex", "26",
                 FeatureStatus.SUPPORTED,

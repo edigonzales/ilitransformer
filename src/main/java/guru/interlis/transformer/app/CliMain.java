@@ -4,6 +4,8 @@ import guru.interlis.transformer.cli.ImportCorrelationCommand;
 import guru.interlis.transformer.cli.InspectModelCommand;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.mapping.plan.FailPolicy;
+import guru.interlis.transformer.mapping.plan.FailPolicyParser;
 import guru.interlis.transformer.validation.InProcessIlivalidatorService;
 import guru.interlis.transformer.validation.TransferValidationService;
 import guru.interlis.transformer.validation.ValidationResult;
@@ -91,11 +93,22 @@ public final class CliMain implements Callable<Integer> {
 
         @Override
         public Integer call() throws Exception {
+            FailPolicy override = null;
+            if (failPolicy != null && !failPolicy.isBlank()) {
+                try {
+                    override = FailPolicyParser.parseOrDefault(failPolicy, null);
+                } catch (IllegalArgumentException e) {
+                    System.err.println(e.getMessage());
+                    return 1;
+                }
+            }
+
             RunOptions options = new RunOptions(
                     modeldirs != null ? modeldirs : List.of(),
                     validate,
                     report,
-                    keepTemp);
+                    keepTemp,
+                    override);
 
             DiagnosticCollector diagnostics = new JobRunner().run(mapping, options);
 

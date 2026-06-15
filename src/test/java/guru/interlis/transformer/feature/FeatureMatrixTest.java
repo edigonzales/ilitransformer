@@ -6,6 +6,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -93,6 +94,29 @@ class FeatureMatrixTest {
                         FeatureStatus.STUB, FeatureStatus.UNSUPPORTED,
                         FeatureStatus.EXPERIMENTAL, FeatureStatus.PARTIAL,
                         FeatureStatus.CONFIG_ONLY);
+            }
+        }
+    }
+
+    @Test
+    void allReferencedTestsExist() throws Exception {
+        var matrix = new FeatureMatrix();
+        Set<String> existingTestNames = new HashSet<>();
+        Path srcRoot = Path.of("src");
+        Files.walk(srcRoot)
+                .filter(p -> p.getFileName().toString().endsWith("Test.java"))
+                .forEach(p -> existingTestNames.add(
+                        p.getFileName().toString().replace(".java", "")));
+
+        for (FeatureEntry entry : matrix.entries()) {
+            for (String testRefList : entry.testReferences()) {
+                for (String ref : testRefList.split("\\s*,\\s*")) {
+                    String refTrimmed = ref.trim();
+                    if (refTrimmed.isEmpty()) continue;
+                    assertThat(existingTestNames)
+                            .as("Feature '%s' references missing test '%s'", entry.feature(), refTrimmed)
+                            .contains(refTrimmed);
+                }
             }
         }
     }
