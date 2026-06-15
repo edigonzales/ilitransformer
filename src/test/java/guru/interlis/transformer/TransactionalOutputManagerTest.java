@@ -206,4 +206,66 @@ class TransactionalOutputManagerTest {
             assertThat(retained).exists();
         }
     }
+
+    // --- P0.3: Robust commit ---
+
+    @Test
+    void commitSupportsRelativeTargetWithoutParent() throws Exception {
+        Path target = tempDir.resolve("flat-out.xtf");
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel",
+                TransferFormat.XTF, null, null);
+
+        try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
+            Path tempPath = tx.createTemporaryOutput(binding);
+            Files.writeString(tempPath, "flat data");
+            tx.commit("out1");
+        }
+
+        assertThat(target).exists();
+        assertThat(Files.readString(target)).isEqualTo("flat data");
+    }
+
+    @Test
+    void commitCreatesMissingParentDirectory() throws Exception {
+        Path target = tempDir.resolve("nested").resolve("sub").resolve("out.xtf");
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel",
+                TransferFormat.XTF, null, null);
+
+        try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
+            Path tempPath = tx.createTemporaryOutput(binding);
+            Files.writeString(tempPath, "nested data");
+            tx.commit("out1");
+        }
+
+        assertThat(target).exists();
+        assertThat(Files.readString(target)).isEqualTo("nested data");
+    }
+
+    @Test
+    void commitRemovesTempPathAfterSuccess() throws Exception {
+        Path target = tempDir.resolve("cleaned.xtf");
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel",
+                TransferFormat.XTF, null, null);
+
+        try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
+            Path tempPath = tx.createTemporaryOutput(binding);
+            Files.writeString(tempPath, "clean data");
+            tx.commit("out1");
+
+            assertThat(tx.tempPath("out1")).isNull();
+        }
+    }
+
+    @Test
+    void tempFileCreatedNearTarget() throws Exception {
+        Path target = tempDir.resolve("near-target.xtf");
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel",
+                TransferFormat.XTF, null, null);
+
+        try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
+            Path tempPath = tx.createTemporaryOutput(binding);
+            assertThat(tempPath.getParent()).isEqualTo(tempDir);
+            assertThat(tempPath).isNotEqualTo(tx.tempDir());
+        }
+    }
 }

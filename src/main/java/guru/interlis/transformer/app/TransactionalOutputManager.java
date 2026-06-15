@@ -4,6 +4,7 @@ import guru.interlis.transformer.mapping.plan.OutputBinding;
 import guru.interlis.transformer.mapping.plan.TransferFormat;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -35,7 +36,11 @@ public final class TransactionalOutputManager implements AutoCloseable {
                 : outputId;
 
         try {
-            Path tempPath = Files.createTempFile(tempDir, baseName + "-", extension);
+            Path targetParent = targetPath != null ? targetPath.toAbsolutePath().getParent() : null;
+            Path tempParent = targetParent != null ? targetParent : tempDir;
+            Files.createDirectories(tempParent);
+            Path tempPath = Files.createTempFile(tempParent,
+                    baseName + ".", "." + baseExtension(extension));
             tempPathsByOutputId.put(outputId, tempPath);
             bindingsById.put(outputId, binding);
             return tempPath;
@@ -54,8 +59,17 @@ public final class TransactionalOutputManager implements AutoCloseable {
         if (targetPath == null) {
             throw new IllegalStateException("No target path for output " + outputId);
         }
-        Files.createDirectories(targetPath.getParent());
-        Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        Path parent = targetPath.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        try {
+            Files.move(tempPath, targetPath,
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
         tempPathsByOutputId.remove(outputId);
     }
 
@@ -95,5 +109,13 @@ public final class TransactionalOutputManager implements AutoCloseable {
             case ITF -> ".itf";
             case XTF, XML -> ".xtf";
         };
+    }
+
+    private static String baseExtension(String extension) {
+        if (extension == null) return "xtf";
+        if (extension.startsWith(".")) {
+            return extension.substring(1);
+        }
+        return extension;
     }
 }
