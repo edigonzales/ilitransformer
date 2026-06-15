@@ -65,7 +65,7 @@ class GebaeudeadressenMinimalFixtureRoundtripTest {
 
         Path forwardMapping = materializeDm01ToDmav(dm01Intermediate, dmavRoundtrip);
         String yaml = Files.readString(forwardMapping, StandardCharsets.UTF_8);
-        String tolerantYaml = yaml.replace("failPolicy: strict", "failPolicy: tolerant");
+        String tolerantYaml = yaml.replace("failPolicy: strict", "failPolicy: lenient");
         Path tolerantMapping = tempDir.resolve("dm01-to-dmav-tolerant.yaml");
         Files.writeString(tolerantMapping, tolerantYaml, StandardCharsets.UTF_8);
 
