@@ -60,6 +60,9 @@ public final class TransactionalOutputManager implements AutoCloseable {
     }
 
     public void rollbackAll() {
+        if (keepTemporaryFiles) {
+            return;
+        }
         for (Path tempPath : tempPathsByOutputId.values()) {
             try {
                 Files.deleteIfExists(tempPath);
@@ -67,11 +70,9 @@ public final class TransactionalOutputManager implements AutoCloseable {
             }
         }
         tempPathsByOutputId.clear();
-        if (!keepTemporaryFiles) {
-            try {
-                Files.deleteIfExists(tempDir);
-            } catch (IOException ignore) {
-            }
+        try {
+            Files.deleteIfExists(tempDir);
+        } catch (IOException ignore) {
         }
     }
 

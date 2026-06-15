@@ -245,12 +245,18 @@ public final class JobRunner {
                 }
                 committed = true;
             } else {
+                String suggestion = options.keepTemporaryFiles()
+                        ? "Temporary files kept in " + txManager.tempDir()
+                        : "Fix errors and retry, or use --keep-temp to inspect temporary files";
                 engineDiag.add(new Diagnostic(DiagnosticCode.COMMIT_ROLLED_BACK,
                         Severity.ERROR,
                         "Output rolled back due to errors (failPolicy="
                                 + plan.failPolicy().name().toLowerCase() + ")",
-                        null, "Fix errors and retry, or use --keep-temp to inspect temporary files"));
+                        null, suggestion));
                 txManager.rollbackAll();
+                if (options.keepTemporaryFiles()) {
+                    System.out.println("Temporary files retained in " + txManager.tempDir());
+                }
             }
         }
 

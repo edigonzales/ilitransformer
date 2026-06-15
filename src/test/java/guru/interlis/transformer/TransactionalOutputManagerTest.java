@@ -142,4 +142,68 @@ class TransactionalOutputManagerTest {
         assertThat(Files.readString(target1)).isEqualTo("data1");
         assertThat(target2).doesNotExist();
     }
+
+    @Test
+    void rollbackAllDeletesTempFilesWhenKeepTempFalse() throws Exception {
+        Path target = tempDir.resolve("deleted.xtf");
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel",
+                TransferFormat.XTF, null, null);
+
+        Path captured;
+        try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
+            captured = tx.createTemporaryOutput(binding);
+            Files.writeString(captured, "temp data");
+        }
+
+        assertThat(target).doesNotExist();
+        assertThat(captured).doesNotExist();
+    }
+
+    @Test
+    void rollbackAllKeepsTempFilesWhenKeepTempTrue() throws Exception {
+        Path target = tempDir.resolve("kept.xtf");
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel",
+                TransferFormat.XTF, null, null);
+
+        try (TransactionalOutputManager tx = new TransactionalOutputManager(true)) {
+            Path tempPath = tx.createTemporaryOutput(binding);
+            Files.writeString(tempPath, "debug data");
+            tx.rollbackAll();
+
+            assertThat(tempPath).exists();
+            assertThat(Files.readString(tempPath)).isEqualTo("debug data");
+        }
+    }
+
+    @Test
+    void closeKeepsTempFilesWhenKeepTempTrue() throws Exception {
+        Path target = tempDir.resolve("close-kept.xtf");
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel",
+                TransferFormat.XTF, null, null);
+
+        Path tempPath;
+        TransactionalOutputManager tx = new TransactionalOutputManager(true);
+        tempPath = tx.createTemporaryOutput(binding);
+        Files.writeString(tempPath, "debug data");
+        tx.close();
+
+        assertThat(tempPath).exists();
+        assertThat(Files.readString(tempPath)).isEqualTo("debug data");
+        assertThat(tx.tempDir()).exists();
+    }
+
+    @Test
+    void retainedFilesAreAccessibleAfterRollback() throws Exception {
+        Path target = tempDir.resolve("accessible.xtf");
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel",
+                TransferFormat.XTF, null, null);
+
+        try (TransactionalOutputManager tx = new TransactionalOutputManager(true)) {
+            tx.createTemporaryOutput(binding);
+            tx.rollbackAll();
+
+            Path retained = tx.tempPath("out1");
+            assertThat(retained).exists();
+        }
+    }
 }
