@@ -79,7 +79,13 @@ public final class InMemoryStateStore implements StateStore {
 
     @Override
     public Optional<IomObject> findTargetObject(String targetClass, String targetOid) {
-        return findTarget(new TargetObjectKey(null, targetClass, targetOid));
+        Optional<IomObject> exactLegacy = findTarget(new TargetObjectKey(null, targetClass, targetOid));
+        if (exactLegacy.isPresent()) return exactLegacy;
+        String suffix = "::" + targetClass + "::" + targetOid;
+        return targetIndex.entrySet().stream()
+                .filter(e -> e.getKey().endsWith(suffix))
+                .map(Map.Entry::getValue)
+                .findFirst();
     }
 
     @Override
@@ -109,7 +115,9 @@ public final class InMemoryStateStore implements StateStore {
     }
 
     private static String targetKey(TargetObjectKey key) {
-        return key.targetClass() + "::" + key.targetOid();
+        return (key.outputId() == null ? "" : key.outputId())
+                + "::" + key.targetClass()
+                + "::" + key.targetOid();
     }
 
     @Override

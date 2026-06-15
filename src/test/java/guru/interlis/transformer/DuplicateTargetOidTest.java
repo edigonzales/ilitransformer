@@ -36,15 +36,40 @@ class DuplicateTargetOidTest {
     }
 
     @Test
-    void sameOidDifferentOutputThrows() {
+    void allowsSameTargetClassAndOidInDifferentOutputs() {
         TargetObjectKey key1 = new TargetObjectKey("out1", "A.B.C", "oid-1");
         TargetObjectKey key2 = new TargetObjectKey("out2", "A.B.C", "oid-1");
         Iom_jObject obj1 = new Iom_jObject("A.B.C", "oid-1");
         Iom_jObject obj2 = new Iom_jObject("A.B.C", "oid-1");
 
         store.registerTarget(key1, obj1);
-        assertThatThrownBy(() -> store.registerTarget(key2, obj2))
-                .isInstanceOf(DuplicateTargetOidException.class);
+        assertThatCode(() -> store.registerTarget(key2, obj2)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void findTargetUsesOutputIdWhenProvided() {
+        TargetObjectKey key1 = new TargetObjectKey("out1", "A.B.C", "oid-1");
+        TargetObjectKey key2 = new TargetObjectKey("out2", "A.B.C", "oid-1");
+        Iom_jObject obj1 = new Iom_jObject("A.B.C", "oid-1");
+        Iom_jObject obj2 = new Iom_jObject("A.B.C", "oid-1");
+
+        store.registerTarget(key1, obj1);
+        store.registerTarget(key2, obj2);
+
+        assertThat(store.findTarget(key1)).isPresent();
+        assertThat(store.findTarget(key1).get()).isSameAs(obj1);
+        assertThat(store.findTarget(key2)).isPresent();
+        assertThat(store.findTarget(key2).get()).isSameAs(obj2);
+    }
+
+    @Test
+    void legacyFindTargetObjectFindsTargetWithOutputId() {
+        TargetObjectKey key = new TargetObjectKey("out1", "A.B.C", "oid-1");
+        Iom_jObject obj = new Iom_jObject("A.B.C", "oid-1");
+        store.registerTarget(key, obj);
+
+        assertThat(store.findTargetObject("A.B.C", "oid-1")).isPresent();
+        assertThat(store.findTargetObject("A.B.C", "oid-1").get()).isSameAs(obj);
     }
 
     @Test
