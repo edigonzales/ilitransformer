@@ -235,6 +235,10 @@ public final class ExpressionTypeChecker {
         if (paramType == TypeInfo.NUMERIC && argType == TypeInfo.NUMERIC) return true;
         if (paramType == TypeInfo.BOOLEAN && argType == TypeInfo.BOOLEAN) return true;
         if (paramType == TypeInfo.ENUM && argType == TypeInfo.ENUM) return true;
+        if (paramType == TypeInfo.COORD && argType == TypeInfo.COORD) return true;
+        if (paramType == TypeInfo.POLYLINE && argType == TypeInfo.POLYLINE) return true;
+        if (paramType == TypeInfo.SURFACE && argType == TypeInfo.SURFACE) return true;
+        if (paramType == TypeInfo.AREA && argType == TypeInfo.AREA) return true;
         return false;
     }
 

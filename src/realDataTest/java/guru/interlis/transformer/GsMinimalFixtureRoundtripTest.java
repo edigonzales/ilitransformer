@@ -91,6 +91,7 @@ class GsMinimalFixtureRoundtripTest {
         assertThat(content).contains("GSNB");
         assertThat(content).contains("GP001");
         assertThat(content).contains("HGP001");
+        assertThat(content).contains("HGP003");
 
         assertThat(countBySuffix(readObjects(DM01_INPUT, dm01Td), ".Grenzpunkt"))
                 .isEqualTo(countBySuffix(readObjects(dm01Roundtrip, dm01Td), ".Grenzpunkt"));

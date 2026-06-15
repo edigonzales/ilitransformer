@@ -137,7 +137,7 @@ mapping:
         Lagegenauigkeit: "div(hgp.LageGen, 100.0)"
         IstLagezuverlaessig: "enumMap(hgp.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
         Punktzeichen: "enumMap(hgp.Punktzeichen, 'Versicherungsart_DM01_DMAV')"
-        IstExaktDefiniert: "enumMap(hgp.ExaktDefiniert, 'JaNein_DM01_DMAV')"
+        IstExaktDefiniert: "if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, 'JaNein_DM01_DMAV'), false)"
         IstHoheitsgrenzpunkt: "true"
         IstHoheitsgrenzsteinAlt: "enumMap(hgp.Hoheitsgrenzstein, 'ja_nein_DM01_DMAV')"
         SymbolOri: "lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori')"
