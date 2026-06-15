@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public final class InMemorySourceLookupIndex implements SourceLookupIndex {
 
@@ -56,21 +55,14 @@ public final class InMemorySourceLookupIndex implements SourceLookupIndex {
         Map<CanonicalValue, List<SourceRecord>> attrIndex = classIndex.get(key.attribute());
         if (attrIndex == null) return List.of();
 
-        // Match by canonicalText and defined status
-        for (var entry : attrIndex.entrySet()) {
-            CanonicalValue indexedCv = entry.getKey();
-            if (Objects.equals(key.value().canonicalText(), indexedCv.canonicalText())
-                    && key.value().defined() == indexedCv.defined()) {
-                // Filter by inputId if specified
-                List<SourceRecord> records = entry.getValue();
-                if (key.inputId() == null || key.inputId().isBlank()) {
-                    return records;
-                }
-                return records.stream()
-                        .filter(r -> key.inputId().equals(r.sourceFileId()))
-                        .toList();
-            }
+        List<SourceRecord> records = attrIndex.get(key.value());
+        if (records == null || records.isEmpty()) return List.of();
+
+        if (key.inputId() == null || key.inputId().isBlank()) {
+            return List.copyOf(records);
         }
-        return List.of();
+        return records.stream()
+                .filter(r -> key.inputId().equals(r.sourceFileId()))
+                .toList();
     }
 }
