@@ -2,8 +2,10 @@ package guru.interlis.transformer.feature;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -56,6 +58,32 @@ public final class FeatureMatrix {
     }
 
     private static List<FeatureEntry> buildEntries() {
+        List<FeatureEntry> fromYaml = loadFromYaml();
+        if (fromYaml != null) {
+            return fromYaml;
+        }
+        return buildHardcodedEntries();
+    }
+
+    private static List<FeatureEntry> loadFromYaml() {
+        try (InputStream in = FeatureMatrix.class.getResourceAsStream("/feature-matrix.yaml")) {
+            if (in == null) {
+                return null;
+            }
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            FeatureMatrixYaml yaml = mapper.readValue(in, FeatureMatrixYaml.class);
+            List<FeatureEntry> entries = new ArrayList<>();
+            for (FeatureEntryYaml e : yaml.entries) {
+                entries.add(e.toFeatureEntry());
+            }
+            validate(entries);
+            return Collections.unmodifiableList(entries);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private static List<FeatureEntry> buildHardcodedEntries() {
         var entries = new ArrayList<FeatureEntry>();
 
         entries.add(FeatureEntry.of("CLI transform", "0",
@@ -297,7 +325,7 @@ public final class FeatureMatrix {
         entries.add(FeatureEntry.of("Real Dataset Smoke Tests (DM01+DMAV)", "26",
                 FeatureStatus.SUPPORTED,
                 "Vollständige Datensätze mit Modellen einlesen; Objektzahlen pro Topic/Klasse berichten",
-                "FullDm01ReadSmokeTest, FullDmavReadSmokeTest"));
+                "FullDm01ReadSmokeTest", "FullDmavReadSmokeTest"));
 
         entries.add(FeatureEntry.of("RealDatasetCatalog", "26",
                 FeatureStatus.SUPPORTED,

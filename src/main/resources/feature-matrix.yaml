@@ -1,0 +1,351 @@
+entries:
+  - feature: "CLI transform"
+    phase: "0"
+    status: SUPPORTED
+    description: "Transform command with --mapping and --modeldir"
+    testReferences:
+      - "CliMainTest"
+  - feature: "CLI validate-mapping"
+    phase: "1"
+    status: SUPPORTED
+    description: "Validate mapping YAML without executing"
+    testReferences:
+      - "CliMainTest"
+      - "MappingCompilerTest"
+  - feature: "CLI inspect-model"
+    phase: "2"
+    status: SUPPORTED
+    description: "Inspect INTERLIS model structure"
+    testReferences:
+      - "InspectModelCliTest"
+  - feature: "IliModelService + TypeSystemFacade"
+    phase: "2"
+    status: SUPPORTED
+    description: "Compile and query INTERLIS models"
+    testReferences:
+      - "IliModelServiceTest"
+  - feature: "IliPath"
+    phase: "2"
+    status: SUPPORTED
+    description: "Parse and resolve INTERLIS paths"
+    testReferences:
+      - "IliPathTest"
+  - feature: "ModelInventory + InventorySerializer"
+    phase: "2"
+    status: SUPPORTED
+    description: "Enumerate model classes and attributes"
+    testReferences:
+      - "InventorySerializerTest"
+  - feature: "MappingCompiler.compileTyped()"
+    phase: "3"
+    status: SUPPORTED
+    description: "Compile YAML config into typed TransformPlan"
+    testReferences:
+      - "TypedCompilerTest"
+  - feature: "TransformPlan (typed plan)"
+    phase: "3"
+    status: SUPPORTED
+    description: "Typed execution plan with RulePlan, AssignmentPlan, RefPlan, BagPlan"
+    testReferences:
+      - "TypedCompilerTest"
+  - feature: "ExpressionEngine"
+    phase: "4"
+    status: SUPPORTED
+    description: "Parse and evaluate mapping expressions"
+    testReferences:
+      - "ExpressionEngineTest"
+      - "ExpressionParserTest"
+  - feature: "FunctionRegistry (Basic/String/Date/Enum/Ref/Math)"
+    phase: "4"
+    status: SUPPORTED
+    description: "Builtin functions for expressions"
+    testReferences:
+      - "FunctionRegistryTest"
+      - "BuiltinFunctionsTest"
+  - feature: "Value type system"
+    phase: "4"
+    status: SUPPORTED
+    description: "Sealed interface: TextValue, NumberValue, BooleanValue, DateValue, EnumValue, CoordValue, GeometryObjectValue, ReferenceValue, NullValue"
+    testReferences:
+      - "ValueTest"
+      - "ExpressionEngineTest"
+  - feature: "Two-pass execution engine"
+    phase: "5"
+    status: SUPPORTED
+    description: "Pass 0 (index), Pass 1 (build), Pass 2 (refs), Write (stable sort)"
+    testReferences:
+      - "TransformationEngineIntegrationTest"
+  - feature: "1:1 Scalar mapping"
+    phase: "5"
+    status: SUPPORTED
+    description: "Copy attributes from source to target"
+    testReferences:
+      - "ScalarMappingIntegrationTest"
+  - feature: "OID strategies (preserve/integer/uuid/deterministic)"
+    phase: "6"
+    status: SUPPORTED
+    description: "preserve, integer, uuid, deterministicUuid (UUIDv3)"
+    testReferences:
+      - "OidStrategyTest"
+      - "OidStrategyGoldenTest"
+  - feature: "OID strategy external"
+    phase: "6"
+    status: STUB
+    description: "External OID source — pass-through stub"
+    testReferences: []
+  - feature: "Basket strategies"
+    phase: "6"
+    status: SUPPORTED
+    description: "preserve, generateUuid, preserveOrGenerateUuid, byTopic"
+    testReferences:
+      - "BasketStrategyTest"
+  - feature: "Basket strategy expression"
+    phase: "6"
+    status: STUB
+    description: "Expression-based basket routing — stub"
+    testReferences: []
+  - feature: "Reference resolution + roles"
+    phase: "7"
+    status: SUPPORTED
+    description: "DeferredRefs, type checking, cardinality, role-aware resolution"
+    testReferences:
+      - "ReferenceResolutionIntegrationTest"
+  - feature: "ReferenceIndex + ReferenceResolutionService"
+    phase: "19"
+    status: SUPPORTED
+    description: "Separate ReferenceIndex with SourceObjectKey/TargetReference; ReferenceResolutionService with per-owner cardinality, ambiguity detection, association-aware diagnostics"
+    testReferences:
+      - "ReferenceIndexTest"
+      - "ReferenceResolutionServiceTest"
+  - feature: "Same OID different context resolution"
+    phase: "19"
+    status: SUPPORTED
+    description: "Same OID in different baskets/inputs/classes correctly disambiguated; no global OID-only fallback by default"
+    testReferences:
+      - "ReferenceIndexTest"
+      - "ReferenceResolutionServiceTest"
+      - "ReferenceResolutionIntegrationTest"
+  - feature: "Association-aware role resolution"
+    phase: "19"
+    status: SUPPORTED
+    description: "requireRole() with AssociationDef; association name in diagnostics; XTF association serialization tested with ilivalidator"
+    testReferences:
+      - "AssociationXtfIntegrationTest"
+  - feature: "failPolicy (strict/lenient/reportOnly)"
+    phase: "7"
+    status: SUPPORTED
+    description: "Configurable error handling at plan level"
+    testReferences:
+      - "TransformationEngineIntegrationTest"
+  - feature: "GeometryAdapter (Coord/Polyline/Surface/Area)"
+    phase: "13/24"
+    status: SUPPORTED
+    description: "IoxGeometryAdapter with GeometryValueCopier, ItfGeometryWriter for ILI1 helper tables"
+    testReferences:
+      - "IoxGeometryAdapterTest"
+      - "GeometryIntegrationTest"
+      - "GeometryDeepCopyTest"
+  - feature: "GeometryValueCopier"
+    phase: "24"
+    status: SUPPORTED
+    description: "Deep copy IomObject geometries to prevent source-target aliasing"
+    testReferences:
+      - "GeometryDeepCopyTest"
+  - feature: "GeometryCompatibilityService"
+    phase: "24"
+    status: SUPPORTED
+    description: "Compile-time geometry compatibility checks: dimension, SURFACE/AREA, type matching"
+    testReferences:
+      - "GeometryCompatibilityServiceTest"
+  - feature: "Geometry roundtrip (Read→Write→Read)"
+    phase: "24"
+    status: SUPPORTED
+    description: "COORD, POLYLINE (straight+ARC), SURFACE, AREA with multiple boundaries; XTF and ITF validated with ilivalidator"
+    testReferences:
+      - "CoordRoundtripTest"
+      - "PolylineRoundtripTest"
+      - "XtfReadOwnOutputTest"
+  - feature: "Real dataset geometry smoke test"
+    phase: "24"
+    status: SUPPORTED
+    description: "Read full DM01 ITF and DMAV XTF, inventory geometry types"
+    testReferences:
+      - "RealDatasetGeometrySmokeTest"
+  - feature: "FailPolicy STRICT – kein Commit bei Fehler"
+    phase: "25"
+    status: SUPPORTED
+    description: "Compiler-Fehler, Runtime-Fehler oder Validator-Fehler verhindern Commit; Exit-Code != 0"
+    testReferences:
+      - "StrictRollbackTest"
+  - feature: "FailPolicy LENIENT – herabstufbare Fehler"
+    phase: "25"
+    status: SUPPORTED
+    description: "Explizit herabstufbare Fehler werden Warnings; strukturelle Fehler verhindern Commit"
+    testReferences:
+      - "LenientPolicyTest"
+  - feature: "FailPolicy REPORT_ONLY"
+    phase: "25"
+    status: SUPPORTED
+    description: "Modelle und Mapping kompilieren, Ausfuehrbarkeit analysieren, keine endgueltigen Outputs"
+    testReferences:
+      - "ReportOnlyTest"
+  - feature: "TransactionalOutputManager"
+    phase: "25"
+    status: SUPPORTED
+    description: "Temp-Dateien, atomarer Move bei Erfolg, Rollback bei Fehler, keep-temp fuer Debugging"
+    testReferences:
+      - "TransactionalOutputManagerTest"
+  - feature: "TransformationReportWriter (JSON+MD)"
+    phase: "25"
+    status: SUPPORTED
+    description: "Objektzahlen, Filterzahlen, Warnings/Errors, Referenzbericht, Validatorstatus, Laufzeit, Modelle"
+    testReferences:
+      - "ReportOptionCliTest"
+  - feature: "TransferValidationService + InProcessIlivalidatorService"
+    phase: "25"
+    status: SUPPORTED
+    description: "Gekapselter ilivalidator-Service mit strukturiertem ValidationResult (errorCount, warningCount)"
+    testReferences:
+      - "ValidateOptionCliTest"
+      - "ValidatorFailureExitCodeTest"
+  - feature: "validate-transfer CLI command"
+    phase: "25"
+    status: SUPPORTED
+    description: "Neuer Subcommand: validate-transfer --file/--modeldir/--model/--log"
+    testReferences:
+      - "ValidatorFailureExitCodeTest"
+  - feature: "CLI --fail-policy / --keep-temp / --validate / --report"
+    phase: "25"
+    status: SUPPORTED
+    description: "Alle CLI-Optionen haben Wirkung; modeldirs aus CLI und YAML mergen korrekt"
+    testReferences:
+      - "ValidateOptionCliTest"
+      - "ReportOptionCliTest"
+      - "JobModeldirMergeTest"
+      - "RelativeMappingPathCliTest"
+  - feature: "validate-mapping mit compileTyped und modeldirs"
+    phase: "25"
+    status: SUPPORTED
+    description: "validate-mapping fuehrt compileTyped mit CLI-modeldirs aus"
+    testReferences:
+      - "ValidateMappingTypedCliTest"
+  - feature: "ITF/XTF I/O via iox-ili"
+    phase: "5"
+    status: SUPPORTED
+    description: "Read and write INTERLIS transfer files"
+    testReferences:
+      - "SurfaceAreaItfIntegrationTest"
+      - "GeometryIntegrationTest"
+  - feature: "XLSX correlation import"
+    phase: "8"
+    status: SUPPORTED
+    description: "Parse DM01/DMAV correlation workbook"
+    testReferences:
+      - "CorrelationWorkbookImporterTest"
+  - feature: "DM01→DMAV LFP3 pilot"
+    phase: "10"
+    status: SUPPORTED
+    description: "LFP3 transformation DM01 to DMAV with golden test"
+    testReferences:
+      - "Dm01ToDmavLfp3IntegrationTest"
+  - feature: "DMAV→DM01 LFP3 pilot"
+    phase: "11"
+    status: SUPPORTED
+    description: "LFP3 transformation DMAV to DM01 with golden test"
+    testReferences:
+      - "DmavToDm01Lfp3IntegrationTest"
+  - feature: "BAG OF STRUCTURE (Textpositionen)"
+    phase: "12"
+    status: SUPPORTED
+    description: "Pos tables to BAG OF Textposition in both directions"
+    testReferences:
+      - "Dm01ToDmavLfp3IntegrationTest"
+  - feature: "enumMap()"
+    phase: "15"
+    status: STUB
+    description: "Enum mapping pass-through with diagnostic warning"
+    testReferences: []
+  - feature: "Joins / Splits / Merge"
+    phase: "22"
+    status: EXPERIMENTAL
+    description: "Multi-source equi-joins, create directives, rule dependency ordering"
+    testReferences:
+      - "JoinCompilationTest"
+      - "CreateCompilationTest"
+      - "CreateAdditionalObjectIntegrationTest"
+  - feature: "RuleDispatchIndex"
+    phase: "26"
+    status: SUPPORTED
+    description: "Pre-computed O(1) rule dispatch per (inputId, sourceClass); eliminates SourceRecord x Rule full scan"
+    testReferences:
+      - "RuleDispatchIndexTest"
+  - feature: "ExecutionMetrics und Performance-Report"
+    phase: "26"
+    status: SUPPORTED
+    description: "Laufzeitmessung, Join-/BAG-Lookup-Zähler, Targets-by-Class; integriert in JSON/Markdown-Report"
+    testReferences:
+      - "ExecutionMetricsTest"
+  - feature: "Service-Dekomposition der TransformationEngine"
+    phase: "26"
+    status: SUPPORTED
+    description: "SourceIndexingService, RuleExecutionService, TargetObjectFactory, AssignmentExecutionService, OutputWritingService"
+    testReferences:
+      - "TransformationEngineIntegrationTest"
+  - feature: "Deterministic Output Order"
+    phase: "26"
+    status: SUPPORTED
+    description: "Output sortiert nach basketId, class, oid; reproduzierbar über mehrere Runs"
+    testReferences:
+      - "DeterministicOutputOrderTest"
+  - feature: "Real Dataset Smoke Tests (DM01+DMAV)"
+    phase: "26"
+    status: SUPPORTED
+    description: "Vollständige Datensätze mit Modellen einlesen; Objektzahlen pro Topic/Klasse berichten"
+    testReferences:
+      - "FullDm01ReadSmokeTest"
+      - "FullDmavReadSmokeTest"
+  - feature: "RealDatasetCatalog"
+    phase: "26"
+    status: SUPPORTED
+    description: "Scan/Classify von Transfer-Dateien ohne harte Dateinamen; requireSingleItf/Xtf"
+    testReferences:
+      - "RealDatasetCatalogTest"
+  - feature: "TransferInventory & Inventory Service"
+    phase: "27"
+    status: SUPPORTED
+    description: "Transfer-Inhaltsstatistiken (Objektzahlen pro Klasse, OID-Typen, Geometrietypen, Referenzen, LFP3-Erkennung)"
+    testReferences:
+      - "FullDatasetInventoryTest"
+  - feature: "ConnectedSubgraphExtractor"
+    phase: "27"
+    status: SUPPORTED
+    description: "Extrahiert fachlich zusammenhängende Teiltransfers inklusive Referenzen; BFS-Expansion, Bidirectional, maxDepth/maxObjects"
+    testReferences:
+      - "ConnectedSubgraphExtractorTest"
+  - feature: "LFP3 Fixture Extraction (DMAV)"
+    phase: "27"
+    status: SUPPORTED
+    description: "Aus realem DMAV-Datensatz LFP3-Fixtures extrahieren und mit ilivalidator validieren"
+    testReferences:
+      - "ExtractedDmavFixtureValidationTest"
+  - feature: "DM01 ITF Fixture Extraction"
+    phase: "27"
+    status: PARTIAL
+    description: "DM01-Daten können gelesen und inventarisiert werden; ITF-Geometrie-Hilfstabellen verhindern Write-Back"
+    testReferences:
+      - "ExtractedDm01FixtureValidationTest"
+  - feature: "Persistent StateStore"
+    phase: "-"
+    status: UNSUPPORTED
+    description: "Disk-backed or database-backed state store"
+    testReferences: []
+  - feature: "AREA topology repair"
+    phase: "-"
+    status: UNSUPPORTED
+    description: "Topological repair of AREA geometries"
+    testReferences: []
+  - feature: "LINEATTR support"
+    phase: "-"
+    status: UNSUPPORTED
+    description: "Line attribute geometry processing"
+    testReferences: []

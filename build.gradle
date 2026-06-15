@@ -126,4 +126,16 @@ tasks.register('generateFeatureMatrix', JavaExec) {
     ]
 }
 
+tasks.register('validateFeatureMatrix', Test) {
+    description = 'Validates feature matrix: test references exist and are loadable'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform()
+    filter {
+        includeTestsMatching "guru.interlis.transformer.feature.FeatureMatrixTest"
+    }
+}
+
 check.dependsOn integrationTest
+check.dependsOn validateFeatureMatrix
