@@ -139,12 +139,13 @@ public final class SourceIndexingService {
             for (int i = 0; i < count; i++) {
                 IomObject structure = source.getattrobj(bagAttrName, i);
                 if (structure == null) continue;
-                structure.setattrvalue("_parentOid", source.getobjectoid());
-                structure.setattrvalue("_parentClass", source.getobjecttag());
+                SourceRecord.ParentContext parentContext =
+                        new SourceRecord.ParentContext(source.getobjectoid(), source.getobjecttag());
                 stateStore.addSourceRecord(new SourceRecord(
                         inputId, basketId,
                         structure.getobjecttag(),
-                        structure));
+                        structure,
+                        parentContext));
             }
         }
     }
