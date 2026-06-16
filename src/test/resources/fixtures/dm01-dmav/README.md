@@ -15,3 +15,4 @@
 - `eo/`: EO-Minimal-Fixtures.
 - `gs/`: GS-Minimal-Fixtures.
 - `gebaeudeadressen/`: Gebaeudeadressen-Minimal-Fixtures.
+- `dbv/`: DBV-Minimal-Fixtures (DauerndeBodenverschiebungen / Rutschgebiete).

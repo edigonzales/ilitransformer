@@ -104,7 +104,13 @@ class CheckedInTransfersValidateTest {
                     Dm01DmavFixtures.HOHEITSGRENZENLV.dm01Model()),
             Map.entry(
                     relativeFixturePath(Dm01DmavFixtures.PLZORTSCHAFT.dm01MinimalFixture()),
-                    Dm01DmavFixtures.PLZORTSCHAFT.dm01Model()));
+                    Dm01DmavFixtures.PLZORTSCHAFT.dm01Model()),
+            Map.entry(
+                    relativeFixturePath(Dm01DmavFixtures.DBV.dm01MinimalFixture()),
+                    Dm01DmavFixtures.DBV.dm01Model()),
+            Map.entry(
+                    relativeFixturePath(Dm01DmavFixtures.DBV.dmavMinimalFixture()),
+                    Dm01DmavFixtures.DBV.dmavMinimalModel()));
 
     @Test
     void validateCheckedInTransferFiles() throws Exception {

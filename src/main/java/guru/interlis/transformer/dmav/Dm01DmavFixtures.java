@@ -90,6 +90,11 @@ public final class Dm01DmavFixtures {
             List.of("PLZOrtschaft.Ortschaft", "PLZOrtschaft.OrtschaftsName", "PLZOrtschaft.PLZ6");
     private static final List<String> PLZORTSCHAFT_DMAV_TARGET_CLASSES =
             List.of("PLZ_Ortschaft.Ortschaft", "PLZ_Ortschaft.PLZ");
+    private static final List<String> DBV_DM01_TARGET_CLASSES = List.of(
+            "Rutschgebiete.Rutschung", "Rutschgebiete.RutschungPos");
+    private static final List<String> DBV_DMAV_TARGET_CLASSES = List.of(
+            "DauerndeBodenverschiebungen.DBVNachfuehrung",
+            "DauerndeBodenverschiebungen.DauerndeBodenverschiebung");
 
     public static final TopicFixtureSpec LFP3 = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_LFP3,
@@ -234,6 +239,17 @@ public final class Dm01DmavFixtures {
             200,
             true);
 
+    public static final TopicFixtureSpec DBV = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_DBV,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_DBV_MODEL,
+            Dm01DmavPaths.DMAV_UMBRELLA_MODEL,
+            DBV_DM01_TARGET_CLASSES,
+            DBV_DMAV_TARGET_CLASSES,
+            2,
+            200,
+            true);
+
     private Dm01DmavFixtures() {}
 
     public static TopicFixtureSpec topic(String topicId) {
@@ -251,6 +267,7 @@ public final class Dm01DmavFixtures {
             case Dm01DmavPaths.TOPIC_FPDS2 -> FPDS2;
             case Dm01DmavPaths.TOPIC_HOHEITSGRENZENLV -> HOHEITSGRENZENLV;
             case Dm01DmavPaths.TOPIC_PLZORTSCHAFT -> PLZORTSCHAFT;
+            case Dm01DmavPaths.TOPIC_DBV -> DBV;
             default -> throw new IllegalArgumentException("Unknown DM01/DMAV topic: " + topicId);
         };
     }
@@ -357,6 +374,14 @@ public final class Dm01DmavFixtures {
 
     public static ExtractionRequest plzortschaftDmavExtractionRequest(Path targetDir) {
         return PLZORTSCHAFT.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest dbvDm01ExtractionRequest(Path targetDir) {
+        return DBV.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest dbvDmavExtractionRequest(Path targetDir) {
+        return DBV.dmavExtractionRequest(targetDir);
     }
 
     public static boolean isLfp3RelevantClass(String className) {
