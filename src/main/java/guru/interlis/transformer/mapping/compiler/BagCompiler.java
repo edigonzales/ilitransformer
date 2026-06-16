@@ -13,6 +13,7 @@ import guru.interlis.transformer.expr.ExpressionCompiler;
 import guru.interlis.transformer.expr.FunctionCallExpr;
 import guru.interlis.transformer.expr.PathExpr;
 import guru.interlis.transformer.mapping.model.JobConfig;
+import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.CompiledExpression;
@@ -63,7 +64,7 @@ final class BagCompiler {
                             ruleId, "Specify the target class in bags.<name>.structure"));
                     continue;
                 }
-                String structTsOutput = rule.getEffectiveTargetOutput();
+                String structTsOutput = JobConfigNormalizer.getEffectiveTargetOutput(rule);
                 TypeSystemFacade structTs = structTsOutput != null && !structTsOutput.isEmpty()
                         ? ctx.modelRegistry().requireTargetTypeSystem(structTsOutput) : null;
                 componentTable = structTs != null ? structTs.resolveClass(structClass) : null;
@@ -278,7 +279,7 @@ final class BagCompiler {
             if (bagSpec.nestedBags != null && !bagSpec.nestedBags.isEmpty()) {
                 JobConfig.RuleSpec nestedRule = new JobConfig.RuleSpec();
                 nestedRule.id = ruleId + "-nested-" + bagAttrName;
-                nestedRule.output = rule.getEffectiveTargetOutput();
+                nestedRule.output = JobConfigNormalizer.getEffectiveTargetOutput(rule);
                 nestedRule.identity = rule.identity;
                 nestedRule.bags = bagSpec.nestedBags;
                 Map<String, SourcePlan> nestedSourcesByAlias = new HashMap<>(sourcesByAlias);

@@ -5,6 +5,7 @@ import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
+import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 
 import java.util.HashSet;
 import java.util.List;
@@ -68,25 +69,25 @@ final class StructuralValidator {
         if (rule.id == null || rule.id.isBlank()) {
             diag.add(new Diagnostic(DiagnosticCode.MAP_MISSING_ID, Severity.ERROR,
                     "Rule is missing required 'id' field",
-                    rule.getEffectiveTargetClass(),
+                    JobConfigNormalizer.getEffectiveTargetClass(rule),
                     "Add an 'id' to each rule"));
         } else if (!seenIds.add(rule.id)) {
             diag.add(new Diagnostic(DiagnosticCode.MAP_DUPLICATE_ID, Severity.ERROR,
                     "Duplicate rule id: " + rule.id,
-                    rule.getEffectiveTargetClass(),
+                    JobConfigNormalizer.getEffectiveTargetClass(rule),
                     "Rule ids must be unique within a mapping file"));
         }
     }
 
     private void validateRuleTarget(JobConfig.RuleSpec rule, Set<String> outputIds, DiagnosticCollector diag) {
-        String targetClass = rule.getEffectiveTargetClass();
+        String targetClass = JobConfigNormalizer.getEffectiveTargetClass(rule);
         if (targetClass == null || targetClass.isBlank()) {
             diag.add(new Diagnostic(DiagnosticCode.MAP_MISSING_TARGET_CLASS, Severity.ERROR,
                     "Rule is missing target class",
                     rule.id,
                     "Add 'target.class' or 'targetClass' to the rule"));
         }
-        String targetOutput = rule.getEffectiveTargetOutput();
+        String targetOutput = JobConfigNormalizer.getEffectiveTargetOutput(rule);
         if (targetOutput != null && !targetOutput.isBlank() && !outputIds.isEmpty()
                 && !outputIds.contains(targetOutput)) {
             diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_OUTPUT, Severity.ERROR,
@@ -116,7 +117,7 @@ final class StructuralValidator {
                         "Source '" + source.alias + "' is missing 'class' field in rule " + rule.id,
                         rule.id, "Add 'class' to each source definition"));
             }
-            List<String> sourceInputs = source.getInputIds();
+            List<String> sourceInputs = JobConfigNormalizer.getInputIds(source);
             if (sourceInputs.isEmpty() || sourceInputs.stream().allMatch(String::isBlank)) {
                 diag.add(new Diagnostic(DiagnosticCode.MAP_MISSING_INPUT, Severity.ERROR,
                         "Source '" + source.alias + "' is missing 'input' field in rule " + rule.id,

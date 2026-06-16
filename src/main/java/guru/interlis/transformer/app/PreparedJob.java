@@ -1,12 +1,10 @@
 package guru.interlis.transformer.app;
 
-import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.ModelRegistry;
 import java.nio.file.Path;
 
 public record PreparedJob(
-        JobConfig config,
         TransformPlan plan,
         ModelRegistry modelRegistry,
         Path baseDirectory

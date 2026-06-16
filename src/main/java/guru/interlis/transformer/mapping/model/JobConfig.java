@@ -127,42 +127,28 @@ public final class JobConfig {
         @JsonProperty("defaults")
         public Map<String, String> defaults;
 
-        /** Returns the effective target class (new format preferred, fallback to flat). */
+        /** @deprecated Use {@link JobConfigNormalizer#getEffectiveTargetClass(RuleSpec)} instead. */
+        @Deprecated
         public String getEffectiveTargetClass() {
-            if (target != null && target.clazz != null && !target.clazz.isBlank()) {
-                return target.clazz;
-            }
-            return targetClass;
+            return JobConfigNormalizer.getEffectiveTargetClass(this);
         }
 
-        /** Returns the effective target output ID (new format preferred, fallback to flat). */
+        /** @deprecated Use {@link JobConfigNormalizer#getEffectiveTargetOutput(RuleSpec)} instead. */
+        @Deprecated
         public String getEffectiveTargetOutput() {
-            if (target != null && target.output != null && !target.output.isBlank()) {
-                return target.output;
-            }
-            return output;
+            return JobConfigNormalizer.getEffectiveTargetOutput(this);
         }
 
-        /** Returns the merged list of attribute assignments from both {@code assign} map and {@code attributes} list. */
+        /** @deprecated Use {@link JobConfigNormalizer#getAllAttributes(RuleSpec)} instead. */
+        @Deprecated
         public List<AttributeMapping> getAllAttributes() {
-            List<AttributeMapping> result = new ArrayList<>();
-            if (assign != null) {
-                assign.forEach((k, v) -> {
-                    AttributeMapping am = new AttributeMapping();
-                    am.target = k;
-                    am.expr = v;
-                    result.add(am);
-                });
-            }
-            if (attributes != null) {
-                result.addAll(attributes);
-            }
-            return result;
+            return JobConfigNormalizer.getAllAttributes(this);
         }
 
-        /** Returns the effective refs list (non-null). */
+        /** @deprecated Use {@link JobConfigNormalizer#getEffectiveRefs(RuleSpec)} instead. */
+        @Deprecated
         public List<RefMapping> getEffectiveRefs() {
-            return refs != null ? refs : List.of();
+            return JobConfigNormalizer.getEffectiveRefs(this);
         }
     }
 
@@ -194,15 +180,10 @@ public final class JobConfig {
         @JsonProperty("where")
         public String where;
 
-        /** Returns the list of input IDs (new format preferred, fallback to single string). */
+        /** @deprecated Use {@link JobConfigNormalizer#getInputIds(SourceSpec)} instead. */
+        @Deprecated
         public List<String> getInputIds() {
-            if (inputs != null && !inputs.isEmpty()) {
-                return inputs;
-            }
-            if (input != null && !input.isBlank()) {
-                return List.of(input);
-            }
-            return List.of();
+            return JobConfigNormalizer.getInputIds(this);
         }
     }
 

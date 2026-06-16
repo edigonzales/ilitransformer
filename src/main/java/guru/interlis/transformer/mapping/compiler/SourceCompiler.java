@@ -7,6 +7,7 @@ import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
+import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 import guru.interlis.transformer.mapping.plan.CompiledExpression;
 import guru.interlis.transformer.mapping.plan.ExpressionCompileContext;
 import guru.interlis.transformer.mapping.plan.SourcePlan;
@@ -30,7 +31,7 @@ final class SourceCompiler {
         DiagnosticCollector diag = ctx.diagnostics();
 
         TypeSystemFacade sourceTs = null;
-        for (String inputId : src.getInputIds()) {
+        for (String inputId : JobConfigNormalizer.getInputIds(src)) {
             try {
                 sourceTs = modelRegistry.requireSourceTypeSystem(inputId);
                 break;
@@ -49,7 +50,7 @@ final class SourceCompiler {
                     ruleId, "Check the source class name and ensure its model is listed in inputs"));
         }
 
-        return new SourcePlan(src.alias, sourceClass, src.getInputIds(), null);
+        return new SourcePlan(src.alias, sourceClass, JobConfigNormalizer.getInputIds(src), null);
     }
 
     List<SourcePlan> compileWhereFilters(List<SourcePlan> sourcePlans,

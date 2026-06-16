@@ -6,6 +6,7 @@ import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.expr.ExpressionCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
+import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 import guru.interlis.transformer.mapping.plan.*;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.OidStrategy;
@@ -26,8 +27,8 @@ final class RuleCompiler {
 
     RulePlan compileRule(JobConfig.RuleSpec rule, CompilerContext ctx) {
         String ruleId = rule.id;
-        String targetOutput = rule.getEffectiveTargetOutput();
-        String targetClassName = rule.getEffectiveTargetClass();
+        String targetOutput = JobConfigNormalizer.getEffectiveTargetOutput(rule);
+        String targetClassName = JobConfigNormalizer.getEffectiveTargetClass(rule);
 
         Table targetClass = CompileUtils.resolveTargetClass(targetOutput, targetClassName, ctx.modelRegistry());
         if (targetClass == null) {
@@ -81,7 +82,7 @@ final class RuleCompiler {
 
         List<AssignmentPlan> assignmentPlans = new ArrayList<>();
         Set<String> assignedTargets = new HashSet<>();
-        for (JobConfig.AttributeMapping attr : rule.getAllAttributes()) {
+        for (JobConfig.AttributeMapping attr : JobConfigNormalizer.getAllAttributes(rule)) {
             if (attr.target == null || attr.target.isBlank()) continue;
             if (!assignedTargets.add(attr.target)) {
                 ctx.diagnostics().add(new Diagnostic(DiagnosticCode.MAP_DUPLICATE_TARGET_ASSIGN, Severity.ERROR,
@@ -109,8 +110,8 @@ final class RuleCompiler {
             }
         }
 
-        if (ctx.config().mapping.defaults != null && !ctx.config().mapping.defaults.isEmpty()) {
-            for (var entry : ctx.config().mapping.defaults.entrySet()) {
+        if (ctx.globalDefaults() != null && !ctx.globalDefaults().isEmpty()) {
+            for (var entry : ctx.globalDefaults().entrySet()) {
                 if (!assignedTargets.contains(entry.getKey())) {
                     AssignmentPlan dp = assignmentCompiler.compileDefaultAssignment(entry.getKey(),
                             entry.getValue(), targetClass, targetTs, sourcesByAlias, ruleId, ctx);
@@ -128,7 +129,7 @@ final class RuleCompiler {
         }
 
         List<RefPlan> refPlans = new ArrayList<>();
-        for (JobConfig.RefMapping ref : rule.getEffectiveRefs()) {
+        for (JobConfig.RefMapping ref : JobConfigNormalizer.getEffectiveRefs(rule)) {
             RefPlan rp = refCompiler.compileRef(ref, targetClass, targetTs, sourcePlans, ruleId, ctx);
             if (rp != null) {
                 refPlans.add(rp);

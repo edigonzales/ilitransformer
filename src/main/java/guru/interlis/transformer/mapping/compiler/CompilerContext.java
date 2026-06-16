@@ -17,5 +17,6 @@ public record CompilerContext(
         DiagnosticCollector diagnostics,
         Map<String, Map<String, String>> enumMaps,
         OidStrategy oidStrategy,
-        String oidNamespace
+        String oidNamespace,
+        Map<String, String> globalDefaults
 ) {}

@@ -70,7 +70,8 @@ public final class MappingCompiler {
         structuralValidator.validateOutputs(config, diagnostics);
         structuralValidator.validateRules(config,
                 new CompilerContext(config, null, functionRegistry, expressionCompiler, diagnostics,
-                        Map.of(), OidStrategy.INTEGER, null));
+                        Map.of(), OidStrategy.INTEGER, null,
+                        config.mapping.defaults));
         return new CompileResult(config, diagnostics);
     }
 
@@ -108,7 +109,8 @@ public final class MappingCompiler {
 
         CompilerContext ctx = new CompilerContext(
                 config, modelRegistry, functionRegistry, expressionCompiler, diagnostics,
-                enumMaps, oidStrategy, oidNamespace);
+                enumMaps, oidStrategy, oidNamespace,
+                config.mapping.defaults);
 
         structuralValidator.validateRulesStructurally(config, ctx);
 

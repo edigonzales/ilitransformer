@@ -83,7 +83,7 @@ public final class JobRunner {
             plan = plan.withFailPolicy(options.failPolicyOverrideOptional().get());
         }
 
-        return new PreparedJob(config, plan, modelRegistry, baseDirectory);
+        return new PreparedJob(plan, modelRegistry, baseDirectory);
     }
 
     public DiagnosticCollector run(Path configPath, String modelDir) throws Exception {
@@ -101,7 +101,6 @@ public final class JobRunner {
     public DiagnosticCollector run(Path configPath, RunOptions options) throws Exception {
         PreparedJob prepared = prepare(configPath, options);
         TransformPlan plan = prepared.plan();
-        JobConfig config = prepared.config();
 
         printCompilerDiagnostics(plan);
 

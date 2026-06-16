@@ -25,6 +25,7 @@ import guru.interlis.transformer.geometry.GeometryAdapter;
 import guru.interlis.transformer.geometry.IoxGeometryAdapter;
 import guru.interlis.transformer.loss.LossinessCollector;
 import guru.interlis.transformer.mapping.model.JobConfig;
+import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.CreatePlan;
@@ -277,16 +278,16 @@ public final class TransformationEngine {
         for (SourceRecord record : stateStore.sourceRecords()) {
             for (JobConfig.RuleSpec rule : config.mapping.rules) {
                 JobConfig.SourceSpec sourceSpec = rule.sources.stream()
-                        .filter(spec -> spec.getInputIds().contains(record.sourceFileId())
+                        .filter(spec -> JobConfigNormalizer.getInputIds(spec).contains(record.sourceFileId())
                                 && spec.clazz.equals(record.sourceClass()))
                         .findFirst().orElse(null);
                 if (sourceSpec == null) continue;
 
-                Iom_jObject target = new Iom_jObject(rule.getEffectiveTargetClass(),
+                Iom_jObject target = new Iom_jObject(JobConfigNormalizer.getEffectiveTargetClass(rule),
                         Long.toString(stateStore.nextOid()));
                 Map<String, IomObject> sources = Map.of(sourceSpec.alias, record.sourceObject());
                 EvalContext evalCtxLegacy = new EvalContext(sources, diagnostics, rule.id);
-                for (JobConfig.AttributeMapping attr : rule.getAllAttributes()) {
+                for (JobConfig.AttributeMapping attr : JobConfigNormalizer.getAllAttributes(rule)) {
                     Value value = expressionEngine.evaluate(attr.expr, evalCtxLegacy);
                     if (value.isDefined()) {
                         Object nativeValue = value.toNative();
@@ -295,13 +296,13 @@ public final class TransformationEngine {
                         }
                     }
                 }
-                for (JobConfig.RefMapping ref : rule.getEffectiveRefs()) {
+                for (JobConfig.RefMapping ref : JobConfigNormalizer.getEffectiveRefs(rule)) {
                     RefCall call = parseRefCall(ref.expr);
                     if (call == null || !sourceSpec.alias.equals(call.alias())) continue;
                     String sourceRefOid = readSourceReferenceOid(record.sourceObject(), call.roleName());
                     if (sourceRefOid != null && !sourceRefOid.isBlank()) {
                         stateStore.addDeferredRef(new DeferredRef(
-                                rule.getEffectiveTargetClass(),
+                                JobConfigNormalizer.getEffectiveTargetClass(rule),
                                 target.getobjectoid(),
                                 ref.target,
                                 record.sourceClass(),
@@ -316,18 +317,18 @@ public final class TransformationEngine {
                 stateStore.putIdMapping(
                         new SourceRefKey(record.sourceClass(), record.sourceObject().getobjectoid(),
                                 record.sourceFileId(), record.sourceBasketId()),
-                        new TargetRefValue(rule.getEffectiveTargetClass(), target.getobjectoid(),
-                                rule.getEffectiveTargetOutput(), record.sourceBasketId()));
+                        new TargetRefValue(JobConfigNormalizer.getEffectiveTargetClass(rule), target.getobjectoid(),
+                                JobConfigNormalizer.getEffectiveTargetOutput(rule), record.sourceBasketId()));
                 stateStore.putIdMapping(
                         new SourceRefKey(null, record.sourceObject().getobjectoid(), null, null),
-                        new TargetRefValue(rule.getEffectiveTargetClass(), target.getobjectoid(),
-                                rule.getEffectiveTargetOutput(), record.sourceBasketId()));
-                stateStore.indexTargetObject(rule.getEffectiveTargetClass(), target.getobjectoid(), target);
+                        new TargetRefValue(JobConfigNormalizer.getEffectiveTargetClass(rule), target.getobjectoid(),
+                                JobConfigNormalizer.getEffectiveTargetOutput(rule), record.sourceBasketId()));
+                stateStore.indexTargetObject(JobConfigNormalizer.getEffectiveTargetClass(rule), target.getobjectoid(), target);
 
-                String basketKey = basketKey(extractTopic(rule.getEffectiveTargetClass()),
+                String basketKey = basketKey(extractTopic(JobConfigNormalizer.getEffectiveTargetClass(rule)),
                         record.sourceBasketId());
                 objectsByOutputAndBasket
-                        .computeIfAbsent(rule.getEffectiveTargetOutput(), ignored -> new LinkedHashMap<>())
+                        .computeIfAbsent(JobConfigNormalizer.getEffectiveTargetOutput(rule), ignored -> new LinkedHashMap<>())
                         .computeIfAbsent(basketKey, ignored -> new ArrayList<>())
                         .add(target);
             }
