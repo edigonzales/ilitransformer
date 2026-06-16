@@ -139,6 +139,7 @@ All comparison and boolean operators are fully supported and tested.
 | `oid` | `(alias) → text` | Returns the OID of the source object identified by the alias |
 | `bagFirst` | `(alias, bagAttr, valueAttr) → text` | Returns the first value from a BAG attribute of a source object |
 | `lookup` | `(classPath, keyAttr, keyValue, returnAttr) → text` | Compatibility function. Searches `SourceLookupIndex` across **all inputs** (unscoped). Returns null + warning on no match. Returns first value + warning on multiple matches with different return values. Return type is `UNKNOWN` at compile time. Prefer structural `joins` for modelled relationships. |
+| `lookupIn` | `(inputId, classPath, keyAttr, keyValue, returnAttr) → text` | Scoped variant of `lookup`. Searches `SourceLookupIndex` filtered to the given `inputId`. Same warning semantics as `lookup`. Return type is `UNKNOWN` at compile time. |
 
 ### Geometry functions
 

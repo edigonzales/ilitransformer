@@ -49,6 +49,17 @@ public final class LookupFunctions {
                         new FunctionDef.FunctionParam("keyValue", TypeInfo.TEXT),
                         new FunctionDef.FunctionParam("returnAttr", TypeInfo.TEXT)),
                 LookupFunctions::lookup);
+
+        registry.register(
+                "lookupIn",
+                TypeInfo.UNKNOWN,
+                List.of(
+                        new FunctionDef.FunctionParam("inputId", TypeInfo.TEXT),
+                        new FunctionDef.FunctionParam("classPath", TypeInfo.TEXT),
+                        new FunctionDef.FunctionParam("keyAttr", TypeInfo.TEXT),
+                        new FunctionDef.FunctionParam("keyValue", TypeInfo.TEXT),
+                        new FunctionDef.FunctionParam("returnAttr", TypeInfo.TEXT)),
+                LookupFunctions::lookupIn);
     }
 
     static Value bagFirst(List<Value> args, EvalContext ctx) {
@@ -124,6 +135,40 @@ public final class LookupFunctions {
         String keyValue = args.get(2).asText();
         String returnAttr = args.get(3).asText();
 
+        return lookupInternal(null, classPath, keyAttr, keyValue, returnAttr, ctx, "lookup");
+    }
+
+    static Value lookupIn(List<Value> args, EvalContext ctx) {
+        if (args.size() < 5) {
+            if (ctx.diagnostics() != null) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_WRONG_ARG_COUNT,
+                                Severity.ERROR,
+                                "lookupIn() requires 5 arguments: inputId, classPath, keyAttr, keyValue, returnAttr",
+                                ctx.ruleId(),
+                                "Use lookupIn('inputId', 'Class.Path', 'KeyAttr', oid(alias), 'ReturnAttr')"));
+            }
+            return NullValue.INSTANCE;
+        }
+
+        String inputId = args.get(0).asText();
+        String classPath = args.get(1).asText();
+        String keyAttr = args.get(2).asText();
+        String keyValue = args.get(3).asText();
+        String returnAttr = args.get(4).asText();
+
+        return lookupInternal(inputId, classPath, keyAttr, keyValue, returnAttr, ctx, "lookupIn");
+    }
+
+    private static Value lookupInternal(
+            String inputId,
+            String classPath,
+            String keyAttr,
+            String keyValue,
+            String returnAttr,
+            EvalContext ctx,
+            String functionName) {
         SourceLookupIndex index = ctx.lookupIndex();
         if (index == null) {
             if (ctx.diagnostics() != null) {
@@ -131,18 +176,14 @@ public final class LookupFunctions {
                         .add(new Diagnostic(
                                 DiagnosticCode.LOOKUP_INDEX_MISSING,
                                 Severity.ERROR,
-                                "lookup() called but no SourceLookupIndex is available in context",
+                                functionName + "() called but no SourceLookupIndex is available in context",
                                 ctx.ruleId(),
                                 "Ensure the engine initialized the source lookup index"));
             }
             return NullValue.INSTANCE;
         }
 
-        LookupKey key = new LookupKey(
-                null, // inputId: search across all inputs
-                classPath,
-                keyAttr,
-                new CanonicalValue("text", keyValue, true));
+        LookupKey key = new LookupKey(inputId, classPath, keyAttr, new CanonicalValue("text", keyValue, true));
 
         List<SourceRecord> hits = index.lookup(key);
         if (hits.isEmpty()) {
@@ -151,7 +192,7 @@ public final class LookupFunctions {
                         .add(new Diagnostic(
                                 DiagnosticCode.LOOKUP_NO_MATCH,
                                 Severity.WARNING,
-                                "lookup() found no match for " + classPath + "." + keyAttr + "=" + keyValue,
+                                functionName + "() found no match for " + classPath + "." + keyAttr + "=" + keyValue,
                                 ctx.ruleId(),
                                 "Verify the referenced child object exists in the source data"));
             }
@@ -164,8 +205,8 @@ public final class LookupFunctions {
                         .add(new Diagnostic(
                                 DiagnosticCode.LOOKUP_AMBIGUOUS,
                                 Severity.WARNING,
-                                "lookup() found " + hits.size() + " matches for " + classPath + "." + keyAttr + "="
-                                        + keyValue + ", using first — EGID may be overdetermined",
+                                functionName + "() found " + hits.size() + " matches for " + classPath + "." + keyAttr
+                                        + "=" + keyValue + ", using first — EGID may be overdetermined",
                                 ctx.ruleId(),
                                 "Ensure the lookup key uniquely identifies one record"));
             }
