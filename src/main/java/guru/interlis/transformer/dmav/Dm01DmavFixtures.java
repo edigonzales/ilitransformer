@@ -95,6 +95,22 @@ public final class Dm01DmavFixtures {
     private static final List<String> DBV_DMAV_TARGET_CLASSES = List.of(
             "DauerndeBodenverschiebungen.DBVNachfuehrung",
             "DauerndeBodenverschiebungen.DauerndeBodenverschiebung");
+    private static final List<String> ROHRLEITUNGEN_DM01_TARGET_CLASSES = List.of(
+            "Rohrleitungen.RLNachfuehrung",
+            "Rohrleitungen.Leitungsobjekt",
+            "Rohrleitungen.LeitungsobjektPos",
+            "Rohrleitungen.Flaechenelement",
+            "Rohrleitungen.Linienelement",
+            "Rohrleitungen.Punktelement",
+            "Rohrleitungen.Signalpunkt",
+            "Rohrleitungen.SignalpunktPos",
+            "Rohrleitungen.Einzelpunkt",
+            "Rohrleitungen.EinzelpunktPos");
+    private static final List<String> ROHRLEITUNGEN_DMAV_TARGET_CLASSES = List.of(
+            "Rohrleitungen.RLNachfuehrung",
+            "Rohrleitungen.Leitungsobjekt",
+            "Rohrleitungen.Signal",
+            "Rohrleitungen.Messpunkt");
 
     public static final TopicFixtureSpec LFP3 = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_LFP3,
@@ -250,6 +266,17 @@ public final class Dm01DmavFixtures {
             200,
             true);
 
+    public static final TopicFixtureSpec ROHRLEITUNGEN = new TopicFixtureSpec(
+            Dm01DmavPaths.TOPIC_ROHRLEITUNGEN,
+            Dm01DmavPaths.DM01_MODEL,
+            Dm01DmavPaths.DMAV_ROHRLEITUNGEN_MODEL,
+            Dm01DmavPaths.DMAV_UMBRELLA_MODEL,
+            ROHRLEITUNGEN_DM01_TARGET_CLASSES,
+            ROHRLEITUNGEN_DMAV_TARGET_CLASSES,
+            2,
+            200,
+            true);
+
     private Dm01DmavFixtures() {}
 
     public static TopicFixtureSpec topic(String topicId) {
@@ -268,6 +295,7 @@ public final class Dm01DmavFixtures {
             case Dm01DmavPaths.TOPIC_HOHEITSGRENZENLV -> HOHEITSGRENZENLV;
             case Dm01DmavPaths.TOPIC_PLZORTSCHAFT -> PLZORTSCHAFT;
             case Dm01DmavPaths.TOPIC_DBV -> DBV;
+            case Dm01DmavPaths.TOPIC_ROHRLEITUNGEN -> ROHRLEITUNGEN;
             default -> throw new IllegalArgumentException("Unknown DM01/DMAV topic: " + topicId);
         };
     }
@@ -382,6 +410,14 @@ public final class Dm01DmavFixtures {
 
     public static ExtractionRequest dbvDmavExtractionRequest(Path targetDir) {
         return DBV.dmavExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest rohrleitungenDm01ExtractionRequest(Path targetDir) {
+        return ROHRLEITUNGEN.dm01ExtractionRequest(targetDir);
+    }
+
+    public static ExtractionRequest rohrleitungenDmavExtractionRequest(Path targetDir) {
+        return ROHRLEITUNGEN.dmavExtractionRequest(targetDir);
     }
 
     public static boolean isLfp3RelevantClass(String className) {

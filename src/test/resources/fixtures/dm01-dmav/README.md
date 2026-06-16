@@ -16,3 +16,4 @@
 - `gs/`: GS-Minimal-Fixtures.
 - `gebaeudeadressen/`: Gebaeudeadressen-Minimal-Fixtures.
 - `dbv/`: DBV-Minimal-Fixtures (DauerndeBodenverschiebungen / Rutschgebiete).
+- `rohrleitungen/`: Rohrleitungen-Minimal-Fixtures.

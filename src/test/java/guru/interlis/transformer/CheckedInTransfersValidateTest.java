@@ -110,7 +110,13 @@ class CheckedInTransfersValidateTest {
                     Dm01DmavFixtures.DBV.dm01Model()),
             Map.entry(
                     relativeFixturePath(Dm01DmavFixtures.DBV.dmavMinimalFixture()),
-                    Dm01DmavFixtures.DBV.dmavMinimalModel()));
+                    Dm01DmavFixtures.DBV.dmavMinimalModel()),
+            Map.entry(
+                    relativeFixturePath(Dm01DmavFixtures.ROHRLEITUNGEN.dm01MinimalFixture()),
+                    Dm01DmavFixtures.ROHRLEITUNGEN.dm01Model()),
+            Map.entry(
+                    relativeFixturePath(Dm01DmavFixtures.ROHRLEITUNGEN.dmavMinimalFixture()),
+                    Dm01DmavFixtures.ROHRLEITUNGEN.dmavMinimalModel()));
 
     @Test
     void validateCheckedInTransferFiles() throws Exception {

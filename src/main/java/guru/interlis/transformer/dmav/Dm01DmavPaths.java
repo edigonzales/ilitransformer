@@ -18,6 +18,7 @@ public final class Dm01DmavPaths {
     public static final String TOPIC_FPDS2 = "fpds2";
     public static final String TOPIC_HOHEITSGRENZENLV = "hoheitsgrenzenlv";
     public static final String TOPIC_PLZORTSCHAFT = "plzortschaft";
+    public static final String TOPIC_ROHRLEITUNGEN = "rohrleitungen";
     public static final String TOPIC_DBV = "dbv";
 
     public static final String LOCAL_MODEL_DIR = "src/test/data/av/models/";
@@ -41,6 +42,7 @@ public final class Dm01DmavPaths {
     public static final String DMAV_HOHEITSGRENZENLV_MODEL = "DMAV_HoheitsgrenzenLV_V1_0";
     public static final String DMAV_PLZORTSCHAFT_MODEL = "DMAV_PLZ_Ortschaft_V1_0";
     public static final String DMAV_DBV_MODEL = "DMAV_DauerndeBodenverschiebungen_V1_1";
+    public static final String DMAV_ROHRLEITUNGEN_MODEL = "DMAV_Rohrleitungen_V1_1";
 
     public static final Path PROFILE_ROOT = Path.of("profiles");
     public static final Path FIXTURE_ROOT = Path.of("src/test/resources/fixtures/dm01-dmav");
