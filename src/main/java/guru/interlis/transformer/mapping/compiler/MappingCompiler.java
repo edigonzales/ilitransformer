@@ -411,6 +411,14 @@ public final class MappingCompiler {
         if (rule.joins == null || rule.joins.isEmpty()) {
             return List.of();
         }
+        if (rule.joins.size() > 1) {
+            diag.add(new Diagnostic(DiagnosticCode.MAP_UNSUPPORTED_FEATURE, Severity.ERROR,
+                    "Only one join per rule is currently supported. Found " + rule.joins.size()
+                            + " joins. Rule: " + ruleId,
+                    ruleId,
+                    "Split the mapping into multiple rules or wait for multi-join support"));
+            return List.of();
+        }
         List<JoinPlan> result = new ArrayList<>();
         for (int i = 0; i < rule.joins.size(); i++) {
             JobConfig.JoinSpec js = rule.joins.get(i);

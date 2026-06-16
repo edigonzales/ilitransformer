@@ -268,7 +268,7 @@ entries:
   - feature: "Joins / Splits / Merge"
     phase: "22"
     status: EXPERIMENTAL
-    description: "Multi-source equi-joins, create directives, rule dependency ordering"
+    description: "Multi-source equi-joins (max 1 join per rule), create directives, rule dependency ordering"
     testReferences:
       - "JoinCompilationTest"
       - "CreateCompilationTest"

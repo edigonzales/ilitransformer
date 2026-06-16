@@ -208,6 +208,8 @@ Die `on`-Condition muss ein `eq()`-Aufruf sein:
 - `eq(leftPath, rightPath)` — beide PathExpr mit unterschiedlichen Aliases
 - `eq(leftPath, rightAlias)` — **Ref-to-Object-Join**: rechte Seite ist ein Bare-Alias. Die linke Attribut-Referenz-OID wird mit der rechten Objekt-OID verglichen. Nützlich für INTERLIS 1 Parent-Child-Beziehungen (z.B. `eq(gnp.GelaendenamePos_von, gn)`).
 
+Derzeit wird **maximal ein Join pro Rule** unterstützt. Mehrere Join-Einträge werden vom Compiler mit einem Fehler abgelehnt.
+
 ### MetadataSpec
 
 ```yaml
