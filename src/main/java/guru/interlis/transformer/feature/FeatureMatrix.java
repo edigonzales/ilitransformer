@@ -385,7 +385,19 @@ public final class FeatureMatrix {
                 "Dm01ToDmavLfp3IntegrationTest"));
 
         entries.add(FeatureEntry.of(
-                "enumMap()", "15", FeatureStatus.STUB, "Enum mapping pass-through with diagnostic warning", ""));
+                "enumMap(), enumMapDefault(), enumMapStrict()",
+                "15",
+                FeatureStatus.SUPPORTED,
+                "Enum mapping with configurable missing-value policies: warn+null, fallback, strict error",
+                "BuiltinFunctionsTest",
+                "EnumTargetValidationTest"));
+
+        entries.add(FeatureEntry.of(
+                "lookup(), lookupIn()",
+                "16",
+                FeatureStatus.PARTIAL,
+                "SourceLookupIndex queries: unscoped lookup() searches all inputs; lookupIn() restricts to inputId. Return type UNKNOWN at compile time.",
+                "LookupFunctionsTest"));
 
         entries.add(FeatureEntry.of(
                 "Joins / Splits / Merge",
