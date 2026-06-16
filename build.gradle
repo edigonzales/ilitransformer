@@ -150,6 +150,17 @@ tasks.register('generateFeatureMatrix', JavaExec) {
     ]
 }
 
+tasks.register('generateExpressionReference', JavaExec) {
+    group = 'documentation'
+    description = 'Generate expression function reference as Markdown and JSON'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'guru.interlis.transformer.feature.ExpressionFunctionReferenceTask'
+    args = [
+        '--markdown', 'build/reports/expression-functions.md',
+        '--json', 'build/reports/expression-functions.json'
+    ]
+}
+
 tasks.register('validateFeatureMatrix', Test) {
     description = 'Validates feature matrix: test references exist and are loadable'
     group = 'verification'

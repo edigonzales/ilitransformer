@@ -71,6 +71,8 @@ All comparison and boolean operators are fully supported and tested.
 
 ## Builtin functions
 
+The authoritative list of built-in functions is generated from `FunctionRegistry` by `./gradlew generateExpressionReference`. That task produces `build/reports/expression-functions.md` and `build/reports/expression-functions.json`. The tables below are manually maintained; the generated report is the canonical reference.
+
 ### Basic functions
 
 | Function | Signature | Description |
