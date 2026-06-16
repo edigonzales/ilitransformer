@@ -68,6 +68,18 @@ public final class ExpressionTypeChecker {
             return TypeInfo.UNKNOWN;
         }
 
+        if (attrName != null && attrName.contains(".")) {
+            if (diagnostics != null) {
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.EXPR_UNSUPPORTED,
+                        Severity.ERROR,
+                        "Nested expression paths are not supported: " + alias + "." + attrName,
+                        context.ruleId(),
+                        "Use bags/nestedBags for structures or direct alias.attribute paths"));
+            }
+            return TypeInfo.UNKNOWN;
+        }
+
         if (attrName == null || attrName.isBlank()) {
             paths.add(new ResolvedPath(
                     alias,

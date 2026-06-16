@@ -64,4 +64,27 @@ class BarePathValidationTest {
         assertThat(path.alias()).isEqualTo("p");
         assertThat(path.attributeName()).isEqualTo("Unbekannt");
     }
+
+    @Test
+    void nestedPathIsParsedAsSingleAttributeName() {
+        Expression expr = ExpressionParser.parse("src.structure.attribute");
+        assertThat(expr).isInstanceOf(PathExpr.class);
+        PathExpr path = (PathExpr) expr;
+        assertThat(path.alias()).isEqualTo("src");
+        assertThat(path.attributeName()).isEqualTo("structure.attribute");
+    }
+
+    @Test
+    void nestedPathProducesUnsupportedDiagnostic() {
+        Map<String, SourcePlan> sources = Map.of("src", new SourcePlan("src", null, List.of(), null));
+
+        ExpressionCompileContext ctx =
+                new ExpressionCompileContext("r1", sources, TypeInfo.UNKNOWN, registry, Map.of());
+
+        CompiledExpression result = compiler.compile("src.structure.attribute", ctx, diagnostics);
+        assertThat(diagnostics.errors()).isGreaterThan(0);
+        assertThat(diagnostics.all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.EXPR_UNSUPPORTED)
+                        && d.message().contains("Nested expression paths are not supported"));
+    }
 }
