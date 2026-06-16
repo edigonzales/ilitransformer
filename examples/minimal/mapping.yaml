@@ -1,0 +1,30 @@
+version: 1
+
+job:
+  name: "minimal-example"
+  description: "Copy SourceClass to TargetClass with scalar attributes"
+  modeldir:
+    - "models/"
+  inputs:
+    - id: source
+      path: "data/input.xtf"
+      model: "ExampleModel"
+  outputs:
+    - id: target
+      path: "output.xtf"
+      model: "ExampleModel"
+
+mapping:
+  rules:
+    - id: copy-rule
+      target:
+        output: target
+        class: "ExampleModel.ExampleTopic.TargetClass"
+      sources:
+        - alias: src
+          input: source
+          class: "ExampleModel.ExampleTopic.SourceClass"
+      assign:
+        Label: "${src.Name}"
+        Size: "${src.Count}"
+        Enabled: "${src.Active}"

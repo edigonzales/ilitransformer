@@ -61,6 +61,13 @@ application {
 distributions {
     main {
         distributionBaseName = 'ilitransformer'
+        contents {
+            from('examples') { into 'examples' }
+            from('profiles') { into 'profiles' }
+            from('docs/cli.md') { into 'docs' }
+            from('docs/mapping-dsl.md') { into 'docs' }
+            from('README.md')
+        }
     }
 }
 

@@ -2,6 +2,26 @@
 
 Java/Gradle-Werkzeug zur modellbewussten Transformation von INTERLIS-Transferdaten. Der aktuelle Referenz-Use-Case ist DM01 ↔ DMAV, die Engine bleibt aber generisch und darf keine DM01/DMAV-Sonderlogik in die generischen Laufzeitpfade ziehen.
 
+## Schnellstart
+
+### Per Release-Download (ohne Gradle)
+
+```bash
+unzip ilitransformer-0.1.0.zip
+cd ilitransformer-0.1.0/
+./bin/ilitransformer --help
+cd examples/minimal/
+../../bin/ilitransformer transform -m mapping.yaml
+```
+
+### Per Build aus Source
+
+```bash
+./gradlew installDist
+./build/install/ilitransformer/bin/ilitransformer --help
+./build/install/ilitransformer/bin/ilitransformer transform -m examples/minimal/mapping.yaml
+```
+
 ## Wichtige Verzeichnisse
 
 - `profiles/` enthält die autoritativen, versionierten DM01/DMAV-Profile auf Root-Ebene.
@@ -29,6 +49,7 @@ Java/Gradle-Werkzeug zur modellbewussten Transformation von INTERLIS-Transferdat
 ./gradlew realDataTest
 ./gradlew check
 ./gradlew installDist
+./gradlew distZip distTar
 ```
 
 DM01/DMAV-spezifische Hilfstasks:

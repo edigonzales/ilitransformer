@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        java: ['21']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and test
+        run: ./gradlew clean check
+
+      - name: Build distribution archives
+        run: ./gradlew distZip distTar
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ilitransformer ${{ github.ref_name }}
+          body: |
+            Release ${{ github.ref_name }} of ilitransformer.
+
+            ## Quick start
+
+            ```bash
+            unzip ilitransformer-*.zip
+            cd ilitransformer-*/
+            ./bin/ilitransformer --help
+            cd examples/minimal/
+            ../../bin/ilitransformer transform -m mapping.yaml
+            ```
+
+            ## Included
+
+            - CLI binary (`bin/ilitransformer`)
+            - Libraries (`lib/`)
+            - Minimal example (`examples/minimal/`)
+            - DM01/DMAV product profiles (`profiles/`)
+            - Documentation (`docs/cli.md`, `docs/mapping-dsl.md`)
+          files: |
+            build/distributions/ilitransformer-*.zip
+            build/distributions/ilitransformer-*.tar
+          fail_on_unmatched_files: true
+
+      - name: Smoke test (ZIP)
+        run: |
+          unzip build/distributions/ilitransformer-*.zip -d build/smoke-test
+          chmod +x build/smoke-test/ilitransformer-*/bin/ilitransformer
+          build/smoke-test/ilitransformer-*/bin/ilitransformer --help
+          build/smoke-test/ilitransformer-*/bin/ilitransformer --version
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-release
+          path: build/reports/

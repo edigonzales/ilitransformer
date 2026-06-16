@@ -2,6 +2,16 @@
 
 ## Installation
 
+### Per Release-Download
+
+```bash
+unzip ilitransformer-0.1.0.zip
+cd ilitransformer-0.1.0/
+./bin/ilitransformer --help
+```
+
+### Per Build aus Source
+
 ```bash
 ./gradlew installDist
 ```
