@@ -104,7 +104,7 @@ Typed expression system with:
 
 - AST-based parser (no JEXL/JSR-223)
 - `sealed interface Value` with subtypes: TextValue, NumberValue, BooleanValue, DateValue, XmlDateTimeValue, EnumValue, CoordValue, GeometryObjectValue, ReferenceValue, NullValue
-- Builtin functions: Basic (coalesce, if, default), String (concat, truncate, ...), Date (toXmlDateTime, now), Enum (enumMap, enumDefault, enumName), Reference (refOid, refEquals), Math (round, abs)
+- Builtin functions: Basic (coalesce, eq, neq, lt, lte, gt, gte, ...), String (concat, truncate, ...), Date (toXmlDateTime, toInterlis1Date, toDate, now), Enum (enumMap, enumDefault, enumName), Reference (refOid, refEquals), Math (div, mul), Lookup (oid, bagFirst, lookup), Geometry (coordEquals)
 
 ### TransformationEngine
 

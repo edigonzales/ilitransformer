@@ -291,7 +291,7 @@ Seit Phase 4 werden Expressions typisiert ausgewertet. Der `MappingCompiler` inf
 
 - `truncate()` → TEXT
 - `toXmlDateTime()` → XML_DATE_TIME
-- `round()` → NUMERIC
+- `div()` → NUMERIC
 
 Typ-Inkompatibilitäten werden als `ILITRF-MAP-TYPE-MISMATCH` (WARNING) diagnostiziert, da die Runtime Typ-Koersion durchführen kann.
 

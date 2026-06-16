@@ -10,11 +10,13 @@ The expression language is a small, sandboxed DSL for transformation logic. It i
 ${alias.attribute}
 ```
 
-Accesses an attribute of a source object. Paths can be nested for structures:
+Accesses an attribute of a source object. Only direct `alias.attribute` paths are supported:
 
 ```
-${alias.structure.attribute}
+${src.Name}
 ```
+
+Nested structure traversal such as `alias.structure.attribute` is reserved and not currently supported by the expression evaluator/type checker. Use the structural DSL features `bags`/`nestedBags` for BAG OF STRUCTURE mappings.
 
 ### Literals
 
@@ -40,10 +42,32 @@ Nested expressions: `truncate(concat(src.first, " ", src.last), 60)`
 if(condition, valueIfTrue, valueIfFalse)
 ```
 
+The `if()` form is a special parser construct that evaluates lazily: only the chosen branch is evaluated. It is not a regular function and does not appear in `FunctionRegistry`.
+
 `condition` can be:
 - Boolean literal: `true`, `false`
 - Null check: `src.attr != null`, `src.attr == null`
-- Function returning boolean: `defined(src.attr)`
+- Comparison operator: `<`, `<=`, `>`, `>=`, `==`, `!=`
+- Function returning boolean: `defined(src.attr)`, `eq(a, b)`
+- Combined with `and`, `or`, `not`
+
+### Operators / syntax sugar
+
+The parser supports infix and prefix operators. They are desugared into function calls or special forms:
+
+| Syntax | Desugaring |
+|---|---|
+| `a == b` | `eq(a, b)`, except `a == null` → `notDefined(a)` |
+| `a != b` | `neq(a, b)`, except `a != null` → `defined(a)` |
+| `a < b` | `lt(a, b)` |
+| `a <= b` | `lte(a, b)` |
+| `a > b` | `gt(a, b)` |
+| `a >= b` | `gte(a, b)` |
+| `a and b` | Lazy `ConditionalExpr`: if `a` then `b` else `false` |
+| `a or b` | Lazy `ConditionalExpr`: if `a` then `true` else `b` |
+| `not a` | `not(a)` |
+
+All comparison and boolean operators are fully supported and tested.
 
 ## Builtin functions
 
@@ -55,9 +79,15 @@ if(condition, valueIfTrue, valueIfFalse)
 | `defined` | `(value) → boolean` | Returns true if value is not null |
 | `notDefined` | `(value) → boolean` | Returns true if value is null |
 | `isNull` | `(value) → boolean` | Synonym for notDefined |
-| `default` | `(value, fallback) → any` | If value is null, return fallback |
+| `default` | `(value, fallback) → text/any` | If value is null, return fallback |
 | `null` | `() → null` | Returns null |
-| `if` | `(condition, a, b) → any` | Conditional: true → a, false → b |
+| `eq` | `(a, b) → boolean` | Returns true if a equals b |
+| `neq` | `(a, b) → boolean` | Returns true if a does not equal b |
+| `lt` | `(a, b) → boolean` | Returns true if a is less than b |
+| `lte` | `(a, b) → boolean` | Returns true if a is less than or equal to b |
+| `gt` | `(a, b) → boolean` | Returns true if a is greater than b |
+| `gte` | `(a, b) → boolean` | Returns true if a is greater than or equal to b |
+| `not` | `(value) → boolean` | Returns logical negation of value |
 
 ### String functions
 
@@ -76,29 +106,45 @@ if(condition, valueIfTrue, valueIfFalse)
 | Function | Signature | Description |
 |---|---|---|
 | `toXmlDateTime` | `(value) → XMLDateTime` | Converts DATE to INTERLIS.XMLDateTime |
+| `toInterlis1Date` | `(value) → text` | Converts DATE/TEXT to INTERLIS 1 date format |
+| `toDate` | `(value) → Date` | Converts DATE/TEXT to INTERLIS.Date |
 | `now` | `() → XMLDateTime` | Current timestamp (marked @NonDeterministic) |
 
 ### Enum functions
 
 | Function | Signature | Description |
 |---|---|---|
-| `enumMap` | `(value, mapName) → enum` | Maps enum value using named map (stub) |
-| `enumDefault` | `(value, fallback) → enum` | Returns default if value not in target enum |
+| `enumMap` | `(value, mapName) → enum` | Maps enum value using named map under `mapping.enums`. Source value is converted to text and looked up in the table. Target values `true`/`false` produce boolean values, numeric target values produce numeric values, other values produce enum values. Missing source mapping reports a warning and returns null. |
+| `enumDefault` | `(value, fallback) → enum` | Returns value if defined, else fallback as enum value |
 | `enumName` | `(value) → text` | Returns the string name of an enum value |
 
 ### Reference functions
 
 | Function | Signature | Description |
 |---|---|---|
-| `refOid` | `(object.role) → text` | Returns the OID referenced by a role |
-| `refEquals` | `(object.role, other) → boolean` | Checks if role reference equals another object |
+| `refOid` | `(ref) → text` | Returns the OID from a reference value |
+| `refEquals` | `(a, b) → boolean` | Checks if two references point to the same object |
 
 ### Math functions
 
 | Function | Signature | Description |
 |---|---|---|
-| `round` | `(value, scale) → number` | Rounds to given decimal scale |
-| `abs` | `(value) → number` | Absolute value |
+| `div` | `(value, divisor) → numeric` | Divides value by divisor. Returns null on division by zero. |
+| `mul` | `(value, factor) → numeric` | Multiplies value by factor |
+
+### Lookup functions
+
+| Function | Signature | Description |
+|---|---|---|
+| `oid` | `(alias) → text` | Returns the OID of the source object identified by the alias |
+| `bagFirst` | `(alias, bagAttr, valueAttr) → text` | Returns the first value from a BAG attribute of a source object |
+| `lookup` | `(classPath, keyAttr, keyValue, returnAttr) → text` | Compatibility function. Searches `SourceLookupIndex` across **all inputs** (unscoped). Returns null + warning on no match. Returns first value + warning on multiple matches with different return values. Return type is `UNKNOWN` at compile time. Prefer structural `joins` for modelled relationships. |
+
+### Geometry functions
+
+| Function | Signature | Description |
+|---|---|---|
+| `coordEquals` | `(coord1, coord2, tolerance) → boolean` | Returns true if two coordinates are within the given tolerance |
 
 ## Type system
 
@@ -128,9 +174,9 @@ Functions marked `@NonDeterministic` (currently only `now()`) produce a warning 
 
 ## Currently unsupported
 
-The following are not yet supported in the expression engine and produce `ILITRF-EXPR-UNSUPPORTED`:
+The following are not yet supported in the expression engine:
 
-- Arithmetic operators (`+`, `-`, `*`, `/`) — planned
-- Comparison operators (`>`, `<`, `>=`, `<=`) — planned
-- `lookupOne`/`lookupMany` (StateStore lookups) — planned for Phase 10+
-- Geometry functions beyond pass-through — partially supported via GeometryAdapter
+- Arithmetic operators (`+`, `-`, `*`, `/`) — use `div(...)` and `mul(...)` as functions. Additional arithmetic functions may be added later.
+- `lookupOne`/`lookupMany` (scoped StateStore lookups) — planned
+- Nested structure paths (`alias.structure.attribute`) — reserved. Use `bags`/`nestedBags` for BAG OF STRUCTURE mappings.
+- Geometry functions beyond `coordEquals` — partially supported via GeometryAdapter

@@ -89,7 +89,7 @@ Produktive Profile: `profiles/dm01-to-dmav/1.1/` und `profiles/dmav-to-dm01/1.1/
 | BAG/Textpositionen | Stabil |
 | Joins / Splits / Merge | Experimentell |
 | create-DSL | Experimentell |
-| enumMap() | Stub (Pass-through) |
+| enumMap() | Supported, with documented missing-value warning behavior |
 | external OID-Strategie | Stub |
 | expression Basket-Strategie | Stub |
 
