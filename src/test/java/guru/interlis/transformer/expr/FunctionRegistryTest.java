@@ -59,4 +59,18 @@ class FunctionRegistryTest {
         assertThat(def).isPresent();
         assertThat(def.get().deterministic()).isFalse();
     }
+
+    @Test
+    void defaultRegistryContainsAllBuiltinFunctionGroups() {
+        FunctionRegistry registry = FunctionRegistry.defaultRegistry();
+
+        assertThat(registry.resolve("coalesce")).isPresent();
+        assertThat(registry.resolve("truncate")).isPresent();
+        assertThat(registry.resolve("toXmlDateTime")).isPresent();
+        assertThat(registry.resolve("enumMap")).isPresent();
+        assertThat(registry.resolve("refEquals")).isPresent();
+        assertThat(registry.resolve("div")).isPresent();
+        assertThat(registry.resolve("lookup")).isPresent();
+        assertThat(registry.resolve("coordEquals")).isPresent();
+    }
 }

@@ -6,14 +6,6 @@ import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.expr.ExpressionCompiler;
 import guru.interlis.transformer.expr.FunctionRegistry;
-import guru.interlis.transformer.expr.builtins.BasicFunctions;
-import guru.interlis.transformer.expr.builtins.DateFunctions;
-import guru.interlis.transformer.expr.builtins.EnumFunctions;
-import guru.interlis.transformer.expr.builtins.GeometryFunctions;
-import guru.interlis.transformer.expr.builtins.LookupFunctions;
-import guru.interlis.transformer.expr.builtins.MathFunctions;
-import guru.interlis.transformer.expr.builtins.RefFunctions;
-import guru.interlis.transformer.expr.builtins.StringFunctions;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.BasketPlan;
 import guru.interlis.transformer.mapping.plan.CompileMode;
@@ -41,26 +33,13 @@ public final class MappingCompiler {
     private final StructuralValidator structuralValidator = new StructuralValidator();
 
     public MappingCompiler() {
-        this.functionRegistry = defaultRegistry();
+        this.functionRegistry = FunctionRegistry.defaultRegistry();
         this.expressionCompiler = new ExpressionCompiler();
     }
 
     public MappingCompiler(FunctionRegistry functionRegistry) {
         this.functionRegistry = functionRegistry;
         this.expressionCompiler = new ExpressionCompiler();
-    }
-
-    private static FunctionRegistry defaultRegistry() {
-        FunctionRegistry registry = new FunctionRegistry();
-        BasicFunctions.registerAll(registry);
-        StringFunctions.registerAll(registry);
-        DateFunctions.registerAll(registry);
-        EnumFunctions.registerAll(registry);
-        RefFunctions.registerAll(registry);
-        MathFunctions.registerAll(registry);
-        LookupFunctions.registerAll(registry);
-        GeometryFunctions.registerAll(registry);
-        return registry;
     }
 
     public CompileResult compile(JobConfig config) {

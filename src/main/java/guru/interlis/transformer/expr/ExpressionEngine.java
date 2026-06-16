@@ -3,14 +3,6 @@ package guru.interlis.transformer.expr;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
-import guru.interlis.transformer.expr.builtins.BasicFunctions;
-import guru.interlis.transformer.expr.builtins.DateFunctions;
-import guru.interlis.transformer.expr.builtins.EnumFunctions;
-import guru.interlis.transformer.expr.builtins.GeometryFunctions;
-import guru.interlis.transformer.expr.builtins.LookupFunctions;
-import guru.interlis.transformer.expr.builtins.MathFunctions;
-import guru.interlis.transformer.expr.builtins.RefFunctions;
-import guru.interlis.transformer.expr.builtins.StringFunctions;
 import guru.interlis.transformer.mapping.plan.CompiledExpression;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 
@@ -26,23 +18,11 @@ public final class ExpressionEngine {
     private final FunctionRegistry functionRegistry;
 
     public ExpressionEngine() {
-        this.functionRegistry = new FunctionRegistry();
-        registerBuiltins();
+        this.functionRegistry = FunctionRegistry.defaultRegistry();
     }
 
     public ExpressionEngine(FunctionRegistry functionRegistry) {
         this.functionRegistry = functionRegistry;
-    }
-
-    private void registerBuiltins() {
-        BasicFunctions.registerAll(functionRegistry);
-        StringFunctions.registerAll(functionRegistry);
-        DateFunctions.registerAll(functionRegistry);
-        EnumFunctions.registerAll(functionRegistry);
-        RefFunctions.registerAll(functionRegistry);
-        MathFunctions.registerAll(functionRegistry);
-        LookupFunctions.registerAll(functionRegistry);
-        GeometryFunctions.registerAll(functionRegistry);
     }
 
     public FunctionRegistry functionRegistry() {

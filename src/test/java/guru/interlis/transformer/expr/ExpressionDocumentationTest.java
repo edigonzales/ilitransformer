@@ -2,14 +2,6 @@ package guru.interlis.transformer.expr;
 
 import static org.assertj.core.api.Assertions.*;
 
-import guru.interlis.transformer.expr.builtins.BasicFunctions;
-import guru.interlis.transformer.expr.builtins.DateFunctions;
-import guru.interlis.transformer.expr.builtins.EnumFunctions;
-import guru.interlis.transformer.expr.builtins.GeometryFunctions;
-import guru.interlis.transformer.expr.builtins.LookupFunctions;
-import guru.interlis.transformer.expr.builtins.MathFunctions;
-import guru.interlis.transformer.expr.builtins.RefFunctions;
-import guru.interlis.transformer.expr.builtins.StringFunctions;
 import guru.interlis.transformer.expr.FunctionDef;
 
 import java.nio.file.Files;
@@ -20,16 +12,7 @@ import org.junit.jupiter.api.Test;
 class ExpressionDocumentationTest {
 
     private static FunctionRegistry defaultRegistry() {
-        FunctionRegistry registry = new FunctionRegistry();
-        BasicFunctions.registerAll(registry);
-        StringFunctions.registerAll(registry);
-        DateFunctions.registerAll(registry);
-        EnumFunctions.registerAll(registry);
-        RefFunctions.registerAll(registry);
-        MathFunctions.registerAll(registry);
-        LookupFunctions.registerAll(registry);
-        GeometryFunctions.registerAll(registry);
-        return registry;
+        return FunctionRegistry.defaultRegistry();
     }
 
     private static String expressionsDoc() throws Exception {
