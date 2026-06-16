@@ -165,7 +165,8 @@ public final class ExpressionTypeChecker {
     }
 
     private void checkEnumMapFunction(FunctionDef def, FunctionCallExpr call, List<TypeInfo> argTypes) {
-        if (!"enumMap".equalsIgnoreCase(def.name())) return;
+        String name = def.name().toLowerCase();
+        if (!name.startsWith("enummap")) return;
         if (call.arguments().size() < 2) return;
 
         Expression mapNameExpr = call.arguments().get(1);
@@ -187,7 +188,8 @@ public final class ExpressionTypeChecker {
     }
 
     private TypeInfo inferEnumMapReturnType(FunctionDef def, FunctionCallExpr call) {
-        if (!"enumMap".equalsIgnoreCase(def.name())) return null;
+        String name = def.name().toLowerCase();
+        if (!name.startsWith("enummap")) return null;
         if (call.arguments().size() < 2) return TypeInfo.ENUM;
 
         Expression mapNameExpr = call.arguments().get(1);

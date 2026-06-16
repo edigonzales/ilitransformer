@@ -115,6 +115,8 @@ All comparison and boolean operators are fully supported and tested.
 | Function | Signature | Description |
 |---|---|---|
 | `enumMap` | `(value, mapName) → enum` | Maps enum value using named map under `mapping.enums`. Source value is converted to text and looked up in the table. Target values `true`/`false` produce boolean values, numeric target values produce numeric values, other values produce enum values. Missing source mapping reports a warning and returns null. |
+| `enumMapDefault` | `(value, mapName, fallback) → any` | Like `enumMap` but returns `fallback` when the source value has no mapping entry, without diagnostic. |
+| `enumMapStrict` | `(value, mapName) → enum` | Like `enumMap` but reports an ERROR diagnostic (instead of WARNING) when the source value has no mapping entry. |
 | `enumDefault` | `(value, fallback) → enum` | Returns value if defined, else fallback as enum value |
 | `enumName` | `(value) → text` | Returns the string name of an enum value |
 

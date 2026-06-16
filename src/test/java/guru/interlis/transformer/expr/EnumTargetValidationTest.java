@@ -56,4 +56,24 @@ class EnumTargetValidationTest {
         assertThat(result).isInstanceOf(EnumValue.class);
         assertThat(((EnumValue) result).name()).isEqualTo("LFP3");
     }
+
+    @Test
+    void enumMapStrictWithExistingTableDoesNotError() {
+        Map<String, Map<String, String>> enumMaps = Map.of("MyMap", Map.of("A", "X", "B", "Y"));
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        ExpressionCompileContext ctx = new ExpressionCompileContext("r1", Map.of(), TypeInfo.ENUM, registry, enumMaps);
+
+        compiler.compile("enumMapStrict(${s.Status}, \"MyMap\")", ctx, diagnostics);
+        assertThat(diagnostics.all()).noneMatch(d -> d.code().equals(DiagnosticCode.EXPR_ENUM_MAP_MISSING));
+    }
+
+    @Test
+    void enumMapDefaultWithExistingTableDoesNotError() {
+        Map<String, Map<String, String>> enumMaps = Map.of("MyMap", Map.of("A", "X", "B", "Y"));
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        ExpressionCompileContext ctx = new ExpressionCompileContext("r1", Map.of(), TypeInfo.ENUM, registry, enumMaps);
+
+        compiler.compile("enumMapDefault(${s.Status}, \"MyMap\", 'Default')", ctx, diagnostics);
+        assertThat(diagnostics.all()).noneMatch(d -> d.code().equals(DiagnosticCode.EXPR_ENUM_MAP_MISSING));
+    }
 }

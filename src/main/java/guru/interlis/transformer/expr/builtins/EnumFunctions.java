@@ -31,6 +31,23 @@ public final class EnumFunctions {
                 EnumFunctions::enumMap);
 
         registry.register(
+                "enumMapDefault",
+                TypeInfo.ENUM,
+                List.of(
+                        new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
+                        new FunctionDef.FunctionParam("mapName", TypeInfo.TEXT),
+                        new FunctionDef.FunctionParam("fallback", TypeInfo.UNKNOWN)),
+                EnumFunctions::enumMapDefault);
+
+        registry.register(
+                "enumMapStrict",
+                TypeInfo.ENUM,
+                List.of(
+                        new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
+                        new FunctionDef.FunctionParam("mapName", TypeInfo.TEXT)),
+                EnumFunctions::enumMapStrict);
+
+        registry.register(
                 "enumDefault",
                 TypeInfo.ENUM,
                 List.of(
@@ -76,11 +93,87 @@ public final class EnumFunctions {
                                 Severity.WARNING,
                                 "enumMap(): no mapping for source value '" + sourceKey + "' in map '" + mapName + "'",
                                 ctx.ruleId(),
-                                "Add the missing mapping or use enumDefault() as fallback"));
+                                "Add the missing mapping or use enumMapDefault() for a fallback"));
             }
             return NullValue.INSTANCE;
         }
 
+        return resolveEnumTargetValue(targetValue);
+    }
+
+    static Value enumMapDefault(List<Value> args, EvalContext ctx) {
+        if (args.size() < 3 || !args.get(0).isDefined()) {
+            if (args.size() >= 3) return args.get(2);
+            return NullValue.INSTANCE;
+        }
+        Value val = args.get(0);
+        String mapName = args.get(1).asText();
+        Value fallback = args.get(2);
+        String sourceKey = val.asText();
+
+        Map<String, Map<String, String>> enumMaps = ctx.enumMaps();
+        if (enumMaps == null || !enumMaps.containsKey(mapName)) {
+            if (ctx.diagnostics() != null) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_UNSUPPORTED,
+                                Severity.WARNING,
+                                "enumMapDefault(): enum mapping table '" + mapName + "' not found in config",
+                                ctx.ruleId(),
+                                "Define the enum mapping under mapping.enums."));
+            }
+            return fallback;
+        }
+
+        Map<String, String> mapping = enumMaps.get(mapName);
+        String targetValue = mapping.get(sourceKey);
+        if (targetValue == null) {
+            return fallback;
+        }
+
+        return resolveEnumTargetValue(targetValue);
+    }
+
+    static Value enumMapStrict(List<Value> args, EvalContext ctx) {
+        if (args.size() < 2 || !args.get(0).isDefined()) return NullValue.INSTANCE;
+        Value val = args.get(0);
+        String mapName = args.get(1).asText();
+        String sourceKey = val.asText();
+
+        Map<String, Map<String, String>> enumMaps = ctx.enumMaps();
+        if (enumMaps == null || !enumMaps.containsKey(mapName)) {
+            if (ctx.diagnostics() != null) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_UNSUPPORTED,
+                                Severity.ERROR,
+                                "enumMapStrict(): enum mapping table '" + mapName + "' not found in config",
+                                ctx.ruleId(),
+                                "Define the enum mapping under mapping.enums."));
+            }
+            return NullValue.INSTANCE;
+        }
+
+        Map<String, String> mapping = enumMaps.get(mapName);
+        String targetValue = mapping.get(sourceKey);
+        if (targetValue == null) {
+            if (ctx.diagnostics() != null) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_TYPE,
+                                Severity.ERROR,
+                                "enumMapStrict(): no mapping for source value '" + sourceKey + "' in map '" + mapName
+                                        + "'",
+                                ctx.ruleId(),
+                                "Add the missing mapping or use enumMapDefault() for a fallback"));
+            }
+            return NullValue.INSTANCE;
+        }
+
+        return resolveEnumTargetValue(targetValue);
+    }
+
+    private static Value resolveEnumTargetValue(String targetValue) {
         if ("true".equalsIgnoreCase(targetValue)) return BooleanValue.TRUE;
         if ("false".equalsIgnoreCase(targetValue)) return BooleanValue.FALSE;
 

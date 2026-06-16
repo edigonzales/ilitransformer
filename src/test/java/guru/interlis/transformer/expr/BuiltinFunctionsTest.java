@@ -223,6 +223,74 @@ class BuiltinFunctionsTest {
         assertThat(((EnumValue) result).name()).isEqualTo("fallback");
     }
 
+    @Test
+    void enumMapReturnsBooleanForBooleanMappingValue() {
+        Map<String, Map<String, String>> enumMaps = Map.of("Map", Map.of("ja", "true", "nein", "false"));
+        EvalContext ctx = new EvalContext(Map.of(), null, "r1").withEnumMaps(enumMaps);
+
+        Value result = engine.evaluate("enumMap('ja', 'Map')", ctx);
+        assertThat(result).isInstanceOf(BooleanValue.class);
+        assertThat(((BooleanValue) result).value()).isTrue();
+    }
+
+    @Test
+    void enumMapReturnsNumberForNumericMappingValue() {
+        Map<String, Map<String, String>> enumMaps = Map.of("Map", Map.of("A", "42", "B", "99"));
+        EvalContext ctx = new EvalContext(Map.of(), null, "r1").withEnumMaps(enumMaps);
+
+        Value result = engine.evaluate("enumMap('A', 'Map')", ctx);
+        assertThat(result).isInstanceOf(NumberValue.class);
+        assertThat(result.asNumber()).isEqualTo(42.0);
+    }
+
+    @Test
+    void enumMapReturnsEnumForEnumMappingValue() {
+        Map<String, Map<String, String>> enumMaps = Map.of("Map", Map.of("A", "LFP3", "B", "LFP4"));
+        EvalContext ctx = new EvalContext(Map.of(), null, "r1").withEnumMaps(enumMaps);
+
+        Value result = engine.evaluate("enumMap('A', 'Map')", ctx);
+        assertThat(result).isInstanceOf(EnumValue.class);
+        assertThat(((EnumValue) result).name()).isEqualTo("LFP3");
+    }
+
+    @Test
+    void enumMapReturnsNullAndWarningForMissingSourceValue() {
+        Map<String, Map<String, String>> enumMaps = Map.of("Map", Map.of("A", "X"));
+        guru.interlis.transformer.diag.DiagnosticCollector diagnostics =
+                new guru.interlis.transformer.diag.DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "r1").withEnumMaps(enumMaps);
+
+        Value result = engine.evaluate("enumMap('Unknown', 'Map')", ctx);
+        assertThat(result.isNull()).isTrue();
+        assertThat(diagnostics.warnings()).isGreaterThan(0);
+        assertThat(diagnostics.all()).anyMatch(d -> d.code().equals("ILITRF-EXPR-TYPE"));
+    }
+
+    @Test
+    void enumMapStrictReportsErrorForMissingSourceValue() {
+        Map<String, Map<String, String>> enumMaps = Map.of("Map", Map.of("A", "X"));
+        guru.interlis.transformer.diag.DiagnosticCollector diagnostics =
+                new guru.interlis.transformer.diag.DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "r1").withEnumMaps(enumMaps);
+
+        Value result = engine.evaluate("enumMapStrict('Unknown', 'Map')", ctx);
+        assertThat(result.isNull()).isTrue();
+        assertThat(diagnostics.errors()).isGreaterThan(0);
+    }
+
+    @Test
+    void enumMapDefaultReturnsFallbackForMissingSourceValue() {
+        Map<String, Map<String, String>> enumMaps = Map.of("Map", Map.of("A", "X"));
+        guru.interlis.transformer.diag.DiagnosticCollector diagnostics =
+                new guru.interlis.transformer.diag.DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "r1").withEnumMaps(enumMaps);
+
+        Value result = engine.evaluate("enumMapDefault('Unknown', 'Map', 'Default')", ctx);
+        assertThat(result).isInstanceOf(TextValue.class);
+        assertThat(((TextValue) result).value()).isEqualTo("Default");
+        assertThat(diagnostics.warnings()).isZero();
+    }
+
     // -- Conditional (if) ------------------------------------------
 
     @Test
