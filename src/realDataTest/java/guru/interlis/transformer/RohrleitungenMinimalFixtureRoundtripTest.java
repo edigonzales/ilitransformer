@@ -74,7 +74,7 @@ class RohrleitungenMinimalFixtureRoundtripTest {
         Path dm01Roundtrip = tempDir.resolve("dm01-roundtrip.itf");
 
         run(materializeDm01ToDmav(DM01_INPUT, dmavIntermediate), tempDir.resolve("reports-dm01-forward"));
-        runWithoutValidation(materializeDmavToDm01(dmavIntermediate, dm01Roundtrip), tempDir.resolve("reports-dm01-reverse"));
+        run(materializeDmavToDm01(dmavIntermediate, dm01Roundtrip), tempDir.resolve("reports-dm01-reverse"));
 
         List<IomObject> original = semanticDm01Objects(DM01_INPUT);
         List<IomObject> roundtripped = semanticDm01Objects(dm01Roundtrip);
@@ -96,8 +96,8 @@ class RohrleitungenMinimalFixtureRoundtripTest {
         Path dmavRoundtrip = tempDir.resolve("dmav-roundtrip.xtf");
         Path reverseReportDir = tempDir.resolve("reports-dmav-reverse");
 
-        runWithoutValidation(materializeDmavToDm01(DMAV_INPUT, dm01Intermediate), reverseReportDir);
-        runWithoutValidation(materializeDm01ToDmav(dm01Intermediate, dmavRoundtrip), tempDir.resolve("reports-dmav-forward"));
+        run(materializeDmavToDm01(DMAV_INPUT, dm01Intermediate), reverseReportDir);
+        run(materializeDm01ToDmav(dm01Intermediate, dmavRoundtrip), tempDir.resolve("reports-dmav-forward"));
 
         List<IomObject> original = semanticDmavObjects(DMAV_INPUT);
         List<IomObject> roundtripped = semanticDmavObjects(dmavRoundtrip);
@@ -118,17 +118,6 @@ class RohrleitungenMinimalFixtureRoundtripTest {
         modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
         DiagnosticCollector diagnostics =
                 new JobRunner().run(mappingPath, new RunOptions(modelDirs, true, reportDir, false));
-        List<Diagnostic> errors = diagnostics.all().stream()
-                .filter(d -> d.severity() == Severity.ERROR)
-                .toList();
-        assertThat(errors).as("Diagnostics: %s", diagnostics.all()).isEmpty();
-    }
-
-    private void runWithoutValidation(Path mappingPath, Path reportDir) throws Exception {
-        List<String> modelDirs = new ArrayList<>(Dm01DmavPaths.localModelDirs());
-        modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
-        DiagnosticCollector diagnostics =
-                new JobRunner().run(mappingPath, new RunOptions(modelDirs, false, reportDir, false));
         List<Diagnostic> errors = diagnostics.all().stream()
                 .filter(d -> d.severity() == Severity.ERROR)
                 .toList();

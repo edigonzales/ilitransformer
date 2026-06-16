@@ -81,6 +81,7 @@ mapping:
           required: true
           targetObject:
             rule: rl-nachfuehrung
+            sourceRef: "lo.Entstehung"
       bags:
         Punktelement:
           mode: expand
@@ -133,6 +134,7 @@ mapping:
           required: true
           targetObject:
             rule: rl-nachfuehrung
+            sourceRef: "sig.Entstehung"
       bags:
         Textposition:
           mode: expand
@@ -170,3 +172,4 @@ mapping:
           required: false
           targetObject:
             rule: rl-nachfuehrung
+            sourceRef: "mp.Entstehung"

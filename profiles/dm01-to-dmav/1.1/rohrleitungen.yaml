@@ -108,7 +108,7 @@ mapping:
       refs:
         - association: "Entstehung_Leitungsobjekt"
           role: "Entstehung"
-          required: false
+          required: true
           targetObject:
             rule: rl-nachfuehrung
             sourceRef: "lo.Entstehung"
@@ -148,7 +148,7 @@ mapping:
       refs:
         - association: "Entstehung_Signal"
           role: "Entstehung"
-          required: false
+          required: true
           targetObject:
             rule: rl-nachfuehrung
             sourceRef: "sp.Entstehung"
