@@ -20,6 +20,14 @@
 - `check` hängt an `integrationTest`, aber bewusst nicht an `realDataTest`.
 - `realDataTest` ist für langsame Echtdaten- und Profil-Regression separat ausführbar.
 
+## CI-Integration
+
+`realDataTest` wird bewusst nicht von `check` ausgeführt, sondern über einen
+separaten GitHub-Actions-Workflow (`.github/workflows/real-data.yml`):
+- manueller Start via `workflow_dispatch` in der GitHub UI
+- automatischer Lauf jeden Montag 03:00 UTC
+- Testergebnisse und Reports werden als Artefakte hochgeladen
+
 ## Ressourcenablage
 
 | Pfad | Rolle |
