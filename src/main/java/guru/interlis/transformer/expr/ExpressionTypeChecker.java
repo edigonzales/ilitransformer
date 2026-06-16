@@ -10,6 +10,7 @@ import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,12 +18,20 @@ import java.util.Set;
 
 public final class ExpressionTypeChecker {
 
+    public record Result(TypeInfo resultType, Set<ResolvedPath> resolvedPaths) {}
+
     private final ExpressionCompileContext context;
     private final DiagnosticCollector diagnostics;
 
     public ExpressionTypeChecker(ExpressionCompileContext context, DiagnosticCollector diagnostics) {
         this.context = context;
         this.diagnostics = diagnostics;
+    }
+
+    public Result check(Expression expr) {
+        Set<ResolvedPath> paths = new HashSet<>();
+        TypeInfo type = check(expr, paths);
+        return new Result(type, Set.copyOf(paths));
     }
 
     public TypeInfo check(Expression expr, Set<ResolvedPath> paths) {

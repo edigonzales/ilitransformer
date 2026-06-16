@@ -2,8 +2,6 @@ package guru.interlis.transformer.expr;
 
 import static org.assertj.core.api.Assertions.*;
 
-import guru.interlis.transformer.expr.FunctionDef;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -58,8 +56,6 @@ class ExpressionDocumentationTest {
     @Test
     void enumMapIsNotDescribedAsStub() throws Exception {
         String docs = expressionsDoc();
-        assertThat(docs)
-                .as("enumMap must not be described as stub")
-                .doesNotContain("(stub)");
+        assertThat(docs).as("enumMap must not be described as stub").doesNotContain("(stub)");
     }
 }
