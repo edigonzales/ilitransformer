@@ -40,7 +40,7 @@ class BuildLayoutTest {
     @Test
     void buildGradleContainsJavaToolchain() throws Exception {
         String content = Files.readString(Path.of("build.gradle"));
-        assertThat(content).contains("JavaLanguageVersion.of(25)");
+        assertThat(content).contains("JavaLanguageVersion.of(21)");
     }
 
     @Test

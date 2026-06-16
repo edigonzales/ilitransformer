@@ -7,7 +7,7 @@ Stand nach Abschluss von Phase 16 (2026-06-09).
 | Kategorie | Wert |
 |---|---|
 | **Build-Tool** | Gradle 9.0 |
-| **Java** | 25 (OpenJDK Temurin-25.0.3+9-LTS) |
+| **Java** | 21 (OpenJDK Temurin-21.0.7+6-LTS) |
 | **Package** | `guru.interlis.transformer` |
 | **Projektname** | `ilitransformer` |
 | **Group** | `guru.interlis` |
@@ -35,7 +35,7 @@ Stand nach Abschluss von Phase 16 (2026-06-09).
 ## Aktueller Funktionsumfang
 
 ### Core Engine (Phasen 0–7)
-- Gradle-Java-Projekt mit Java 25 Toolchain
+- Gradle-Java-Projekt mit Java 21 Toolchain
 - CLI-Kommandos: `transform`, `validate-mapping`, `inspect-model`, `dm01-dmav`
 - `IliModelService` + `TypeSystemFacade` + `IliPath` + `RoleResolver`
 - `ModelInventory` + `InventorySerializer`

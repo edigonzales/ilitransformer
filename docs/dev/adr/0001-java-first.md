@@ -19,7 +19,7 @@ Java-first. Der Core der Engine soll in reinem Java implementiert werden, ohne A
 
 - **Nähe zu INTERLIS-Tools**: `ili2c`, `iox-ili` und `ilivalidator` sind Java-Bibliotheken. Eine direkte Integration ohne Sprachbarrieren ist robuster.
 - **Testbarkeit**: JUnit, AssertJ und Mockito haben das beste Ökosystem für Java.
-- **Toolchain-Stabilität**: Gradle-Java-Projekt mit Java 25 Toolchain.
+- **Toolchain-Stabilität**: Gradle-Java-Projekt mit Java 21 LTS Toolchain (P7.1: von 25 auf 21 gesenkt, da keine Java-22+-Features benötigt).
 - **Zielgruppe**: GIS-Entwickler, die INTERLIS-Werkzeuge kennen, sind in der Regel Java-kompetent.
 
 ## Consequences
