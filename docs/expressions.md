@@ -133,6 +133,13 @@ All comparison and boolean operators are fully supported and tested.
 |---|---|---|
 | `div` | `(value, divisor) → numeric` | Divides value by divisor. Returns null on division by zero. |
 | `mul` | `(value, factor) → numeric` | Multiplies value by factor |
+| `add` | `(value, addend) → numeric` | Adds two numeric values |
+| `sub` | `(value, subtrahend) → numeric` | Subtracts subtrahend from value |
+| `round` | `(value, scale) → numeric` | Rounds to the given number of decimal places (HALF_UP) |
+| `abs` | `(value) → numeric` | Returns the absolute value |
+| `min` | `(a, b) → numeric` | Returns the smaller of two values |
+| `max` | `(a, b) → numeric` | Returns the larger of two values |
+| `toNumber` | `(value) → numeric` | Converts a text value to a number. Returns null on invalid input. |
 
 ### Lookup functions
 

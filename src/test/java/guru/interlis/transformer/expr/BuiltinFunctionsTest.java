@@ -344,4 +344,76 @@ class BuiltinFunctionsTest {
         Value result = engine.evaluate("unknownFunc(1, 2)", Map.of("s", src));
         assertThat(result.isNull()).isTrue();
     }
+
+    // -- Math functions ---------------------------------------------
+
+    @Test
+    void divDividesNumbers() {
+        Value result = engine.evaluate("div(10, 2)", Map.of("s", src));
+        assertThat(result.asNumber()).isEqualTo(5.0);
+    }
+
+    @Test
+    void divReturnsNullForZeroDivisor() {
+        Value result = engine.evaluate("div(10, 0)", Map.of("s", src));
+        assertThat(result.isNull()).isTrue();
+    }
+
+    @Test
+    void mulMultipliesNumbers() {
+        Value result = engine.evaluate("mul(3, 4)", Map.of("s", src));
+        assertThat(result.asNumber()).isEqualTo(12.0);
+    }
+
+    @Test
+    void addAddsNumbers() {
+        Value result = engine.evaluate("add(3, 4)", Map.of("s", src));
+        assertThat(result.asNumber()).isEqualTo(7.0);
+    }
+
+    @Test
+    void subSubtractsNumbers() {
+        Value result = engine.evaluate("sub(10, 3)", Map.of("s", src));
+        assertThat(result.asNumber()).isEqualTo(7.0);
+    }
+
+    @Test
+    void roundRoundsHalfUpToScale() {
+        Value result = engine.evaluate("round(3.14159, 2)", Map.of("s", src));
+        assertThat(result.asNumber()).isEqualTo(3.14);
+    }
+
+    @Test
+    void absReturnsAbsoluteValue() {
+        Value positive = engine.evaluate("abs(5)", Map.of("s", src));
+        assertThat(positive.asNumber()).isEqualTo(5.0);
+
+        Value negative = engine.evaluate("abs(-5)", Map.of("s", src));
+        assertThat(negative.asNumber()).isEqualTo(5.0);
+    }
+
+    @Test
+    void minReturnsSmallerNumber() {
+        Value result = engine.evaluate("min(3, 7)", Map.of("s", src));
+        assertThat(result.asNumber()).isEqualTo(3.0);
+    }
+
+    @Test
+    void maxReturnsLargerNumber() {
+        Value result = engine.evaluate("max(3, 7)", Map.of("s", src));
+        assertThat(result.asNumber()).isEqualTo(7.0);
+    }
+
+    @Test
+    void toNumberConvertsTextNumber() {
+        Value result = engine.evaluate("toNumber('42.5')", Map.of("s", src));
+        assertThat(result).isInstanceOf(NumberValue.class);
+        assertThat(result.asNumber()).isEqualTo(42.5);
+    }
+
+    @Test
+    void toNumberReturnsNullForInvalidText() {
+        Value result = engine.evaluate("toNumber('not-a-number')", Map.of("s", src));
+        assertThat(result.isNull()).isTrue();
+    }
 }

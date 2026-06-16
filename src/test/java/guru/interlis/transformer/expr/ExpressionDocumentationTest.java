@@ -37,20 +37,24 @@ class ExpressionDocumentationTest {
     }
 
     @Test
-    void mathSectionDoesNotListUnregisteredFunctionsAsBuiltins() {
+    void mathSectionDocumentsAllRegisteredMathFunctions() {
         FunctionRegistry registry = defaultRegistry();
-        assertThat(registry.resolve("round")).isEmpty();
-        assertThat(registry.resolve("abs")).isEmpty();
-
+        assertThat(registry.resolve("round")).isPresent();
+        assertThat(registry.resolve("abs")).isPresent();
+        assertThat(registry.resolve("add")).isPresent();
+        assertThat(registry.resolve("sub")).isPresent();
+        assertThat(registry.resolve("min")).isPresent();
+        assertThat(registry.resolve("max")).isPresent();
+        assertThat(registry.resolve("toNumber")).isPresent();
         assertThat(registry.resolve("div")).isPresent();
         assertThat(registry.resolve("mul")).isPresent();
     }
 
     @Test
-    void unregisteredMathFunctionsNotInBuiltinTable() throws Exception {
+    void roundAndAbsAreDocumentedAsBuiltins() throws Exception {
         String docs = expressionsDoc();
-        assertThat(docs).doesNotContain("| `round` | `(value, scale) → number` | Rounds");
-        assertThat(docs).doesNotContain("| `abs` | `(value) → number` | Absolute value |");
+        assertThat(docs).contains("`round`");
+        assertThat(docs).contains("`abs`");
     }
 
     @Test
