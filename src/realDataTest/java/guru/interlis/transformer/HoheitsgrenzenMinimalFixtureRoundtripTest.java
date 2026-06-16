@@ -92,17 +92,6 @@ class HoheitsgrenzenMinimalFixtureRoundtripTest {
         assertThat(errors).as("Diagnostics: %s", diagnostics.all()).isEmpty();
     }
 
-    private void runWithoutValidation(Path mappingPath, Path reportDir) throws Exception {
-        List<String> modelDirs = new ArrayList<>(Dm01DmavPaths.localModelDirs());
-        modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
-        DiagnosticCollector diagnostics =
-                new JobRunner().run(mappingPath, new RunOptions(modelDirs, false, reportDir, false));
-        List<Diagnostic> errors = diagnostics.all().stream()
-                .filter(d -> d.severity() == Severity.ERROR)
-                .toList();
-        assertThat(errors).as("Diagnostics: %s", diagnostics.all()).isEmpty();
-    }
-
     private Path materializeDm01ToDmav(Path inputPath, Path outputPath) throws Exception {
         Path mappingPath = tempDir.resolve("dm01-to-dmav-hoheitsgrenzen-minimal.yaml");
         String yaml = Files.readString(DM01_TO_DMAV_PROFILE, StandardCharsets.UTF_8)
