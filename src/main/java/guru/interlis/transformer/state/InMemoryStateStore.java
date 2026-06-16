@@ -16,6 +16,7 @@ public final class InMemoryStateStore implements StateStore {
     private final List<DeferredRef> deferredRefs = new ArrayList<>();
     private final List<DeferredReference> deferredReferences = new ArrayList<>();
     private final List<SourceRecord> sourceRecords = new ArrayList<>();
+    private final Map<String, List<SourceRecord>> sourceRecordsByInputAndClass = new HashMap<>();
     private final Map<String, IomObject> targetIndex = new HashMap<>();
     private final AtomicLong oidSequence = new AtomicLong();
 
@@ -60,11 +61,21 @@ public final class InMemoryStateStore implements StateStore {
     @Override
     public void addSourceRecord(SourceRecord sourceRecord) {
         sourceRecords.add(sourceRecord);
+        sourceRecordsByInputAndClass
+                .computeIfAbsent(inputClassKey(sourceRecord.sourceFileId(), sourceRecord.sourceClass()),
+                        ignored -> new ArrayList<>())
+                .add(sourceRecord);
     }
 
     @Override
     public List<SourceRecord> sourceRecords() {
         return List.copyOf(sourceRecords);
+    }
+
+    @Override
+    public List<SourceRecord> sourceRecords(String inputId, String sourceClass) {
+        return List.copyOf(sourceRecordsByInputAndClass.getOrDefault(
+                inputClassKey(inputId, sourceClass), List.of()));
     }
 
     @Override
@@ -149,5 +160,9 @@ public final class InMemoryStateStore implements StateStore {
 
     private String key(String sourceClass, String sourceFileId, String sourceBasketId) {
         return sourceClass + "|" + (sourceFileId == null ? "" : sourceFileId) + "|" + (sourceBasketId == null ? "" : sourceBasketId);
+    }
+
+    private static String inputClassKey(String inputId, String sourceClass) {
+        return inputId + "|" + sourceClass;
     }
 }

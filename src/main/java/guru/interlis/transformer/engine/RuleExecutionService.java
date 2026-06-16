@@ -146,25 +146,22 @@ public final class RuleExecutionService {
                 objectsByOutputAndBasket, expandedTargets, diagnostics, stateStore,
                 referenceIndex, parentChildIndex, metrics, geometryAdapter, sourceAttrTypes);
 
-        List<SourceRecord> records = stateStore.sourceRecords();
-        for (SourceRecord record : records) {
-            List<RulePlan> matchingRules = dispatchIndex.rulesFor(record.sourceFileId(), record.sourceClass());
-            for (RulePlan matchingRule : matchingRules) {
-                if (!matchingRule.ruleId().equals(rule.ruleId())) continue;
+        for (SourcePlan source : rule.sources()) {
+            if (source.sourceClass() == null) continue;
+            String scopedClass = TargetObjectFactory.getScopedName(source.sourceClass());
+            for (String inputId : source.inputIds()) {
+                for (SourceRecord record : stateStore.sourceRecords(inputId, scopedClass)) {
+                    Map<String, IomObject> sources = Map.of(source.alias(), record.sourceObject());
+                    EvalContext evalCtx = new EvalContext(sources, diagnostics, rule.ruleId(), plan.enumMaps(),
+                            geometryAdapter, sourceAttrTypes).withLookupIndex(sourceLookupIndex);
 
-                SourcePlan matchedSource = findSourcePlan(matchingRule, record);
-                if (matchedSource == null) continue;
+                    if (!evaluateWhereAndPredicate(source, rule, evalCtx, expressionEngine, metrics)) continue;
 
-                Map<String, IomObject> sources = Map.of(matchedSource.alias(), record.sourceObject());
-                EvalContext evalCtx = new EvalContext(sources, diagnostics, rule.ruleId(), plan.enumMaps(),
-                        geometryAdapter, sourceAttrTypes).withLookupIndex(sourceLookupIndex);
-
-                if (!evaluateWhereAndPredicate(matchedSource, rule, evalCtx, expressionEngine, metrics)) continue;
-
-                metrics.recordRuleMatch(rule.ruleId());
-                recordLosses(rule, record, evalCtx);
-                int created = targetObjectFactory.createTarget(rule, matchedSource, record, evalCtx, plan, ctx);
-                metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
+                    metrics.recordRuleMatch(rule.ruleId());
+                    recordLosses(rule, record, evalCtx);
+                    int created = targetObjectFactory.createTarget(rule, source, record, evalCtx, plan, ctx);
+                    metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
+                }
             }
         }
     }

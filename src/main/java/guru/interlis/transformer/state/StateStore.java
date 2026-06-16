@@ -22,6 +22,8 @@ public interface StateStore {
 
     List<SourceRecord> sourceRecords();
 
+    List<SourceRecord> sourceRecords(String inputId, String sourceClass);
+
     void indexSourceObject(String sourceClass, String sourceFileId, String sourceBasketId, IomObject sourceObject);
 
     List<IomObject> listSourceObjects(String sourceClass, String sourceFileId, String sourceBasketId);
