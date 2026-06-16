@@ -22,8 +22,7 @@ final class StructuralValidator {
                     Severity.ERROR,
                     "Mapping file must declare 'version: 1' or higher",
                     null,
-                    "Add 'version: 1' at the top of the mapping YAML"
-            ));
+                    "Add 'version: 1' at the top of the mapping YAML"));
         }
     }
 
@@ -35,8 +34,7 @@ final class StructuralValidator {
                         Severity.ERROR,
                         "Output id is required",
                         null,
-                        "Add an 'id' to each output in job.outputs"
-                ));
+                        "Add an 'id' to each output in job.outputs"));
             }
         }
     }
@@ -67,12 +65,16 @@ final class StructuralValidator {
 
     private void validateRuleId(JobConfig.RuleSpec rule, Set<String> seenIds, DiagnosticCollector diag) {
         if (rule.id == null || rule.id.isBlank()) {
-            diag.add(new Diagnostic(DiagnosticCode.MAP_MISSING_ID, Severity.ERROR,
+            diag.add(new Diagnostic(
+                    DiagnosticCode.MAP_MISSING_ID,
+                    Severity.ERROR,
                     "Rule is missing required 'id' field",
                     JobConfigNormalizer.getEffectiveTargetClass(rule),
                     "Add an 'id' to each rule"));
         } else if (!seenIds.add(rule.id)) {
-            diag.add(new Diagnostic(DiagnosticCode.MAP_DUPLICATE_ID, Severity.ERROR,
+            diag.add(new Diagnostic(
+                    DiagnosticCode.MAP_DUPLICATE_ID,
+                    Severity.ERROR,
                     "Duplicate rule id: " + rule.id,
                     JobConfigNormalizer.getEffectiveTargetClass(rule),
                     "Rule ids must be unique within a mapping file"));
@@ -82,53 +84,73 @@ final class StructuralValidator {
     private void validateRuleTarget(JobConfig.RuleSpec rule, Set<String> outputIds, DiagnosticCollector diag) {
         String targetClass = JobConfigNormalizer.getEffectiveTargetClass(rule);
         if (targetClass == null || targetClass.isBlank()) {
-            diag.add(new Diagnostic(DiagnosticCode.MAP_MISSING_TARGET_CLASS, Severity.ERROR,
+            diag.add(new Diagnostic(
+                    DiagnosticCode.MAP_MISSING_TARGET_CLASS,
+                    Severity.ERROR,
                     "Rule is missing target class",
                     rule.id,
                     "Add 'target.class' or 'targetClass' to the rule"));
         }
         String targetOutput = JobConfigNormalizer.getEffectiveTargetOutput(rule);
-        if (targetOutput != null && !targetOutput.isBlank() && !outputIds.isEmpty()
+        if (targetOutput != null
+                && !targetOutput.isBlank()
+                && !outputIds.isEmpty()
                 && !outputIds.contains(targetOutput)) {
-            diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_OUTPUT, Severity.ERROR,
+            diag.add(new Diagnostic(
+                    DiagnosticCode.MAP_UNKNOWN_OUTPUT,
+                    Severity.ERROR,
                     "Rule references unknown output: " + targetOutput,
                     rule.id,
                     "Ensure the output id exists in job.outputs"));
         }
     }
 
-    private void validateRuleSources(JobConfig.RuleSpec rule, Set<String> inputIds,
-                                      Set<String> outputIds, DiagnosticCollector diag) {
+    private void validateRuleSources(
+            JobConfig.RuleSpec rule, Set<String> inputIds, Set<String> outputIds, DiagnosticCollector diag) {
         Set<String> aliases = new HashSet<>();
         for (JobConfig.SourceSpec source : rule.sources) {
             if (source.alias == null || source.alias.isBlank()) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_MISSING_ALIAS, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_MISSING_ALIAS,
+                        Severity.ERROR,
                         "Source is missing required 'alias' field in rule " + rule.id,
-                        rule.id, "Add an 'alias' to each source"));
+                        rule.id,
+                        "Add an 'alias' to each source"));
                 continue;
             }
             if (!aliases.add(source.alias)) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_DUPLICATE_ALIAS, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_DUPLICATE_ALIAS,
+                        Severity.ERROR,
                         "Duplicate source alias '" + source.alias + "' in rule " + rule.id,
-                        rule.id, "Source aliases must be unique within a rule"));
+                        rule.id,
+                        "Source aliases must be unique within a rule"));
             }
             if (source.clazz == null || source.clazz.isBlank()) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_MISSING_SOURCE_CLASS, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_MISSING_SOURCE_CLASS,
+                        Severity.ERROR,
                         "Source '" + source.alias + "' is missing 'class' field in rule " + rule.id,
-                        rule.id, "Add 'class' to each source definition"));
+                        rule.id,
+                        "Add 'class' to each source definition"));
             }
             List<String> sourceInputs = JobConfigNormalizer.getInputIds(source);
             if (sourceInputs.isEmpty() || sourceInputs.stream().allMatch(String::isBlank)) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_MISSING_INPUT, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_MISSING_INPUT,
+                        Severity.ERROR,
                         "Source '" + source.alias + "' is missing 'input' field in rule " + rule.id,
-                        rule.id, "Add 'input' or 'inputs' to each source definition"));
+                        rule.id,
+                        "Add 'input' or 'inputs' to each source definition"));
             }
             for (String inputId : sourceInputs) {
-                if (inputId != null && !inputId.isBlank() && !inputIds.isEmpty()
-                        && !inputIds.contains(inputId)) {
-                    diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_INPUT, Severity.ERROR,
+                if (inputId != null && !inputId.isBlank() && !inputIds.isEmpty() && !inputIds.contains(inputId)) {
+                    diag.add(new Diagnostic(
+                            DiagnosticCode.MAP_UNKNOWN_INPUT,
+                            Severity.ERROR,
                             "Source '" + source.alias + "' references unknown input: " + inputId,
-                            rule.id, "Available inputs: " + inputIds));
+                            rule.id,
+                            "Available inputs: " + inputIds));
                 }
             }
         }

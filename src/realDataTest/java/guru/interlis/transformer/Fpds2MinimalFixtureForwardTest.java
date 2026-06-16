@@ -1,10 +1,8 @@
 package guru.interlis.transformer;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iom.IomObject;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.ObjectEvent;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import guru.interlis.transformer.app.JobRunner;
 import guru.interlis.transformer.app.RunOptions;
 import guru.interlis.transformer.diag.Diagnostic;
@@ -14,10 +12,12 @@ import guru.interlis.transformer.dmav.Dm01DmavPaths;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.ObjectEvent;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -25,8 +25,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 @Tag("real-data")
 class Fpds2MinimalFixtureForwardTest {
@@ -53,8 +55,8 @@ class Fpds2MinimalFixtureForwardTest {
         }
         dm01Td = dm01Result.transferDescription();
 
-        IliModelCompileResult dmavResult = modelService.compileModel(
-                DMAV_MODEL, Dm01DmavPaths.LOCAL_AND_REMOTE_KGK_MODEL_DIRS);
+        IliModelCompileResult dmavResult =
+                modelService.compileModel(DMAV_MODEL, Dm01DmavPaths.LOCAL_AND_REMOTE_KGK_MODEL_DIRS);
         if (dmavResult.hasErrors()) {
             fail("DMAV model compilation errors:\n  " + diagnostics(dmavResult));
         }
@@ -83,7 +85,9 @@ class Fpds2MinimalFixtureForwardTest {
         List<Diagnostic> errors = diagnostics.all().stream()
                 .filter(d -> d.severity() == guru.interlis.transformer.diag.Severity.ERROR)
                 .toList();
-        assertThat(errors).as("Transformation diagnostics: %s", diagnostics.all()).isEmpty();
+        assertThat(errors)
+                .as("Transformation diagnostics: %s", diagnostics.all())
+                .isEmpty();
         assertThat(outputPath).exists();
 
         String content = Files.readString(outputPath, StandardCharsets.UTF_8);
@@ -133,10 +137,8 @@ class Fpds2MinimalFixtureForwardTest {
     private Path materializeProfile(Path outputPath) throws Exception {
         Path mappingPath = tempDir.resolve(outputPath.getFileName() + "-mapping.yaml");
         String yaml = Files.readString(PROFILE, StandardCharsets.UTF_8)
-                .replace("path: \"input/dm01.itf\"",
-                        "path: \"" + DM01_INPUT.toAbsolutePath() + "\"")
-                .replace("path: \"build/out/dmav-fpds2.xtf\"",
-                        "path: \"" + outputPath.toAbsolutePath() + "\"");
+                .replace("path: \"input/dm01.itf\"", "path: \"" + DM01_INPUT.toAbsolutePath() + "\"")
+                .replace("path: \"build/out/dmav-fpds2.xtf\"", "path: \"" + outputPath.toAbsolutePath() + "\"");
         Files.writeString(mappingPath, yaml, StandardCharsets.UTF_8);
         return mappingPath;
     }

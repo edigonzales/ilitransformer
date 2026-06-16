@@ -50,7 +50,8 @@ class RelativeMappingPathCliTest {
                 NAME Relative
                 """);
 
-        Files.writeString(mapping, """
+        Files.writeString(
+                mapping, """
                 version: 1
                 job:
                   description: "Relative path test"
@@ -75,15 +76,16 @@ class RelativeMappingPathCliTest {
                           class: "TestModel.TestTopic.TestClass"
                       assign:
                         Name: "${s.Name}"
-                """
-                .replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
-                .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
+                """.replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
+                        .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
 
-        int exitCode = new CommandLine(new CliMain()).execute(
-                "transform",
-                "--mapping", mapping.toAbsolutePath().toString(),
-                "--modeldir", "src/test/data/models"
-        );
+        int exitCode = new CommandLine(new CliMain())
+                .execute(
+                        "transform",
+                        "--mapping",
+                        mapping.toAbsolutePath().toString(),
+                        "--modeldir",
+                        "src/test/data/models");
 
         assertThat(exitCode).isZero();
     }

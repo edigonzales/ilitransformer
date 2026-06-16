@@ -23,7 +23,8 @@ public final class Dm01DmavPaths {
     public static final String REMOTE_MODEL_DIR = "https://models.interlis.ch";
     public static final String REMOTE_KGK_MODEL_DIR = "https://models.kgk-cgc.ch";
     public static final String LOCAL_AND_REMOTE_MODEL_DIRS = LOCAL_MODEL_DIR + ";" + REMOTE_MODEL_DIR;
-    public static final String LOCAL_AND_REMOTE_KGK_MODEL_DIRS = LOCAL_MODEL_DIR + ";" + REMOTE_MODEL_DIR + ";" + REMOTE_KGK_MODEL_DIR;
+    public static final String LOCAL_AND_REMOTE_KGK_MODEL_DIRS =
+            LOCAL_MODEL_DIR + ";" + REMOTE_MODEL_DIR + ";" + REMOTE_KGK_MODEL_DIR;
     public static final String DM01_MODEL = "DM01AVCH24LV95D";
     public static final String DMAV_UMBRELLA_MODEL = "DMAVTYM_Alles_V1_1";
     public static final String DMAV_LFP3_MODEL = "DMAV_FixpunkteAVKategorie3_V1_1";
@@ -45,10 +46,8 @@ public final class Dm01DmavPaths {
     public static final Path FULL_DM01_DATASET = FULL_DATASET_DIR.resolve("DM01-AV-CH.itf");
     public static final Path FULL_DMAV_DATASET = FULL_DATASET_DIR.resolve("DMAVTYM_Alles_V1_1.xtf");
 
-    public static final Path CORRELATION_XLSX =
-            Path.of("docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx");
-    public static final Path GENERATED_HINTS =
-            Path.of("build/generated/dm01-dmav/correlation-hints.json");
+    public static final Path CORRELATION_XLSX = Path.of("docs/dm01-dmav/DMAV_Korrelationstabelle_20260301.xlsx");
+    public static final Path GENERATED_HINTS = Path.of("build/generated/dm01-dmav/correlation-hints.json");
     public static final Path CORRELATION_IMPORT_REPORT =
             Path.of("build/reports/dm01-dmav/correlation-import-report.md");
 

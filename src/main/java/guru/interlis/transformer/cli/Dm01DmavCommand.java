@@ -6,10 +6,7 @@ import picocli.CommandLine.Command;
         name = "dm01-dmav",
         description = "DM01 ↔ DMAV product profile utilities",
         mixinStandardHelpOptions = true,
-        subcommands = {
-                ImportCorrelationCommand.class
-        }
-)
+        subcommands = {ImportCorrelationCommand.class})
 public final class Dm01DmavCommand implements Runnable {
     @Override
     public void run() {

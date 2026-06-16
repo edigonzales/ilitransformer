@@ -9,14 +9,11 @@ public record ComparisonReport(
         int matchedObjectCount,
         List<ComparisonIssue> issues,
         Set<String> observedLossReasonCodes,
-        Set<String> expectedLossReasonCodes
-) {
+        Set<String> expectedLossReasonCodes) {
     public ComparisonReport {
         issues = issues != null ? List.copyOf(issues) : List.of();
-        observedLossReasonCodes = observedLossReasonCodes != null
-                ? Set.copyOf(observedLossReasonCodes) : Set.of();
-        expectedLossReasonCodes = expectedLossReasonCodes != null
-                ? Set.copyOf(expectedLossReasonCodes) : Set.of();
+        observedLossReasonCodes = observedLossReasonCodes != null ? Set.copyOf(observedLossReasonCodes) : Set.of();
+        expectedLossReasonCodes = expectedLossReasonCodes != null ? Set.copyOf(expectedLossReasonCodes) : Set.of();
     }
 
     public boolean equivalent() {
@@ -35,10 +32,5 @@ public record ComparisonReport(
     }
 
     public record ComparisonIssue(
-            Severity severity,
-            String path,
-            String message,
-            String leftValue,
-            String rightValue
-    ) {}
+            Severity severity, String path, String message, String leftValue, String rightValue) {}
 }

@@ -1,23 +1,25 @@
 package guru.interlis.transformer.model;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.iox.IoxWriter;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.testutil.TransferDatasetDescriptor;
 import guru.interlis.transformer.testutil.TransferFormat;
 import guru.interlis.transformer.validation.InProcessIlivalidatorService;
 import guru.interlis.transformer.validation.TransferValidationService;
 import guru.interlis.transformer.validation.ValidationResult;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxWriter;
 
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class ConnectedSubgraphExtractorTest {
 
@@ -103,16 +105,15 @@ class ConnectedSubgraphExtractorTest {
                 fmt,
                 List.of(MODEL_NAME),
                 List.of(MODEL_DIR),
-                filePath.toFile().length()
-        );
+                filePath.toFile().length());
     }
 
-    private ExtractedTransfer runExtraction(List<String> targets, int depth, int maxObjs,
-                                              boolean bidirectional) throws Exception {
+    private ExtractedTransfer runExtraction(List<String> targets, int depth, int maxObjs, boolean bidirectional)
+            throws Exception {
         Path srcPath = createTestXtf();
         TransferDatasetDescriptor source = descriptorFor(srcPath);
-        ExtractionRequest request = new ExtractionRequest(
-                targets, List.of(MODEL_DIR), depth, maxObjs, bidirectional, tempDir);
+        ExtractionRequest request =
+                new ExtractionRequest(targets, List.of(MODEL_DIR), depth, maxObjs, bidirectional, tempDir);
         return extractor.extract(source, request);
     }
 
@@ -162,12 +163,8 @@ class ConnectedSubgraphExtractorTest {
 
         TransferValidationService validator = new InProcessIlivalidatorService();
         Path logFile = tempDir.resolve("validation.log");
-        ValidationResult validation = validator.validate(
-                result.transferFile(),
-                List.of(MODEL_DIR),
-                List.of(MODEL_NAME),
-                logFile
-        );
+        ValidationResult validation =
+                validator.validate(result.transferFile(), List.of(MODEL_DIR), List.of(MODEL_NAME), logFile);
 
         assertThat(validation.valid())
                 .as("Extracted transfer must be valid. Log: " + validation.logText())

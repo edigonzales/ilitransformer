@@ -1,6 +1,5 @@
 package guru.interlis.transformer.expr.builtins;
 
-import ch.interlis.iom.IomObject;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
@@ -17,6 +16,8 @@ import guru.interlis.transformer.state.LookupKey;
 import guru.interlis.transformer.state.SourceLookupIndex;
 import guru.interlis.transformer.state.SourceRecord;
 
+import ch.interlis.iom.IomObject;
+
 import java.util.List;
 
 public final class LookupFunctions {
@@ -24,25 +25,29 @@ public final class LookupFunctions {
     private LookupFunctions() {}
 
     public static void registerAll(FunctionRegistry registry) {
-        registry.register("oid", TypeInfo.TEXT,
+        registry.register(
+                "oid",
+                TypeInfo.TEXT,
                 List.of(new FunctionDef.FunctionParam("alias", TypeInfo.TEXT)),
                 LookupFunctions::oid);
 
-        registry.register("bagFirst", TypeInfo.TEXT,
+        registry.register(
+                "bagFirst",
+                TypeInfo.TEXT,
                 List.of(
                         new FunctionDef.FunctionParam("alias", TypeInfo.TEXT),
                         new FunctionDef.FunctionParam("bagAttr", TypeInfo.TEXT),
-                        new FunctionDef.FunctionParam("valueAttr", TypeInfo.TEXT)
-                ),
+                        new FunctionDef.FunctionParam("valueAttr", TypeInfo.TEXT)),
                 LookupFunctions::bagFirst);
 
-        registry.register("lookup", TypeInfo.UNKNOWN,
+        registry.register(
+                "lookup",
+                TypeInfo.UNKNOWN,
                 List.of(
                         new FunctionDef.FunctionParam("classPath", TypeInfo.TEXT),
                         new FunctionDef.FunctionParam("keyAttr", TypeInfo.TEXT),
                         new FunctionDef.FunctionParam("keyValue", TypeInfo.TEXT),
-                        new FunctionDef.FunctionParam("returnAttr", TypeInfo.TEXT)
-                ),
+                        new FunctionDef.FunctionParam("returnAttr", TypeInfo.TEXT)),
                 LookupFunctions::lookup);
     }
 
@@ -83,10 +88,13 @@ public final class LookupFunctions {
         IomObject source = ctx.sources().get(alias);
         if (source == null) {
             if (ctx.diagnostics() != null) {
-                ctx.diagnostics().add(new Diagnostic(
-                        DiagnosticCode.EXPR_UNKNOWN_PATH, Severity.WARNING,
-                        "oid(): source alias '" + alias + "' not found in context",
-                        ctx.ruleId(), "Check alias declaration in rule sources"));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_UNKNOWN_PATH,
+                                Severity.WARNING,
+                                "oid(): source alias '" + alias + "' not found in context",
+                                ctx.ruleId(),
+                                "Check alias declaration in rule sources"));
             }
             return NullValue.INSTANCE;
         }
@@ -100,10 +108,13 @@ public final class LookupFunctions {
     static Value lookup(List<Value> args, EvalContext ctx) {
         if (args.size() < 4) {
             if (ctx.diagnostics() != null) {
-                ctx.diagnostics().add(new Diagnostic(
-                        DiagnosticCode.EXPR_WRONG_ARG_COUNT, Severity.ERROR,
-                        "lookup() requires 4 arguments: classPath, keyAttr, keyValue, returnAttr",
-                        ctx.ruleId(), "Use lookup('Class.Path', 'KeyAttr', oid(alias), 'ReturnAttr')"));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_WRONG_ARG_COUNT,
+                                Severity.ERROR,
+                                "lookup() requires 4 arguments: classPath, keyAttr, keyValue, returnAttr",
+                                ctx.ruleId(),
+                                "Use lookup('Class.Path', 'KeyAttr', oid(alias), 'ReturnAttr')"));
             }
             return NullValue.INSTANCE;
         }
@@ -116,38 +127,47 @@ public final class LookupFunctions {
         SourceLookupIndex index = ctx.lookupIndex();
         if (index == null) {
             if (ctx.diagnostics() != null) {
-                ctx.diagnostics().add(new Diagnostic(
-                        DiagnosticCode.LOOKUP_INDEX_MISSING, Severity.ERROR,
-                        "lookup() called but no SourceLookupIndex is available in context",
-                        ctx.ruleId(), "Ensure the engine initialized the source lookup index"));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.LOOKUP_INDEX_MISSING,
+                                Severity.ERROR,
+                                "lookup() called but no SourceLookupIndex is available in context",
+                                ctx.ruleId(),
+                                "Ensure the engine initialized the source lookup index"));
             }
             return NullValue.INSTANCE;
         }
 
         LookupKey key = new LookupKey(
-                null,               // inputId: search across all inputs
+                null, // inputId: search across all inputs
                 classPath,
                 keyAttr,
-                new CanonicalValue("text", keyValue, true)
-        );
+                new CanonicalValue("text", keyValue, true));
 
         List<SourceRecord> hits = index.lookup(key);
         if (hits.isEmpty()) {
             if (ctx.diagnostics() != null) {
-                ctx.diagnostics().add(new Diagnostic(
-                        DiagnosticCode.LOOKUP_NO_MATCH, Severity.WARNING,
-                        "lookup() found no match for " + classPath + "." + keyAttr + "=" + keyValue,
-                        ctx.ruleId(), "Verify the referenced child object exists in the source data"));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.LOOKUP_NO_MATCH,
+                                Severity.WARNING,
+                                "lookup() found no match for " + classPath + "." + keyAttr + "=" + keyValue,
+                                ctx.ruleId(),
+                                "Verify the referenced child object exists in the source data"));
             }
             return NullValue.INSTANCE;
         }
         String attrValue = hits.get(0).sourceObject().getattrvalue(returnAttr);
         if (hits.size() > 1 && !allReturnValuesEqual(hits, returnAttr)) {
             if (ctx.diagnostics() != null) {
-                ctx.diagnostics().add(new Diagnostic(
-                        DiagnosticCode.LOOKUP_AMBIGUOUS, Severity.WARNING,
-                        "lookup() found " + hits.size() + " matches for " + classPath + "." + keyAttr + "=" + keyValue + ", using first — EGID may be overdetermined",
-                        ctx.ruleId(), "Ensure the lookup key uniquely identifies one record"));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.LOOKUP_AMBIGUOUS,
+                                Severity.WARNING,
+                                "lookup() found " + hits.size() + " matches for " + classPath + "." + keyAttr + "="
+                                        + keyValue + ", using first — EGID may be overdetermined",
+                                ctx.ruleId(),
+                                "Ensure the lookup key uniquely identifies one record"));
             }
         }
         if (attrValue == null) {

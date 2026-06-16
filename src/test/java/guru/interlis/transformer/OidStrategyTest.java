@@ -1,13 +1,14 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.state.InMemoryStateStore;
 import guru.interlis.transformer.state.OidStrategy;
-import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class OidStrategyTest {
 
@@ -52,10 +53,8 @@ class OidStrategyTest {
     void deterministicUuidSameInputProducesSameOid() {
         Map<String, String> keys = Map.of("NBIdent", "ABC123", "Nummer", "42");
 
-        String oid1 = store.nextOid(OidStrategy.DETERMINISTIC_UUID,
-                "dm01-to-dmav", "lfp3", "src-1", keys);
-        String oid2 = store.nextOid(OidStrategy.DETERMINISTIC_UUID,
-                "dm01-to-dmav", "lfp3", "src-1", keys);
+        String oid1 = store.nextOid(OidStrategy.DETERMINISTIC_UUID, "dm01-to-dmav", "lfp3", "src-1", keys);
+        String oid2 = store.nextOid(OidStrategy.DETERMINISTIC_UUID, "dm01-to-dmav", "lfp3", "src-1", keys);
 
         assertThat(oid1).isEqualTo(oid2);
         assertThatCode(() -> UUID.fromString(oid1)).doesNotThrowAnyException();
@@ -65,10 +64,8 @@ class OidStrategyTest {
     void deterministicUuidDifferentRuleIdProducesDifferentOid() {
         Map<String, String> keys = Map.of("NBIdent", "ABC123");
 
-        String oid1 = store.nextOid(OidStrategy.DETERMINISTIC_UUID,
-                "ns", "lfp3", "src-1", keys);
-        String oid2 = store.nextOid(OidStrategy.DETERMINISTIC_UUID,
-                "ns", "lfp3-nachfuehrung", "src-1", keys);
+        String oid1 = store.nextOid(OidStrategy.DETERMINISTIC_UUID, "ns", "lfp3", "src-1", keys);
+        String oid2 = store.nextOid(OidStrategy.DETERMINISTIC_UUID, "ns", "lfp3-nachfuehrung", "src-1", keys);
 
         assertThat(oid1).isNotEqualTo(oid2);
     }
@@ -77,10 +74,8 @@ class OidStrategyTest {
     void deterministicUuidDifferentNamespaceProducesDifferentOid() {
         Map<String, String> keys = Map.of("NBIdent", "ABC123");
 
-        String oid1 = store.nextOid(OidStrategy.DETERMINISTIC_UUID,
-                "ns-1", "r1", "src-1", keys);
-        String oid2 = store.nextOid(OidStrategy.DETERMINISTIC_UUID,
-                "ns-2", "r1", "src-1", keys);
+        String oid1 = store.nextOid(OidStrategy.DETERMINISTIC_UUID, "ns-1", "r1", "src-1", keys);
+        String oid2 = store.nextOid(OidStrategy.DETERMINISTIC_UUID, "ns-2", "r1", "src-1", keys);
 
         assertThat(oid1).isNotEqualTo(oid2);
     }
@@ -90,10 +85,8 @@ class OidStrategyTest {
         Map<String, String> keys1 = Map.of("NBIdent", "ABC123");
         Map<String, String> keys2 = Map.of("NBIdent", "XYZ789");
 
-        String oid1 = store.nextOid(OidStrategy.DETERMINISTIC_UUID,
-                "ns", "r1", "src-1", keys1);
-        String oid2 = store.nextOid(OidStrategy.DETERMINISTIC_UUID,
-                "ns", "r1", "src-1", keys2);
+        String oid1 = store.nextOid(OidStrategy.DETERMINISTIC_UUID, "ns", "r1", "src-1", keys1);
+        String oid2 = store.nextOid(OidStrategy.DETERMINISTIC_UUID, "ns", "r1", "src-1", keys2);
 
         assertThat(oid1).isNotEqualTo(oid2);
     }
@@ -102,8 +95,7 @@ class OidStrategyTest {
     void deterministicUuidNullNamespaceUsesDefault() {
         Map<String, String> keys = Map.of("NBIdent", "ABC123");
 
-        String oid = store.nextOid(OidStrategy.DETERMINISTIC_UUID,
-                null, "r1", "src-1", keys);
+        String oid = store.nextOid(OidStrategy.DETERMINISTIC_UUID, null, "r1", "src-1", keys);
 
         assertThat(oid).isNotNull();
         assertThatCode(() -> UUID.fromString(oid)).doesNotThrowAnyException();
@@ -117,10 +109,8 @@ class OidStrategyTest {
 
     @Test
     void deterministicUuidEmptyKeyValuesStillProducesDeterministicOid() {
-        String oid1 = store.nextOid(OidStrategy.DETERMINISTIC_UUID,
-                "ns", "r1", "src-1", Map.of());
-        String oid2 = store.nextOid(OidStrategy.DETERMINISTIC_UUID,
-                "ns", "r1", "src-1", Map.of());
+        String oid1 = store.nextOid(OidStrategy.DETERMINISTIC_UUID, "ns", "r1", "src-1", Map.of());
+        String oid2 = store.nextOid(OidStrategy.DETERMINISTIC_UUID, "ns", "r1", "src-1", Map.of());
 
         assertThat(oid1).isEqualTo(oid2);
     }

@@ -1,8 +1,7 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom.IomObject;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.expr.GeometryObjectValue;
 import guru.interlis.transformer.geometry.IoxGeometryAdapter;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
@@ -13,13 +12,16 @@ import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.support.TestGeometries;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.iom.IomObject;
 
 import java.nio.file.Path;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class SurfaceAreaGeometryIntegrationTest {
 
@@ -33,8 +35,8 @@ class SurfaceAreaGeometryIntegrationTest {
     static void compileModels() {
         IliModelService service = new IliModelService();
 
-        IliModelCompileResult dm01Result = service.compileModel(
-                "src/test/data/models/dm01-surface-area-test.ili", MODELDIR);
+        IliModelCompileResult dm01Result =
+                service.compileModel("src/test/data/models/dm01-surface-area-test.ili", MODELDIR);
         if (dm01Result.hasErrors()) {
             String errors = dm01Result.diagnostics().all().stream()
                     .map(d -> d.severity() + " " + d.code() + ": " + d.message())
@@ -43,8 +45,8 @@ class SurfaceAreaGeometryIntegrationTest {
         }
         dm01Ts = new TypeSystemFacade(dm01Result.transferDescription());
 
-        IliModelCompileResult dmavResult = service.compileModel(
-                "src/test/data/models/dmav-surface-area-test.ili", MODELDIR);
+        IliModelCompileResult dmavResult =
+                service.compileModel("src/test/data/models/dmav-surface-area-test.ili", MODELDIR);
         if (dmavResult.hasErrors()) {
             String errors = dmavResult.diagnostics().all().stream()
                     .map(d -> d.severity() + " " + d.code() + ": " + d.message())
@@ -67,12 +69,14 @@ class SurfaceAreaGeometryIntegrationTest {
 
         var surfAssign = plan.rules().get(0).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Perimeter"))
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(surfAssign.expression().resultType()).isEqualTo(TypeInfo.SURFACE);
 
         var areaAssign = plan.rules().get(1).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Geometrie"))
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(areaAssign.expression().resultType()).isEqualTo(TypeInfo.AREA);
     }
 
@@ -104,7 +108,8 @@ class SurfaceAreaGeometryIntegrationTest {
         var backSv = (GeometryObjectValue) back;
         assertThat(backSv.geometryType()).isEqualTo(TypeInfo.SURFACE);
         IomObject copied = adapter.denormalize(backSv, TypeInfo.SURFACE);
-        assertThat(copied.getattrobj("surface", 0).getattrvaluecount("boundary")).isEqualTo(1);
+        assertThat(copied.getattrobj("surface", 0).getattrvaluecount("boundary"))
+                .isEqualTo(1);
     }
 
     @Test
@@ -143,6 +148,7 @@ class SurfaceAreaGeometryIntegrationTest {
         var back = adapter.normalize(geom, TypeInfo.SURFACE);
         assertThat(back).isInstanceOf(GeometryObjectValue.class);
         IomObject copied = adapter.denormalize(back, TypeInfo.SURFACE);
-        assertThat(copied.getattrobj("surface", 0).getattrvaluecount("boundary")).isEqualTo(2);
+        assertThat(copied.getattrobj("surface", 0).getattrvaluecount("boundary"))
+                .isEqualTo(2);
     }
 }

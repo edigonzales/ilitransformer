@@ -1,13 +1,14 @@
 package guru.interlis.transformer.expr;
 
+import guru.interlis.transformer.mapping.plan.TypeInfo;
+
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
-import guru.interlis.transformer.mapping.plan.TypeInfo;
 
 import java.util.Objects;
 
-public record GeometryObjectValue(TypeInfo geometryType, IomObject geometryObject,
-                                  CoordValue pointOnSurface) implements Value {
+public record GeometryObjectValue(TypeInfo geometryType, IomObject geometryObject, CoordValue pointOnSurface)
+        implements Value {
 
     public GeometryObjectValue {
         geometryType = Objects.requireNonNull(geometryType, "geometryType");

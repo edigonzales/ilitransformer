@@ -10,5 +10,4 @@ public record CreatePlan(
         java.util.List<AssignmentPlan> assignments,
         java.util.List<RefPlan> references,
         java.util.List<BagPlan> bags,
-        IdentityPlan identity
-) {}
+        IdentityPlan identity) {}

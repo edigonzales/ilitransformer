@@ -1,6 +1,7 @@
 package guru.interlis.transformer.state;
 
 import ch.interlis.iom.IomObject;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,12 +27,15 @@ public final class InMemoryStateStore implements StateStore {
     }
 
     @Override
-    public List<TargetRefValue> findIdMappings(String sourceClass, String sourceOid, String sourceFileId, String sourceBasketId) {
-        List<TargetRefValue> exact = idMap.getOrDefault(new SourceRefKey(sourceClass, sourceOid, sourceFileId, sourceBasketId), List.of());
+    public List<TargetRefValue> findIdMappings(
+            String sourceClass, String sourceOid, String sourceFileId, String sourceBasketId) {
+        List<TargetRefValue> exact =
+                idMap.getOrDefault(new SourceRefKey(sourceClass, sourceOid, sourceFileId, sourceBasketId), List.of());
         if (!exact.isEmpty()) {
             return exact;
         }
-        List<TargetRefValue> basketWide = idMap.getOrDefault(new SourceRefKey(sourceClass, sourceOid, sourceFileId, null), List.of());
+        List<TargetRefValue> basketWide =
+                idMap.getOrDefault(new SourceRefKey(sourceClass, sourceOid, sourceFileId, null), List.of());
         if (!basketWide.isEmpty()) {
             return basketWide;
         }
@@ -62,7 +66,8 @@ public final class InMemoryStateStore implements StateStore {
     public void addSourceRecord(SourceRecord sourceRecord) {
         sourceRecords.add(sourceRecord);
         sourceRecordsByInputAndClass
-                .computeIfAbsent(inputClassKey(sourceRecord.sourceFileId(), sourceRecord.sourceClass()),
+                .computeIfAbsent(
+                        inputClassKey(sourceRecord.sourceFileId(), sourceRecord.sourceClass()),
                         ignored -> new ArrayList<>())
                 .add(sourceRecord);
     }
@@ -74,13 +79,15 @@ public final class InMemoryStateStore implements StateStore {
 
     @Override
     public List<SourceRecord> sourceRecords(String inputId, String sourceClass) {
-        return List.copyOf(sourceRecordsByInputAndClass.getOrDefault(
-                inputClassKey(inputId, sourceClass), List.of()));
+        return List.copyOf(sourceRecordsByInputAndClass.getOrDefault(inputClassKey(inputId, sourceClass), List.of()));
     }
 
     @Override
-    public void indexSourceObject(String sourceClass, String sourceFileId, String sourceBasketId, IomObject sourceObject) {
-        sourceIndex.computeIfAbsent(key(sourceClass, sourceFileId, sourceBasketId), ignored -> new ArrayList<>()).add(sourceObject);
+    public void indexSourceObject(
+            String sourceClass, String sourceFileId, String sourceBasketId, IomObject sourceObject) {
+        sourceIndex
+                .computeIfAbsent(key(sourceClass, sourceFileId, sourceBasketId), ignored -> new ArrayList<>())
+                .add(sourceObject);
     }
 
     @Override
@@ -107,10 +114,9 @@ public final class InMemoryStateStore implements StateStore {
     @Override
     public void registerTarget(TargetObjectKey key, IomObject object) {
         if (targetExists(key)) {
-            throw new DuplicateTargetOidException(
-                    "Duplicate target OID: targetClass=" + key.targetClass()
-                            + ", targetOid=" + key.targetOid()
-                            + (key.outputId() != null ? ", outputId=" + key.outputId() : ""));
+            throw new DuplicateTargetOidException("Duplicate target OID: targetClass=" + key.targetClass()
+                    + ", targetOid=" + key.targetOid()
+                    + (key.outputId() != null ? ", outputId=" + key.outputId() : ""));
         }
         targetIndex.put(targetKey(key), object);
     }
@@ -126,9 +132,7 @@ public final class InMemoryStateStore implements StateStore {
     }
 
     private static String targetKey(TargetObjectKey key) {
-        return (key.outputId() == null ? "" : key.outputId())
-                + "::" + key.targetClass()
-                + "::" + key.targetOid();
+        return (key.outputId() == null ? "" : key.outputId()) + "::" + key.targetClass() + "::" + key.targetOid();
     }
 
     @Override
@@ -137,8 +141,12 @@ public final class InMemoryStateStore implements StateStore {
     }
 
     @Override
-    public String nextOid(OidStrategy strategy, String namespace, String ruleId,
-                           String sourceOid, Map<String, String> identityKeyValues) {
+    public String nextOid(
+            OidStrategy strategy,
+            String namespace,
+            String ruleId,
+            String sourceOid,
+            Map<String, String> identityKeyValues) {
         return switch (strategy) {
             case INTEGER -> Long.toString(oidSequence.incrementAndGet());
             case PRESERVE -> sourceOid != null ? sourceOid : Long.toString(oidSequence.incrementAndGet());
@@ -148,8 +156,8 @@ public final class InMemoryStateStore implements StateStore {
         };
     }
 
-    private static String generateDeterministicUuid(String namespace, String ruleId,
-                                                     Map<String, String> identityKeyValues) {
+    private static String generateDeterministicUuid(
+            String namespace, String ruleId, Map<String, String> identityKeyValues) {
         String ns = namespace != null ? namespace : "default";
         String keyPart = identityKeyValues != null && !identityKeyValues.isEmpty()
                 ? String.join("|", identityKeyValues.values())
@@ -159,7 +167,8 @@ public final class InMemoryStateStore implements StateStore {
     }
 
     private String key(String sourceClass, String sourceFileId, String sourceBasketId) {
-        return sourceClass + "|" + (sourceFileId == null ? "" : sourceFileId) + "|" + (sourceBasketId == null ? "" : sourceBasketId);
+        return sourceClass + "|" + (sourceFileId == null ? "" : sourceFileId) + "|"
+                + (sourceBasketId == null ? "" : sourceBasketId);
     }
 
     private static String inputClassKey(String inputId, String sourceClass) {

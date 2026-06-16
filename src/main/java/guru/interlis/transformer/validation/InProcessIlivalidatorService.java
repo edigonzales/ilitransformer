@@ -1,13 +1,14 @@
 package guru.interlis.transformer.validation;
 
 import ch.ehi.basics.settings.Settings;
-import org.interlis2.validator.Validator;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.interlis2.validator.Validator;
 
 public final class InProcessIlivalidatorService implements TransferValidationService {
 
@@ -16,10 +17,7 @@ public final class InProcessIlivalidatorService implements TransferValidationSer
 
     @Override
     public ValidationResult validate(
-            Path transferFile,
-            List<String> modelDirectories,
-            List<String> modelNames,
-            Path logFile) {
+            Path transferFile, List<String> modelDirectories, List<String> modelNames, Path logFile) {
 
         Settings settings = new Settings();
         settings.setValue("org.interlis2.validator.ilidirs", String.join(";", modelDirectories));
@@ -36,8 +34,7 @@ public final class InProcessIlivalidatorService implements TransferValidationSer
 
         boolean valid;
         try {
-            valid = Validator.runValidation(
-                    new String[]{transferFile.toString()}, settings);
+            valid = Validator.runValidation(new String[] {transferFile.toString()}, settings);
         } catch (Exception e) {
             return new ValidationResult(false, -1, -1, effectiveLog, e.getMessage());
         }

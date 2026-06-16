@@ -1,19 +1,19 @@
 package guru.interlis.transformer.expr;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.mapping.plan.TypeInfo;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class FunctionRegistryTest {
 
     @Test
     void registersAndResolvesFunction() {
         FunctionRegistry registry = new FunctionRegistry();
-        registry.register("myFunc", TypeInfo.TEXT, List.of(),
-                (args, ctx) -> new TextValue("hello"));
+        registry.register("myFunc", TypeInfo.TEXT, List.of(), (args, ctx) -> new TextValue("hello"));
 
         assertThat(registry.resolve("myFunc")).isPresent();
         assertThat(registry.resolve("myFunc").get().returnType()).isEqualTo(TypeInfo.TEXT);
@@ -23,7 +23,9 @@ class FunctionRegistryTest {
     @Test
     void resolvesCaseInsensitively() {
         FunctionRegistry registry = new FunctionRegistry();
-        registry.register("Truncate", TypeInfo.TEXT,
+        registry.register(
+                "Truncate",
+                TypeInfo.TEXT,
                 List.of(new FunctionDef.FunctionParam("v", TypeInfo.TEXT)),
                 (args, ctx) -> new TextValue(""));
 
@@ -36,7 +38,8 @@ class FunctionRegistryTest {
     void rejectsDuplicateRegistration() {
         FunctionRegistry registry = new FunctionRegistry();
         registry.register("f", TypeInfo.TEXT, List.of(), (a, c) -> new TextValue(""));
-        assertThatThrownBy(() -> registry.register("f", TypeInfo.NUMERIC, List.of(), (a, c) -> new NumberValue(java.math.BigDecimal.ZERO)))
+        assertThatThrownBy(() -> registry.register(
+                        "f", TypeInfo.NUMERIC, List.of(), (a, c) -> new NumberValue(java.math.BigDecimal.ZERO)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -49,8 +52,8 @@ class FunctionRegistryTest {
     @Test
     void nonDeterministicRegistration() {
         FunctionRegistry registry = new FunctionRegistry();
-        registry.registerNonDeterministic("rand", TypeInfo.NUMERIC, List.of(),
-                (args, ctx) -> NumberValue.of(Math.random()));
+        registry.registerNonDeterministic(
+                "rand", TypeInfo.NUMERIC, List.of(), (args, ctx) -> NumberValue.of(Math.random()));
 
         var def = registry.resolve("rand");
         assertThat(def).isPresent();

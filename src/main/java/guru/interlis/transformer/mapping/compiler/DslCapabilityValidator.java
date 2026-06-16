@@ -30,42 +30,65 @@ public final class DslCapabilityValidator {
         }
         for (JobConfig.JoinSpec join : rule.joins) {
             if (join.left == null || join.left.isBlank()) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_JOIN_INVALID, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_JOIN_INVALID,
+                        Severity.ERROR,
                         "Join missing 'left' alias. Rule: " + rule.id,
-                        rule.id, "Specify the left source alias for the join"));
+                        rule.id,
+                        "Specify the left source alias for the join"));
                 continue;
             }
             if (!sourceAliases.contains(join.left)) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_JOIN_UNKNOWN_ALIAS, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_JOIN_UNKNOWN_ALIAS,
+                        Severity.ERROR,
                         "Join 'left' alias '" + join.left + "' not found in rule sources. Rule: " + rule.id,
-                        rule.id, "Check that the alias is defined in the rule's sources"));
+                        rule.id,
+                        "Check that the alias is defined in the rule's sources"));
             }
             if (join.right == null || join.right.isBlank()) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_JOIN_INVALID, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_JOIN_INVALID,
+                        Severity.ERROR,
                         "Join missing 'right' alias. Rule: " + rule.id,
-                        rule.id, "Specify the right source alias for the join"));
+                        rule.id,
+                        "Specify the right source alias for the join"));
                 continue;
             }
             if (!sourceAliases.contains(join.right)) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_JOIN_UNKNOWN_ALIAS, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_JOIN_UNKNOWN_ALIAS,
+                        Severity.ERROR,
                         "Join 'right' alias '" + join.right + "' not found in rule sources. Rule: " + rule.id,
-                        rule.id, "Check that the alias is defined in the rule's sources"));
+                        rule.id,
+                        "Check that the alias is defined in the rule's sources"));
             }
             if (join.left.equals(join.right)) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_JOIN_SELF_REF, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_JOIN_SELF_REF,
+                        Severity.ERROR,
                         "Join 'left' and 'right' aliases are the same: " + join.left + ". Rule: " + rule.id,
-                        rule.id, "Joins require two different source aliases"));
+                        rule.id,
+                        "Joins require two different source aliases"));
             }
             if (join.on == null || join.on.isBlank()) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_JOIN_INVALID, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_JOIN_INVALID,
+                        Severity.ERROR,
                         "Join missing 'on' condition. Rule: " + rule.id,
-                        rule.id, "Specify an equi-join condition like 'left.attr = right.attr'"));
+                        rule.id,
+                        "Specify an equi-join condition like 'left.attr = right.attr'"));
             }
-            if (join.type != null && !join.type.isBlank()
-                    && !join.type.equalsIgnoreCase("inner") && !join.type.equalsIgnoreCase("left")) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_JOIN_INVALID, Severity.ERROR,
+            if (join.type != null
+                    && !join.type.isBlank()
+                    && !join.type.equalsIgnoreCase("inner")
+                    && !join.type.equalsIgnoreCase("left")) {
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_JOIN_INVALID,
+                        Severity.ERROR,
                         "Unknown join type '" + join.type + "'. Rule: " + rule.id,
-                        rule.id, "Valid types: inner, left"));
+                        rule.id,
+                        "Valid types: inner, left"));
             }
         }
     }
@@ -77,15 +100,21 @@ public final class DslCapabilityValidator {
         java.util.Set<String> createIds = new java.util.HashSet<>();
         for (JobConfig.CreateSpec create : rule.create) {
             if (create.clazz == null || create.clazz.isBlank()) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_CREATE_INVALID, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_CREATE_INVALID,
+                        Severity.ERROR,
                         "Create missing target class. Rule: " + rule.id,
-                        rule.id, "Specify the target class for the create directive"));
+                        rule.id,
+                        "Specify the target class for the create directive"));
             }
             String id = create.clazz;
             if (!createIds.add(id)) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_CREATE_DUPLICATE, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_CREATE_DUPLICATE,
+                        Severity.ERROR,
                         "Duplicate create target class '" + id + "'. Rule: " + rule.id,
-                        rule.id, "Each create directive must target a unique class"));
+                        rule.id,
+                        "Each create directive must target a unique class"));
             }
         }
     }
@@ -98,9 +127,12 @@ public final class DslCapabilityValidator {
                     try {
                         BagPlan.BagMode.valueOf(bagMode.toUpperCase());
                     } catch (IllegalArgumentException e) {
-                        diagnostics.add(new Diagnostic(DiagnosticCode.MAP_UNSUPPORTED_BAG_MODE, Severity.ERROR,
+                        diagnostics.add(new Diagnostic(
+                                DiagnosticCode.MAP_UNSUPPORTED_BAG_MODE,
+                                Severity.ERROR,
                                 "Unknown BAG mode '" + bagMode + "' in rule " + rule.id + ", bag " + entry.getKey(),
-                                rule.id, "Valid modes: EMBED, EXPAND"));
+                                rule.id,
+                                "Valid modes: EMBED, EXPAND"));
                     }
                 }
             }
@@ -111,9 +143,12 @@ public final class DslCapabilityValidator {
         if (config.mapping.basketStrategy != null
                 && config.mapping.basketStrategy.defaultStrategy != null
                 && config.mapping.basketStrategy.defaultStrategy.equalsIgnoreCase("expression")) {
-            diagnostics.add(new Diagnostic(DiagnosticCode.MAP_UNSUPPORTED_BASKET_STRATEGY, Severity.ERROR,
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.MAP_UNSUPPORTED_BASKET_STRATEGY,
+                    Severity.ERROR,
                     "Basket strategy 'expression' is not yet supported",
-                    null, "Use one of: preserve, generateUuid, preserveOrGenerateUuid, byTopic"));
+                    null,
+                    "Use one of: preserve, generateUuid, preserveOrGenerateUuid, byTopic"));
         }
     }
 }

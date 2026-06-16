@@ -1,7 +1,8 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.model.IliModelService;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class CheckedInModelsCompileTest {
 
@@ -29,7 +30,9 @@ class CheckedInModelsCompileTest {
             }
         }
 
-        assertThat(failures).as("All local .ili models must compile without errors").isEmpty();
+        assertThat(failures)
+                .as("All local .ili models must compile without errors")
+                .isEmpty();
     }
 
     @Test
@@ -45,7 +48,9 @@ class CheckedInModelsCompileTest {
             }
         }
 
-        assertThat(failures).as("All AV .ili models must compile without errors").isEmpty();
+        assertThat(failures)
+                .as("All AV .ili models must compile without errors")
+                .isEmpty();
     }
 
     private static List<String> localModelNames() throws Exception {

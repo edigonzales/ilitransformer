@@ -1,15 +1,12 @@
 package guru.interlis.transformer.model;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.List;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 public final class InventorySerializer {
 
@@ -44,7 +41,9 @@ public final class InventorySerializer {
             if (topics != null) {
                 for (ModelInventory.TopicInventory topic : topics) {
                     sb.append("## Topic: ").append(escapeMd(topic.name())).append("\n\n");
-                    sb.append("- **Basket OID:** ").append(escapeMd(topic.basketOidType())).append("\n");
+                    sb.append("- **Basket OID:** ")
+                            .append(escapeMd(topic.basketOidType()))
+                            .append("\n");
                     sb.append("- **OID:** ").append(escapeMd(topic.oidType())).append("\n\n");
 
                     List<ModelInventory.ClassInventory> classes = topic.classes();
@@ -75,10 +74,14 @@ public final class InventorySerializer {
             sb.append("| Name | Type | Cardinality | Mandatory |\n");
             sb.append("|------|------|-------------|-----------|\n");
             for (ModelInventory.AttributeInventory attr : attrs) {
-                sb.append("| ").append(escapeMd(attr.name()))
-                        .append(" | ").append(escapeMd(attr.typeString()))
-                        .append(" | ").append(escapeMd(attr.cardinality()))
-                        .append(" | ").append(attr.mandatory() ? "yes" : "no")
+                sb.append("| ")
+                        .append(escapeMd(attr.name()))
+                        .append(" | ")
+                        .append(escapeMd(attr.typeString()))
+                        .append(" | ")
+                        .append(escapeMd(attr.cardinality()))
+                        .append(" | ")
+                        .append(attr.mandatory() ? "yes" : "no")
                         .append(" |\n");
             }
         }
@@ -89,10 +92,14 @@ public final class InventorySerializer {
             sb.append("| Name | Association | Target Class | Cardinality |\n");
             sb.append("|------|-------------|--------------|-------------|\n");
             for (ModelInventory.RoleInventory role : roles) {
-                sb.append("| ").append(escapeMd(role.name()))
-                        .append(" | ").append(escapeMd(role.association() != null ? role.association() : "-"))
-                        .append(" | ").append(escapeMd(role.targetClass() != null ? role.targetClass() : "-"))
-                        .append(" | ").append(escapeMd(role.cardinality()))
+                sb.append("| ")
+                        .append(escapeMd(role.name()))
+                        .append(" | ")
+                        .append(escapeMd(role.association() != null ? role.association() : "-"))
+                        .append(" | ")
+                        .append(escapeMd(role.targetClass() != null ? role.targetClass() : "-"))
+                        .append(" | ")
+                        .append(escapeMd(role.cardinality()))
                         .append(" |\n");
             }
         }

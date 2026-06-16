@@ -1,8 +1,7 @@
 package guru.interlis.transformer;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iom.IomObject;
-import ch.interlis.iox.IoxReader;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.app.JobRunner;
 import guru.interlis.transformer.app.RunOptions;
 import guru.interlis.transformer.diag.Diagnostic;
@@ -16,10 +15,10 @@ import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.ModelRegistry;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iox.IoxReader;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -27,7 +26,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 @Tag("real-data")
 class RealDm01ToDmavHfp3EndToEndTest {
@@ -170,9 +172,10 @@ class RealDm01ToDmavHfp3EndToEndTest {
                 .toList();
         assertThat(errors).as("Transformation should produce no errors").isEmpty();
 
-        boolean validationPassed = diagnostics.all().stream()
-                .noneMatch(d -> "VALIDATION_FAILED".equals(d.code()));
-        assertThat(validationPassed).as("Output should pass ilivalidator validation").isTrue();
+        boolean validationPassed = diagnostics.all().stream().noneMatch(d -> "VALIDATION_FAILED".equals(d.code()));
+        assertThat(validationPassed)
+                .as("Output should pass ilivalidator validation")
+                .isTrue();
     }
 
     @Test
@@ -303,10 +306,8 @@ class RealDm01ToDmavHfp3EndToEndTest {
     private Path materializeProfile(Path outputPath) throws Exception {
         Path mappingPath = tempDir.resolve(outputPath.getFileName() + "-mapping.yaml");
         String yaml = Files.readString(PROFILE, StandardCharsets.UTF_8)
-                .replace("path: \"input/dm01.itf\"",
-                        "path: \"" + DM01_INPUT.toAbsolutePath() + "\"")
-                .replace("path: \"build/out/dmav-hfp3.xtf\"",
-                        "path: \"" + outputPath.toAbsolutePath() + "\"");
+                .replace("path: \"input/dm01.itf\"", "path: \"" + DM01_INPUT.toAbsolutePath() + "\"")
+                .replace("path: \"build/out/dmav-hfp3.xtf\"", "path: \"" + outputPath.toAbsolutePath() + "\"");
         Files.writeString(mappingPath, yaml, StandardCharsets.UTF_8);
         return mappingPath;
     }

@@ -1,5 +1,15 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import guru.interlis.transformer.app.IlivalidatorRunner;
+import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
+import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.model.IliModelCompileResult;
+import guru.interlis.transformer.model.IliModelService;
+
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.EndTransferEvent;
@@ -10,22 +20,14 @@ import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox_j.EndBasketEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
-import guru.interlis.transformer.app.IlivalidatorRunner;
-import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
-import guru.interlis.transformer.diag.DiagnosticCollector;
-import guru.interlis.transformer.model.IliModelCompileResult;
-import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.interlis.InterlisIoFactory;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class SurfaceAreaItfIntegrationTest {
 
@@ -47,19 +49,19 @@ class SurfaceAreaItfIntegrationTest {
 
     @Test
     void surfaceWithStraightSegmentsWritesValidItfAndReadBackGeometry() throws Exception {
-        IomObject surface = surfaceObject("S001", surface(boundary(
-                coord(2600000.000, 1200000.000),
-                coord(2600100.000, 1200000.000),
-                coord(2600100.000, 1200100.000),
-                coord(2600000.000, 1200100.000),
-                coord(2600000.000, 1200000.000))));
+        IomObject surface = surfaceObject(
+                "S001",
+                surface(boundary(
+                        coord(2600000.000, 1200000.000),
+                        coord(2600100.000, 1200000.000),
+                        coord(2600100.000, 1200100.000),
+                        coord(2600000.000, 1200100.000),
+                        coord(2600000.000, 1200000.000))));
 
         WriteResult write = writeItf(surface);
 
         assertThat(write.diagnostics().hasErrors()).isFalse();
-        assertThat(write.validation().success())
-                .as(write.validation().log())
-                .isTrue();
+        assertThat(write.validation().success()).as(write.validation().log()).isTrue();
 
         List<IomObject> objects = readAllObjects(write.path());
         IomObject roundtrip = findFirstBySuffix(objects, ".SurfaceClass");
@@ -71,18 +73,18 @@ class SurfaceAreaItfIntegrationTest {
 
     @Test
     void surfaceWithArcWritesArcpAndReadBackPreservesArc() throws Exception {
-        IomObject surface = surfaceObject("SARC", surface(boundary(
-                coord(2601000.000, 1201000.000),
-                arc(2601050.000, 1201100.000, 2601100.000, 1201000.000),
-                coord(2601000.000, 1201000.000))));
+        IomObject surface = surfaceObject(
+                "SARC",
+                surface(boundary(
+                        coord(2601000.000, 1201000.000),
+                        arc(2601050.000, 1201100.000, 2601100.000, 1201000.000),
+                        coord(2601000.000, 1201000.000))));
 
         WriteResult write = writeItf(surface);
         String content = Files.readString(write.path());
 
         assertThat(write.diagnostics().hasErrors()).isFalse();
-        assertThat(write.validation().success())
-                .as(write.validation().log())
-                .isTrue();
+        assertThat(write.validation().success()).as(write.validation().log()).isTrue();
         assertThat(content).contains("ARCP 2601050.000 1201100.000");
 
         IomObject roundtrip = findFirstBySuffix(readAllObjects(write.path()), ".SurfaceClass");
@@ -92,21 +94,21 @@ class SurfaceAreaItfIntegrationTest {
 
     @Test
     void areaWritesHelperTableAndPointOnSurface() throws Exception {
-        IomObject area = areaObject("A001", surface(boundary(
-                coord(2602000.000, 1202000.000),
-                coord(2602100.000, 1202000.000),
-                coord(2602100.000, 1202100.000),
-                coord(2602000.000, 1202100.000),
-                coord(2602000.000, 1202000.000))),
+        IomObject area = areaObject(
+                "A001",
+                surface(boundary(
+                        coord(2602000.000, 1202000.000),
+                        coord(2602100.000, 1202000.000),
+                        coord(2602100.000, 1202100.000),
+                        coord(2602000.000, 1202100.000),
+                        coord(2602000.000, 1202000.000))),
                 coord(2602050.000, 1202050.000));
 
         WriteResult write = writeItf(area);
         String content = Files.readString(write.path());
 
         assertThat(write.diagnostics().hasErrors()).isFalse();
-        assertThat(write.validation().success())
-                .as(write.validation().log())
-                .isTrue();
+        assertThat(write.validation().success()).as(write.validation().log()).isTrue();
         assertThat(content).contains("TABL AreaClass_Geometrie");
         assertThat(content).containsPattern("TABL AreaClass\\ROBJE \\d+ A001 2602050\\.[0-9]+ 1202050\\.[0-9]+");
 
@@ -118,26 +120,26 @@ class SurfaceAreaItfIntegrationTest {
 
     @Test
     void surfaceWithHoleSurvivesReadBack() throws Exception {
-        IomObject surface = surfaceObject("SHOLE", surface(
-                boundary(
-                        coord(2603000.000, 1203000.000),
-                        coord(2603200.000, 1203000.000),
-                        coord(2603200.000, 1203200.000),
-                        coord(2603000.000, 1203200.000),
-                        coord(2603000.000, 1203000.000)),
-                boundary(
-                        coord(2603050.000, 1203050.000),
-                        coord(2603150.000, 1203050.000),
-                        coord(2603150.000, 1203150.000),
-                        coord(2603050.000, 1203150.000),
-                        coord(2603050.000, 1203050.000))));
+        IomObject surface = surfaceObject(
+                "SHOLE",
+                surface(
+                        boundary(
+                                coord(2603000.000, 1203000.000),
+                                coord(2603200.000, 1203000.000),
+                                coord(2603200.000, 1203200.000),
+                                coord(2603000.000, 1203200.000),
+                                coord(2603000.000, 1203000.000)),
+                        boundary(
+                                coord(2603050.000, 1203050.000),
+                                coord(2603150.000, 1203050.000),
+                                coord(2603150.000, 1203150.000),
+                                coord(2603050.000, 1203150.000),
+                                coord(2603050.000, 1203050.000))));
 
         WriteResult write = writeItf(surface);
 
         assertThat(write.diagnostics().hasErrors()).isFalse();
-        assertThat(write.validation().success())
-                .as(write.validation().log())
-                .isTrue();
+        assertThat(write.validation().success()).as(write.validation().log()).isTrue();
 
         IomObject roundtrip = findFirstBySuffix(readAllObjects(write.path()), ".SurfaceClass");
         assertThat(roundtrip).isNotNull();
@@ -309,7 +311,8 @@ class SurfaceAreaItfIntegrationTest {
 
     private static IomObject findFirstBySuffix(List<IomObject> objects, String suffix) {
         return objects.stream()
-                .filter(object -> object.getobjecttag() != null && object.getobjecttag().endsWith(suffix))
+                .filter(object ->
+                        object.getobjecttag() != null && object.getobjecttag().endsWith(suffix))
                 .findFirst()
                 .orElse(null);
     }
@@ -321,6 +324,5 @@ class SurfaceAreaItfIntegrationTest {
                 .orElse("<none>");
     }
 
-    private record WriteResult(Path path, DiagnosticCollector diagnostics, ValidationResult validation) {
-    }
+    private record WriteResult(Path path, DiagnosticCollector diagnostics, ValidationResult validation) {}
 }

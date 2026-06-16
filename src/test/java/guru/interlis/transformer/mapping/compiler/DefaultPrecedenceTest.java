@@ -1,18 +1,18 @@
 package guru.interlis.transformer.mapping.compiler;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.mapping.model.JobConfig;
-import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class DefaultPrecedenceTest {
 
@@ -41,7 +41,8 @@ class DefaultPrecedenceTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         var nameAssign = plan.rules().get(0).assignments().stream()
-                .filter(a -> a.targetAttrName().equals("Name")).findFirst();
+                .filter(a -> a.targetAttrName().equals("Name"))
+                .findFirst();
         assertThat(nameAssign).isPresent();
         assertThat(nameAssign.get().expression().sourceText()).isEqualTo("${s.Name}");
     }
@@ -63,7 +64,8 @@ class DefaultPrecedenceTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         var descAssign = plan.rules().get(0).assignments().stream()
-                .filter(a -> a.targetAttrName().equals("Beschreibung")).findFirst();
+                .filter(a -> a.targetAttrName().equals("Beschreibung"))
+                .findFirst();
         assertThat(descAssign).isPresent();
         assertThat(descAssign.get().expression().sourceText()).isEqualTo("${s.Name}");
     }
@@ -82,7 +84,8 @@ class DefaultPrecedenceTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         var descAssign = plan.rules().get(0).assignments().stream()
-                .filter(a -> a.targetAttrName().equals("Beschreibung")).findFirst();
+                .filter(a -> a.targetAttrName().equals("Beschreibung"))
+                .findFirst();
         assertThat(descAssign).isPresent();
         assertThat(descAssign.get().expression().sourceText()).isEqualTo("\"mapping-default\"");
     }
@@ -104,7 +107,8 @@ class DefaultPrecedenceTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         var nameAssign = plan.rules().get(0).assignments().stream()
-                .filter(a -> a.targetAttrName().equals("Name")).findFirst();
+                .filter(a -> a.targetAttrName().equals("Name"))
+                .findFirst();
         assertThat(nameAssign).isPresent();
         assertThat(nameAssign.get().expression().sourceText()).isEqualTo("${s.Name}");
     }

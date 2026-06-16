@@ -1,15 +1,14 @@
 package guru.interlis.transformer.mapping.compiler;
 
-import ch.interlis.ili2c.metamodel.Table;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
-import guru.interlis.transformer.expr.ExpressionCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 import guru.interlis.transformer.mapping.plan.*;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import guru.interlis.transformer.state.OidStrategy;
+
+import ch.interlis.ili2c.metamodel.Table;
 
 import java.util.*;
 
@@ -32,24 +31,37 @@ final class RuleCompiler {
 
         Table targetClass = CompileUtils.resolveTargetClass(targetOutput, targetClassName, ctx.modelRegistry());
         if (targetClass == null) {
-            ctx.diagnostics().add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_TARGET_CLASS, Severity.ERROR,
-                    "Target class not found in model: " + targetClassName,
-                    ruleId, "Check the target class name and model registration"));
+            ctx.diagnostics()
+                    .add(new Diagnostic(
+                            DiagnosticCode.MAP_UNKNOWN_TARGET_CLASS,
+                            Severity.ERROR,
+                            "Target class not found in model: " + targetClassName,
+                            ruleId,
+                            "Check the target class name and model registration"));
             return null;
         }
         if (targetClass.isAbstract()) {
-            ctx.diagnostics().add(new Diagnostic(DiagnosticCode.MAP_ABSTRACT_TARGET_CLASS, Severity.ERROR,
-                    "Target class is abstract: " + targetClassName,
-                    ruleId, "Choose a concrete target class or instantiate via a specific subclass"));
+            ctx.diagnostics()
+                    .add(new Diagnostic(
+                            DiagnosticCode.MAP_ABSTRACT_TARGET_CLASS,
+                            Severity.ERROR,
+                            "Target class is abstract: " + targetClassName,
+                            ruleId,
+                            "Choose a concrete target class or instantiate via a specific subclass"));
         }
         if (!targetClass.isIdentifiable()) {
-            ctx.diagnostics().add(new Diagnostic(DiagnosticCode.MAP_NON_TRANSFERABLE_TARGET, Severity.WARNING,
-                    "Target class is not identifiable (possibly a view): " + targetClassName,
-                    ruleId, "Views cannot be written as transfer objects"));
+            ctx.diagnostics()
+                    .add(new Diagnostic(
+                            DiagnosticCode.MAP_NON_TRANSFERABLE_TARGET,
+                            Severity.WARNING,
+                            "Target class is not identifiable (possibly a view): " + targetClassName,
+                            ruleId,
+                            "Views cannot be written as transfer objects"));
         }
 
         TypeSystemFacade targetTs = targetOutput != null && !targetOutput.isEmpty()
-                ? ctx.modelRegistry().requireTargetTypeSystem(targetOutput) : null;
+                ? ctx.modelRegistry().requireTargetTypeSystem(targetOutput)
+                : null;
 
         List<SourcePlan> sourcePlans = new ArrayList<>();
         for (JobConfig.SourceSpec src : rule.sources) {
@@ -85,13 +97,17 @@ final class RuleCompiler {
         for (JobConfig.AttributeMapping attr : JobConfigNormalizer.getAllAttributes(rule)) {
             if (attr.target == null || attr.target.isBlank()) continue;
             if (!assignedTargets.add(attr.target)) {
-                ctx.diagnostics().add(new Diagnostic(DiagnosticCode.MAP_DUPLICATE_TARGET_ASSIGN, Severity.ERROR,
-                        "Target attribute assigned multiple times: " + attr.target,
-                        ruleId, "Remove duplicate assignment or use an explicit merge policy"));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.MAP_DUPLICATE_TARGET_ASSIGN,
+                                Severity.ERROR,
+                                "Target attribute assigned multiple times: " + attr.target,
+                                ruleId,
+                                "Remove duplicate assignment or use an explicit merge policy"));
             }
 
-            AssignmentPlan ap = assignmentCompiler.compileAssignment(attr, targetClass, targetTs,
-                    sourcesByAlias, ruleId, ctx);
+            AssignmentPlan ap =
+                    assignmentCompiler.compileAssignment(attr, targetClass, targetTs, sourcesByAlias, ruleId, ctx);
             if (ap != null) {
                 assignmentPlans.add(ap);
             }
@@ -100,8 +116,8 @@ final class RuleCompiler {
         if (rule.defaults != null && !rule.defaults.isEmpty()) {
             for (var entry : rule.defaults.entrySet()) {
                 if (!assignedTargets.contains(entry.getKey())) {
-                    AssignmentPlan dp = assignmentCompiler.compileDefaultAssignment(entry.getKey(),
-                            entry.getValue(), targetClass, targetTs, sourcesByAlias, ruleId, ctx);
+                    AssignmentPlan dp = assignmentCompiler.compileDefaultAssignment(
+                            entry.getKey(), entry.getValue(), targetClass, targetTs, sourcesByAlias, ruleId, ctx);
                     if (dp != null) {
                         assignedTargets.add(entry.getKey());
                         assignmentPlans.add(dp);
@@ -113,8 +129,8 @@ final class RuleCompiler {
         if (ctx.globalDefaults() != null && !ctx.globalDefaults().isEmpty()) {
             for (var entry : ctx.globalDefaults().entrySet()) {
                 if (!assignedTargets.contains(entry.getKey())) {
-                    AssignmentPlan dp = assignmentCompiler.compileDefaultAssignment(entry.getKey(),
-                            entry.getValue(), targetClass, targetTs, sourcesByAlias, ruleId, ctx);
+                    AssignmentPlan dp = assignmentCompiler.compileDefaultAssignment(
+                            entry.getKey(), entry.getValue(), targetClass, targetTs, sourcesByAlias, ruleId, ctx);
                     if (dp != null) {
                         assignedTargets.add(entry.getKey());
                         assignmentPlans.add(dp);
@@ -124,8 +140,8 @@ final class RuleCompiler {
         }
 
         if (targetTs != null) {
-            mandatoryCoverageValidator.checkMandatoryCoverage(targetClass, targetTs, assignmentPlans,
-                    ruleId, ctx.diagnostics());
+            mandatoryCoverageValidator.checkMandatoryCoverage(
+                    targetClass, targetTs, assignmentPlans, ruleId, ctx.diagnostics());
         }
 
         List<RefPlan> refPlans = new ArrayList<>();
@@ -136,8 +152,8 @@ final class RuleCompiler {
             }
         }
 
-        List<BagPlan> bagPlans = bagCompiler.compileBags(rule, sourcePlans, sourcesByAlias,
-                targetClass, targetTs, ruleId, ctx, null);
+        List<BagPlan> bagPlans =
+                bagCompiler.compileBags(rule, sourcePlans, sourcesByAlias, targetClass, targetTs, ruleId, ctx, null);
 
         List<LossPlan> lossPlans = lossCompiler.compileLosses(rule, sourcesByAlias, ruleId, ctx);
 
@@ -145,8 +161,8 @@ final class RuleCompiler {
 
         List<JoinPlan> joinPlans = joinCompiler.compileJoins(rule, sourcePlans, sourcesByAlias, ruleId, ctx);
 
-        List<CreatePlan> createPlans = createCompiler.compileCreates(rule, targetOutput, sourcePlans,
-                sourcesByAlias, ruleId, ctx);
+        List<CreatePlan> createPlans =
+                createCompiler.compileCreates(rule, targetOutput, sourcePlans, sourcesByAlias, ruleId, ctx);
 
         return new RulePlan(
                 ruleId,
@@ -160,7 +176,6 @@ final class RuleCompiler {
                 identitySourceKeys,
                 predicate,
                 joinPlans,
-                createPlans
-        );
+                createPlans);
     }
 }

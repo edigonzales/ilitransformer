@@ -12,7 +12,8 @@ public final class OutputWritingService {
 
     public long writeOutputs(
             Map<String, IoxWriter> writersByOutputId,
-            Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket) throws Exception {
+            Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket)
+            throws Exception {
         long written = 0;
         for (var entry : writersByOutputId.entrySet()) {
             String outputId = entry.getKey();

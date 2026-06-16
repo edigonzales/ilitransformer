@@ -6,5 +6,4 @@ public record LossEvent(
         String sourceOid,
         String sourcePath,
         String reasonCode,
-        String description
-) {}
+        String description) {}

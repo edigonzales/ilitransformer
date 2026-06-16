@@ -1,15 +1,16 @@
 package guru.interlis.transformer.mapping.compiler;
 
-import ch.interlis.ili2c.metamodel.AttributeDef;
-import ch.interlis.ili2c.metamodel.CompositionType;
-import ch.interlis.ili2c.metamodel.Extendable;
-import ch.interlis.ili2c.metamodel.Table;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.SourcePlan;
+
+import ch.interlis.ili2c.metamodel.AttributeDef;
+import ch.interlis.ili2c.metamodel.CompositionType;
+import ch.interlis.ili2c.metamodel.Extendable;
+import ch.interlis.ili2c.metamodel.Table;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,8 +19,7 @@ import java.util.Set;
 
 final class IdentityCompiler {
 
-    List<String> compileIdentityKeys(JobConfig.RuleSpec rule, List<SourcePlan> sourcePlans,
-                                      CompilerContext ctx) {
+    List<String> compileIdentityKeys(JobConfig.RuleSpec rule, List<SourcePlan> sourcePlans, CompilerContext ctx) {
         DiagnosticCollector diag = ctx.diagnostics();
         if (rule.identity == null || rule.identity.sourceKey == null || rule.identity.sourceKey.isEmpty()) {
             return List.of();
@@ -28,32 +28,44 @@ final class IdentityCompiler {
         Set<String> seenKeys = new HashSet<>();
         for (String key : rule.identity.sourceKey) {
             if (key == null || key.isBlank()) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_MISSING, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_MISSING,
+                        Severity.ERROR,
                         "Identity key is null or empty in rule " + rule.id,
-                        rule.id, "Remove empty key or provide a valid attribute reference"));
+                        rule.id,
+                        "Remove empty key or provide a valid attribute reference"));
                 continue;
             }
             String trimmed = key.trim();
 
             if (!seenKeys.add(trimmed)) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_DUPLICATE, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_DUPLICATE,
+                        Severity.ERROR,
                         "Duplicate identity key: " + trimmed + " in rule " + rule.id,
-                        rule.id, "Remove duplicate identity key"));
+                        rule.id,
+                        "Remove duplicate identity key"));
                 continue;
             }
 
             if (!trimmed.contains(".")) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_MISSING, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_MISSING,
+                        Severity.ERROR,
                         "Identity key must be qualified with alias: " + trimmed,
-                        rule.id, "Use format: <alias>.<attributeName>"));
+                        rule.id,
+                        "Use format: <alias>.<attributeName>"));
                 continue;
             }
 
             String[] parts = trimmed.split("\\.", 2);
             if (parts.length != 2) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_MISSING, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_MISSING,
+                        Severity.ERROR,
                         "Invalid identity key format: " + trimmed,
-                        rule.id, "Use format: <alias>.<attributeName>"));
+                        rule.id,
+                        "Use format: <alias>.<attributeName>"));
                 continue;
             }
 
@@ -62,19 +74,26 @@ final class IdentityCompiler {
 
             SourcePlan matchingSource = sourcePlans.stream()
                     .filter(sp -> sp.alias() != null && sp.alias().equals(alias))
-                    .findFirst().orElse(null);
+                    .findFirst()
+                    .orElse(null);
 
             if (matchingSource == null) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_MISSING, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_MISSING,
+                        Severity.ERROR,
                         "Identity key alias not found: " + alias + " in rule " + rule.id,
-                        rule.id, "Verify the alias matches a source definition"));
+                        rule.id,
+                        "Verify the alias matches a source definition"));
                 continue;
             }
 
             if (matchingSource.sourceClass() == null) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_MISSING, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_MISSING,
+                        Severity.ERROR,
                         "Source class not resolved for alias: " + alias,
-                        rule.id, "Verify the source class is valid"));
+                        rule.id,
+                        "Verify the source class is valid"));
                 continue;
             }
 
@@ -91,18 +110,23 @@ final class IdentityCompiler {
             }
 
             if (attr == null) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_MISSING, Severity.ERROR,
-                        "Identity key attribute not found: " + attrName
-                                + " on source " + alias + " in rule " + rule.id,
-                        rule.id, "Verify the attribute name exists on the source class"));
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_MISSING,
+                        Severity.ERROR,
+                        "Identity key attribute not found: " + attrName + " on source " + alias + " in rule " + rule.id,
+                        rule.id,
+                        "Verify the attribute name exists on the source class"));
                 continue;
             }
 
             if (!isValidIdentityKeyType(attr)) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_INVALID_TYPE, Severity.ERROR,
-                        "Identity key attribute is not a usable scalar type: "
-                                + alias + "." + attrName + " in rule " + rule.id,
-                        rule.id, "Identity keys must be scalar text, numeric, enum, boolean, or date attributes. "
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_INVALID_TYPE,
+                        Severity.ERROR,
+                        "Identity key attribute is not a usable scalar type: " + alias + "." + attrName + " in rule "
+                                + rule.id,
+                        rule.id,
+                        "Identity keys must be scalar text, numeric, enum, boolean, or date attributes. "
                                 + "Geometry, BAG/STRUCTURE, and reference types are not allowed."));
                 continue;
             }
@@ -154,32 +178,44 @@ final class IdentityCompiler {
         }
         for (String key : rule.identity.sourceKey) {
             if (key == null || key.isBlank()) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_MISSING, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_MISSING,
+                        Severity.ERROR,
                         "Identity key is null or empty in rule " + rule.id,
-                        rule.id, "Remove empty key or provide a valid attribute reference"));
+                        rule.id,
+                        "Remove empty key or provide a valid attribute reference"));
                 continue;
             }
             String trimmed = key.trim();
 
             if (!seenKeys.add(trimmed)) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_DUPLICATE, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_DUPLICATE,
+                        Severity.ERROR,
                         "Duplicate identity key: " + trimmed + " in rule " + rule.id,
-                        rule.id, "Remove duplicate identity key"));
+                        rule.id,
+                        "Remove duplicate identity key"));
             }
 
             if (!trimmed.contains(".")) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_MISSING, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_MISSING,
+                        Severity.ERROR,
                         "Identity key must be qualified with alias: " + trimmed,
-                        rule.id, "Use format: <alias>.<attributeName>"));
+                        rule.id,
+                        "Use format: <alias>.<attributeName>"));
                 continue;
             }
 
             String[] parts = trimmed.split("\\.", 2);
             String alias = parts[0];
             if (!aliases.isEmpty() && !aliases.contains(alias)) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_IDENTITY_KEY_MISSING, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_IDENTITY_KEY_MISSING,
+                        Severity.ERROR,
                         "Identity key alias not found: " + alias + " in rule " + rule.id,
-                        rule.id, "Available aliases: " + aliases));
+                        rule.id,
+                        "Available aliases: " + aliases));
             }
         }
     }

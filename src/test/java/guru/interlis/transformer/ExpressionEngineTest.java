@@ -1,14 +1,16 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom_j.Iom_jObject;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import guru.interlis.transformer.expr.ExpressionEngine;
-import guru.interlis.transformer.expr.NullValue;
 import guru.interlis.transformer.expr.TextValue;
 import guru.interlis.transformer.expr.Value;
-import java.util.Map;
-import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import ch.interlis.iom_j.Iom_jObject;
+
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
 
 class ExpressionEngineTest {
     @Test

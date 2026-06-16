@@ -1,6 +1,6 @@
 package guru.interlis.transformer;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class RealDatasetCatalogTest {
 
@@ -19,7 +19,9 @@ class RealDatasetCatalogTest {
         catalogRealData(Path.of("src/test/data/av/"), catalog);
         catalogRealData(Path.of("src/test/data/DMAV_Version_1_1/"), catalog);
 
-        assertThat(catalog).as("Real data files must be present under src/test/data/").isNotEmpty();
+        assertThat(catalog)
+                .as("Real data files must be present under src/test/data/")
+                .isNotEmpty();
 
         for (FileEntry entry : catalog) {
             assertThat(entry.path).exists();
@@ -64,16 +66,16 @@ class RealDatasetCatalogTest {
         if (!Files.exists(dir)) return;
         try (Stream<Path> files = Files.walk(dir)) {
             files.filter(f -> {
-                String name = f.getFileName().toString().toLowerCase();
-                return name.endsWith(".itf") || name.endsWith(".xtf");
-            }).forEach(f -> {
-                try {
-                    catalog.add(new FileEntry(f, f.getFileName().toString(),
-                            Files.size(f), fileType(f)));
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
+                        String name = f.getFileName().toString().toLowerCase();
+                        return name.endsWith(".itf") || name.endsWith(".xtf");
+                    })
+                    .forEach(f -> {
+                        try {
+                            catalog.add(new FileEntry(f, f.getFileName().toString(), Files.size(f), fileType(f)));
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
         }
     }
 

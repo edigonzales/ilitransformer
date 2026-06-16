@@ -21,15 +21,15 @@ public final class DefaultOidGenerationService implements OidGenerationService {
             }
             case UUID -> UUID.randomUUID().toString();
             case DETERMINISTIC_UUID -> generateDeterministicUuid(request);
-            case EXTERNAL -> throw new UnsupportedOperationException(
-                    "EXTERNAL OID strategy is not yet implemented");
+            case EXTERNAL -> throw new UnsupportedOperationException("EXTERNAL OID strategy is not yet implemented");
         };
     }
 
     private String generateDeterministicUuid(OidGenerationRequest request) {
         String namespace = request.namespace() != null ? request.namespace() : "default";
 
-        if (request.identityValues() != null && !request.identityValues().isEmpty()
+        if (request.identityValues() != null
+                && !request.identityValues().isEmpty()
                 && request.identityValues().values().stream().allMatch(CanonicalValue::defined)) {
             return generateIdentityDeterministicUuid(namespace, request);
         }
@@ -37,8 +37,7 @@ public final class DefaultOidGenerationService implements OidGenerationService {
         return generateFallbackDeterministicUuid(namespace, request);
     }
 
-    private static String generateIdentityDeterministicUuid(String namespace,
-                                                             OidGenerationRequest request) {
+    private static String generateIdentityDeterministicUuid(String namespace, OidGenerationRequest request) {
         StringBuilder sb = new StringBuilder();
         sb.append(namespace);
         sb.append("::");
@@ -53,16 +52,17 @@ public final class DefaultOidGenerationService implements OidGenerationService {
             sb.append(value.canonicalText());
         });
 
-        return UUID.nameUUIDFromBytes(sb.toString().getBytes(StandardCharsets.UTF_8)).toString();
+        return UUID.nameUUIDFromBytes(sb.toString().getBytes(StandardCharsets.UTF_8))
+                .toString();
     }
 
-    private String generateFallbackDeterministicUuid(String namespace,
-                                                      OidGenerationRequest request) {
+    private String generateFallbackDeterministicUuid(String namespace, OidGenerationRequest request) {
         if (request.sourceOid() == null || request.sourceOid().isBlank()) {
             String fallbackName = namespace + "::" + request.ruleId() + "::"
                     + request.inputId() + "::" + request.sourceBasketId() + "::"
                     + request.sourceClass() + "::FALLBACK::" + fallbackSequence.incrementAndGet();
-            return UUID.nameUUIDFromBytes(fallbackName.getBytes(StandardCharsets.UTF_8)).toString();
+            return UUID.nameUUIDFromBytes(fallbackName.getBytes(StandardCharsets.UTF_8))
+                    .toString();
         }
 
         String name = namespace + "::" + request.ruleId() + "::"

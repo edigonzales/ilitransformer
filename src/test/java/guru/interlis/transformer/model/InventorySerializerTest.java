@@ -1,13 +1,11 @@
 package guru.interlis.transformer.model;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class InventorySerializerTest {
 
@@ -52,10 +50,8 @@ class InventorySerializerTest {
     @Test
     void markdownIncludesRoles() {
         var role = new ModelInventory.RoleInventory("ParentRole", "ParentChild", "Parent", "1");
-        var cls = new ModelInventory.ClassInventory("Child", "M.T.Child", false, null, false,
-                List.of(), List.of(role));
-        var topic = new ModelInventory.TopicInventory("T", "UUID", "STANDARD",
-                List.of(cls));
+        var cls = new ModelInventory.ClassInventory("Child", "M.T.Child", false, null, false, List.of(), List.of(role));
+        var topic = new ModelInventory.TopicInventory("T", "UUID", "STANDARD", List.of(cls));
         var inv = new ModelInventory("M", "1.0", null, List.of(topic));
         String md = new InventorySerializer().toMarkdown(List.of(inv));
 
@@ -65,10 +61,8 @@ class InventorySerializerTest {
 
     @Test
     void emptyAttributesAndRolesProduceCleanOutput() throws IOException {
-        var cls = new ModelInventory.ClassInventory("Empty", "M.T.Empty", false, null, false,
-                List.of(), List.of());
-        var topic = new ModelInventory.TopicInventory("T", "UUID", "STANDARD",
-                List.of(cls));
+        var cls = new ModelInventory.ClassInventory("Empty", "M.T.Empty", false, null, false, List.of(), List.of());
+        var topic = new ModelInventory.TopicInventory("T", "UUID", "STANDARD", List.of(cls));
         var inv = new ModelInventory("M", "1.0", null, List.of(topic));
 
         String json = new InventorySerializer().toJson(List.of(inv));
@@ -79,11 +73,9 @@ class InventorySerializerTest {
     private static ModelInventory createSampleInventory() {
         var attr1 = new ModelInventory.AttributeInventory("Name", "TEXT*60", "1", true);
         var attr2 = new ModelInventory.AttributeInventory("Beschreibung", "TEXT*200", "0..1", false);
-        var cls = new ModelInventory.ClassInventory("TestClass",
-                "TestModel.TestTopic.TestClass", false, null, false,
-                List.of(attr1, attr2), List.of());
-        var topic = new ModelInventory.TopicInventory("TestTopic", "UUIDOID", "STANDARDOID",
-                List.of(cls));
+        var cls = new ModelInventory.ClassInventory(
+                "TestClass", "TestModel.TestTopic.TestClass", false, null, false, List.of(attr1, attr2), List.of());
+        var topic = new ModelInventory.TopicInventory("TestTopic", "UUIDOID", "STANDARDOID", List.of(cls));
         return new ModelInventory("TestModel", "1.0", null, List.of(topic));
     }
 }

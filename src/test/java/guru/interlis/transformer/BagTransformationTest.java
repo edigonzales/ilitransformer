@@ -1,21 +1,10 @@
 package guru.interlis.transformer;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.IoxWriter;
-import ch.interlis.iox_j.EndBasketEvent;
-import ch.interlis.iox_j.EndTransferEvent;
-import ch.interlis.iox_j.ObjectEvent;
-import ch.interlis.iox_j.StartBasketEvent;
-import ch.interlis.iox_j.StartTransferEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
-import guru.interlis.transformer.engine.BagTransformationService;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
@@ -29,17 +18,28 @@ import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.IoxWriter;
+import ch.interlis.iox_j.EndBasketEvent;
+import ch.interlis.iox_j.EndTransferEvent;
+import ch.interlis.iox_j.ObjectEvent;
+import ch.interlis.iox_j.StartBasketEvent;
+import ch.interlis.iox_j.StartTransferEvent;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class BagTransformationTest {
 
@@ -89,10 +89,9 @@ class BagTransformationTest {
             InterlisIoFactory ioFactory = new InterlisIoFactory();
             IoxWriter writer = ioFactory.createWriter(outputPath, nestedTransferDescription);
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan, onceReaderFactory(parent),
-                    Map.of("nested", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(parent), Map.of("nested", writer));
 
             assertThat(result.errors()).isEqualTo(0);
             assertThat(result.targetsCreated()).isEqualTo(1);
@@ -120,10 +119,9 @@ class BagTransformationTest {
             InterlisIoFactory ioFactory = new InterlisIoFactory();
             IoxWriter writer = ioFactory.createWriter(outputPath, nestedTransferDescription);
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan, onceReaderFactory(parent, child),
-                    Map.of("nested", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(parent, child), Map.of("nested", writer));
 
             assertThat(result.errors()).isEqualTo(0);
             String content = Files.readString(outputPath);
@@ -160,10 +158,9 @@ class BagTransformationTest {
             InterlisIoFactory ioFactory = new InterlisIoFactory();
             IoxWriter writer = ioFactory.createWriter(outputPath, nestedTransferDescription);
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            engine.runTyped(plan, onceReaderFactory(parent, child1, child2, child3),
-                    Map.of("nested", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            engine.runTyped(plan, onceReaderFactory(parent, child1, child2, child3), Map.of("nested", writer));
 
             String content = Files.readString(outputPath);
             // Stable ordering by OID: c10, c20, c5
@@ -194,10 +191,9 @@ class BagTransformationTest {
             InterlisIoFactory ioFactory = new InterlisIoFactory();
             IoxWriter writer = ioFactory.createWriter(outputPath, nestedTransferDescription);
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            engine.runTyped(plan, onceReaderFactory(parent, wrongChild),
-                    Map.of("nested", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            engine.runTyped(plan, onceReaderFactory(parent, wrongChild), Map.of("nested", writer));
 
             String content = Files.readString(outputPath);
             assertThat(content).doesNotContain("1.500");
@@ -224,13 +220,12 @@ class BagTransformationTest {
             InterlisIoFactory ioFactory = new InterlisIoFactory();
             IoxWriter writer = ioFactory.createWriter(outputPath, nestedTransferDescription);
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            engine.runTyped(plan, onceReaderFactory(parent, child),
-                    Map.of("nested", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            engine.runTyped(plan, onceReaderFactory(parent, child), Map.of("nested", writer));
 
-            boolean hasBagMandatoryWarning = engineDiag.all().stream()
-                    .anyMatch(d -> d.code().equals(DiagnosticCode.RUN_BAG_MANDATORY_MISSING));
+            boolean hasBagMandatoryWarning =
+                    engineDiag.all().stream().anyMatch(d -> d.code().equals(DiagnosticCode.RUN_BAG_MANDATORY_MISSING));
             assertThat(hasBagMandatoryWarning).isTrue();
         } finally {
             Files.deleteIfExists(outputPath);
@@ -268,10 +263,9 @@ class BagTransformationTest {
             InterlisIoFactory ioFactory = new InterlisIoFactory();
             IoxWriter writer = ioFactory.createWriter(outputPath, flatTransferDescription);
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan, onceReaderFactory(parent),
-                    Map.of("flat", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(parent), Map.of("flat", writer));
 
             assertThat(result.errors()).isEqualTo(0);
             assertThat(result.targetsCreated()).isGreaterThanOrEqualTo(3); // parent + 2 children
@@ -302,10 +296,9 @@ class BagTransformationTest {
             InterlisIoFactory ioFactory = new InterlisIoFactory();
             IoxWriter writer = ioFactory.createWriter(outputPath, flatTransferDescription);
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan, onceReaderFactory(parent),
-                    Map.of("flat", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(parent), Map.of("flat", writer));
 
             assertThat(result.errors()).isEqualTo(0);
             // Multiple targets created: parent + expanded child
@@ -340,11 +333,10 @@ class BagTransformationTest {
             InterlisIoFactory ioFactory = new InterlisIoFactory();
             IoxWriter writer = ioFactory.createWriter(outputPath, nestedTransferDescription);
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(parent1, parent2, childA, childB),
-                    Map.of("nested", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(
+                    plan, onceReaderFactory(parent1, parent2, childA, childB), Map.of("nested", writer));
 
             assertThat(result.errors()).isEqualTo(0);
             String content = Files.readString(outputPath);
@@ -395,7 +387,8 @@ class BagTransformationTest {
                 return null;
             }
 
-            @Override public void close() {}
+            @Override
+            public void close() {}
 
             @Override
             public IomObject createIomObject(String tag, String oid) {
@@ -403,7 +396,9 @@ class BagTransformationTest {
             }
 
             @Override
-            public ch.interlis.iox.IoxFactoryCollection getFactory() { return null; }
+            public ch.interlis.iox.IoxFactoryCollection getFactory() {
+                return null;
+            }
 
             @Override
             public void setFactory(ch.interlis.iox.IoxFactoryCollection factory) {}

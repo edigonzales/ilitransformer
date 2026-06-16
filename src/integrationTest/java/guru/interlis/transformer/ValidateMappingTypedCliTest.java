@@ -35,11 +35,13 @@ class ValidateMappingTypedCliTest {
 
     @Test
     void validateMappingWithModeldirsPerformsFullValidation() {
-        int exitCode = new CommandLine(new CliMain()).execute(
-                "validate-mapping",
-                "--mapping", "src/test/resources/mappings/fail-policy/simple-identity.yaml",
-                "--modeldir", "src/test/data/models"
-        );
+        int exitCode = new CommandLine(new CliMain())
+                .execute(
+                        "validate-mapping",
+                        "--mapping",
+                        "src/test/resources/mappings/fail-policy/simple-identity.yaml",
+                        "--modeldir",
+                        "src/test/data/models");
 
         String output = outContent.toString();
         assertThat(output).contains("model-aware");
@@ -47,10 +49,11 @@ class ValidateMappingTypedCliTest {
 
     @Test
     void validateMappingWithoutModeldirsPerformsBasicValidation() {
-        int exitCode = new CommandLine(new CliMain()).execute(
-                "validate-mapping",
-                "--mapping", "src/test/resources/mappings/fail-policy/simple-identity.yaml"
-        );
+        int exitCode = new CommandLine(new CliMain())
+                .execute(
+                        "validate-mapping",
+                        "--mapping",
+                        "src/test/resources/mappings/fail-policy/simple-identity.yaml");
 
         assertThat(exitCode).isZero();
         String output = outContent.toString();

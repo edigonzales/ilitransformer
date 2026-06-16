@@ -1,8 +1,8 @@
 package guru.interlis.transformer.engine;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.RulePlan;
@@ -10,14 +10,14 @@ import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class RuleDispatchIndexTest {
 
@@ -65,10 +65,14 @@ class RuleDispatchIndexTest {
 
     @Test
     void emptyPlanReturnsEmpty() {
-        TransformPlan plan = new TransformPlan("test", "forward",
+        TransformPlan plan = new TransformPlan(
+                "test",
+                "forward",
                 guru.interlis.transformer.mapping.plan.FailPolicy.STRICT,
                 guru.interlis.transformer.mapping.plan.CompileMode.STRICT,
-                java.util.List.of(), java.util.Map.of(), java.util.Map.of(),
+                java.util.List.of(),
+                java.util.Map.of(),
+                java.util.Map.of(),
                 new guru.interlis.transformer.diag.DiagnosticCollector(),
                 new guru.interlis.transformer.mapping.plan.OidPlan(
                         guru.interlis.transformer.state.OidStrategy.INTEGER, "ns"),

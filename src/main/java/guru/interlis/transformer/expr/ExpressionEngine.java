@@ -1,10 +1,7 @@
 package guru.interlis.transformer.expr;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
-import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.expr.builtins.BasicFunctions;
 import guru.interlis.transformer.expr.builtins.DateFunctions;
@@ -16,6 +13,10 @@ import guru.interlis.transformer.expr.builtins.RefFunctions;
 import guru.interlis.transformer.expr.builtins.StringFunctions;
 import guru.interlis.transformer.mapping.plan.CompiledExpression;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
+
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,12 +61,15 @@ public final class ExpressionEngine {
         String trimmed = expression.trim();
 
         // Legacy quick path: simple string literal (no operators/spaces)
-        if (trimmed.length() >= 2 && ((trimmed.startsWith("\"") && trimmed.endsWith("\""))
-                || (trimmed.startsWith("'") && trimmed.endsWith("'")))
+        if (trimmed.length() >= 2
+                && ((trimmed.startsWith("\"") && trimmed.endsWith("\""))
+                        || (trimmed.startsWith("'") && trimmed.endsWith("'")))
                 && !trimmed.substring(1, trimmed.length() - 1).contains("\"")
                 && !trimmed.substring(1, trimmed.length() - 1).contains("'")
-                && !trimmed.contains("==") && !trimmed.contains("!=")
-                && !trimmed.contains("(") && !trimmed.contains("${")) {
+                && !trimmed.contains("==")
+                && !trimmed.contains("!=")
+                && !trimmed.contains("(")
+                && !trimmed.contains("${")) {
             return new TextValue(trimmed.substring(1, trimmed.length() - 1));
         }
 
@@ -81,10 +85,13 @@ public final class ExpressionEngine {
             ast = ExpressionParser.parse(trimmed);
         } catch (ExpressionParseException e) {
             if (ctx.diagnostics() != null) {
-                ctx.diagnostics().add(new Diagnostic(
-                        DiagnosticCode.EXPR_SYNTAX, Severity.ERROR,
-                        "Expression parse error: " + e.getMessage(),
-                        ctx.ruleId(), expression));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_SYNTAX,
+                                Severity.ERROR,
+                                "Expression parse error: " + e.getMessage(),
+                                ctx.ruleId(),
+                                expression));
             }
             return NullValue.INSTANCE;
         }
@@ -127,30 +134,34 @@ public final class ExpressionEngine {
         Optional<FunctionDef> defOpt = functionRegistry.resolve(call.functionName());
         if (defOpt.isEmpty()) {
             if (ctx.diagnostics() != null) {
-                ctx.diagnostics().add(new Diagnostic(
-                        DiagnosticCode.EXPR_UNKNOWN_FUNC, Severity.ERROR,
-                        "Unknown function: " + call.functionName(),
-                        ctx.ruleId(), "Check function name or ensure it is registered"));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_UNKNOWN_FUNC,
+                                Severity.ERROR,
+                                "Unknown function: " + call.functionName(),
+                                ctx.ruleId(),
+                                "Check function name or ensure it is registered"));
             }
             return NullValue.INSTANCE;
         }
         FunctionDef def = defOpt.get();
 
         if (!def.deterministic() && ctx.diagnostics() != null) {
-            ctx.diagnostics().add(new Diagnostic(
-                    DiagnosticCode.EXPR_NON_DETERMINISTIC, Severity.WARNING,
-                    "Non-deterministic function used: " + def.name(),
-                    ctx.ruleId(), "Results may vary between runs"));
+            ctx.diagnostics()
+                    .add(new Diagnostic(
+                            DiagnosticCode.EXPR_NON_DETERMINISTIC,
+                            Severity.WARNING,
+                            "Non-deterministic function used: " + def.name(),
+                            ctx.ruleId(),
+                            "Results may vary between runs"));
         }
 
         if (def.evaluationMode() == EvaluationMode.LAZY && def.lazyImplementation() != null) {
-            return def.lazyImplementation().apply(call.arguments(),
-                    expr -> evaluateAst(expr, ctx), ctx);
+            return def.lazyImplementation().apply(call.arguments(), expr -> evaluateAst(expr, ctx), ctx);
         }
 
-        List<Value> evalArgs = call.arguments().stream()
-                .map(arg -> evaluateAst(arg, ctx))
-                .toList();
+        List<Value> evalArgs =
+                call.arguments().stream().map(arg -> evaluateAst(arg, ctx)).toList();
         return def.implementation().apply(evalArgs, ctx);
     }
 
@@ -192,10 +203,11 @@ public final class ExpressionEngine {
 
         // Check if this is a geometry attribute
         TypeInfo attrType = resolveSourceAttributeType(ctx, parts[0], attrName);
-        if (attrType != null && (attrType == guru.interlis.transformer.mapping.plan.TypeInfo.COORD
-                || attrType == guru.interlis.transformer.mapping.plan.TypeInfo.POLYLINE
-                || attrType == guru.interlis.transformer.mapping.plan.TypeInfo.SURFACE
-                || attrType == guru.interlis.transformer.mapping.plan.TypeInfo.AREA)) {
+        if (attrType != null
+                && (attrType == guru.interlis.transformer.mapping.plan.TypeInfo.COORD
+                        || attrType == guru.interlis.transformer.mapping.plan.TypeInfo.POLYLINE
+                        || attrType == guru.interlis.transformer.mapping.plan.TypeInfo.SURFACE
+                        || attrType == guru.interlis.transformer.mapping.plan.TypeInfo.AREA)) {
             return resolveGeometryValue(source, attrName, attrType, ctx);
         }
 
@@ -297,14 +309,15 @@ public final class ExpressionEngine {
     private void reportMissingMergedGeometry(IomObject source, String attrName, TypeInfo attrType, EvalContext ctx) {
         if (ctx.diagnostics() == null) return;
         String oid = source.getobjectoid() != null ? source.getobjectoid() : "<no-oid>";
-        ctx.diagnostics().add(new Diagnostic(
-                DiagnosticCode.GEOM_INVALID,
-                Severity.ERROR,
-                "Geometry attribute " + source.getobjecttag() + "." + attrName
-                        + " of type " + attrType
-                        + " has no merged geometry object; only scalar data is available",
-                source.getobjecttag() + "/" + oid,
-                "Ensure the model-aware ITF reader merges geometry helper tables and the input contains them"));
+        ctx.diagnostics()
+                .add(new Diagnostic(
+                        DiagnosticCode.GEOM_INVALID,
+                        Severity.ERROR,
+                        "Geometry attribute " + source.getobjecttag() + "." + attrName
+                                + " of type " + attrType
+                                + " has no merged geometry object; only scalar data is available",
+                        source.getobjecttag() + "/" + oid,
+                        "Ensure the model-aware ITF reader merges geometry helper tables and the input contains them"));
     }
 
     // -- Legacy compatibility -----------------------------------------

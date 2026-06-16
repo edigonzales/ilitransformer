@@ -1,8 +1,5 @@
 package guru.interlis.transformer.dmav;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,16 +8,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 public final class CorrelationHintExporter {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper()
-            .enable(SerializationFeature.INDENT_OUTPUT);
+    private static final ObjectMapper MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
     public void writeJson(List<CorrelationHint> hints, Path outputPath) throws IOException {
         Files.createDirectories(outputPath.getParent());
-        List<Map<String, Object>> data = hints.stream()
-                .map(this::toMap)
-                .collect(Collectors.toList());
+        List<Map<String, Object>> data = hints.stream().map(this::toMap).collect(Collectors.toList());
         MAPPER.writeValue(outputPath.toFile(), data);
     }
 
@@ -35,8 +32,12 @@ public final class CorrelationHintExporter {
         md.append("|---|---|\n");
         md.append("| Total hints | ").append(hints.size()).append(" |\n");
 
-        long dmToDmav = hints.stream().filter(h -> h.direction() == Direction.DM01_TO_DMAV).count();
-        long dmavToDm = hints.stream().filter(h -> h.direction() == Direction.DMAV_TO_DM01).count();
+        long dmToDmav = hints.stream()
+                .filter(h -> h.direction() == Direction.DM01_TO_DMAV)
+                .count();
+        long dmavToDm = hints.stream()
+                .filter(h -> h.direction() == Direction.DMAV_TO_DM01)
+                .count();
         md.append("| DM01→DMAV | ").append(dmToDmav).append(" |\n");
         md.append("| DMAV→DM01 | ").append(dmavToDm).append(" |\n");
 
@@ -44,9 +45,21 @@ public final class CorrelationHintExporter {
         md.append("| Code | DM01→DMAV | DMAV→DM01 | Total |\n");
         md.append("|---|---|---|---|\n");
         for (String code : List.of("K", "V", "I")) {
-            long dm = hints.stream().filter(h -> h.direction() == Direction.DM01_TO_DMAV && code.equals(h.transformCode())).count();
-            long md2 = hints.stream().filter(h -> h.direction() == Direction.DMAV_TO_DM01 && code.equals(h.transformCode())).count();
-            md.append("| ").append(code).append(" | ").append(dm).append(" | ").append(md2).append(" | ").append(dm + md2).append(" |\n");
+            long dm = hints.stream()
+                    .filter(h -> h.direction() == Direction.DM01_TO_DMAV && code.equals(h.transformCode()))
+                    .count();
+            long md2 = hints.stream()
+                    .filter(h -> h.direction() == Direction.DMAV_TO_DM01 && code.equals(h.transformCode()))
+                    .count();
+            md.append("| ")
+                    .append(code)
+                    .append(" | ")
+                    .append(dm)
+                    .append(" | ")
+                    .append(md2)
+                    .append(" | ")
+                    .append(dm + md2)
+                    .append(" |\n");
         }
 
         md.append("\n## Diagnostics\n\n");
@@ -59,7 +72,11 @@ public final class CorrelationHintExporter {
             md.append("\n### Warnings\n\n");
             result.diagnostics().all().stream()
                     .filter(d -> d.severity().name().equals("WARNING"))
-                    .forEach(d -> md.append("- ").append(d.message()).append(" (").append(d.sourcePath()).append(")\n"));
+                    .forEach(d -> md.append("- ")
+                            .append(d.message())
+                            .append(" (")
+                            .append(d.sourcePath())
+                            .append(")\n"));
         }
 
         md.append("\n## Source\n\n");

@@ -1,14 +1,14 @@
 package guru.interlis.transformer.loss;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 public final class LossinessCollector {
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper()
@@ -46,12 +46,18 @@ public final class LossinessCollector {
             sb.append("| Rule | Source class | Source OID | Source path | Reason | Description |\n");
             sb.append("|------|--------------|------------|-------------|--------|-------------|\n");
             for (LossEvent event : sortedEvents()) {
-                sb.append("| ").append(escape(event.ruleId()))
-                        .append(" | ").append(escape(event.sourceClass()))
-                        .append(" | ").append(escape(event.sourceOid()))
-                        .append(" | ").append(escape(event.sourcePath()))
-                        .append(" | ").append(escape(event.reasonCode()))
-                        .append(" | ").append(escape(event.description()))
+                sb.append("| ")
+                        .append(escape(event.ruleId()))
+                        .append(" | ")
+                        .append(escape(event.sourceClass()))
+                        .append(" | ")
+                        .append(escape(event.sourceOid()))
+                        .append(" | ")
+                        .append(escape(event.sourcePath()))
+                        .append(" | ")
+                        .append(escape(event.reasonCode()))
+                        .append(" | ")
+                        .append(escape(event.description()))
                         .append(" |\n");
             }
         }
@@ -60,8 +66,7 @@ public final class LossinessCollector {
 
     private List<LossEvent> sortedEvents() {
         return events.stream()
-                .sorted(Comparator
-                        .comparing(LossEvent::ruleId, Comparator.nullsLast(String::compareTo))
+                .sorted(Comparator.comparing(LossEvent::ruleId, Comparator.nullsLast(String::compareTo))
                         .thenComparing(LossEvent::sourceClass, Comparator.nullsLast(String::compareTo))
                         .thenComparing(LossEvent::sourceOid, Comparator.nullsLast(String::compareTo))
                         .thenComparing(LossEvent::sourcePath, Comparator.nullsLast(String::compareTo))

@@ -1,12 +1,7 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.IoxWriter;
-import guru.interlis.transformer.diag.Diagnostic;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.TransformResult;
@@ -15,18 +10,24 @@ import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.IliModelCompileResult;
+import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.IoxWriter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class ReferenceResolutionIntegrationTest {
 
@@ -37,8 +38,7 @@ class ReferenceResolutionIntegrationTest {
     @BeforeAll
     static void compileModels() {
         IliModelService service = new IliModelService();
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/with-references.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/with-references.ili", MODELDIR);
         assertThat(result.hasErrors())
                 .as("Model compilation errors: %s", result.diagnostics())
                 .isFalse();
@@ -67,14 +67,15 @@ class ReferenceResolutionIntegrationTest {
         System.out.println("srcA tag=" + srcA.getobjecttag() + " oid=" + srcA.getobjectoid());
 
         DiagnosticCollector engineDiag = new DiagnosticCollector();
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
 
         var capturedOids = new ArrayList<String>();
         var capturedRefs = new ArrayList<String>();
         IoxWriter writer = new CapturingRefWriter(capturedOids, capturedRefs);
 
-        TransformResult result = engine.runTyped(plan,
+        TransformResult result = engine.runTyped(
+                plan,
                 id -> {
                     if ("in-classa".equals(id)) return createMockReader(srcA);
                     if ("in-classb".equals(id)) return createMockReader(srcB);
@@ -105,12 +106,13 @@ class ReferenceResolutionIntegrationTest {
         refAttr.setobjectrefoid("NONEXISTENT");
 
         DiagnosticCollector engineDiag = new DiagnosticCollector();
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
 
         IoxWriter writer = new CapturingRefWriter(new ArrayList<>(), new ArrayList<>());
 
-        TransformResult result = engine.runTyped(plan,
+        TransformResult result = engine.runTyped(
+                plan,
                 id -> {
                     if ("in-classa".equals(id)) return createMockReader(srcA);
                     if ("in-classb".equals(id)) return createMockReader();
@@ -120,8 +122,7 @@ class ReferenceResolutionIntegrationTest {
 
         assertThat(result.targetsCreated()).isEqualTo(1);
         assertThat(engineDiag.all()).isNotEmpty();
-        assertThat(engineDiag.all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.RUN_REF_MISSING_MANDATORY));
+        assertThat(engineDiag.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_MISSING_MANDATORY));
     }
 
     @Test
@@ -135,12 +136,13 @@ class ReferenceResolutionIntegrationTest {
         srcA.setattrvalue("Name", "NoRef");
 
         DiagnosticCollector engineDiag = new DiagnosticCollector();
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
 
         IoxWriter writer = new CapturingRefWriter(new ArrayList<>(), new ArrayList<>());
 
-        TransformResult result = engine.runTyped(plan,
+        TransformResult result = engine.runTyped(
+                plan,
                 id -> {
                     if ("in-classa".equals(id)) return createMockReader(srcA);
                     if ("in-classb".equals(id)) return createMockReader();
@@ -150,8 +152,7 @@ class ReferenceResolutionIntegrationTest {
 
         assertThat(result.targetsCreated()).isEqualTo(1);
         assertThat(engineDiag.all()).isNotEmpty();
-        assertThat(engineDiag.all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.RUN_REF_MISSING_MANDATORY));
+        assertThat(engineDiag.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_MISSING_MANDATORY));
     }
 
     @Test
@@ -169,12 +170,13 @@ class ReferenceResolutionIntegrationTest {
         refAttr.setobjectrefoid("MISSING");
 
         DiagnosticCollector engineDiag = new DiagnosticCollector();
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
 
         IoxWriter writer = new CapturingRefWriter(new ArrayList<>(), new ArrayList<>());
 
-        TransformResult result = engine.runTyped(plan,
+        TransformResult result = engine.runTyped(
+                plan,
                 id -> {
                     if ("in-classa".equals(id)) return createMockReader(srcA);
                     if ("in-classb".equals(id)) return createMockReader();
@@ -201,12 +203,13 @@ class ReferenceResolutionIntegrationTest {
         refAttr.setobjectrefoid("MISSING");
 
         DiagnosticCollector engineDiag = new DiagnosticCollector();
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
 
         IoxWriter writer = new CapturingRefWriter(new ArrayList<>(), new ArrayList<>());
 
-        TransformResult result = engine.runTyped(plan,
+        TransformResult result = engine.runTyped(
+                plan,
                 id -> {
                     if ("in-classa".equals(id)) return createMockReader(srcA);
                     if ("in-classb".equals(id)) return createMockReader();
@@ -281,6 +284,7 @@ class ReferenceResolutionIntegrationTest {
     private IoxReader createMockReader(Iom_jObject... objects) {
         return new IoxReader() {
             private final IoxEvent[] events;
+
             {
                 var list = new ArrayList<IoxEvent>();
                 list.add(new ch.interlis.iox_j.StartTransferEvent("test", null, null));
@@ -292,6 +296,7 @@ class ReferenceResolutionIntegrationTest {
                 list.add(new ch.interlis.iox_j.EndTransferEvent());
                 events = list.toArray(new IoxEvent[0]);
             }
+
             private int index;
 
             @Override
@@ -309,7 +314,9 @@ class ReferenceResolutionIntegrationTest {
             }
 
             @Override
-            public ch.interlis.iox.IoxFactoryCollection getFactory() { return null; }
+            public ch.interlis.iox.IoxFactoryCollection getFactory() {
+                return null;
+            }
 
             @Override
             public void setFactory(ch.interlis.iox.IoxFactoryCollection factory) {}
@@ -352,7 +359,9 @@ class ReferenceResolutionIntegrationTest {
         }
 
         @Override
-        public ch.interlis.iox.IoxFactoryCollection getFactory() { return null; }
+        public ch.interlis.iox.IoxFactoryCollection getFactory() {
+            return null;
+        }
 
         @Override
         public void setFactory(ch.interlis.iox.IoxFactoryCollection factory) {}

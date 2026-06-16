@@ -8,8 +8,7 @@ public record DeferredReference(
         String targetRuleId,
         String expectedTargetClass,
         Cardinality expectedCardinality,
-        boolean required
-) {
+        boolean required) {
 
     public record Cardinality(long min, long max) {
         public static final long UNBOUND = Long.MAX_VALUE;

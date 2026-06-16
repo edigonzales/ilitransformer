@@ -10,39 +10,35 @@ import guru.interlis.transformer.model.TypeSystemFacade;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
+
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(
         name = "inspect-model",
         description = "Compile an INTERLIS model and output its inventory as JSON and/or Markdown",
-        mixinStandardHelpOptions = true
-)
+        mixinStandardHelpOptions = true)
 public final class InspectModelCommand implements Callable<Integer> {
 
     @Option(
             names = {"--model"},
             required = true,
-            description = "INTERLIS model name (file path or qualified model name)"
-    )
+            description = "INTERLIS model name (file path or qualified model name)")
     private String model;
 
     @Option(
             names = {"--modeldir"},
-            description = "Model directory path(s) for INTERLIS model resolution (semicolon-separated)"
-    )
+            description = "Model directory path(s) for INTERLIS model resolution (semicolon-separated)")
     private String modelDir;
 
     @Option(
             names = {"--output"},
-            description = "Output file path base (extensions .json and .md will be appended)"
-    )
+            description = "Output file path base (extensions .json and .md will be appended)")
     private Path output;
 
     @Option(
             names = {"--format"},
-            description = "Output format: json, markdown, or both (default: both)"
-    )
+            description = "Output format: json, markdown, or both (default: both)")
     private String format = "both";
 
     @Override

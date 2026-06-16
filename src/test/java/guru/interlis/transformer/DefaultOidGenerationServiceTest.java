@@ -1,13 +1,14 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.state.DefaultOidGenerationService;
 import guru.interlis.transformer.state.OidGenerationRequest;
 import guru.interlis.transformer.state.OidStrategy;
-import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class DefaultOidGenerationServiceTest {
 
@@ -57,16 +58,20 @@ class DefaultOidGenerationServiceTest {
 
     private static OidGenerationRequest oidIntReq(String inputId, String ruleId, String sourceOid) {
         return new OidGenerationRequest(
-                OidStrategy.INTEGER, null, ruleId,
-                inputId, null, "X.Y.C", sourceOid,
-                new java.util.LinkedHashMap<>(), null);
+                OidStrategy.INTEGER,
+                null,
+                ruleId,
+                inputId,
+                null,
+                "X.Y.C",
+                sourceOid,
+                new java.util.LinkedHashMap<>(),
+                null);
     }
 
-    private static OidGenerationRequest oidReq(OidStrategy strategy, String namespace,
-                                                String ruleId, String sourceOid) {
+    private static OidGenerationRequest oidReq(
+            OidStrategy strategy, String namespace, String ruleId, String sourceOid) {
         return new OidGenerationRequest(
-                strategy, namespace, ruleId,
-                "in1", "b1", "X.Y.C", sourceOid,
-                new java.util.LinkedHashMap<>(), null);
+                strategy, namespace, ruleId, "in1", "b1", "X.Y.C", sourceOid, new java.util.LinkedHashMap<>(), null);
     }
 }

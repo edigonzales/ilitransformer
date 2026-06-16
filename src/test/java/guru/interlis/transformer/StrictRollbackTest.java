@@ -2,8 +2,6 @@ package guru.interlis.transformer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iom_j.Iom_jObject;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
@@ -13,12 +11,14 @@ import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.IliModelCompileResult;
+import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
 
-import java.nio.file.Files;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxReader;
+
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.function.Function;
@@ -26,9 +26,6 @@ import java.util.function.Function;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class StrictRollbackTest {
 
@@ -38,8 +35,7 @@ class StrictRollbackTest {
     @BeforeAll
     static void compileModels() {
         IliModelService service = new IliModelService();
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/minimal.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
         assertThat(result.hasErrors())
                 .as("Model compilation errors: %s", result.diagnostics())
                 .isFalse();
@@ -58,21 +54,19 @@ class StrictRollbackTest {
         Path output = tempDir.resolve("output.xtf");
         DiagnosticCollector engineDiag = new DiagnosticCollector();
         InterlisIoFactory ioFactory = new InterlisIoFactory();
-        var writer = ioFactory.createWriter(output,
-                modelTs.getTransferDescription(), engineDiag);
+        var writer = ioFactory.createWriter(output, modelTs.getTransferDescription(), engineDiag);
 
         Function<String, IoxReader> readerFactory = inputId -> {
             throw new RuntimeException("Simulated I/O failure");
         };
 
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
         try {
             engine.runTyped(plan, readerFactory, Map.of("out1", writer));
         } catch (Exception e) {
             engineDiag.add(new guru.interlis.transformer.diag.Diagnostic(
-                    "TEST", guru.interlis.transformer.diag.Severity.ERROR,
-                    e.getMessage(), null, null));
+                    "TEST", guru.interlis.transformer.diag.Severity.ERROR, e.getMessage(), null, null));
         }
         assertThat(engineDiag.hasErrors()).isTrue();
     }
@@ -91,16 +85,13 @@ class StrictRollbackTest {
 
         DiagnosticCollector engineDiag = new DiagnosticCollector();
         InterlisIoFactory ioFactory = new InterlisIoFactory();
-        var writer = ioFactory.createWriter(output,
-                modelTs.getTransferDescription(), engineDiag);
+        var writer = ioFactory.createWriter(output, modelTs.getTransferDescription(), engineDiag);
 
         Function<String, IoxReader> readerFactory = inputId -> TestMockReaders.mockReader(src1);
 
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-        TransformResult result = engine.runTyped(plan,
-                id -> TestMockReaders.mockReader(src1),
-                Map.of("out1", writer));
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+        TransformResult result = engine.runTyped(plan, id -> TestMockReaders.mockReader(src1), Map.of("out1", writer));
 
         assertThat(engineDiag.hasErrors()).isFalse();
         assertThat(result.targetsWritten()).isEqualTo(1);
@@ -113,20 +104,27 @@ class StrictRollbackTest {
         config.job.failPolicy = "strict";
 
         JobConfig.InputSpec in = new JobConfig.InputSpec();
-        in.id = "in1"; in.path = "input.xtf"; in.model = "TestModel";
+        in.id = "in1";
+        in.path = "input.xtf";
+        in.model = "TestModel";
         config.job.inputs.add(in);
 
         JobConfig.OutputSpec out = new JobConfig.OutputSpec();
-        out.id = "out1"; out.path = outputPath; out.model = "TestModel";
+        out.id = "out1";
+        out.path = outputPath;
+        out.model = "TestModel";
         config.job.outputs.add(out);
 
         JobConfig.RuleSpec rule = new JobConfig.RuleSpec();
         rule.id = "rule1";
         JobConfig.TargetSpec tgt = new JobConfig.TargetSpec();
-        tgt.output = "out1"; tgt.clazz = "TestModel.TestTopic.TestClass";
+        tgt.output = "out1";
+        tgt.clazz = "TestModel.TestTopic.TestClass";
         rule.target = tgt;
         JobConfig.SourceSpec src = new JobConfig.SourceSpec();
-        src.alias = "s"; src.input = "in1"; src.clazz = "TestModel.TestTopic.TestClass";
+        src.alias = "s";
+        src.input = "in1";
+        src.clazz = "TestModel.TestTopic.TestClass";
         rule.sources.add(src);
         rule.assign = Map.of("Name", "${s.Name}");
         config.mapping.rules.add(rule);

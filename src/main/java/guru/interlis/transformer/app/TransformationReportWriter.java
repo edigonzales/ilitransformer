@@ -1,7 +1,5 @@
 package guru.interlis.transformer.app;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.ExecutionMetricsSnapshot;
@@ -18,6 +16,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 public final class TransformationReportWriter {
 
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper()
@@ -32,10 +33,12 @@ public final class TransformationReportWriter {
             List<ValidationResult> validations,
             Duration elapsed,
             Map<String, String> modelVersions,
-            ExecutionMetricsSnapshot metricsSnapshot) throws IOException {
+            ExecutionMetricsSnapshot metricsSnapshot)
+            throws IOException {
         Files.createDirectories(outputPath.getParent());
-        JSON_MAPPER.writeValue(outputPath.toFile(), buildReportMap(
-                plan, result, diagnostics, validations, elapsed, modelVersions, metricsSnapshot));
+        JSON_MAPPER.writeValue(
+                outputPath.toFile(),
+                buildReportMap(plan, result, diagnostics, validations, elapsed, modelVersions, metricsSnapshot));
     }
 
     public void writeMarkdown(
@@ -46,10 +49,12 @@ public final class TransformationReportWriter {
             List<ValidationResult> validations,
             Duration elapsed,
             Map<String, String> modelVersions,
-            ExecutionMetricsSnapshot metricsSnapshot) throws IOException {
+            ExecutionMetricsSnapshot metricsSnapshot)
+            throws IOException {
         Files.createDirectories(outputPath.getParent());
-        Files.writeString(outputPath, buildMarkdown(
-                plan, result, diagnostics, validations, elapsed, modelVersions, metricsSnapshot));
+        Files.writeString(
+                outputPath,
+                buildMarkdown(plan, result, diagnostics, validations, elapsed, modelVersions, metricsSnapshot));
     }
 
     // -- JSON ---------------------------------------------------------------
@@ -142,14 +147,18 @@ public final class TransformationReportWriter {
 
         sb.append("**Job:** ").append(escape(plan.name())).append("\n\n");
         sb.append("**Direction:** ").append(escape(plan.direction())).append("\n\n");
-        sb.append("**Fail Policy:** ").append(plan.failPolicy().name().toLowerCase()).append("\n\n");
+        sb.append("**Fail Policy:** ")
+                .append(plan.failPolicy().name().toLowerCase())
+                .append("\n\n");
         sb.append("**Elapsed:** ").append(formatDuration(elapsed)).append("\n\n");
 
         sb.append("## Counts\n\n");
         sb.append("| Metric | Value |\n");
         sb.append("|--------|-------|\n");
         sb.append("| Source records read | ").append(result.sourceRecordsRead()).append(" |\n");
-        sb.append("| Source records filtered | ").append(result.sourceRecordsFiltered()).append(" |\n");
+        sb.append("| Source records filtered | ")
+                .append(result.sourceRecordsFiltered())
+                .append(" |\n");
         sb.append("| Targets created | ").append(result.targetsCreated()).append(" |\n");
         sb.append("| Targets written | ").append(result.targetsWritten()).append(" |\n");
         sb.append("| Errors | ").append(result.errors()).append(" |\n");
@@ -162,14 +171,20 @@ public final class TransformationReportWriter {
             sb.append("## Performance\n\n");
             sb.append("| Metric | Value |\n");
             sb.append("|--------|-------|\n");
-            sb.append("| Elapsed (ms) | ").append(metricsSnapshot.elapsedMillis()).append(" |\n");
+            sb.append("| Elapsed (ms) | ")
+                    .append(metricsSnapshot.elapsedMillis())
+                    .append(" |\n");
             sb.append("| Join lookups | ").append(metricsSnapshot.joinLookups()).append(" |\n");
             sb.append("| BAG lookups | ").append(metricsSnapshot.bagLookups()).append(" |\n");
             sb.append("| Rule matches | ").append(metricsSnapshot.ruleMatches()).append(" |\n");
             if (!metricsSnapshot.targetsByClass().isEmpty()) {
                 sb.append("| Targets by class | |\n");
                 for (var entry : metricsSnapshot.targetsByClass().entrySet()) {
-                    sb.append("|   ").append(escape(entry.getKey())).append(" | ").append(entry.getValue()).append(" |\n");
+                    sb.append("|   ")
+                            .append(escape(entry.getKey()))
+                            .append(" | ")
+                            .append(entry.getValue())
+                            .append(" |\n");
                 }
             }
             sb.append("\n");
@@ -180,11 +195,16 @@ public final class TransformationReportWriter {
             sb.append("| Severity | Code | Message | Rule | Suggestion |\n");
             sb.append("|----------|------|---------|------|------------|\n");
             for (Diagnostic d : diagnostics.all()) {
-                sb.append("| ").append(d.severity())
-                        .append(" | ").append(escape(d.code()))
-                        .append(" | ").append(escape(d.message()))
-                        .append(" | ").append(escape(d.sourcePath() != null ? d.sourcePath() : "-"))
-                        .append(" | ").append(escape(d.suggestion() != null ? d.suggestion() : "-"))
+                sb.append("| ")
+                        .append(d.severity())
+                        .append(" | ")
+                        .append(escape(d.code()))
+                        .append(" | ")
+                        .append(escape(d.message()))
+                        .append(" | ")
+                        .append(escape(d.sourcePath() != null ? d.sourcePath() : "-"))
+                        .append(" | ")
+                        .append(escape(d.suggestion() != null ? d.suggestion() : "-"))
                         .append(" |\n");
             }
             sb.append("\n");
@@ -195,11 +215,16 @@ public final class TransformationReportWriter {
             sb.append("| File | Valid | Errors | Warnings | Log |\n");
             sb.append("|------|-------|--------|----------|-----|\n");
             for (var vr : validations) {
-                sb.append("| ").append(vr.logFile() != null ? vr.logFile().getFileName() : "-")
-                        .append(" | ").append(vr.valid() ? "yes" : "no")
-                        .append(" | ").append(vr.errorCount())
-                        .append(" | ").append(vr.warningCount())
-                        .append(" | ").append(vr.logFile() != null ? vr.logFile().toString() : "-")
+                sb.append("| ")
+                        .append(vr.logFile() != null ? vr.logFile().getFileName() : "-")
+                        .append(" | ")
+                        .append(vr.valid() ? "yes" : "no")
+                        .append(" | ")
+                        .append(vr.errorCount())
+                        .append(" | ")
+                        .append(vr.warningCount())
+                        .append(" | ")
+                        .append(vr.logFile() != null ? vr.logFile().toString() : "-")
                         .append(" |\n");
             }
             sb.append("\n");
@@ -208,8 +233,11 @@ public final class TransformationReportWriter {
         if (modelVersions != null && !modelVersions.isEmpty()) {
             sb.append("## Models\n\n");
             for (var entry : modelVersions.entrySet()) {
-                sb.append("- **").append(escape(entry.getKey())).append("**: ")
-                        .append(escape(entry.getValue())).append("\n");
+                sb.append("- **")
+                        .append(escape(entry.getKey()))
+                        .append("**: ")
+                        .append(escape(entry.getValue()))
+                        .append("\n");
             }
             sb.append("\n");
         }

@@ -1,15 +1,16 @@
 package guru.interlis.transformer.expr;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.expr.builtins.BasicFunctions;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
-import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class LazyCoalesceTest {
 
@@ -20,12 +21,10 @@ class LazyCoalesceTest {
 
         AtomicBoolean nonDetCalled = new AtomicBoolean(false);
 
-        registry.registerNonDeterministic("sideEffect", TypeInfo.XML_DATE_TIME,
-                List.of(),
-                (args, ctx) -> {
-                    nonDetCalled.set(true);
-                    return new XmlDateTimeValue(ZonedDateTime.now());
-                });
+        registry.registerNonDeterministic("sideEffect", TypeInfo.XML_DATE_TIME, List.of(), (args, ctx) -> {
+            nonDetCalled.set(true);
+            return new XmlDateTimeValue(ZonedDateTime.now());
+        });
 
         ExpressionEngine engine = new ExpressionEngine(registry);
         EvalContext ctx = new EvalContext(Map.of(), null, "r1");

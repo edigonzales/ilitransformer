@@ -1,7 +1,5 @@
 package guru.interlis.transformer.mapping.compiler;
 
-import ch.interlis.ili2c.metamodel.AttributeDef;
-import ch.interlis.ili2c.metamodel.Table;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -14,6 +12,9 @@ import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.model.TypeSystemFacade;
+
+import ch.interlis.ili2c.metamodel.AttributeDef;
+import ch.interlis.ili2c.metamodel.Table;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,19 +46,23 @@ final class SourceCompiler {
             sourceClass = sourceTs.resolveClass(src.clazz);
         }
         if (sourceClass == null) {
-            diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_SOURCE_CLASS, Severity.ERROR,
+            diag.add(new Diagnostic(
+                    DiagnosticCode.MAP_UNKNOWN_SOURCE_CLASS,
+                    Severity.ERROR,
                     "Source class not found in any registered model: " + src.clazz,
-                    ruleId, "Check the source class name and ensure its model is listed in inputs"));
+                    ruleId,
+                    "Check the source class name and ensure its model is listed in inputs"));
         }
 
         return new SourcePlan(src.alias, sourceClass, JobConfigNormalizer.getInputIds(src), null);
     }
 
-    List<SourcePlan> compileWhereFilters(List<SourcePlan> sourcePlans,
-                                          Map<String, SourcePlan> sourcesByAlias,
-                                          String ruleId,
-                                          CompilerContext ctx,
-                                          List<JobConfig.SourceSpec> sourceSpecs) {
+    List<SourcePlan> compileWhereFilters(
+            List<SourcePlan> sourcePlans,
+            Map<String, SourcePlan> sourcesByAlias,
+            String ruleId,
+            CompilerContext ctx,
+            List<JobConfig.SourceSpec> sourceSpecs) {
         Map<String, String> whereByAlias = new HashMap<>();
         for (JobConfig.SourceSpec src : sourceSpecs) {
             if (src.where != null && !src.where.isBlank() && src.alias != null) {
@@ -83,8 +88,7 @@ final class SourceCompiler {
         return result;
     }
 
-    void checkSourcePaths(String expr, List<SourcePlan> sourcePlans,
-                           String ruleId, CompilerContext ctx) {
+    void checkSourcePaths(String expr, List<SourcePlan> sourcePlans, String ruleId, CompilerContext ctx) {
         if (expr == null || expr.isBlank()) return;
         String trimmed = expr.trim();
         DiagnosticCollector diag = ctx.diagnostics();
@@ -101,8 +105,8 @@ final class SourceCompiler {
             String alias = parts[0];
             String attrName = parts[1];
 
-            Optional<SourcePlan> spOpt = sourcePlans.stream()
-                    .filter(s -> s.alias().equals(alias)).findFirst();
+            Optional<SourcePlan> spOpt =
+                    sourcePlans.stream().filter(s -> s.alias().equals(alias)).findFirst();
             if (spOpt.isEmpty()) continue;
             SourcePlan sp = spOpt.get();
             if (sp.sourceClass() == null) continue;
@@ -119,9 +123,12 @@ final class SourceCompiler {
                 }
             }
             if (!found) {
-                diag.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE, Severity.ERROR,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE,
+                        Severity.ERROR,
                         "Source attribute not found: " + alias + "." + attrName,
-                        ruleId, "Check the attribute name in source class"));
+                        ruleId,
+                        "Check the attribute name in source class"));
             }
         }
     }

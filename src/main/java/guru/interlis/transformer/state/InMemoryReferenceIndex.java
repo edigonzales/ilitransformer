@@ -20,7 +20,8 @@ public final class InMemoryReferenceIndex implements ReferenceIndex {
     }
 
     @Override
-    public List<TargetReference> find(SourceReferenceSelector selector, boolean crossBasketFallback, boolean globalFallback) {
+    public List<TargetReference> find(
+            SourceReferenceSelector selector, boolean crossBasketFallback, boolean globalFallback) {
         // 1. Exact match: inputId, basketId, class, OID
         List<TargetReference> exact = index.get(new SourceObjectKey(
                 selector.inputId(),
@@ -51,7 +52,8 @@ public final class InMemoryReferenceIndex implements ReferenceIndex {
         return List.of();
     }
 
-    private List<TargetReference> findMatchingEntries(String inputId, String sourceClass, String sourceOid, boolean oidOnly) {
+    private List<TargetReference> findMatchingEntries(
+            String inputId, String sourceClass, String sourceOid, boolean oidOnly) {
         List<TargetReference> result = new ArrayList<>();
         for (var entry : index.entrySet()) {
             SourceObjectKey key = entry.getKey();

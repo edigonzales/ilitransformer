@@ -12,8 +12,7 @@ import java.util.List;
  */
 public final class JobConfigNormalizer {
 
-    private JobConfigNormalizer() {
-    }
+    private JobConfigNormalizer() {}
 
     // -- Normalization --------------------------------------------------------
 
@@ -54,7 +53,8 @@ public final class JobConfigNormalizer {
             for (JobConfig.SourceSpec source : rule.sources) {
                 if (getInputIds(source).size() == 1
                         && (source.inputs == null || source.inputs.isEmpty())
-                        && source.input != null && !source.input.isBlank()) {
+                        && source.input != null
+                        && !source.input.isBlank()) {
                     source.inputs = List.of(source.input);
                 }
             }

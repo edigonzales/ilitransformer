@@ -1,15 +1,11 @@
 package guru.interlis.transformer;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iom.IomObject;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.ObjectEvent;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import guru.interlis.transformer.app.JobRunner;
 import guru.interlis.transformer.app.RunOptions;
 import guru.interlis.transformer.compare.ComparisonProfile;
-import guru.interlis.transformer.compare.ComparisonReport;
-import guru.interlis.transformer.compare.SemanticTransferComparator;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
@@ -18,10 +14,12 @@ import guru.interlis.transformer.dmav.Dm01DmavPaths;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.ObjectEvent;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -29,8 +27,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 @Tag("real-data")
 class GsMinimalFixtureRoundtripTest {
@@ -58,8 +58,8 @@ class GsMinimalFixtureRoundtripTest {
         }
         dm01Td = dm01Result.transferDescription();
 
-        IliModelCompileResult dmavResult = modelService.compileModel(
-                DMAV_MODEL, Dm01DmavPaths.LOCAL_AND_REMOTE_MODEL_DIRS);
+        IliModelCompileResult dmavResult =
+                modelService.compileModel(DMAV_MODEL, Dm01DmavPaths.LOCAL_AND_REMOTE_MODEL_DIRS);
         if (dmavResult.hasErrors()) {
             fail("DMAV model compilation errors:\n  " + diagnostics(dmavResult));
         }
@@ -71,10 +71,10 @@ class GsMinimalFixtureRoundtripTest {
         Path dmavIntermediate = tempDir.resolve("dm01-to-dmav.xtf");
         Path dm01Roundtrip = tempDir.resolve("dm01-roundtrip.itf");
 
-        runWithoutValidation(materializeDm01ToDmav(DM01_INPUT, dmavIntermediate),
-                tempDir.resolve("reports-dm01-forward"));
-        runWithoutValidation(materializeDmavToDm01(dmavIntermediate, dm01Roundtrip),
-                tempDir.resolve("reports-dm01-reverse"));
+        runWithoutValidation(
+                materializeDm01ToDmav(DM01_INPUT, dmavIntermediate), tempDir.resolve("reports-dm01-forward"));
+        runWithoutValidation(
+                materializeDmavToDm01(dmavIntermediate, dm01Roundtrip), tempDir.resolve("reports-dm01-reverse"));
 
         assertThat(dm01Roundtrip).exists();
         String content = Files.readString(dm01Roundtrip, StandardCharsets.ISO_8859_1);
@@ -114,10 +114,10 @@ class GsMinimalFixtureRoundtripTest {
         Path dm01Intermediate = tempDir.resolve("dmav-to-dm01.itf");
         Path dmavRoundtrip = tempDir.resolve("dmav-roundtrip.xtf");
 
-        runWithoutValidation(materializeDmavToDm01(DMAV_INPUT, dm01Intermediate),
-                tempDir.resolve("reports-dmav-reverse"));
-        runWithoutValidation(materializeDm01ToDmav(dm01Intermediate, dmavRoundtrip),
-                tempDir.resolve("reports-dmav-forward"));
+        runWithoutValidation(
+                materializeDmavToDm01(DMAV_INPUT, dm01Intermediate), tempDir.resolve("reports-dmav-reverse"));
+        runWithoutValidation(
+                materializeDm01ToDmav(dm01Intermediate, dmavRoundtrip), tempDir.resolve("reports-dmav-forward"));
 
         assertThat(dmavRoundtrip).exists();
         String content = Files.readString(dmavRoundtrip, StandardCharsets.UTF_8);
@@ -134,8 +134,8 @@ class GsMinimalFixtureRoundtripTest {
     private void run(Path mappingPath, Path reportDir) throws Exception {
         List<String> modelDirs = new ArrayList<>(Dm01DmavPaths.localModelDirs());
         modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
-        DiagnosticCollector diagnostics = new JobRunner().run(mappingPath,
-                new RunOptions(modelDirs, true, reportDir, false));
+        DiagnosticCollector diagnostics =
+                new JobRunner().run(mappingPath, new RunOptions(modelDirs, true, reportDir, false));
         List<Diagnostic> errors = diagnostics.all().stream()
                 .filter(d -> d.severity() == Severity.ERROR)
                 .toList();
@@ -145,8 +145,8 @@ class GsMinimalFixtureRoundtripTest {
     private void runWithoutValidation(Path mappingPath, Path reportDir) throws Exception {
         List<String> modelDirs = new ArrayList<>(Dm01DmavPaths.localModelDirs());
         modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
-        DiagnosticCollector diagnostics = new JobRunner().run(mappingPath,
-                new RunOptions(modelDirs, false, reportDir, false));
+        DiagnosticCollector diagnostics =
+                new JobRunner().run(mappingPath, new RunOptions(modelDirs, false, reportDir, false));
         List<Diagnostic> errors = diagnostics.all().stream()
                 .filter(d -> d.severity() == Severity.ERROR)
                 .toList();

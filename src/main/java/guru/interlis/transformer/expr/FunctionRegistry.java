@@ -1,6 +1,7 @@
 package guru.interlis.transformer.expr;
 
 import guru.interlis.transformer.mapping.plan.TypeInfo;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,14 +19,13 @@ public final class FunctionRegistry {
         functions.put(key, def);
     }
 
-    public void register(String name, TypeInfo returnType, List<FunctionDef.FunctionParam> params,
-                         FunctionImplementation impl) {
+    public void register(
+            String name, TypeInfo returnType, List<FunctionDef.FunctionParam> params, FunctionImplementation impl) {
         register(FunctionDef.eager(name, returnType, params, impl));
     }
 
-    public void registerNonDeterministic(String name, TypeInfo returnType,
-                                          List<FunctionDef.FunctionParam> params,
-                                          FunctionImplementation impl) {
+    public void registerNonDeterministic(
+            String name, TypeInfo returnType, List<FunctionDef.FunctionParam> params, FunctionImplementation impl) {
         register(FunctionDef.eagerNonDeterministic(name, returnType, params, impl));
     }
 

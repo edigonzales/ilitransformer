@@ -1,11 +1,12 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import guru.interlis.transformer.state.InMemoryStateStore;
 import guru.interlis.transformer.state.SourceRefKey;
 import guru.interlis.transformer.state.TargetRefValue;
-import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class StateStoreTest {
     @Test

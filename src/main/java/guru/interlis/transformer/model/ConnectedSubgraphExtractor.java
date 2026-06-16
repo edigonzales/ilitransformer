@@ -1,5 +1,8 @@
 package guru.interlis.transformer.model;
 
+import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.testutil.TransferDatasetDescriptor;
+
 import ch.interlis.ili2c.metamodel.AttributeDef;
 import ch.interlis.ili2c.metamodel.ReferenceType;
 import ch.interlis.ili2c.metamodel.RoleDef;
@@ -10,13 +13,11 @@ import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.IoxWriter;
 import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox.StartBasketEvent;
-import guru.interlis.transformer.interlis.InterlisIoFactory;
-import guru.interlis.transformer.testutil.TransferDatasetDescriptor;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -64,8 +65,7 @@ public final class ConnectedSubgraphExtractor {
                 includedClasses,
                 selectedKeys.size(),
                 List.copyOf(includedBaskets),
-                provenance
-        );
+                provenance);
     }
 
     private TypeSystemFacade compileModels(TransferDatasetDescriptor source, ExtractionRequest request) {
@@ -97,10 +97,10 @@ public final class ConnectedSubgraphExtractor {
         try {
             IoxReader reader;
             if (facade != null) {
-                reader = ioFactory.createReader(source.transferFile(),
-                        facade.getTransferDescription());
+                reader = ioFactory.createReader(source.transferFile(), facade.getTransferDescription());
             } else {
-                String lowerName = source.transferFile().getFileName().toString().toLowerCase();
+                String lowerName =
+                        source.transferFile().getFileName().toString().toLowerCase();
                 if (lowerName.endsWith(".itf")) {
                     reader = new ch.interlis.iom_j.itf.ItfReader2(
                             source.transferFile().toFile(), false);
@@ -118,8 +118,7 @@ public final class ConnectedSubgraphExtractor {
                 } else if (event instanceof ObjectEvent obj) {
                     IomObject iom = obj.getIomObject();
                     entries.add(new BasketEntry(
-                            currentBasketId, currentBasketType,
-                            iom.getobjecttag(), iom.getobjectoid(), iom));
+                            currentBasketId, currentBasketType, iom.getobjecttag(), iom.getobjectoid(), iom));
                 } else if (event instanceof ch.interlis.iox.EndBasketEvent) {
                 } else if (event instanceof ch.interlis.iox.EndTransferEvent) {
                     break;
@@ -127,8 +126,10 @@ public final class ConnectedSubgraphExtractor {
             }
             reader.close();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to read transfer: " + source.transferFile()
-                    + " - " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+            throw new RuntimeException(
+                    "Failed to read transfer: " + source.transferFile() + " - "
+                            + e.getClass().getSimpleName() + ": " + e.getMessage(),
+                    e);
         }
         return entries;
     }
@@ -159,9 +160,8 @@ public final class ConnectedSubgraphExtractor {
         return graph;
     }
 
-    private void extractReferencesFromModel(BasketEntry entry, String fromKey, Table table,
-                                             Map<String, List<String>> oidToKeys,
-                                             ReferenceGraph graph) {
+    private void extractReferencesFromModel(
+            BasketEntry entry, String fromKey, Table table, Map<String, List<String>> oidToKeys, ReferenceGraph graph) {
         Iterator<ch.interlis.ili2c.metamodel.Extendable> attrsIt = table.getAttributes();
         while (attrsIt.hasNext()) {
             ch.interlis.ili2c.metamodel.Extendable ext = attrsIt.next();
@@ -206,8 +206,7 @@ public final class ConnectedSubgraphExtractor {
         }
     }
 
-    private Set<String> selectAndExpand(List<BasketEntry> entries, ReferenceGraph graph,
-                                         ExtractionRequest request) {
+    private Set<String> selectAndExpand(List<BasketEntry> entries, ReferenceGraph graph, ExtractionRequest request) {
         Set<String> selected = new LinkedHashSet<>();
         Deque<String> queue = new ArrayDeque<>();
         Map<String, Integer> depths = new HashMap<>();
@@ -249,9 +248,12 @@ public final class ConnectedSubgraphExtractor {
         return selected;
     }
 
-    private Path writeExtracted(TransferDatasetDescriptor source, ExtractionRequest request,
-                                 List<BasketEntry> entries, Set<String> selectedKeys,
-                                 TypeSystemFacade facade) {
+    private Path writeExtracted(
+            TransferDatasetDescriptor source,
+            ExtractionRequest request,
+            List<BasketEntry> entries,
+            Set<String> selectedKeys,
+            TypeSystemFacade facade) {
         String baseName = source.transferFile().getFileName().toString();
         int dotIdx = baseName.lastIndexOf('.');
         String stem = dotIdx > 0 ? baseName.substring(0, dotIdx) : baseName;
@@ -274,7 +276,8 @@ public final class ConnectedSubgraphExtractor {
             }
 
             Set<String> modelNames = new LinkedHashSet<>(source.declaredModels());
-            String modelName = modelNames.isEmpty() ? "Unknown" : modelNames.iterator().next();
+            String modelName =
+                    modelNames.isEmpty() ? "Unknown" : modelNames.iterator().next();
             writer.write(new ch.interlis.iox_j.StartTransferEvent(modelName, null));
 
             String currentBasketKey = null;
@@ -311,15 +314,19 @@ public final class ConnectedSubgraphExtractor {
         return outputFile;
     }
 
-    private static String buildProvenance(TransferDatasetDescriptor source, ExtractionRequest request,
-                                           int objectCount, Set<String> classes) {
+    private static String buildProvenance(
+            TransferDatasetDescriptor source, ExtractionRequest request, int objectCount, Set<String> classes) {
         StringBuilder sb = new StringBuilder();
         sb.append("Extracted from ").append(source.transferFile().getFileName()).append("\n");
         sb.append("Target classes: ").append(request.targetClasses()).append("\n");
         sb.append("Max depth: ").append(request.maxDepth()).append("\n");
         sb.append("Bidirectional: ").append(request.includeBidirectional()).append("\n");
-        sb.append("Result: ").append(objectCount).append(" objects in ").append(classes.size())
-                .append(" classes: ").append(classes);
+        sb.append("Result: ")
+                .append(objectCount)
+                .append(" objects in ")
+                .append(classes.size())
+                .append(" classes: ")
+                .append(classes);
         return sb.toString();
     }
 
@@ -385,8 +392,8 @@ public final class ConnectedSubgraphExtractor {
                     while (telIt.hasNext()) {
                         ch.interlis.ili2c.metamodel.Element tel = telIt.next();
                         if (tel instanceof Table table) {
-                            if (className.equals(table.getName()) ||
-                                    getScoped(table).equals(className)) {
+                            if (className.equals(table.getName())
+                                    || getScoped(table).equals(className)) {
                                 String modelName = model.getName() != null ? model.getName() : "";
                                 String topicName = topic.getName() != null ? topic.getName() : "";
                                 return modelName + "." + topicName + "." + table.getName();

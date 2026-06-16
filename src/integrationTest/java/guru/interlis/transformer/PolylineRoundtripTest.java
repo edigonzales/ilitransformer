@@ -1,5 +1,14 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import guru.interlis.transformer.app.IlivalidatorRunner;
+import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
+import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.model.IliModelCompileResult;
+import guru.interlis.transformer.model.IliModelService;
+
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.EndTransferEvent;
@@ -10,21 +19,14 @@ import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox_j.EndBasketEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
-import guru.interlis.transformer.app.IlivalidatorRunner;
-import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
-import guru.interlis.transformer.interlis.InterlisIoFactory;
-import guru.interlis.transformer.model.IliModelCompileResult;
-import guru.interlis.transformer.model.IliModelService;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class PolylineRoundtripTest {
 
@@ -46,19 +48,19 @@ class PolylineRoundtripTest {
 
     @Test
     void xtfSurfaceWithStraightPolylineRoundtrip() throws Exception {
-        IomObject surface = surfaceObject("SSTRAIGHT", surface(boundary(
-                coord(2600000.000, 1200000.000),
-                coord(2600100.000, 1200000.000),
-                coord(2600100.000, 1200100.000),
-                coord(2600000.000, 1200100.000),
-                coord(2600000.000, 1200000.000))));
+        IomObject surface = surfaceObject(
+                "SSTRAIGHT",
+                surface(boundary(
+                        coord(2600000.000, 1200000.000),
+                        coord(2600100.000, 1200000.000),
+                        coord(2600100.000, 1200100.000),
+                        coord(2600000.000, 1200100.000),
+                        coord(2600000.000, 1200000.000))));
 
         Path xtfPath = writeXtf(surface);
         try {
             ValidationResult validation = IlivalidatorRunner.validate(xtfPath, List.of(MODELDIR), MODEL, null);
-            assertThat(validation.success())
-                    .as(validation.log())
-                    .isTrue();
+            assertThat(validation.success()).as(validation.log()).isTrue();
 
             List<IomObject> objects = readAllObjects(xtfPath);
             IomObject roundtrip = findBySuffix(objects, ".SurfaceClass");
@@ -80,17 +82,17 @@ class PolylineRoundtripTest {
 
     @Test
     void xtfSurfaceWithArcPolylineRoundtrip() throws Exception {
-        IomObject surface = surfaceObject("SARC", surface(boundary(
-                coord(2601000.000, 1201000.000),
-                arc(2601050.000, 1201100.000, 2601100.000, 1201000.000),
-                coord(2601000.000, 1201000.000))));
+        IomObject surface = surfaceObject(
+                "SARC",
+                surface(boundary(
+                        coord(2601000.000, 1201000.000),
+                        arc(2601050.000, 1201100.000, 2601100.000, 1201000.000),
+                        coord(2601000.000, 1201000.000))));
 
         Path xtfPath = writeXtf(surface);
         try {
             ValidationResult validation = IlivalidatorRunner.validate(xtfPath, List.of(MODELDIR), MODEL, null);
-            assertThat(validation.success())
-                    .as(validation.log())
-                    .isTrue();
+            assertThat(validation.success()).as(validation.log()).isTrue();
 
             List<IomObject> objects = readAllObjects(xtfPath);
             IomObject roundtrip = findBySuffix(objects, ".SurfaceClass");
@@ -100,8 +102,7 @@ class PolylineRoundtripTest {
             assertThat(perimeter).isNotNull();
 
             int arcCount = countArcs(perimeter);
-            assertThat(arcCount).isEqualTo(1
-            );
+            assertThat(arcCount).isEqualTo(1);
         } finally {
             Files.deleteIfExists(xtfPath);
         }

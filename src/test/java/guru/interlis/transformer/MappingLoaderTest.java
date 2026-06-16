@@ -1,12 +1,13 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.model.MappingLoader;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class MappingLoaderTest {
 
@@ -38,8 +39,7 @@ class MappingLoaderTest {
         JobConfig config = loader.load(path);
 
         // YAML uses "class:", which maps to SourceSpec.clazz via @JsonProperty("class")
-        assertThat(config.mapping.rules.get(0).sources.get(0).clazz)
-                .isEqualTo("TestModel.TestTopic.SourceClass");
+        assertThat(config.mapping.rules.get(0).sources.get(0).clazz).isEqualTo("TestModel.TestTopic.SourceClass");
     }
 
     @Test
@@ -87,9 +87,9 @@ class MappingLoaderTest {
         config.mapping.rules.add(rule);
 
         // Simulate what load() does
-        new guru.interlis.transformer.mapping.model.MappingLoader().load(
-                java.nio.file.Path.of("src/test/resources/mappings/minimal-valid.yaml")
-        ); // just to verify loader works
+        new guru.interlis.transformer.mapping.model.MappingLoader()
+                .load(java.nio.file.Path.of(
+                        "src/test/resources/mappings/minimal-valid.yaml")); // just to verify loader works
 
         // Direct test: getInputIds() works even with old input field
         assertThat(src.getInputIds()).containsExactly("inX");

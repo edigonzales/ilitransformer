@@ -1,6 +1,7 @@
 package guru.interlis.transformer.mapping.plan;
 
 import guru.interlis.transformer.expr.Expression;
+
 import java.util.Set;
 
 public record CompiledExpression(
@@ -8,5 +9,4 @@ public record CompiledExpression(
         Expression ast,
         TypeInfo resultType,
         boolean deterministic,
-        Set<ResolvedPath> referencedPaths
-) {}
+        Set<ResolvedPath> referencedPaths) {}

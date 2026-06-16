@@ -5,12 +5,11 @@ import guru.interlis.transformer.expr.EvalContext;
 import guru.interlis.transformer.expr.Expression;
 import guru.interlis.transformer.expr.FunctionDef;
 import guru.interlis.transformer.expr.FunctionRegistry;
-import guru.interlis.transformer.expr.NumberValue;
 import guru.interlis.transformer.expr.NullValue;
-import guru.interlis.transformer.expr.TextValue;
+import guru.interlis.transformer.expr.NumberValue;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
-import java.math.BigDecimal;
+
 import java.util.List;
 import java.util.function.Function;
 
@@ -19,68 +18,97 @@ public final class BasicFunctions {
     private BasicFunctions() {}
 
     public static void registerAll(FunctionRegistry registry) {
-        registry.register(FunctionDef.lazyVariadic("coalesce",
+        registry.register(FunctionDef.lazyVariadic(
+                "coalesce",
                 argTypes -> argTypes.isEmpty() ? TypeInfo.UNKNOWN : argTypes.get(0),
                 List.of(new FunctionDef.FunctionParam("values", TypeInfo.UNKNOWN)),
-                true, BasicFunctions::coalesceLazy));
+                true,
+                BasicFunctions::coalesceLazy));
 
-        registry.register("defined", TypeInfo.BOOLEAN,
+        registry.register(
+                "defined",
+                TypeInfo.BOOLEAN,
                 List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN)),
                 BasicFunctions::defined);
 
-        registry.register("notDefined", TypeInfo.BOOLEAN,
+        registry.register(
+                "notDefined",
+                TypeInfo.BOOLEAN,
                 List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN)),
                 BasicFunctions::notDefined);
 
-        registry.register("isNull", TypeInfo.BOOLEAN,
+        registry.register(
+                "isNull",
+                TypeInfo.BOOLEAN,
                 List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN)),
                 BasicFunctions::isNull);
 
-        registry.register("default", TypeInfo.TEXT,
-                List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
+        registry.register(
+                "default",
+                TypeInfo.TEXT,
+                List.of(
+                        new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
                         new FunctionDef.FunctionParam("fallback", TypeInfo.UNKNOWN)),
                 BasicFunctions::withDefault);
 
-        registry.register("null", TypeInfo.UNKNOWN,
-                List.of(), BasicFunctions::nullFn);
+        registry.register("null", TypeInfo.UNKNOWN, List.of(), BasicFunctions::nullFn);
 
-        registry.register("eq", TypeInfo.BOOLEAN,
-                List.of(new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
+        registry.register(
+                "eq",
+                TypeInfo.BOOLEAN,
+                List.of(
+                        new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
                         new FunctionDef.FunctionParam("b", TypeInfo.UNKNOWN)),
                 BasicFunctions::eq);
 
-        registry.register("neq", TypeInfo.BOOLEAN,
-                List.of(new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
+        registry.register(
+                "neq",
+                TypeInfo.BOOLEAN,
+                List.of(
+                        new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
                         new FunctionDef.FunctionParam("b", TypeInfo.UNKNOWN)),
                 BasicFunctions::neq);
 
-        registry.register("lt", TypeInfo.BOOLEAN,
-                List.of(new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
+        registry.register(
+                "lt",
+                TypeInfo.BOOLEAN,
+                List.of(
+                        new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
                         new FunctionDef.FunctionParam("b", TypeInfo.UNKNOWN)),
                 BasicFunctions::lt);
 
-        registry.register("lte", TypeInfo.BOOLEAN,
-                List.of(new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
+        registry.register(
+                "lte",
+                TypeInfo.BOOLEAN,
+                List.of(
+                        new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
                         new FunctionDef.FunctionParam("b", TypeInfo.UNKNOWN)),
                 BasicFunctions::lte);
 
-        registry.register("gt", TypeInfo.BOOLEAN,
-                List.of(new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
+        registry.register(
+                "gt",
+                TypeInfo.BOOLEAN,
+                List.of(
+                        new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
                         new FunctionDef.FunctionParam("b", TypeInfo.UNKNOWN)),
                 BasicFunctions::gt);
 
-        registry.register("gte", TypeInfo.BOOLEAN,
-                List.of(new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
+        registry.register(
+                "gte",
+                TypeInfo.BOOLEAN,
+                List.of(
+                        new FunctionDef.FunctionParam("a", TypeInfo.UNKNOWN),
                         new FunctionDef.FunctionParam("b", TypeInfo.UNKNOWN)),
                 BasicFunctions::gte);
 
-        registry.register("not", TypeInfo.BOOLEAN,
+        registry.register(
+                "not",
+                TypeInfo.BOOLEAN,
                 List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN)),
                 BasicFunctions::notFn);
     }
 
-    static Value coalesceLazy(List<Expression> args, Function<Expression, Value> evaluator,
-                               EvalContext ctx) {
+    static Value coalesceLazy(List<Expression> args, Function<Expression, Value> evaluator, EvalContext ctx) {
         for (Expression arg : args) {
             Value val = evaluator.apply(arg);
             if (val.isDefined()) {

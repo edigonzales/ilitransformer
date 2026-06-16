@@ -1,21 +1,21 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.*;
+
+import guru.interlis.transformer.dmav.Dm01DmavTransferInventoryClassifier;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TransferInventory;
 import guru.interlis.transformer.model.TransferInventoryService;
-import guru.interlis.transformer.dmav.Dm01DmavTransferInventoryClassifier;
-import guru.interlis.transformer.testutil.RealDatasetCatalog;
 import guru.interlis.transformer.testutil.TransferDatasetDescriptor;
 import guru.interlis.transformer.testutil.TransferFormat;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 @Tag("real-data")
 class FullDatasetInventoryTest {
@@ -29,8 +29,7 @@ class FullDatasetInventoryTest {
     @BeforeAll
     static void setUp() {
         modelService = new IliModelService();
-        inventoryService = new TransferInventoryService(modelService,
-                new Dm01DmavTransferInventoryClassifier());
+        inventoryService = new TransferInventoryService(modelService, new Dm01DmavTransferInventoryClassifier());
     }
 
     @Test
@@ -39,9 +38,11 @@ class FullDatasetInventoryTest {
         assertThat(dm01Path).exists();
 
         TransferDatasetDescriptor dm01Desc = new TransferDatasetDescriptor(
-                dm01Path.getFileName().toString(), dm01Path.toAbsolutePath(),
+                dm01Path.getFileName().toString(),
+                dm01Path.toAbsolutePath(),
                 TransferFormat.ITF,
-                List.of("DM01AVCH24LV95D"), List.of(MODEL_DIR),
+                List.of("DM01AVCH24LV95D"),
+                List.of(MODEL_DIR),
                 dm01Path.toFile().length());
 
         TransferInventory inventory = inventoryService.inspect(dm01Desc);
@@ -60,8 +61,10 @@ class FullDatasetInventoryTest {
                 .sorted((a, b) -> Long.compare(b.count(), a.count()))
                 .limit(20)
                 .forEach(cs -> System.out.printf("  %s: %d%n", cs.className(), cs.count()));
-        System.out.println("LFP3-related: " + inventory.classifications()
-                .getOrDefault(Dm01DmavTransferInventoryClassifier.CATEGORY_LFP3, List.of()));
+        System.out.println("LFP3-related: "
+                + inventory
+                        .classifications()
+                        .getOrDefault(Dm01DmavTransferInventoryClassifier.CATEGORY_LFP3, List.of()));
 
         long lfp3Count = inventory.classStats().stream()
                 .filter(cs -> cs.className().toUpperCase().contains("LFP3"))
@@ -77,7 +80,8 @@ class FullDatasetInventoryTest {
 
         String modelDirs = MODEL_DIR + ";https://models.interlis.ch";
         TransferDatasetDescriptor dmavDesc = new TransferDatasetDescriptor(
-                dmavPath.getFileName().toString(), dmavPath.toAbsolutePath(),
+                dmavPath.getFileName().toString(),
+                dmavPath.toAbsolutePath(),
                 TransferFormat.XTF,
                 List.of("DMAVTYM_Alles_V1_1"),
                 List.of(MODEL_DIR, "https://models.interlis.ch"),
@@ -99,8 +103,10 @@ class FullDatasetInventoryTest {
                 .sorted((a, b) -> Long.compare(b.count(), a.count()))
                 .limit(20)
                 .forEach(cs -> System.out.printf("  %s: %d%n", cs.className(), cs.count()));
-        System.out.println("LFP3-related: " + inventory.classifications()
-                .getOrDefault(Dm01DmavTransferInventoryClassifier.CATEGORY_LFP3, List.of()));
+        System.out.println("LFP3-related: "
+                + inventory
+                        .classifications()
+                        .getOrDefault(Dm01DmavTransferInventoryClassifier.CATEGORY_LFP3, List.of()));
 
         long lfp3Count = inventory.classStats().stream()
                 .filter(cs -> cs.className().toUpperCase().contains("LFP3"))
@@ -111,12 +117,10 @@ class FullDatasetInventoryTest {
 
     private static Path findTransferFile(Path dir, String extension) {
         try (var files = Files.walk(dir)) {
-            return files
-                    .filter(f -> f.getFileName().toString().toLowerCase().endsWith(extension))
+            return files.filter(f -> f.getFileName().toString().toLowerCase().endsWith(extension))
                     .filter(Files::isRegularFile)
                     .findFirst()
-                    .orElseThrow(() -> new IllegalStateException(
-                            "No " + extension + " file found under " + dir));
+                    .orElseThrow(() -> new IllegalStateException("No " + extension + " file found under " + dir));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

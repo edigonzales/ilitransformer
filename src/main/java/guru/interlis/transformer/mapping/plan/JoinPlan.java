@@ -6,5 +6,4 @@ public record JoinPlan(
         SourcePlan left,
         SourcePlan right,
         CompiledExpression condition,
-        JoinCardinality expectedCardinality
-) {}
+        JoinCardinality expectedCardinality) {}

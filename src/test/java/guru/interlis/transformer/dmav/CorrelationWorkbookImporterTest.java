@@ -1,20 +1,19 @@
 package guru.interlis.transformer.dmav;
 
-import guru.interlis.transformer.diag.DiagnosticCode;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import guru.interlis.transformer.diag.DiagnosticCollector;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.junit.jupiter.api.Test;
 
 class CorrelationWorkbookImporterTest {
 
@@ -23,8 +22,7 @@ class CorrelationWorkbookImporterTest {
         Path xlsx = createArtificialXlsx();
         try {
             DiagnosticCollector diag = new DiagnosticCollector();
-            CorrelationWorkbookImporter.ImportResult result =
-                    new CorrelationWorkbookImporter().importHints(xlsx, diag);
+            CorrelationWorkbookImporter.ImportResult result = new CorrelationWorkbookImporter().importHints(xlsx, diag);
 
             assertThat(result.hintCount()).isEqualTo(4);
             assertThat(result.errorCount()).isZero();
@@ -69,8 +67,7 @@ class CorrelationWorkbookImporterTest {
         Path xlsx = createXlsxWithCode("X");
         try {
             DiagnosticCollector diag = new DiagnosticCollector();
-            CorrelationWorkbookImporter.ImportResult result =
-                    new CorrelationWorkbookImporter().importHints(xlsx, diag);
+            CorrelationWorkbookImporter.ImportResult result = new CorrelationWorkbookImporter().importHints(xlsx, diag);
 
             assertThat(result.warningCount()).isEqualTo(1);
             assertThat(result.hintCount()).isEqualTo(1);
@@ -86,8 +83,7 @@ class CorrelationWorkbookImporterTest {
         Path xlsx = createXlsxWithEmptyRows();
         try {
             DiagnosticCollector diag = new DiagnosticCollector();
-            CorrelationWorkbookImporter.ImportResult result =
-                    new CorrelationWorkbookImporter().importHints(xlsx, diag);
+            CorrelationWorkbookImporter.ImportResult result = new CorrelationWorkbookImporter().importHints(xlsx, diag);
 
             assertThat(result.hintCount()).isEqualTo(2);
         } finally {
@@ -101,8 +97,7 @@ class CorrelationWorkbookImporterTest {
         assumeTrue(Files.exists(xlsx), "Real XLSX not available");
 
         DiagnosticCollector diag = new DiagnosticCollector();
-        CorrelationWorkbookImporter.ImportResult result =
-                new CorrelationWorkbookImporter().importHints(xlsx, diag);
+        CorrelationWorkbookImporter.ImportResult result = new CorrelationWorkbookImporter().importHints(xlsx, diag);
 
         // Snapshot assertions: the real XLSX should produce a reasonable number of hints
         assertThat(result.hintCount()).isGreaterThan(100);
@@ -118,9 +113,11 @@ class CorrelationWorkbookImporterTest {
 
         // Direction counts should be roughly balanced
         long dmToDmav = result.hints().stream()
-                .filter(h -> h.direction() == Direction.DM01_TO_DMAV).count();
+                .filter(h -> h.direction() == Direction.DM01_TO_DMAV)
+                .count();
         long dmavToDm = result.hints().stream()
-                .filter(h -> h.direction() == Direction.DMAV_TO_DM01).count();
+                .filter(h -> h.direction() == Direction.DMAV_TO_DM01)
+                .count();
         assertThat(dmToDmav).isGreaterThan(0);
         assertThat(dmavToDm).isGreaterThan(0);
     }
@@ -132,8 +129,7 @@ class CorrelationWorkbookImporterTest {
         Path reportPath = Files.createTempFile("report-", ".md");
         try {
             DiagnosticCollector diag = new DiagnosticCollector();
-            CorrelationWorkbookImporter.ImportResult result =
-                    new CorrelationWorkbookImporter().importHints(xlsx, diag);
+            CorrelationWorkbookImporter.ImportResult result = new CorrelationWorkbookImporter().importHints(xlsx, diag);
 
             CorrelationHintExporter exporter = new CorrelationHintExporter();
             exporter.writeJson(result.hints(), jsonPath);
@@ -172,17 +168,17 @@ class CorrelationWorkbookImporterTest {
         // Data row 1: DM01→DMAV with K, DMAV→DM01 with I
         Row row1 = sheet.createRow(1);
         row1.createCell(0).setCellValue(1);
-        row1.createCell(32).setCellValue("DM01_Foo");     // DM01 Topic
-        row1.createCell(33).setCellValue("DM01_Foo");     // DM01 Table/Class
-        row1.createCell(34).setCellValue("attr1");        // DM01 Attribute
-        row1.createCell(11).setCellValue("DMAV_Bar");     // DMAV Topic
-        row1.createCell(12).setCellValue("DMAV_Bar");     // DMAV Class
-        row1.createCell(13).setCellValue("attrA");        // DMAV Attribute
+        row1.createCell(32).setCellValue("DM01_Foo"); // DM01 Topic
+        row1.createCell(33).setCellValue("DM01_Foo"); // DM01 Table/Class
+        row1.createCell(34).setCellValue("attr1"); // DM01 Attribute
+        row1.createCell(11).setCellValue("DMAV_Bar"); // DMAV Topic
+        row1.createCell(12).setCellValue("DMAV_Bar"); // DMAV Class
+        row1.createCell(13).setCellValue("attrA"); // DMAV Attribute
         row1.createCell(19).setCellValue("if something"); // Condition DM01
-        row1.createCell(20).setCellValue("K");            // Code DM01→DMAV
-        row1.createCell(22).setCellValue("default: 42");  // Addition DM01→DMAV
-        row1.createCell(25).setCellValue("I");            // Code DMAV→DM01
-        row1.createCell(29).setCellValue("Some note");    // Notes
+        row1.createCell(20).setCellValue("K"); // Code DM01→DMAV
+        row1.createCell(22).setCellValue("default: 42"); // Addition DM01→DMAV
+        row1.createCell(25).setCellValue("I"); // Code DMAV→DM01
+        row1.createCell(29).setCellValue("Some note"); // Notes
 
         // Data row 2: DM01→DMAV with V, no DMAV→DM01
         Row row2 = sheet.createRow(2);

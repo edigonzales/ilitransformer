@@ -1,10 +1,5 @@
 package guru.interlis.transformer.mapping.compiler;
 
-import ch.interlis.ili2c.metamodel.AttributeDef;
-import ch.interlis.ili2c.metamodel.Container;
-import ch.interlis.ili2c.metamodel.Model;
-import ch.interlis.ili2c.metamodel.Table;
-import ch.interlis.ili2c.metamodel.Topic;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -16,6 +11,12 @@ import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.model.TypeSystemFacade;
+
+import ch.interlis.ili2c.metamodel.AttributeDef;
+import ch.interlis.ili2c.metamodel.Container;
+import ch.interlis.ili2c.metamodel.Model;
+import ch.interlis.ili2c.metamodel.Table;
+import ch.interlis.ili2c.metamodel.Topic;
 
 import java.util.List;
 
@@ -59,8 +60,7 @@ final class CompileUtils {
         if (trimmed.startsWith("${") && trimmed.endsWith("}")) {
             return ExpressionKind.SOURCE_PATH;
         }
-        if (trimmed.startsWith("\"") && trimmed.endsWith("\"")
-                || trimmed.startsWith("'") && trimmed.endsWith("'")) {
+        if (trimmed.startsWith("\"") && trimmed.endsWith("\"") || trimmed.startsWith("'") && trimmed.endsWith("'")) {
             return ExpressionKind.LITERAL_TEXT;
         }
         if ("true".equalsIgnoreCase(trimmed) || "false".equalsIgnoreCase(trimmed)) {
@@ -125,13 +125,15 @@ final class CompileUtils {
             case TEXT, ENUM -> targetType == TypeInfo.TEXT || targetType == TypeInfo.ENUM;
             case NUMERIC -> targetType == TypeInfo.NUMERIC || targetType == TypeInfo.TEXT;
             case BOOLEAN -> targetType == TypeInfo.BOOLEAN || targetType == TypeInfo.TEXT;
-            case COORD, POLYLINE, SURFACE, AREA -> targetType == sourceType || targetType == TypeInfo.TEXT
-                    || (sourceType == TypeInfo.AREA && targetType == TypeInfo.SURFACE)
-                    || (sourceType == TypeInfo.SURFACE && targetType == TypeInfo.AREA);
-            case XML_DATE_TIME -> targetType == TypeInfo.XML_DATE_TIME || targetType == TypeInfo.DATE
-                    || targetType == TypeInfo.TEXT;
-            case DATE -> targetType == TypeInfo.DATE || targetType == TypeInfo.XML_DATE_TIME
-                    || targetType == TypeInfo.TEXT;
+            case COORD, POLYLINE, SURFACE, AREA ->
+                targetType == sourceType
+                        || targetType == TypeInfo.TEXT
+                        || (sourceType == TypeInfo.AREA && targetType == TypeInfo.SURFACE)
+                        || (sourceType == TypeInfo.SURFACE && targetType == TypeInfo.AREA);
+            case XML_DATE_TIME ->
+                targetType == TypeInfo.XML_DATE_TIME || targetType == TypeInfo.DATE || targetType == TypeInfo.TEXT;
+            case DATE ->
+                targetType == TypeInfo.DATE || targetType == TypeInfo.XML_DATE_TIME || targetType == TypeInfo.TEXT;
             default -> true;
         };
     }
@@ -144,25 +146,27 @@ final class CompileUtils {
         return trimmed.substring(0, paren).trim();
     }
 
-    static TypeInfo inferFunctionType(String expr, FunctionRegistry functionRegistry,
-                                       DiagnosticCollector diag, String ruleId) {
+    static TypeInfo inferFunctionType(
+            String expr, FunctionRegistry functionRegistry, DiagnosticCollector diag, String ruleId) {
         String funcName = extractFunctionName(expr);
         if (funcName == null) return TypeInfo.UNKNOWN;
         var def = functionRegistry.resolve(funcName);
         if (def.isPresent()) {
             if (!def.get().deterministic()) {
-                diag.add(new Diagnostic(DiagnosticCode.EXPR_NON_DETERMINISTIC, Severity.WARNING,
+                diag.add(new Diagnostic(
+                        DiagnosticCode.EXPR_NON_DETERMINISTIC,
+                        Severity.WARNING,
                         "Non-deterministic function used: " + funcName,
-                        ruleId, "Results may vary between runs"));
+                        ruleId,
+                        "Results may vary between runs"));
             }
             return def.get().returnType();
         }
         return TypeInfo.UNKNOWN;
     }
 
-    static TypeInfo inferExpressionType(String expr, ExpressionKind kind,
-                                          List<SourcePlan> sourcePlans,
-                                          DiagnosticCollector diag, String ruleId) {
+    static TypeInfo inferExpressionType(
+            String expr, ExpressionKind kind, List<SourcePlan> sourcePlans, DiagnosticCollector diag, String ruleId) {
         return switch (kind) {
             case LITERAL_TEXT -> TypeInfo.TEXT;
             case LITERAL_NUMBER -> TypeInfo.NUMERIC;

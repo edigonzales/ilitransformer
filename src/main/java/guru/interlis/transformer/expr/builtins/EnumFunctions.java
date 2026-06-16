@@ -12,6 +12,7 @@ import guru.interlis.transformer.expr.NullValue;
 import guru.interlis.transformer.expr.NumberValue;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -21,17 +22,25 @@ public final class EnumFunctions {
     private EnumFunctions() {}
 
     public static void registerAll(FunctionRegistry registry) {
-        registry.register("enumMap", TypeInfo.ENUM,
-                List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
+        registry.register(
+                "enumMap",
+                TypeInfo.ENUM,
+                List.of(
+                        new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
                         new FunctionDef.FunctionParam("mapName", TypeInfo.TEXT)),
                 EnumFunctions::enumMap);
 
-        registry.register("enumDefault", TypeInfo.ENUM,
-                List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
+        registry.register(
+                "enumDefault",
+                TypeInfo.ENUM,
+                List.of(
+                        new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
                         new FunctionDef.FunctionParam("fallback", TypeInfo.TEXT)),
                 EnumFunctions::enumDefault);
 
-        registry.register("enumName", TypeInfo.TEXT,
+        registry.register(
+                "enumName",
+                TypeInfo.TEXT,
                 List.of(new FunctionDef.FunctionParam("value", TypeInfo.ENUM)),
                 EnumFunctions::enumName);
     }
@@ -45,10 +54,14 @@ public final class EnumFunctions {
         Map<String, Map<String, String>> enumMaps = ctx.enumMaps();
         if (enumMaps == null || !enumMaps.containsKey(mapName)) {
             if (ctx.diagnostics() != null) {
-                ctx.diagnostics().add(new Diagnostic(
-                        DiagnosticCode.EXPR_UNSUPPORTED, Severity.WARNING,
-                        "enumMap(): enum mapping table '" + mapName + "' not found in config – pass-through used",
-                        ctx.ruleId(), "Define the enum mapping under mapping.enums."));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_UNSUPPORTED,
+                                Severity.WARNING,
+                                "enumMap(): enum mapping table '" + mapName
+                                        + "' not found in config – pass-through used",
+                                ctx.ruleId(),
+                                "Define the enum mapping under mapping.enums."));
             }
             return val;
         }
@@ -57,10 +70,13 @@ public final class EnumFunctions {
         String targetValue = mapping.get(sourceKey);
         if (targetValue == null) {
             if (ctx.diagnostics() != null) {
-                ctx.diagnostics().add(new Diagnostic(
-                        DiagnosticCode.EXPR_TYPE, Severity.WARNING,
-                        "enumMap(): no mapping for source value '" + sourceKey + "' in map '" + mapName + "'",
-                        ctx.ruleId(), "Add the missing mapping or use enumDefault() as fallback"));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_TYPE,
+                                Severity.WARNING,
+                                "enumMap(): no mapping for source value '" + sourceKey + "' in map '" + mapName + "'",
+                                ctx.ruleId(),
+                                "Add the missing mapping or use enumDefault() as fallback"));
             }
             return NullValue.INSTANCE;
         }

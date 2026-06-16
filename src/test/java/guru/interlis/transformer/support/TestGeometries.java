@@ -4,8 +4,7 @@ import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 
 public final class TestGeometries {
-    private TestGeometries() {
-    }
+    private TestGeometries() {}
 
     public static IomObject surface(IomObject... boundaries) {
         Iom_jObject multiSurface = new Iom_jObject("MULTISURFACE", null);

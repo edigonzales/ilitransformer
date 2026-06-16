@@ -9,8 +9,7 @@ final class FixtureUpdateSupport {
 
     private static final String UPDATE_FIXTURES_PROPERTY = "updateFixtures";
 
-    private FixtureUpdateSupport() {
-    }
+    private FixtureUpdateSupport() {}
 
     static boolean syncCheckedInFixture(Path generatedFixture, Path checkedInFixture) throws IOException {
         if (!Boolean.parseBoolean(System.getProperty(UPDATE_FIXTURES_PROPERTY, "false"))) {

@@ -1,6 +1,7 @@
 package guru.interlis.transformer.state;
 
 import ch.interlis.iom.IomObject;
+
 import java.util.Optional;
 
 public record SourceRecord(
@@ -8,10 +9,8 @@ public record SourceRecord(
         String sourceBasketId,
         String sourceClass,
         IomObject sourceObject,
-        ParentContext parentContext
-) {
-    public SourceRecord(String sourceFileId, String sourceBasketId,
-                        String sourceClass, IomObject sourceObject) {
+        ParentContext parentContext) {
+    public SourceRecord(String sourceFileId, String sourceBasketId, String sourceClass, IomObject sourceObject) {
         this(sourceFileId, sourceBasketId, sourceClass, sourceObject, null);
     }
 

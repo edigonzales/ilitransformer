@@ -1,14 +1,15 @@
 package guru.interlis.transformer.expr;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.expr.builtins.BasicFunctions;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class LazyIfTest {
 
@@ -19,12 +20,10 @@ class LazyIfTest {
 
         AtomicBoolean elseCalled = new AtomicBoolean(false);
 
-        registry.registerNonDeterministic("error", TypeInfo.UNKNOWN,
-                List.of(),
-                (args, ctx) -> {
-                    elseCalled.set(true);
-                    throw new RuntimeException("should not be called");
-                });
+        registry.registerNonDeterministic("error", TypeInfo.UNKNOWN, List.of(), (args, ctx) -> {
+            elseCalled.set(true);
+            throw new RuntimeException("should not be called");
+        });
 
         ExpressionEngine engine = new ExpressionEngine(registry);
         EvalContext ctx = new EvalContext(Map.of(), null, "r1");

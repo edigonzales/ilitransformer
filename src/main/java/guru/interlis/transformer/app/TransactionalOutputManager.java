@@ -31,16 +31,14 @@ public final class TransactionalOutputManager implements AutoCloseable {
         String outputId = binding.outputId();
         Path targetPath = binding.path();
         String extension = extension(binding.format());
-        String baseName = targetPath != null
-                ? targetPath.getFileName().toString().replaceFirst("\\.[^.]+$", "")
-                : outputId;
+        String baseName =
+                targetPath != null ? targetPath.getFileName().toString().replaceFirst("\\.[^.]+$", "") : outputId;
 
         try {
             Path targetParent = targetPath != null ? targetPath.toAbsolutePath().getParent() : null;
             Path tempParent = targetParent != null ? targetParent : tempDir;
             Files.createDirectories(tempParent);
-            Path tempPath = Files.createTempFile(tempParent,
-                    baseName + ".", "." + baseExtension(extension));
+            Path tempPath = Files.createTempFile(tempParent, baseName + ".", "." + baseExtension(extension));
             tempPathsByOutputId.put(outputId, tempPath);
             bindingsById.put(outputId, binding);
             return tempPath;
@@ -64,9 +62,7 @@ public final class TransactionalOutputManager implements AutoCloseable {
             Files.createDirectories(parent);
         }
         try {
-            Files.move(tempPath, targetPath,
-                    StandardCopyOption.REPLACE_EXISTING,
-                    StandardCopyOption.ATOMIC_MOVE);
+            Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (AtomicMoveNotSupportedException e) {
             Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
         }

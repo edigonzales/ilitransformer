@@ -13,8 +13,7 @@ public record TransformPlan(
         DiagnosticCollector diagnostics,
         OidPlan oidPlan,
         BasketPlan basketPlan,
-        java.util.Map<String, java.util.Map<String, String>> enumMaps
-) {
+        java.util.Map<String, java.util.Map<String, String>> enumMaps) {
 
     public boolean isReportOnly() {
         return compileMode == CompileMode.REPORT;
@@ -32,7 +31,6 @@ public record TransformPlan(
                 diagnostics,
                 oidPlan,
                 basketPlan,
-                enumMaps
-        );
+                enumMaps);
     }
 }

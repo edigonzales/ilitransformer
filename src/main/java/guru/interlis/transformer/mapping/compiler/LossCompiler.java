@@ -13,9 +13,8 @@ import java.util.Map;
 
 final class LossCompiler {
 
-    List<LossPlan> compileLosses(JobConfig.RuleSpec rule,
-                                  Map<String, SourcePlan> sourcesByAlias,
-                                  String ruleId, CompilerContext ctx) {
+    List<LossPlan> compileLosses(
+            JobConfig.RuleSpec rule, Map<String, SourcePlan> sourcesByAlias, String ruleId, CompilerContext ctx) {
         if (rule.losses == null || rule.losses.isEmpty()) {
             return List.of();
         }
@@ -23,8 +22,8 @@ final class LossCompiler {
         for (JobConfig.LossSpec loss : rule.losses) {
             CompiledExpression when = null;
             if (loss.when != null && !loss.when.isBlank()) {
-                ExpressionCompileContext exprCtx = new ExpressionCompileContext(ruleId,
-                        sourcesByAlias, TypeInfo.BOOLEAN, ctx.functionRegistry(), ctx.enumMaps());
+                ExpressionCompileContext exprCtx = new ExpressionCompileContext(
+                        ruleId, sourcesByAlias, TypeInfo.BOOLEAN, ctx.functionRegistry(), ctx.enumMaps());
                 when = ctx.expressionCompiler().compile(loss.when, exprCtx, ctx.diagnostics());
             }
             result.add(new LossPlan(loss.sourcePath, loss.reasonCode, loss.description, when));

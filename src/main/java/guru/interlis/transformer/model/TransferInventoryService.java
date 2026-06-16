@@ -1,5 +1,8 @@
 package guru.interlis.transformer.model;
 
+import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.testutil.TransferDatasetDescriptor;
+
 import ch.interlis.ili2c.metamodel.AttributeDef;
 import ch.interlis.ili2c.metamodel.CoordType;
 import ch.interlis.ili2c.metamodel.PolylineType;
@@ -8,15 +11,12 @@ import ch.interlis.ili2c.metamodel.SurfaceOrAreaType;
 import ch.interlis.ili2c.metamodel.Table;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom.IomObject;
-import ch.interlis.iox.EndBasketEvent;
+import ch.interlis.iom_j.itf.ItfReader2;
+import ch.interlis.iom_j.xtf.Xtf24Reader;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox.StartBasketEvent;
-import guru.interlis.transformer.interlis.InterlisIoFactory;
-import guru.interlis.transformer.testutil.TransferDatasetDescriptor;
-import ch.interlis.iom_j.itf.ItfReader2;
-import ch.interlis.iom_j.xtf.Xtf24Reader;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -35,8 +35,7 @@ public final class TransferInventoryService {
         this(modelService, TransferInventoryClassifier.none());
     }
 
-    public TransferInventoryService(IliModelService modelService,
-                                    TransferInventoryClassifier classifier) {
+    public TransferInventoryService(IliModelService modelService, TransferInventoryClassifier classifier) {
         this.modelService = modelService;
         this.classifier = classifier != null ? classifier : TransferInventoryClassifier.none();
     }
@@ -61,8 +60,8 @@ public final class TransferInventoryService {
         try {
             if (facade.isPresent()) {
                 InterlisIoFactory ioFactory = new InterlisIoFactory();
-                reader = ioFactory.createReader(descriptor.transferFile(),
-                        facade.get().getTransferDescription());
+                reader = ioFactory.createReader(
+                        descriptor.transferFile(), facade.get().getTransferDescription());
             } else {
                 reader = createPlainReader(descriptor);
             }
@@ -72,8 +71,8 @@ public final class TransferInventoryService {
                 if (event instanceof ch.interlis.iox.StartTransferEvent) {
                 } else if (event instanceof StartBasketEvent basket) {
                     if (currentBasketId != null) {
-                        baskets.add(new TransferInventory.BasketSummary(
-                                currentBasketId, currentTopic, currentBasketCount));
+                        baskets.add(
+                                new TransferInventory.BasketSummary(currentBasketId, currentTopic, currentBasketCount));
                     }
                     currentBasketId = basket.getBid();
                     String[] topics = basket.getTopicv();
@@ -98,14 +97,13 @@ public final class TransferInventoryService {
                     }
 
                     if (facade.isPresent() && tag != null) {
-                        inspectWithModel(tag, iom, facade.get(), geometryObservation,
-                                refCounts);
+                        inspectWithModel(tag, iom, facade.get(), geometryObservation, refCounts);
                     }
                 } else if (event instanceof ch.interlis.iox.EndBasketEvent) {
                 } else if (event instanceof ch.interlis.iox.EndTransferEvent) {
                     if (currentBasketId != null) {
-                        baskets.add(new TransferInventory.BasketSummary(
-                                currentBasketId, currentTopic, currentBasketCount));
+                        baskets.add(
+                                new TransferInventory.BasketSummary(currentBasketId, currentTopic, currentBasketCount));
                     }
                     break;
                 }
@@ -121,8 +119,8 @@ public final class TransferInventoryService {
             }
         }
 
-        List<TransferInventory.ClassStats> classStats = buildClassStats(
-                classCounts, facade, geometryObservation, refCounts);
+        List<TransferInventory.ClassStats> classStats =
+                buildClassStats(classCounts, facade, geometryObservation, refCounts);
 
         return new TransferInventory(
                 descriptor.transferFile(),
@@ -134,12 +132,10 @@ public final class TransferInventoryService {
                 classStats,
                 List.copyOf(geometryObservation),
                 refCounts,
-                toImmutableClassifications(classifications)
-        );
+                toImmutableClassifications(classifications));
     }
 
-    private static Map<String, List<String>> toImmutableClassifications(
-            Map<String, Set<String>> classifications) {
+    private static Map<String, List<String>> toImmutableClassifications(Map<String, Set<String>> classifications) {
         Map<String, List<String>> result = new LinkedHashMap<>();
         for (var entry : classifications.entrySet()) {
             result.put(entry.getKey(), List.copyOf(entry.getValue()));
@@ -167,8 +163,7 @@ public final class TransferInventoryService {
         List<String> dirs = descriptor.modelDirectories();
         if (modelNames.isEmpty()) return java.util.Optional.empty();
 
-        String modelDirs = dirs != null && !dirs.isEmpty()
-                ? String.join(";", dirs) : null;
+        String modelDirs = dirs != null && !dirs.isEmpty() ? String.join(";", dirs) : null;
         if (modelDirs == null || modelDirs.isBlank()) return java.util.Optional.empty();
 
         for (String modelName : modelNames) {
@@ -183,8 +178,12 @@ public final class TransferInventoryService {
         return java.util.Optional.empty();
     }
 
-    private void inspectWithModel(String className, IomObject iom, TypeSystemFacade facade,
-                                   Set<String> geometryObservation, Map<String, Integer> refCounts) {
+    private void inspectWithModel(
+            String className,
+            IomObject iom,
+            TypeSystemFacade facade,
+            Set<String> geometryObservation,
+            Map<String, Integer> refCounts) {
         String scopedPath = findScopedPath(className, facade);
         if (scopedPath == null) return;
 
@@ -246,8 +245,7 @@ public final class TransferInventoryService {
                 hasRefs = refCounts.getOrDefault(className, 0) > 0;
             }
 
-            result.add(new TransferInventory.ClassStats(
-                    className, count, oidType, geomAttrs, hasRefs));
+            result.add(new TransferInventory.ClassStats(className, count, oidType, geomAttrs, hasRefs));
         }
         return result;
     }
@@ -289,8 +287,8 @@ public final class TransferInventoryService {
                     while (telIt.hasNext()) {
                         ch.interlis.ili2c.metamodel.Element tel = telIt.next();
                         if (tel instanceof Table table) {
-                            if (className.equals(table.getName()) ||
-                                    getScoped(table).equals(className)) {
+                            if (className.equals(table.getName())
+                                    || getScoped(table).equals(className)) {
                                 String modelName = model.getName() != null ? model.getName() : "";
                                 String topicName = topic.getName() != null ? topic.getName() : "";
                                 return modelName + "." + topicName + "." + table.getName();
@@ -313,5 +311,4 @@ public final class TransferInventoryService {
         }
         return table.getName();
     }
-
 }

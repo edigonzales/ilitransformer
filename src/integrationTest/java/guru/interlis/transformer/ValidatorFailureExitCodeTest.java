@@ -41,12 +41,15 @@ class ValidatorFailureExitCodeTest {
         Path invalidFile = tempDir.resolve("invalid.xtf");
         Files.writeString(invalidFile, "this is not a valid XTF file");
 
-        int exitCode = new CommandLine(new CliMain()).execute(
-                "validate-transfer",
-                "--file", invalidFile.toString(),
-                "--modeldir", "src/test/data/models",
-                "--model", "TestModel"
-        );
+        int exitCode = new CommandLine(new CliMain())
+                .execute(
+                        "validate-transfer",
+                        "--file",
+                        invalidFile.toString(),
+                        "--modeldir",
+                        "src/test/data/models",
+                        "--model",
+                        "TestModel");
 
         assertThat(exitCode).isNotZero();
         String output = outContent.toString();

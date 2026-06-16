@@ -1,8 +1,7 @@
 package guru.interlis.transformer;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iom.IomObject;
-import ch.interlis.iox.IoxReader;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.app.JobRunner;
 import guru.interlis.transformer.app.RunOptions;
 import guru.interlis.transformer.diag.Diagnostic;
@@ -18,10 +17,10 @@ import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.ModelRegistry;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iox.IoxReader;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -29,7 +28,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 @Tag("real-data")
 class RealDmavToDm01Lfp3EndToEndTest {
@@ -93,8 +95,9 @@ class RealDmavToDm01Lfp3EndToEndTest {
                 .isFalse();
         assertThat(plan.rules()).hasSize(3);
         assertThat(plan.enumMaps()).containsKeys("Zuverlaessigkeit_DMAV_DM01", "Versicherungsart_DMAV_DM01");
-        assertThat(plan.rules().stream().filter(rule -> "lfp3".equals(rule.ruleId()))
-                .flatMap(rule -> rule.losses().stream()))
+        assertThat(plan.rules().stream()
+                        .filter(rule -> "lfp3".equals(rule.ruleId()))
+                        .flatMap(rule -> rule.losses().stream()))
                 .hasSizeGreaterThanOrEqualTo(5);
     }
 
@@ -103,8 +106,8 @@ class RealDmavToDm01Lfp3EndToEndTest {
         Path outputPath = tempDir.resolve("dm01-lfp3-real.itf");
         Path mappingPath = materializeProfile(outputPath);
 
-        DiagnosticCollector diagnostics = run(mappingPath, true,
-                Path.of("build/reports/realDataTest/dmav-to-dm01-lfp3-validation"));
+        DiagnosticCollector diagnostics =
+                run(mappingPath, true, Path.of("build/reports/realDataTest/dmav-to-dm01-lfp3-validation"));
         assertNoErrors(diagnostics);
 
         assertThat(outputPath).exists();
@@ -200,10 +203,8 @@ class RealDmavToDm01Lfp3EndToEndTest {
     private Path materializeProfile(Path outputPath) throws Exception {
         Path mappingPath = tempDir.resolve("dmav-to-dm01-lfp3-real.yaml");
         String yaml = Files.readString(PROFILE, StandardCharsets.UTF_8)
-                .replace("path: \"input/dmav.xtf\"",
-                        "path: \"" + DMAV_INPUT.toAbsolutePath() + "\"")
-                .replace("path: \"build/out/dm01-lfp3.itf\"",
-                        "path: \"" + outputPath.toAbsolutePath() + "\"");
+                .replace("path: \"input/dmav.xtf\"", "path: \"" + DMAV_INPUT.toAbsolutePath() + "\"")
+                .replace("path: \"build/out/dm01-lfp3.itf\"", "path: \"" + outputPath.toAbsolutePath() + "\"");
         Files.writeString(mappingPath, yaml, StandardCharsets.UTF_8);
         return mappingPath;
     }

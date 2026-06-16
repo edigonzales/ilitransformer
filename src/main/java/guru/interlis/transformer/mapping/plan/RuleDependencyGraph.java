@@ -1,13 +1,9 @@
 package guru.interlis.transformer.mapping.plan;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public final class RuleDependencyGraph {
 
@@ -111,8 +107,8 @@ public final class RuleDependencyGraph {
         return result;
     }
 
-    private void findCycles(int u, boolean[] visited, boolean[] onStack,
-                            List<Integer> stack, List<List<String>> result) {
+    private void findCycles(
+            int u, boolean[] visited, boolean[] onStack, List<Integer> stack, List<List<String>> result) {
         visited[u] = true;
         onStack[u] = true;
         stack.add(u);

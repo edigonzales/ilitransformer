@@ -1,12 +1,14 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom_j.Iom_jObject;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.state.DuplicateTargetOidException;
 import guru.interlis.transformer.state.InMemoryStateStore;
 import guru.interlis.transformer.state.TargetObjectKey;
-import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import ch.interlis.iom_j.Iom_jObject;
+
+import org.junit.jupiter.api.Test;
 
 class DuplicateTargetOidTest {
 

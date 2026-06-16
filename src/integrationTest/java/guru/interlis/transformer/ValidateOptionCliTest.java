@@ -50,7 +50,8 @@ class ValidateOptionCliTest {
                 NAME XYZ
                 """);
 
-        Files.writeString(mapping, """
+        Files.writeString(
+                mapping, """
                 version: 1
                 job:
                   description: "Validate option test"
@@ -75,16 +76,17 @@ class ValidateOptionCliTest {
                           class: "TestModel.TestTopic.TestClass"
                       assign:
                         Name: "${s.Name}"
-                """
-                .replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
-                .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
+                """.replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
+                        .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
 
-        int exitCode = new CommandLine(new CliMain()).execute(
-                "transform",
-                "--mapping", mapping.toString(),
-                "--modeldir", "src/test/data/models",
-                "--validate"
-        );
+        int exitCode = new CommandLine(new CliMain())
+                .execute(
+                        "transform",
+                        "--mapping",
+                        mapping.toString(),
+                        "--modeldir",
+                        "src/test/data/models",
+                        "--validate");
 
         assertThat(exitCode).isZero();
     }

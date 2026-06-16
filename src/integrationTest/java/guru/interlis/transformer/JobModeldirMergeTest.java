@@ -50,7 +50,8 @@ class JobModeldirMergeTest {
                 NAME Merged
                 """);
 
-        Files.writeString(mapping, """
+        Files.writeString(
+                mapping, """
                 version: 1
                 job:
                   description: "Modeldir merge test"
@@ -77,15 +78,16 @@ class JobModeldirMergeTest {
                           class: "TestModel.TestTopic.TestClass"
                       assign:
                         Name: "${s.Name}"
-                """
-                .replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
-                .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
+                """.replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
+                        .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
 
-        int exitCode = new CommandLine(new CliMain()).execute(
-                "transform",
-                "--mapping", mapping.toAbsolutePath().toString(),
-                "--modeldir", "src/test/data/av/models"
-        );
+        int exitCode = new CommandLine(new CliMain())
+                .execute(
+                        "transform",
+                        "--mapping",
+                        mapping.toAbsolutePath().toString(),
+                        "--modeldir",
+                        "src/test/data/av/models");
 
         assertThat(exitCode).isZero();
     }
@@ -104,7 +106,8 @@ class JobModeldirMergeTest {
                 NAME Multi
                 """);
 
-        Files.writeString(mapping, """
+        Files.writeString(
+                mapping, """
                 version: 1
                 job:
                   description: "Multiple modeldir test"
@@ -129,16 +132,18 @@ class JobModeldirMergeTest {
                           class: "TestModel.TestTopic.TestClass"
                       assign:
                         Name: "${s.Name}"
-                """
-                .replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
-                .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
+                """.replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
+                        .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
 
-        int exitCode = new CommandLine(new CliMain()).execute(
-                "transform",
-                "--mapping", mapping.toAbsolutePath().toString(),
-                "--modeldir", "src/test/data/models",
-                "--modeldir", "src/test/data/av/models"
-        );
+        int exitCode = new CommandLine(new CliMain())
+                .execute(
+                        "transform",
+                        "--mapping",
+                        mapping.toAbsolutePath().toString(),
+                        "--modeldir",
+                        "src/test/data/models",
+                        "--modeldir",
+                        "src/test/data/av/models");
 
         assertThat(exitCode).isZero();
     }

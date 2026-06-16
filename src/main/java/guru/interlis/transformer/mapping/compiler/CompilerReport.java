@@ -1,7 +1,5 @@
 package guru.interlis.transformer.mapping.compiler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.RefPlan;
@@ -9,13 +7,15 @@ import guru.interlis.transformer.mapping.plan.RulePlan;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 public final class CompilerReport {
 
@@ -47,13 +47,20 @@ public final class CompilerReport {
         }
 
         int errorCount = plan.diagnostics().all().stream()
-                .filter(d -> d.severity() == guru.interlis.transformer.diag.Severity.ERROR).toList().size();
+                .filter(d -> d.severity() == guru.interlis.transformer.diag.Severity.ERROR)
+                .toList()
+                .size();
         int warnCount = plan.diagnostics().all().stream()
-                .filter(d -> d.severity() == guru.interlis.transformer.diag.Severity.WARNING).toList().size();
+                .filter(d -> d.severity() == guru.interlis.transformer.diag.Severity.WARNING)
+                .toList()
+                .size();
 
-        sb.append("**Rules:** ").append(plan.rules().size())
-                .append(" | **Errors:** ").append(errorCount)
-                .append(" | **Warnings:** ").append(warnCount)
+        sb.append("**Rules:** ")
+                .append(plan.rules().size())
+                .append(" | **Errors:** ")
+                .append(errorCount)
+                .append(" | **Warnings:** ")
+                .append(warnCount)
                 .append("\n\n");
 
         if (!plan.diagnostics().all().isEmpty()) {
@@ -61,11 +68,16 @@ public final class CompilerReport {
             sb.append("| Severity | Code | Message | Rule | Suggestion |\n");
             sb.append("|----------|------|---------|------|------------|\n");
             for (Diagnostic d : plan.diagnostics().all()) {
-                sb.append("| ").append(d.severity())
-                        .append(" | ").append(escape(d.code()))
-                        .append(" | ").append(escape(d.message()))
-                        .append(" | ").append(escape(d.sourcePath() != null ? d.sourcePath() : "-"))
-                        .append(" | ").append(escape(d.suggestion() != null ? d.suggestion() : "-"))
+                sb.append("| ")
+                        .append(d.severity())
+                        .append(" | ")
+                        .append(escape(d.code()))
+                        .append(" | ")
+                        .append(escape(d.message()))
+                        .append(" | ")
+                        .append(escape(d.sourcePath() != null ? d.sourcePath() : "-"))
+                        .append(" | ")
+                        .append(escape(d.suggestion() != null ? d.suggestion() : "-"))
                         .append(" |\n");
             }
             sb.append("\n");
@@ -74,14 +86,20 @@ public final class CompilerReport {
         sb.append("## Rules\n\n");
         for (RulePlan rp : plan.rules()) {
             sb.append("### ").append(escape(rp.ruleId())).append("\n\n");
-            sb.append("- **Target:** ").append(escape(rp.targetClass() != null
-                    ? rp.targetClass().getName() : "?")).append(" → ").append(escape(rp.outputId())).append("\n");
+            sb.append("- **Target:** ")
+                    .append(escape(rp.targetClass() != null ? rp.targetClass().getName() : "?"))
+                    .append(" → ")
+                    .append(escape(rp.outputId()))
+                    .append("\n");
             sb.append("- **Sources:** ");
             for (int i = 0; i < rp.sources().size(); i++) {
                 if (i > 0) sb.append(", ");
                 var sp = rp.sources().get(i);
-                sb.append("`").append(escape(sp.alias())).append("`: ")
-                        .append(escape(sp.sourceClass() != null ? sp.sourceClass().getName() : "?"));
+                sb.append("`")
+                        .append(escape(sp.alias()))
+                        .append("`: ")
+                        .append(escape(
+                                sp.sourceClass() != null ? sp.sourceClass().getName() : "?"));
             }
             sb.append("\n");
 
@@ -90,9 +108,12 @@ public final class CompilerReport {
                 sb.append("| Target | Expression | Result Type |\n");
                 sb.append("|--------|------------|-------------|\n");
                 for (AssignmentPlan ap : rp.assignments()) {
-                    sb.append("| ").append(escape(ap.targetAttrName()))
-                            .append(" | ").append(escape(ap.expression().sourceText()))
-                            .append(" | ").append(ap.expression().resultType())
+                    sb.append("| ")
+                            .append(escape(ap.targetAttrName()))
+                            .append(" | ")
+                            .append(escape(ap.expression().sourceText()))
+                            .append(" | ")
+                            .append(ap.expression().resultType())
                             .append(" |\n");
                 }
             }
@@ -102,11 +123,16 @@ public final class CompilerReport {
                 sb.append("| Role | Association | Source Ref | Target Rule | Required |\n");
                 sb.append("|------|-------------|------------|-------------|----------|\n");
                 for (RefPlan ref : rp.refs()) {
-                    sb.append("| ").append(escape(ref.targetRoleName() != null ? ref.targetRoleName() : "-"))
-                            .append(" | ").append(escape(ref.association() != null ? ref.association() : "-"))
-                            .append(" | ").append(escape(ref.sourceRef() != null ? ref.sourceRef() : "-"))
-                            .append(" | ").append(escape(ref.targetRuleId() != null ? ref.targetRuleId() : "-"))
-                            .append(" | ").append(ref.required() ? "yes" : "no")
+                    sb.append("| ")
+                            .append(escape(ref.targetRoleName() != null ? ref.targetRoleName() : "-"))
+                            .append(" | ")
+                            .append(escape(ref.association() != null ? ref.association() : "-"))
+                            .append(" | ")
+                            .append(escape(ref.sourceRef() != null ? ref.sourceRef() : "-"))
+                            .append(" | ")
+                            .append(escape(ref.targetRuleId() != null ? ref.targetRuleId() : "-"))
+                            .append(" | ")
+                            .append(ref.required() ? "yes" : "no")
                             .append(" |\n");
                 }
             }
@@ -133,7 +159,9 @@ public final class CompilerReport {
             for (var sp : rp.sources()) {
                 Map<String, Object> sm = new LinkedHashMap<>();
                 sm.put("alias", sp.alias());
-                sm.put("sourceClass", sp.sourceClass() != null ? sp.sourceClass().getName() : null);
+                sm.put(
+                        "sourceClass",
+                        sp.sourceClass() != null ? sp.sourceClass().getName() : null);
                 sm.put("inputIds", sp.inputIds());
                 srcMaps.add(sm);
             }

@@ -1,12 +1,5 @@
 package guru.interlis.transformer.engine;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iox.EndBasketEvent;
-import ch.interlis.iox.EndTransferEvent;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.ObjectEvent;
-import ch.interlis.iox.StartBasketEvent;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.RulePlan;
@@ -18,11 +11,18 @@ import guru.interlis.transformer.state.SourceLookupIndex;
 import guru.interlis.transformer.state.SourceRecord;
 import guru.interlis.transformer.state.StateStore;
 
+import ch.interlis.iom.IomObject;
+import ch.interlis.iox.EndBasketEvent;
+import ch.interlis.iox.EndTransferEvent;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.ObjectEvent;
+import ch.interlis.iox.StartBasketEvent;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +38,8 @@ public final class SourceIndexingService {
             SourceLookupIndex sourceLookupIndex,
             ParentChildIndex parentChildIndex,
             DiagnosticCollector diagnostics,
-            ExecutionMetrics metrics) throws Exception {
+            ExecutionMetrics metrics)
+            throws Exception {
 
         metrics.recordReadStart();
         Map<String, List<SourceRecord>> recordsByInput = new HashMap<>();
@@ -96,8 +97,8 @@ public final class SourceIndexingService {
         return new IndexingResult(recordCount, Collections.unmodifiableMap(recordsByInput));
     }
 
-    private static void indexBagChild(RuleDispatchIndex dispatchIndex, SourceRecord sr,
-                                       ParentChildIndex parentChildIndex) {
+    private static void indexBagChild(
+            RuleDispatchIndex dispatchIndex, SourceRecord sr, ParentChildIndex parentChildIndex) {
         String sourceClass = sr.sourceClass();
         String sourceOid = sr.sourceObject().getobjectoid();
 
@@ -122,14 +123,19 @@ public final class SourceIndexingService {
         return source.getattrvalue(refAttr);
     }
 
-    private static void expandBagStructures(RuleDispatchIndex dispatchIndex, IomObject source,
-                                             String inputId, String basketId,
-                                             TransformPlan plan, StateStore stateStore) {
+    private static void expandBagStructures(
+            RuleDispatchIndex dispatchIndex,
+            IomObject source,
+            String inputId,
+            String basketId,
+            TransformPlan plan,
+            StateStore stateStore) {
         String sourceClass = source.getobjecttag();
         List<RuleDispatchIndex.BagExpansionEntry> entries = dispatchIndex.expandBagsFor(inputId, sourceClass);
         for (var entry : entries) {
             BagPlan bag = entry.bag();
-            String parentClassName = TypeSystemFacade.getScopedName(entry.parentSource().sourceClass());
+            String parentClassName =
+                    TypeSystemFacade.getScopedName(entry.parentSource().sourceClass());
             if (!parentClassName.equals(sourceClass)) continue;
 
             String bagAttrName = bag.bagAttrName();
@@ -141,11 +147,8 @@ public final class SourceIndexingService {
                 if (structure == null) continue;
                 SourceRecord.ParentContext parentContext =
                         new SourceRecord.ParentContext(source.getobjectoid(), source.getobjecttag());
-                stateStore.addSourceRecord(new SourceRecord(
-                        inputId, basketId,
-                        structure.getobjecttag(),
-                        structure,
-                        parentContext));
+                stateStore.addSourceRecord(
+                        new SourceRecord(inputId, basketId, structure.getobjecttag(), structure, parentContext));
             }
         }
     }

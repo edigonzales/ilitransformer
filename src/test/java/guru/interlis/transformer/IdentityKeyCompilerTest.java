@@ -1,10 +1,11 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
-import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class IdentityKeyCompilerTest {
 
@@ -50,8 +51,7 @@ class IdentityKeyCompilerTest {
         JobConfig config = configWithIdentityKey("  ");
         var result = new MappingCompiler().compile(config);
         assertThat(result.diagnostics().hasErrors()).isTrue();
-        assertThat(result.diagnostics().all()).anyMatch(d ->
-                d.code().equals("ILITRF-MAP-IDENTITY-KEY-MISSING"));
+        assertThat(result.diagnostics().all()).anyMatch(d -> d.code().equals("ILITRF-MAP-IDENTITY-KEY-MISSING"));
     }
 
     @Test
@@ -59,8 +59,8 @@ class IdentityKeyCompilerTest {
         JobConfig config = configWithIdentityKey("Name");
         var result = new MappingCompiler().compile(config);
         assertThat(result.diagnostics().hasErrors()).isTrue();
-        assertThat(result.diagnostics().all()).anyMatch(d ->
-                d.code().equals("ILITRF-MAP-IDENTITY-KEY-MISSING")
+        assertThat(result.diagnostics().all())
+                .anyMatch(d -> d.code().equals("ILITRF-MAP-IDENTITY-KEY-MISSING")
                         && d.message().contains("qualified with alias"));
     }
 
@@ -69,8 +69,7 @@ class IdentityKeyCompilerTest {
         JobConfig config = configWithIdentityKey("s.Name");
         config.mapping.rules.get(0).identity.sourceKey = java.util.List.of("s.Name", "s.Name");
         var result = new MappingCompiler().compile(config);
-        assertThat(result.diagnostics().all()).anyMatch(d ->
-                d.code().equals("ILITRF-MAP-IDENTITY-KEY-DUPLICATE"));
+        assertThat(result.diagnostics().all()).anyMatch(d -> d.code().equals("ILITRF-MAP-IDENTITY-KEY-DUPLICATE"));
     }
 
     @Test
@@ -78,6 +77,7 @@ class IdentityKeyCompilerTest {
         JobConfig config = configWithIdentityKey("unknownAlias.Name");
         var result = new MappingCompiler().compile(config);
         assertThat(result.diagnostics().all())
-                .anyMatch(d -> d.message().contains("identity key") || d.message().contains("alias"));
+                .anyMatch(
+                        d -> d.message().contains("identity key") || d.message().contains("alias"));
     }
 }

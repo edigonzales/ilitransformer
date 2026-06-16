@@ -1,6 +1,7 @@
 package guru.interlis.transformer.state;
 
 import ch.interlis.iom.IomObject;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -8,7 +9,8 @@ import java.util.Optional;
 public interface StateStore {
     void putIdMapping(SourceRefKey key, TargetRefValue value);
 
-    List<TargetRefValue> findIdMappings(String sourceClass, String sourceOid, String sourceFileId, String sourceBasketId);
+    List<TargetRefValue> findIdMappings(
+            String sourceClass, String sourceOid, String sourceFileId, String sourceBasketId);
 
     void addDeferredRef(DeferredRef deferredRef);
 
@@ -42,6 +44,10 @@ public interface StateStore {
     @Deprecated
     long nextOid();
 
-    String nextOid(OidStrategy strategy, String namespace, String ruleId,
-                   String sourceOid, Map<String, String> identityKeyValues);
+    String nextOid(
+            OidStrategy strategy,
+            String namespace,
+            String ruleId,
+            String sourceOid,
+            Map<String, String> identityKeyValues);
 }

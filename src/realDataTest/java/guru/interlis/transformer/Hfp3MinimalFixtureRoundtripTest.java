@@ -1,12 +1,8 @@
 package guru.interlis.transformer;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iom.IomObject;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.ObjectEvent;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import guru.interlis.transformer.app.JobRunner;
 import guru.interlis.transformer.app.RunOptions;
 import guru.interlis.transformer.compare.ComparisonProfile;
@@ -18,13 +14,14 @@ import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.dmav.Dm01DmavFixtures;
 import guru.interlis.transformer.dmav.Dm01DmavPaths;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
-import guru.interlis.transformer.loss.LossEvent;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.ObjectEvent;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -32,8 +29,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 @Tag("real-data")
 class Hfp3MinimalFixtureRoundtripTest {
@@ -62,8 +62,8 @@ class Hfp3MinimalFixtureRoundtripTest {
         }
         dm01Td = dm01Result.transferDescription();
 
-        IliModelCompileResult dmavResult = modelService.compileModel(
-                DMAV_MODEL, Dm01DmavPaths.LOCAL_AND_REMOTE_MODEL_DIRS);
+        IliModelCompileResult dmavResult =
+                modelService.compileModel(DMAV_MODEL, Dm01DmavPaths.LOCAL_AND_REMOTE_MODEL_DIRS);
         if (dmavResult.hasErrors()) {
             fail("DMAV model compilation errors:\n  " + diagnostics(dmavResult));
         }
@@ -75,16 +75,14 @@ class Hfp3MinimalFixtureRoundtripTest {
         Path dmavIntermediate = tempDir.resolve("dm01-to-dmav.xtf");
         Path dm01Roundtrip = tempDir.resolve("dm01-roundtrip.itf");
 
-        run(materializeDm01ToDmav(DM01_INPUT, dmavIntermediate),
-                tempDir.resolve("reports-dm01-forward"));
-        run(materializeDmavToDm01(dmavIntermediate, dm01Roundtrip),
-                tempDir.resolve("reports-dm01-reverse"));
+        run(materializeDm01ToDmav(DM01_INPUT, dmavIntermediate), tempDir.resolve("reports-dm01-forward"));
+        run(materializeDmavToDm01(dmavIntermediate, dm01Roundtrip), tempDir.resolve("reports-dm01-reverse"));
 
         List<IomObject> original = semanticDm01Objects(DM01_INPUT);
         List<IomObject> roundtripped = semanticDm01Objects(dm01Roundtrip);
 
-        ComparisonReport report = new SemanticTransferComparator()
-                .compare(original, roundtripped, dm01RoundtripProfile());
+        ComparisonReport report =
+                new SemanticTransferComparator().compare(original, roundtripped, dm01RoundtripProfile());
 
         assertThat(report.equivalent())
                 .as("Semantic differences: %s", report.errors())
@@ -100,14 +98,13 @@ class Hfp3MinimalFixtureRoundtripTest {
         Path reverseReportDir = tempDir.resolve("reports-dmav-reverse");
 
         run(materializeDmavToDm01(DMAV_INPUT, dm01Intermediate), reverseReportDir);
-        run(materializeDm01ToDmav(dm01Intermediate, dmavRoundtrip),
-                tempDir.resolve("reports-dmav-forward"));
+        run(materializeDm01ToDmav(dm01Intermediate, dmavRoundtrip), tempDir.resolve("reports-dmav-forward"));
 
         List<IomObject> original = semanticDmavObjects(DMAV_INPUT);
         List<IomObject> roundtripped = semanticDmavObjects(dmavRoundtrip);
 
-        ComparisonReport report = new SemanticTransferComparator()
-                .compare(original, roundtripped, dmavRoundtripProfile());
+        ComparisonReport report =
+                new SemanticTransferComparator().compare(original, roundtripped, dmavRoundtripProfile());
 
         assertThat(report.equivalent())
                 .as("Semantic differences: %s", report.errors())
@@ -117,8 +114,8 @@ class Hfp3MinimalFixtureRoundtripTest {
     private void run(Path mappingPath, Path reportDir) throws Exception {
         List<String> modelDirs = new ArrayList<>(Dm01DmavPaths.localModelDirs());
         modelDirs.add(Dm01DmavPaths.REMOTE_MODEL_DIR);
-        DiagnosticCollector diagnostics = new JobRunner().run(mappingPath,
-                new RunOptions(modelDirs, true, reportDir, false));
+        DiagnosticCollector diagnostics =
+                new JobRunner().run(mappingPath, new RunOptions(modelDirs, true, reportDir, false));
         List<Diagnostic> errors = diagnostics.all().stream()
                 .filter(d -> d.severity() == Severity.ERROR)
                 .toList();

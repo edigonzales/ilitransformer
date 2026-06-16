@@ -1,5 +1,11 @@
 package guru.interlis.transformer.geometry;
 
+import guru.interlis.transformer.diag.Diagnostic;
+import guru.interlis.transformer.diag.DiagnosticCode;
+import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.diag.Severity;
+
+import ch.ehi.iox.objpool.ObjectPoolManager;
 import ch.interlis.ili2c.metamodel.AbstractClassDef;
 import ch.interlis.ili2c.metamodel.AreaType;
 import ch.interlis.ili2c.metamodel.AttributeDef;
@@ -22,15 +28,6 @@ import ch.interlis.iox_j.jts.Iox2jts;
 import ch.interlis.iox_j.jts.Iox2jtsException;
 import ch.interlis.iox_j.jts.Jts2iox;
 import ch.interlis.iox_j.logging.LogEventFactory;
-import ch.ehi.iox.objpool.ObjectPoolManager;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
-import guru.interlis.transformer.diag.Diagnostic;
-import guru.interlis.transformer.diag.DiagnosticCode;
-import guru.interlis.transformer.diag.DiagnosticCollector;
-import guru.interlis.transformer.diag.Severity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,6 +35,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Point;
 
 public final class ItfGeometryWriter implements IoxWriter {
 
@@ -59,8 +59,8 @@ public final class ItfGeometryWriter implements IoxWriter {
         this(delegate, transferDescription, null);
     }
 
-    public ItfGeometryWriter(IoxWriter delegate, TransferDescription transferDescription,
-                             DiagnosticCollector diagnostics) {
+    public ItfGeometryWriter(
+            IoxWriter delegate, TransferDescription transferDescription, DiagnosticCollector diagnostics) {
         this.delegate = Objects.requireNonNull(delegate);
         this.transferDescription = Objects.requireNonNull(transferDescription);
         this.geometryByTag = buildGeometryMap(transferDescription);
@@ -76,7 +76,8 @@ public final class ItfGeometryWriter implements IoxWriter {
             return;
         }
         if (event instanceof ch.interlis.iox_j.StartBasketEvent basket) {
-            String[] parts = basket.getType() == null ? new String[0] : basket.getType().split("\\.");
+            String[] parts =
+                    basket.getType() == null ? new String[0] : basket.getType().split("\\.");
             if (parts.length >= 2) {
                 currentItfTables = ModelUtilities.getItfTables(transferDescription, parts[0], parts[1]);
             } else {
@@ -155,20 +156,29 @@ public final class ItfGeometryWriter implements IoxWriter {
             if (geometryAttr.isArea()) {
                 IomObject surfaceGeometry = toSurfaceContainer(geomValue);
                 if (surfaceGeometry == null) {
-                    reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+                    reportGeometryError(
+                            DiagnosticCode.GEOM_INVALID,
+                            source,
+                            attrName,
                             "Geometry object is not a serializable AREA container",
                             "Provide canonical SURFACE/MULTISURFACE geometry before writing ITF");
                     continue;
                 }
                 int surfaceCount = surfaceGeometry.getattrvaluecount("surface");
                 if (surfaceCount <= 0) {
-                    reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+                    reportGeometryError(
+                            DiagnosticCode.GEOM_INVALID,
+                            source,
+                            attrName,
                             "AREA geometry contains no surface elements",
                             "Provide a single-surface AREA geometry");
                     continue;
                 }
                 if (surfaceCount > 1) {
-                    reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+                    reportGeometryError(
+                            DiagnosticCode.GEOM_INVALID,
+                            source,
+                            attrName,
                             "AREA with multiple surface elements is not supported in ILI1 reverse serialization",
                             "Provide a single-surface AREA geometry");
                     continue;
@@ -177,10 +187,9 @@ public final class ItfGeometryWriter implements IoxWriter {
                 if (areaPoint == null) {
                     continue;
                 }
-                areaAccumulator.computeIfAbsent(geometryTableTag(geometryAttr.attribute()),
-                                k -> new ArrayList<>())
-                        .add(new AreaEntry(source.getobjectoid(), surfaceGeometry,
-                                source, attrName, geometryAttr));
+                areaAccumulator
+                        .computeIfAbsent(geometryTableTag(geometryAttr.attribute()), k -> new ArrayList<>())
+                        .add(new AreaEntry(source.getobjectoid(), surfaceGeometry, source, attrName, geometryAttr));
                 baseObj.addattrobj(attrName, new Iom_jObject(areaPoint));
             } else {
                 PreparedGeometry prepared = prepareGeometry(source, geometryAttr, geomValue);
@@ -195,15 +204,18 @@ public final class ItfGeometryWriter implements IoxWriter {
         buffer(tableName(source), new ImmediateObj(baseObj));
     }
 
-    private PreparedGeometry prepareGeometry(IomObject source, GeometryAttr geometryAttr,
-                                             IomObject geomValue) throws IoxException {
+    private PreparedGeometry prepareGeometry(IomObject source, GeometryAttr geometryAttr, IomObject geomValue)
+            throws IoxException {
         String attrName = geometryAttr.attribute().getName();
         List<IomObject> polylines = extractHelperPolylines(source, geometryAttr, geomValue);
         if (polylines == null) {
             return null;
         }
         if (polylines.isEmpty()) {
-            reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+            reportGeometryError(
+                    DiagnosticCode.GEOM_INVALID,
+                    source,
+                    attrName,
                     "Geometry object has no boundary/polyline content",
                     "Provide a valid SURFACE/AREA geometry object before writing ITF");
             return null;
@@ -213,7 +225,10 @@ public final class ItfGeometryWriter implements IoxWriter {
         }
 
         if (source.getobjectoid() == null) {
-            reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+            reportGeometryError(
+                    DiagnosticCode.GEOM_INVALID,
+                    source,
+                    attrName,
                     "SURFACE helper rows require a source object OID",
                     "Ensure the source object has an OID before writing ILI1 helper tables");
             return null;
@@ -234,7 +249,10 @@ public final class ItfGeometryWriter implements IoxWriter {
         String attrName = geometryAttr.attribute().getName();
         IomObject surfaceGeometry = toSurfaceContainer(geomValue);
         if (surfaceGeometry == null) {
-            reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+            reportGeometryError(
+                    DiagnosticCode.GEOM_INVALID,
+                    source,
+                    attrName,
                     "Geometry object is not a serializable SURFACE/AREA container",
                     "Provide canonical SURFACE/MULTISURFACE geometry before writing ITF");
             return null;
@@ -242,7 +260,10 @@ public final class ItfGeometryWriter implements IoxWriter {
 
         int surfaceCount = surfaceGeometry.getattrvaluecount("surface");
         if (surfaceCount <= 0) {
-            reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+            reportGeometryError(
+                    DiagnosticCode.GEOM_INVALID,
+                    source,
+                    attrName,
                     "Geometry object contains no surface elements",
                     "Provide canonical SURFACE/MULTISURFACE geometry before writing ITF");
             return null;
@@ -254,7 +275,10 @@ public final class ItfGeometryWriter implements IoxWriter {
             }
             return ItfAreaPolygon2Linetable.getLinesFromMultiPolygon(surfaceGeometry);
         } catch (IllegalArgumentException ex) {
-            reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+            reportGeometryError(
+                    DiagnosticCode.GEOM_INVALID,
+                    source,
+                    attrName,
                     "Geometry is not serializable to ITF helper tables: " + ex.getMessage(),
                     "Provide an unclipped canonical surface geometry");
             return null;
@@ -279,13 +303,19 @@ public final class ItfGeometryWriter implements IoxWriter {
     private boolean validatePolylines(List<IomObject> polylines, IomObject source, String attrName) {
         for (IomObject polyline : polylines) {
             if (polyline == null) {
-                reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+                reportGeometryError(
+                        DiagnosticCode.GEOM_INVALID,
+                        source,
+                        attrName,
                         "Polyline entry is missing",
                         "Provide canonical COORD/ARC polyline segments");
                 return false;
             }
             if (polyline.getattrobj("lineattr", 0) != null) {
-                reportGeometryError(DiagnosticCode.GEOM_LINEATTR_UNSUPPORTED, source, attrName,
+                reportGeometryError(
+                        DiagnosticCode.GEOM_LINEATTR_UNSUPPORTED,
+                        source,
+                        attrName,
                         "LINEATTR is not supported in XTF -> ITF surface/area serialization",
                         "Remove LINEATTR from the reverse mapping scope or implement a dedicated line attribute writer");
                 return false;
@@ -293,13 +323,19 @@ public final class ItfGeometryWriter implements IoxWriter {
 
             int sequenceCount = polyline.getattrvaluecount("sequence");
             if (sequenceCount == 0) {
-                reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+                reportGeometryError(
+                        DiagnosticCode.GEOM_INVALID,
+                        source,
+                        attrName,
                         "Polyline contains no sequence",
                         "Provide canonical COORD/ARC polyline segments");
                 return false;
             }
             if (sequenceCount > 1) {
-                reportGeometryError(DiagnosticCode.GEOM_SEGMENT_UNSUPPORTED, source, attrName,
+                reportGeometryError(
+                        DiagnosticCode.GEOM_SEGMENT_UNSUPPORTED,
+                        source,
+                        attrName,
                         "Polyline with multiple sequences is not supported in ITF reverse serialization",
                         "Provide an unclipped single-sequence polyline");
                 return false;
@@ -307,7 +343,10 @@ public final class ItfGeometryWriter implements IoxWriter {
 
             IomObject sequence = polyline.getattrobj("sequence", 0);
             if (sequence == null) {
-                reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+                reportGeometryError(
+                        DiagnosticCode.GEOM_INVALID,
+                        source,
+                        attrName,
                         "Polyline sequence is missing",
                         "Provide canonical COORD/ARC polyline segments");
                 return false;
@@ -315,7 +354,10 @@ public final class ItfGeometryWriter implements IoxWriter {
 
             int segmentCount = sequence.getattrvaluecount("segment");
             if (segmentCount == 0) {
-                reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+                reportGeometryError(
+                        DiagnosticCode.GEOM_INVALID,
+                        source,
+                        attrName,
                         "Polyline contains no writable segments",
                         "Provide canonical COORD/ARC polyline segments");
                 return false;
@@ -324,21 +366,30 @@ public final class ItfGeometryWriter implements IoxWriter {
             for (int i = 0; i < segmentCount; i++) {
                 IomObject segment = sequence.getattrobj("segment", i);
                 if (segment == null) {
-                    reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+                    reportGeometryError(
+                            DiagnosticCode.GEOM_INVALID,
+                            source,
+                            attrName,
                             "Polyline segment is missing",
                             "Provide canonical COORD/ARC polyline segments");
                     return false;
                 }
                 String tag = segment.getobjecttag();
                 if (i == 0 && !"COORD".equalsIgnoreCase(tag)) {
-                    reportGeometryError(DiagnosticCode.GEOM_SEGMENT_UNSUPPORTED, source, attrName,
+                    reportGeometryError(
+                            DiagnosticCode.GEOM_SEGMENT_UNSUPPORTED,
+                            source,
+                            attrName,
                             "Polyline must start with a COORD segment",
                             "Provide canonical COORD/ARC polyline segments");
                     return false;
                 }
                 if ("COORD".equalsIgnoreCase(tag)) {
                     if (segment.getattrvalue("C1") == null || segment.getattrvalue("C2") == null) {
-                        reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+                        reportGeometryError(
+                                DiagnosticCode.GEOM_INVALID,
+                                source,
+                                attrName,
                                 "COORD segment has no C1/C2 values",
                                 "Provide canonical COORD segments");
                         return false;
@@ -346,16 +397,24 @@ public final class ItfGeometryWriter implements IoxWriter {
                     continue;
                 }
                 if ("ARC".equalsIgnoreCase(tag)) {
-                    if (segment.getattrvalue("A1") == null || segment.getattrvalue("A2") == null
-                            || segment.getattrvalue("C1") == null || segment.getattrvalue("C2") == null) {
-                        reportGeometryError(DiagnosticCode.GEOM_INVALID, source, attrName,
+                    if (segment.getattrvalue("A1") == null
+                            || segment.getattrvalue("A2") == null
+                            || segment.getattrvalue("C1") == null
+                            || segment.getattrvalue("C2") == null) {
+                        reportGeometryError(
+                                DiagnosticCode.GEOM_INVALID,
+                                source,
+                                attrName,
                                 "ARC segment has no A1/A2/C1/C2 values",
                                 "Provide canonical ARC segments with midpoint and endpoint");
                         return false;
                     }
                     continue;
                 }
-                reportGeometryError(DiagnosticCode.GEOM_SEGMENT_UNSUPPORTED, source, attrName,
+                reportGeometryError(
+                        DiagnosticCode.GEOM_SEGMENT_UNSUPPORTED,
+                        source,
+                        attrName,
                         "Unsupported polyline segment type: " + tag,
                         "Only canonical COORD and ARC segments are supported in ITF reverse serialization");
                 return false;
@@ -372,7 +431,10 @@ public final class ItfGeometryWriter implements IoxWriter {
         try {
             Geometry geometry = toJtsSurface(geomValue);
             if (geometry == null || geometry.isEmpty()) {
-                reportGeometryError(DiagnosticCode.GEOM_AREA_POINT_MISSING, source, attrName,
+                reportGeometryError(
+                        DiagnosticCode.GEOM_AREA_POINT_MISSING,
+                        source,
+                        attrName,
                         "AREA geometry is empty and has no point-on-surface",
                         "Provide a valid surface geometry or preserve the ILI1 helper point");
                 return null;
@@ -381,20 +443,26 @@ public final class ItfGeometryWriter implements IoxWriter {
                 Geometry fixed = geometry.buffer(0);
                 if (!fixed.isEmpty()
                         && ("Polygon".equals(fixed.getGeometryType())
-                            || "MultiPolygon".equals(fixed.getGeometryType()))) {
+                                || "MultiPolygon".equals(fixed.getGeometryType()))) {
                     geometry = fixed;
                 }
             }
             Point interiorPoint = geometry.getInteriorPoint();
             if (interiorPoint == null || interiorPoint.isEmpty() || interiorPoint.getCoordinate() == null) {
-                reportGeometryError(DiagnosticCode.GEOM_AREA_POINT_MISSING, source, attrName,
+                reportGeometryError(
+                        DiagnosticCode.GEOM_AREA_POINT_MISSING,
+                        source,
+                        attrName,
                         "Could not derive a deterministic point-on-surface for AREA geometry",
                         "Provide an explicit point-on-surface or fix the AREA geometry");
                 return null;
             }
             return Jts2iox.JTS2coord(interiorPoint.getCoordinate());
         } catch (Iox2jtsException | RuntimeException ex) {
-            reportGeometryError(DiagnosticCode.GEOM_AREA_POINT_MISSING, source, attrName,
+            reportGeometryError(
+                    DiagnosticCode.GEOM_AREA_POINT_MISSING,
+                    source,
+                    attrName,
                     "Could not derive point-on-surface for AREA geometry: " + ex.getMessage(),
                     "Provide an explicit point-on-surface or fix the AREA geometry");
             return null;
@@ -433,20 +501,17 @@ public final class ItfGeometryWriter implements IoxWriter {
                 continue;
             }
 
-            ItfAreaPolygon2Linetable topoWriter = new ItfAreaPolygon2Linetable(
-                    tableTag, objectPoolManager);
+            ItfAreaPolygon2Linetable topoWriter = new ItfAreaPolygon2Linetable(tableTag, objectPoolManager);
             LogEventFactory logEventFactory = new LogEventFactory();
 
             for (AreaEntry area : areas) {
                 try {
                     topoWriter.addMultiPolygon(
-                            area.sourceOid(),
-                            null,
-                            area.surfaceGeometry(),
-                            "Warning",
-                            logEventFactory);
+                            area.sourceOid(), null, area.surfaceGeometry(), "Warning", logEventFactory);
                 } catch (IoxException e) {
-                    reportGeometryError(DiagnosticCode.GEOM_INVALID, area.source(),
+                    reportGeometryError(
+                            DiagnosticCode.GEOM_INVALID,
+                            area.source(),
                             area.attrName(),
                             "Topology build failed: " + e.getMessage(),
                             "Fix source geometry");
@@ -457,7 +522,9 @@ public final class ItfGeometryWriter implements IoxWriter {
             try {
                 topoLines = topoWriter.getLines();
             } catch (IoxException e) {
-                reportGeometryError(DiagnosticCode.GEOM_INVALID, null,
+                reportGeometryError(
+                        DiagnosticCode.GEOM_INVALID,
+                        null,
                         tableTag,
                         "AREA topology has intersections: " + e.getMessage(),
                         "Source geometries may have invalid topology");
@@ -473,8 +540,7 @@ public final class ItfGeometryWriter implements IoxWriter {
             String geomAttrName = ModelUtilities.getHelperTableGeomAttrName(
                     first.geometryAttr().attribute());
             for (IomObject polyline : topoLines) {
-                buffer(tableName, new HelperRowObj(tableTag, geomAttrName,
-                        null, null, polyline));
+                buffer(tableName, new HelperRowObj(tableTag, geomAttrName, null, null, polyline));
             }
         }
         areaAccumulator.clear();
@@ -577,8 +643,7 @@ public final class ItfGeometryWriter implements IoxWriter {
         }
     }
 
-    private void reportGeometryError(String code, IomObject source, String attrName,
-                                     String detail, String suggestion) {
+    private void reportGeometryError(String code, IomObject source, String attrName, String detail, String suggestion) {
         if (diagnostics == null) {
             return;
         }
@@ -635,6 +700,7 @@ public final class ItfGeometryWriter implements IoxWriter {
 
     private interface BufferedObj {
         boolean requiresGeneratedOid();
+
         IomObject materialize(String generatedOid);
     }
 
@@ -650,8 +716,9 @@ public final class ItfGeometryWriter implements IoxWriter {
         }
     }
 
-    private record HelperRowObj(String tableName, String geomAttrName, String refAttrName,
-                                String sourceOid, IomObject polyline) implements BufferedObj {
+    private record HelperRowObj(
+            String tableName, String geomAttrName, String refAttrName, String sourceOid, IomObject polyline)
+            implements BufferedObj {
         private HelperRowObj {
             polyline = new Iom_jObject(polyline);
         }
@@ -673,14 +740,14 @@ public final class ItfGeometryWriter implements IoxWriter {
         }
     }
 
-    private record GeometryAttr(AttributeDef attribute, boolean isArea) {
-    }
+    private record GeometryAttr(AttributeDef attribute, boolean isArea) {}
 
-    private record AreaEntry(String sourceOid, IomObject surfaceGeometry,
-                             IomObject source, String attrName,
-                             GeometryAttr geometryAttr) {
-    }
+    private record AreaEntry(
+            String sourceOid,
+            IomObject surfaceGeometry,
+            IomObject source,
+            String attrName,
+            GeometryAttr geometryAttr) {}
 
-    private record PreparedGeometry(List<HelperRowObj> rows, IomObject areaPoint) {
-    }
+    private record PreparedGeometry(List<HelperRowObj> rows, IomObject areaPoint) {}
 }

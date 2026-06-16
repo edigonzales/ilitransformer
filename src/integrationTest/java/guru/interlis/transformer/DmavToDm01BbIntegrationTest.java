@@ -1,20 +1,8 @@
 package guru.interlis.transformer;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.IoxWriter;
-import ch.interlis.iox_j.EndBasketEvent;
-import ch.interlis.iox_j.EndTransferEvent;
-import ch.interlis.iox_j.ObjectEvent;
-import ch.interlis.iox_j.StartBasketEvent;
-import ch.interlis.iox_j.StartTransferEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCollector;
-import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
@@ -29,15 +17,28 @@ import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.DefaultOidGenerationService;
 import guru.interlis.transformer.state.InMemoryReferenceIndex;
 import guru.interlis.transformer.state.InMemoryStateStore;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.IoxWriter;
+import ch.interlis.iox_j.EndBasketEvent;
+import ch.interlis.iox_j.EndTransferEvent;
+import ch.interlis.iox_j.ObjectEvent;
+import ch.interlis.iox_j.StartBasketEvent;
+import ch.interlis.iox_j.StartTransferEvent;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class DmavToDm01BbIntegrationTest {
 
@@ -164,8 +165,7 @@ class DmavToDm01BbIntegrationTest {
                     new IoxGeometryAdapter(),
                     new DefaultOidGenerationService(),
                     new InMemoryReferenceIndex());
-            TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(nf, bb), Map.of("dm01", writer));
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, bb), Map.of("dm01", writer));
 
             for (var d : engineDiag.all()) {
                 System.out.println("  Rev Engine: [" + d.severity() + "] " + d.code() + ": " + d.message());
@@ -173,11 +173,9 @@ class DmavToDm01BbIntegrationTest {
 
             boolean hasErrors = engineDiag.all().stream()
                     .anyMatch(d -> "ERROR".equals(d.severity().name()));
-            boolean hasAmbiguousRefs = engineDiag.all().stream()
-                    .anyMatch(d -> "ILITRF-RUN-REF-AMBIGUOUS".equals(d.code()));
-            assertThat(hasErrors)
-                    .as("Engine diagnostics: %s", engineDiag.all())
-                    .isFalse();
+            boolean hasAmbiguousRefs =
+                    engineDiag.all().stream().anyMatch(d -> "ILITRF-RUN-REF-AMBIGUOUS".equals(d.code()));
+            assertThat(hasErrors).as("Engine diagnostics: %s", engineDiag.all()).isFalse();
             assertThat(hasAmbiguousRefs)
                     .as("Engine diagnostics: %s", engineDiag.all())
                     .isFalse();
@@ -278,8 +276,8 @@ class DmavToDm01BbIntegrationTest {
                     new IoxGeometryAdapter(),
                     new DefaultOidGenerationService(),
                     new InMemoryReferenceIndex());
-            TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(nfGueltig, nfProj, real, projected, fiktive), Map.of("dm01", writer));
+            TransformResult result = engine.runTyped(
+                    plan, onceReaderFactory(nfGueltig, nfProj, real, projected, fiktive), Map.of("dm01", writer));
 
             assertThat(result.errors()).isEqualTo(0);
             assertThat(engineDiag.all()).isEmpty();
@@ -334,8 +332,7 @@ class DmavToDm01BbIntegrationTest {
                     new IoxGeometryAdapter(),
                     new DefaultOidGenerationService(),
                     new InMemoryReferenceIndex());
-            TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(nf, bb), Map.of("dm01", writer));
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, bb), Map.of("dm01", writer));
 
             assertThat(result.errors()).isEqualTo(0);
             assertThat(engineDiag.all()).isEmpty();
@@ -383,8 +380,7 @@ class DmavToDm01BbIntegrationTest {
                     new IoxGeometryAdapter(),
                     new DefaultOidGenerationService(),
                     new InMemoryReferenceIndex());
-            TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(nf, mp), Map.of("dm01", writer));
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, mp), Map.of("dm01", writer));
 
             assertThat(result.errors()).isEqualTo(0);
 
@@ -393,7 +389,8 @@ class DmavToDm01BbIntegrationTest {
                     .allMatch(d -> "ILITRF-LOOKUP-NO-MATCH".equals(d.code())
                             || "ILITRF-RUN-REF-MISSING-OPTIONAL".equals(d.code()));
             assertThat(onlyLookupNoMatchWarnings)
-                    .as("Only LOOKUP-NO-MATCH and RUN-REF-MISSING-OPTIONAL diagnostics expected, got: %s",
+                    .as(
+                            "Only LOOKUP-NO-MATCH and RUN-REF-MISSING-OPTIONAL diagnostics expected, got: %s",
                             engineDiag.all())
                     .isTrue();
 
@@ -437,10 +434,9 @@ class DmavToDm01BbIntegrationTest {
             IoxWriter writer = ioFactory.createWriter(outputPath, dm01TransferDescription);
 
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(nf, bb), Map.of("dm01", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, bb), Map.of("dm01", writer));
 
             assertThat(result.summary()).contains("INTEGER");
             String content = Files.readString(outputPath);
@@ -483,7 +479,9 @@ class DmavToDm01BbIntegrationTest {
             }
 
             @Override
-            public ch.interlis.iox.IoxFactoryCollection getFactory() { return null; }
+            public ch.interlis.iox.IoxFactoryCollection getFactory() {
+                return null;
+            }
 
             @Override
             public void setFactory(ch.interlis.iox.IoxFactoryCollection factory) {}
@@ -493,15 +491,31 @@ class DmavToDm01BbIntegrationTest {
     private static java.util.function.Function<String, IoxReader> onceReaderFactory(Iom_jObject... objects) {
         return new java.util.function.Function<>() {
             private boolean used = false;
+
             @Override
             public IoxReader apply(String inputId) {
                 if (used) {
                     return new IoxReader() {
-                        @Override public IoxEvent read() { return null; }
-                        @Override public void close() {}
-                        @Override public IomObject createIomObject(String tag, String oid) { return new Iom_jObject(tag, oid); }
-                        @Override public ch.interlis.iox.IoxFactoryCollection getFactory() { return null; }
-                        @Override public void setFactory(ch.interlis.iox.IoxFactoryCollection f) {}
+                        @Override
+                        public IoxEvent read() {
+                            return null;
+                        }
+
+                        @Override
+                        public void close() {}
+
+                        @Override
+                        public IomObject createIomObject(String tag, String oid) {
+                            return new Iom_jObject(tag, oid);
+                        }
+
+                        @Override
+                        public ch.interlis.iox.IoxFactoryCollection getFactory() {
+                            return null;
+                        }
+
+                        @Override
+                        public void setFactory(ch.interlis.iox.IoxFactoryCollection f) {}
                     };
                 }
                 used = true;

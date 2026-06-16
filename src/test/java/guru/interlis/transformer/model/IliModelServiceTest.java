@@ -1,9 +1,8 @@
 package guru.interlis.transformer.model;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
 
 class IliModelServiceTest {
 
@@ -12,16 +11,14 @@ class IliModelServiceTest {
 
     @Test
     void compilesMinimalModel() {
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/minimal.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
         assertThat(result.hasErrors()).isFalse();
         assertThat(result.transferDescription()).isNotNull();
     }
 
     @Test
     void buildInventoryForMinimalModel() {
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/minimal.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
         assertThat(result.hasErrors()).isFalse();
 
         ModelInventory inv = service.buildInventory(result.transferDescription(), "minimal");
@@ -58,8 +55,7 @@ class IliModelServiceTest {
 
     @Test
     void compilesEnumModel() {
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/with-enums.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/with-enums.ili", MODELDIR);
         assertThat(result.hasErrors()).isFalse();
 
         ModelInventory inv = service.buildInventory(result.transferDescription(), "enums");
@@ -76,8 +72,7 @@ class IliModelServiceTest {
 
     @Test
     void compilesAssociationModelWithRoles() {
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/with-associations.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/with-associations.ili", MODELDIR);
         assertThat(result.hasErrors()).isFalse();
 
         ModelInventory inv = service.buildInventory(result.transferDescription(), "assoc");
@@ -104,8 +99,7 @@ class IliModelServiceTest {
 
     @Test
     void compilesStructureModel() {
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/with-structures.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/with-structures.ili", MODELDIR);
         assertThat(result.hasErrors()).isFalse();
 
         ModelInventory inv = service.buildInventory(result.transferDescription(), "struct");
@@ -128,8 +122,7 @@ class IliModelServiceTest {
 
     @Test
     void compileNonexistentModelReturnsDiagnostic() {
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/nonexistent.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/nonexistent.ili", MODELDIR);
         assertThat(result.hasErrors()).isTrue();
         assertThat(result.transferDescription()).isNull();
         assertThat(result.diagnostics().all()).isNotEmpty();
@@ -137,8 +130,7 @@ class IliModelServiceTest {
 
     @Test
     void classesSortedByNameDeterministically() {
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/with-associations.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/with-associations.ili", MODELDIR);
         assertThat(result.hasErrors()).isFalse();
 
         ModelInventory inv = service.buildInventory(result.transferDescription(), "assoc");

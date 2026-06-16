@@ -1,11 +1,11 @@
 package guru.interlis.transformer.expr;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.expr.builtins.BasicFunctions;
 import guru.interlis.transformer.expr.builtins.StringFunctions;
-import guru.interlis.transformer.mapping.plan.TypeInfo;
-import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class NestedFunctionTypeTest {
 

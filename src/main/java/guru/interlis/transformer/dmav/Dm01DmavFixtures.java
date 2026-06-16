@@ -9,76 +9,83 @@ public final class Dm01DmavFixtures {
 
     private static final List<String> LFP3_TARGET_CLASSES =
             List.of("LFP3Nachfuehrung", "LFP3", "LFP3Pos", "LFP3Symbol");
-    private static final List<String> HFP3_TARGET_CLASSES =
-            List.of("HFP3Nachfuehrung", "HFP3", "HFP3Pos");
-    private static final List<String> BB_DM01_TARGET_CLASSES =
-            List.of("Bodenbedeckung.BBNachfuehrung", "Bodenbedeckung.BoFlaeche",
-                    "Bodenbedeckung.ProjBoFlaeche", "Bodenbedeckung.Gebaeudenummer",
-                    "Bodenbedeckung.GebaeudenummerPos", "Bodenbedeckung.Objektname",
-                    "Bodenbedeckung.ObjektnamePos", "Bodenbedeckung.BoFlaecheSymbol",
-                    "Bodenbedeckung.Einzelpunkt");
+    private static final List<String> HFP3_TARGET_CLASSES = List.of("HFP3Nachfuehrung", "HFP3", "HFP3Pos");
+    private static final List<String> BB_DM01_TARGET_CLASSES = List.of(
+            "Bodenbedeckung.BBNachfuehrung",
+            "Bodenbedeckung.BoFlaeche",
+            "Bodenbedeckung.ProjBoFlaeche",
+            "Bodenbedeckung.Gebaeudenummer",
+            "Bodenbedeckung.GebaeudenummerPos",
+            "Bodenbedeckung.Objektname",
+            "Bodenbedeckung.ObjektnamePos",
+            "Bodenbedeckung.BoFlaecheSymbol",
+            "Bodenbedeckung.Einzelpunkt");
     private static final List<String> BB_DMAV_TARGET_CLASSES =
-            List.of("Bodenbedeckung.BBNachfuehrung", "Bodenbedeckung.Bodenbedeckung",
-                    "Bodenbedeckung.Messpunkt");
-    private static final List<String> EO_DM01_TARGET_CLASSES =
-            List.of("Einzelobjekte.EONachfuehrung", "Einzelobjekte.Einzelobjekt",
-                    "Einzelobjekte.Flaechenelement", "Einzelobjekte.Linienelement",
-                    "Einzelobjekte.Punktelement", "Einzelobjekte.Objektname",
-                    "Einzelobjekte.Objektnummer", "Einzelobjekte.Einzelpunkt");
+            List.of("Bodenbedeckung.BBNachfuehrung", "Bodenbedeckung.Bodenbedeckung", "Bodenbedeckung.Messpunkt");
+    private static final List<String> EO_DM01_TARGET_CLASSES = List.of(
+            "Einzelobjekte.EONachfuehrung", "Einzelobjekte.Einzelobjekt",
+            "Einzelobjekte.Flaechenelement", "Einzelobjekte.Linienelement",
+            "Einzelobjekte.Punktelement", "Einzelobjekte.Objektname",
+            "Einzelobjekte.Objektnummer", "Einzelobjekte.Einzelpunkt");
     private static final List<String> EO_DMAV_TARGET_CLASSES =
-            List.of("Einzelobjekte.EONachfuehrung", "Einzelobjekte.Einzelobjekt",
-                    "Einzelobjekte.Messpunkt");
-    private static final List<String> GS_DM01_TARGET_CLASSES =
-            List.of("Liegenschaften.LSNachfuehrung", "Liegenschaften.Grenzpunkt",
-                    "Liegenschaften.Grundstueck", "Liegenschaften.Liegenschaft");
-    private static final List<String> GS_DMAV_TARGET_CLASSES =
-            List.of("Grundstuecke.GSNachfuehrung", "Grundstuecke.Grenzpunkt",
-                    "Grundstuecke.Grundstueck", "Grundstuecke.Liegenschaft");
-    private static final List<String> NOMENKLATUR_DM01_TARGET_CLASSES =
-            List.of("Nomenklatur.NKNachfuehrung", "Nomenklatur.Flurname",
-                    "Nomenklatur.Flurname_Geometrie", "Nomenklatur.FlurnamePos",
-                    "Nomenklatur.Ortsname", "Nomenklatur.OrtsnamePos",
-                    "Nomenklatur.Gelaendename", "Nomenklatur.GelaendenamePos");
-    private static final List<String> NOMENKLATUR_DMAV_TARGET_CLASSES =
-            List.of("Nomenklatur.NKNachfuehrung", "Nomenklatur.Flurname",
-                    "Nomenklatur.Ortsname", "Nomenklatur.Gelaendename");
+            List.of("Einzelobjekte.EONachfuehrung", "Einzelobjekte.Einzelobjekt", "Einzelobjekte.Messpunkt");
+    private static final List<String> GS_DM01_TARGET_CLASSES = List.of(
+            "Liegenschaften.LSNachfuehrung", "Liegenschaften.Grenzpunkt",
+            "Liegenschaften.Grundstueck", "Liegenschaften.Liegenschaft");
+    private static final List<String> GS_DMAV_TARGET_CLASSES = List.of(
+            "Grundstuecke.GSNachfuehrung", "Grundstuecke.Grenzpunkt",
+            "Grundstuecke.Grundstueck", "Grundstuecke.Liegenschaft");
+    private static final List<String> NOMENKLATUR_DM01_TARGET_CLASSES = List.of(
+            "Nomenklatur.NKNachfuehrung", "Nomenklatur.Flurname",
+            "Nomenklatur.Flurname_Geometrie", "Nomenklatur.FlurnamePos",
+            "Nomenklatur.Ortsname", "Nomenklatur.OrtsnamePos",
+            "Nomenklatur.Gelaendename", "Nomenklatur.GelaendenamePos");
+    private static final List<String> NOMENKLATUR_DMAV_TARGET_CLASSES = List.of(
+            "Nomenklatur.NKNachfuehrung", "Nomenklatur.Flurname",
+            "Nomenklatur.Ortsname", "Nomenklatur.Gelaendename");
     private static final List<String> TOLERANZSTUFEN_DM01_TARGET_CLASSES =
             List.of("TSEinteilung.Toleranzstufe", "TSEinteilung.ToleranzstufePos");
     private static final List<String> TOLERANZSTUFEN_DMAV_TARGET_CLASSES =
             List.of("Toleranzstufen.TSNachfuehrung", "Toleranzstufen.Toleranzstufe");
-    private static final List<String> GA_DM01_TARGET_CLASSES =
-            List.of("Gebaeudeadressen.GEBNachfuehrung", "Gebaeudeadressen.Lokalisation",
-                    "Gebaeudeadressen.LokalisationsName", "Gebaeudeadressen.LokalisationsNamePos",
-                    "Gebaeudeadressen.BenanntesGebiet", "Gebaeudeadressen.Strassenstueck",
-                    "Gebaeudeadressen.Gebaeudeeingang", "Gebaeudeadressen.HausnummerPos",
-                    "Gebaeudeadressen.GebaeudeName", "Gebaeudeadressen.GebaeudeNamePos",
-                    "Gebaeudeadressen.GebaeudeBeschreibung");
-    private static final List<String> GA_DMAV_TARGET_CLASSES =
-            List.of("Gebaeudeadressen.GANachfuehrung", "Gebaeudeadressen.Lokalisation",
-                    "Gebaeudeadressen.Gebaeudeeingang");
-    private static final List<String> HOHEITSGRENZEN_DM01_TARGET_CLASSES =
-            List.of("Gemeindegrenzen.GEMNachfuehrung", "Gemeindegrenzen.Gemeinde",
-                    "Gemeindegrenzen.ProjGemeindegrenze", "Gemeindegrenzen.Gemeindegrenze",
-                    "Bezirksgrenzen.Bezirksgrenzabschnitt",
-                    "Kantonsgrenzen.Kantonsgrenzabschnitt");
-    private static final List<String> HOHEITSGRENZEN_DMAV_TARGET_CLASSES =
-            List.of("HoheitsgrenzenAV.HHGNachfuehrung", "HoheitsgrenzenAV.Gemeinde",
-                    "HoheitsgrenzenAV.ProjGemeindegrenzabschnitt", "HoheitsgrenzenAV.Gemeindegrenze",
-                    "HoheitsgrenzenAV.Bezirksgrenzabschnitt",
-                    "HoheitsgrenzenAV.Kantonsgrenzabschnitt");
+    private static final List<String> GA_DM01_TARGET_CLASSES = List.of(
+            "Gebaeudeadressen.GEBNachfuehrung",
+            "Gebaeudeadressen.Lokalisation",
+            "Gebaeudeadressen.LokalisationsName",
+            "Gebaeudeadressen.LokalisationsNamePos",
+            "Gebaeudeadressen.BenanntesGebiet",
+            "Gebaeudeadressen.Strassenstueck",
+            "Gebaeudeadressen.Gebaeudeeingang",
+            "Gebaeudeadressen.HausnummerPos",
+            "Gebaeudeadressen.GebaeudeName",
+            "Gebaeudeadressen.GebaeudeNamePos",
+            "Gebaeudeadressen.GebaeudeBeschreibung");
+    private static final List<String> GA_DMAV_TARGET_CLASSES = List.of(
+            "Gebaeudeadressen.GANachfuehrung", "Gebaeudeadressen.Lokalisation", "Gebaeudeadressen.Gebaeudeeingang");
+    private static final List<String> HOHEITSGRENZEN_DM01_TARGET_CLASSES = List.of(
+            "Gemeindegrenzen.GEMNachfuehrung",
+            "Gemeindegrenzen.Gemeinde",
+            "Gemeindegrenzen.ProjGemeindegrenze",
+            "Gemeindegrenzen.Gemeindegrenze",
+            "Bezirksgrenzen.Bezirksgrenzabschnitt",
+            "Kantonsgrenzen.Kantonsgrenzabschnitt");
+    private static final List<String> HOHEITSGRENZEN_DMAV_TARGET_CLASSES = List.of(
+            "HoheitsgrenzenAV.HHGNachfuehrung",
+            "HoheitsgrenzenAV.Gemeinde",
+            "HoheitsgrenzenAV.ProjGemeindegrenzabschnitt",
+            "HoheitsgrenzenAV.Gemeindegrenze",
+            "HoheitsgrenzenAV.Bezirksgrenzabschnitt",
+            "HoheitsgrenzenAV.Kantonsgrenzabschnitt");
     private static final List<String> FIXPUNKTELV_DM01_TARGET_CLASSES =
             List.of("FixpunkteKategorie1.LFP1", "FixpunkteKategorie1.HFP1");
-    private static final List<String> FIXPUNKTELV_DMAV_TARGET_CLASSES =
-            List.of("FixpunkteLV.LFP1", "FixpunkteLV.HFP1");
-    private static final List<String> FPDS2_DM01_TARGET_CLASSES =
-            List.of("FixpunkteKategorie2.LFP2", "FixpunkteKategorie2.HFP2",
-                    "FixpunkteKategorie2.LFP2Nachfuehrung", "FixpunkteKategorie2.HFP2Nachfuehrung");
+    private static final List<String> FIXPUNKTELV_DMAV_TARGET_CLASSES = List.of("FixpunkteLV.LFP1", "FixpunkteLV.HFP1");
+    private static final List<String> FPDS2_DM01_TARGET_CLASSES = List.of(
+            "FixpunkteKategorie2.LFP2", "FixpunkteKategorie2.HFP2",
+            "FixpunkteKategorie2.LFP2Nachfuehrung", "FixpunkteKategorie2.HFP2Nachfuehrung");
     private static final List<String> FPDS2_DMAV_TARGET_CLASSES =
             List.of("FPDS2.Fixpunkt", "FPDS2.FixpunktVersion", "FPDS2.FixpunkteNachfuehrung");
     private static final List<String> HOHEITSGRENZENLV_DM01_TARGET_CLASSES =
             List.of("Landesgrenzen.Landesgrenzabschnitt");
-    private static final List<String> HOHEITSGRENZENLV_DMAV_TARGET_CLASSES =
-            List.of("HoheitsgrenzenLV.Landesgrenze");
+    private static final List<String> HOHEITSGRENZENLV_DMAV_TARGET_CLASSES = List.of("HoheitsgrenzenLV.Landesgrenze");
     private static final List<String> PLZORTSCHAFT_DM01_TARGET_CLASSES =
             List.of("PLZOrtschaft.Ortschaft", "PLZOrtschaft.OrtschaftsName", "PLZOrtschaft.PLZ6");
     private static final List<String> PLZORTSCHAFT_DMAV_TARGET_CLASSES =
@@ -93,8 +100,7 @@ public final class Dm01DmavFixtures {
             LFP3_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec HFP3 = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_HFP3,
@@ -105,8 +111,7 @@ public final class Dm01DmavFixtures {
             HFP3_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec BB = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_BB,
@@ -117,8 +122,7 @@ public final class Dm01DmavFixtures {
             BB_DMAV_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec EO = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_EO,
@@ -129,8 +133,7 @@ public final class Dm01DmavFixtures {
             EO_DMAV_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec GS = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_GS,
@@ -141,8 +144,7 @@ public final class Dm01DmavFixtures {
             GS_DMAV_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec NOMENKLATUR = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_NOMENKLATUR,
@@ -153,8 +155,7 @@ public final class Dm01DmavFixtures {
             NOMENKLATUR_DMAV_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec TOLERANZSTUFEN = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_TOLERANZSTUFEN,
@@ -165,8 +166,7 @@ public final class Dm01DmavFixtures {
             TOLERANZSTUFEN_DMAV_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec GA = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_GA,
@@ -177,8 +177,7 @@ public final class Dm01DmavFixtures {
             GA_DMAV_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec HOHEITSGRENZEN = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_HOHEITSGRENZEN,
@@ -189,8 +188,7 @@ public final class Dm01DmavFixtures {
             HOHEITSGRENZEN_DMAV_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec FIXPUNKTELV = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_FIXPUNKTELV,
@@ -201,8 +199,7 @@ public final class Dm01DmavFixtures {
             FIXPUNKTELV_DMAV_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec FPDS2 = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_FPDS2,
@@ -213,8 +210,7 @@ public final class Dm01DmavFixtures {
             FPDS2_DMAV_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec HOHEITSGRENZENLV = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_HOHEITSGRENZENLV,
@@ -225,8 +221,7 @@ public final class Dm01DmavFixtures {
             HOHEITSGRENZENLV_DMAV_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     public static final TopicFixtureSpec PLZORTSCHAFT = new TopicFixtureSpec(
             Dm01DmavPaths.TOPIC_PLZORTSCHAFT,
@@ -237,8 +232,7 @@ public final class Dm01DmavFixtures {
             PLZORTSCHAFT_DMAV_TARGET_CLASSES,
             2,
             200,
-            true
-    );
+            true);
 
     private Dm01DmavFixtures() {}
 
@@ -382,8 +376,7 @@ public final class Dm01DmavFixtures {
             List<String> dmavSeedClasses,
             int maxDepth,
             int maxObjects,
-            boolean includeBidirectional
-    ) {
+            boolean includeBidirectional) {
 
         public Path fixtureDir() {
             return Dm01DmavPaths.fixtureDir(topicId);
@@ -420,8 +413,7 @@ public final class Dm01DmavFixtures {
                     maxDepth,
                     maxObjects,
                     includeBidirectional,
-                    targetDir
-            );
+                    targetDir);
         }
 
         public ExtractionRequest dmavExtractionRequest(Path targetDir) {
@@ -431,8 +423,7 @@ public final class Dm01DmavFixtures {
                     maxDepth,
                     maxObjects,
                     includeBidirectional,
-                    targetDir
-            );
+                    targetDir);
         }
     }
 }

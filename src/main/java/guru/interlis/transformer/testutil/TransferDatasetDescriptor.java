@@ -9,5 +9,4 @@ public record TransferDatasetDescriptor(
         TransferFormat format,
         List<String> declaredModels,
         List<String> modelDirectories,
-        long sizeBytes
-) {}
+        long sizeBytes) {}

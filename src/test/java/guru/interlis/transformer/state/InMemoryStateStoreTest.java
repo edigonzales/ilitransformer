@@ -1,12 +1,13 @@
 package guru.interlis.transformer.state;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import ch.interlis.iom_j.Iom_jObject;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
 class InMemoryStateStoreTest {
 
@@ -31,8 +32,7 @@ class InMemoryStateStoreTest {
     @Test
     void sourceRecordsEmptyForWrongInputId() {
         InMemoryStateStore store = new InMemoryStateStore();
-        store.addSourceRecord(new SourceRecord("in1", null, "Model.T.ClassA",
-                new Iom_jObject("Model.T.ClassA", "1")));
+        store.addSourceRecord(new SourceRecord("in1", null, "Model.T.ClassA", new Iom_jObject("Model.T.ClassA", "1")));
 
         List<SourceRecord> result = store.sourceRecords("unknown", "Model.T.ClassA");
 
@@ -42,8 +42,7 @@ class InMemoryStateStoreTest {
     @Test
     void sourceRecordsEmptyForWrongClass() {
         InMemoryStateStore store = new InMemoryStateStore();
-        store.addSourceRecord(new SourceRecord("in1", null, "Model.T.ClassA",
-                new Iom_jObject("Model.T.ClassA", "1")));
+        store.addSourceRecord(new SourceRecord("in1", null, "Model.T.ClassA", new Iom_jObject("Model.T.ClassA", "1")));
 
         List<SourceRecord> result = store.sourceRecords("in1", "Model.T.ClassX");
 
@@ -54,10 +53,10 @@ class InMemoryStateStoreTest {
     void sourceRecordsPreservesInsertionOrder() {
         InMemoryStateStore store = new InMemoryStateStore();
         for (int i = 1; i <= 5; i++) {
-            store.addSourceRecord(new SourceRecord("in1", null, "Model.T.ClassA",
-                    new Iom_jObject("Model.T.ClassA", String.valueOf(i))));
-            store.addSourceRecord(new SourceRecord("in1", null, "Model.T.ClassB",
-                    new Iom_jObject("Model.T.ClassB", String.valueOf(i))));
+            store.addSourceRecord(new SourceRecord(
+                    "in1", null, "Model.T.ClassA", new Iom_jObject("Model.T.ClassA", String.valueOf(i))));
+            store.addSourceRecord(new SourceRecord(
+                    "in1", null, "Model.T.ClassB", new Iom_jObject("Model.T.ClassB", String.valueOf(i))));
         }
 
         List<SourceRecord> resultA = store.sourceRecords("in1", "Model.T.ClassA");
@@ -74,24 +73,22 @@ class InMemoryStateStoreTest {
     @Test
     void sourceRecordsReturnsImmutableList() {
         InMemoryStateStore store = new InMemoryStateStore();
-        store.addSourceRecord(new SourceRecord("in1", null, "Model.T.ClassA",
-                new Iom_jObject("Model.T.ClassA", "1")));
+        store.addSourceRecord(new SourceRecord("in1", null, "Model.T.ClassA", new Iom_jObject("Model.T.ClassA", "1")));
 
         List<SourceRecord> result = store.sourceRecords("in1", "Model.T.ClassA");
 
         assertThat(result).isNotEmpty();
-        assertThrows(UnsupportedOperationException.class, () -> result.add(
-                new SourceRecord("in1", null, "Model.T.ClassA",
-                        new Iom_jObject("Model.T.ClassA", "2"))));
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> result.add(
+                        new SourceRecord("in1", null, "Model.T.ClassA", new Iom_jObject("Model.T.ClassA", "2"))));
     }
 
     @Test
     void unfilteredSourceRecordsStillContainsAll() {
         InMemoryStateStore store = new InMemoryStateStore();
-        store.addSourceRecord(new SourceRecord("in1", null, "Model.T.ClassA",
-                new Iom_jObject("Model.T.ClassA", "1")));
-        store.addSourceRecord(new SourceRecord("in2", null, "Model.T.ClassB",
-                new Iom_jObject("Model.T.ClassB", "2")));
+        store.addSourceRecord(new SourceRecord("in1", null, "Model.T.ClassA", new Iom_jObject("Model.T.ClassA", "1")));
+        store.addSourceRecord(new SourceRecord("in2", null, "Model.T.ClassB", new Iom_jObject("Model.T.ClassB", "2")));
 
         List<SourceRecord> all = store.sourceRecords();
 

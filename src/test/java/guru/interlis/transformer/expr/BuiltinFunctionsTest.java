@@ -1,12 +1,13 @@
 package guru.interlis.transformer.expr;
 
+import static org.assertj.core.api.Assertions.*;
+
 import ch.interlis.iom_j.Iom_jObject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class BuiltinFunctionsTest {
 

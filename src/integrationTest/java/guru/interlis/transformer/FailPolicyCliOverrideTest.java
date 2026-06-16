@@ -6,7 +6,6 @@ import guru.interlis.transformer.app.CliMain;
 import guru.interlis.transformer.app.JobRunner;
 import guru.interlis.transformer.app.PreparedJob;
 import guru.interlis.transformer.app.RunOptions;
-import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.mapping.plan.FailPolicy;
 
 import java.io.ByteArrayOutputStream;
@@ -73,12 +72,14 @@ class FailPolicyCliOverrideTest {
                           class: "TestModel.TestTopic.TestClass"
                       assign:
                         Name: "${s.Name}"
-                """
-                .replace("INPUT_PLACEHOLDER", tempDir.resolve("input.itf").toString().replace("\\", "\\\\"))
-                .replace("OUTPUT_PLACEHOLDER", tempDir.resolve("output.itf").toString().replace("\\", "\\\\")));
+                """.replace(
+                        "INPUT_PLACEHOLDER",
+                        tempDir.resolve("input.itf").toString().replace("\\", "\\\\"))
+                .replace(
+                        "OUTPUT_PLACEHOLDER",
+                        tempDir.resolve("output.itf").toString().replace("\\", "\\\\")));
 
-        var options = new RunOptions(List.of(), false, null,
-                false, FailPolicy.LENIENT);
+        var options = new RunOptions(List.of(), false, null, false, FailPolicy.LENIENT);
         PreparedJob prepared = new JobRunner().prepare(mapping, options);
 
         assertThat(prepared.plan().failPolicy()).isEqualTo(FailPolicy.LENIENT);
@@ -115,12 +116,14 @@ class FailPolicyCliOverrideTest {
                           class: "TestModel.TestTopic.TestClass"
                       assign:
                         Name: "${s.Name}"
-                """
-                .replace("INPUT_PLACEHOLDER", tempDir.resolve("input.itf").toString().replace("\\", "\\\\"))
-                .replace("OUTPUT_PLACEHOLDER", tempDir.resolve("output.itf").toString().replace("\\", "\\\\")));
+                """.replace(
+                        "INPUT_PLACEHOLDER",
+                        tempDir.resolve("input.itf").toString().replace("\\", "\\\\"))
+                .replace(
+                        "OUTPUT_PLACEHOLDER",
+                        tempDir.resolve("output.itf").toString().replace("\\", "\\\\")));
 
-        var options = new RunOptions(List.of(), false, null,
-                false, FailPolicy.REPORT_ONLY);
+        var options = new RunOptions(List.of(), false, null, false, FailPolicy.REPORT_ONLY);
         PreparedJob prepared = new JobRunner().prepare(mapping, options);
 
         assertThat(prepared.plan().failPolicy()).isEqualTo(FailPolicy.REPORT_ONLY);
@@ -157,9 +160,12 @@ class FailPolicyCliOverrideTest {
                           class: "TestModel.TestTopic.TestClass"
                       assign:
                         Name: "${s.Name}"
-                """
-                .replace("INPUT_PLACEHOLDER", tempDir.resolve("input.itf").toString().replace("\\", "\\\\"))
-                .replace("OUTPUT_PLACEHOLDER", tempDir.resolve("output.itf").toString().replace("\\", "\\\\")));
+                """.replace(
+                        "INPUT_PLACEHOLDER",
+                        tempDir.resolve("input.itf").toString().replace("\\", "\\\\"))
+                .replace(
+                        "OUTPUT_PLACEHOLDER",
+                        tempDir.resolve("output.itf").toString().replace("\\", "\\\\")));
 
         var options = new RunOptions(List.of(), false, null, false);
         PreparedJob prepared = new JobRunner().prepare(mapping, options);
@@ -198,15 +204,15 @@ class FailPolicyCliOverrideTest {
                           class: "TestModel.TestTopic.TestClass"
                       assign:
                         Name: "${s.Name}"
-                """
-                .replace("INPUT_PLACEHOLDER", tempDir.resolve("input.itf").toString().replace("\\", "\\\\"))
-                .replace("OUTPUT_PLACEHOLDER", tempDir.resolve("output.itf").toString().replace("\\", "\\\\")));
+                """.replace(
+                        "INPUT_PLACEHOLDER",
+                        tempDir.resolve("input.itf").toString().replace("\\", "\\\\"))
+                .replace(
+                        "OUTPUT_PLACEHOLDER",
+                        tempDir.resolve("output.itf").toString().replace("\\", "\\\\")));
 
-        int exitCode = new CommandLine(new CliMain()).execute(
-                "transform",
-                "--mapping", mapping.toString(),
-                "--fail-policy", "invalid"
-        );
+        int exitCode = new CommandLine(new CliMain())
+                .execute("transform", "--mapping", mapping.toString(), "--fail-policy", "invalid");
 
         assertThat(exitCode).isEqualTo(1);
         assertThat(errContent.toString()).contains("failPolicy");

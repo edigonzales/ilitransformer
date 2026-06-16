@@ -1,6 +1,7 @@
 package guru.interlis.transformer.mapping.compiler;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
@@ -8,13 +9,12 @@ import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class TypedCompilerTest {
 
@@ -56,7 +56,9 @@ class TypedCompilerTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
         var assignments = plan.rules().get(0).assignments();
 
-        var nameAssign = assignments.stream().filter(a -> a.targetAttrName().equals("Name")).findFirst();
+        var nameAssign = assignments.stream()
+                .filter(a -> a.targetAttrName().equals("Name"))
+                .findFirst();
         assertThat(nameAssign).isPresent();
         assertThat(nameAssign.get().targetAttr()).isNotNull();
         assertThat(nameAssign.get().expression().resultType()).isEqualTo(TypeInfo.TEXT);
@@ -75,11 +77,15 @@ class TypedCompilerTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         var nameAssign = plan.rules().get(0).assignments().stream()
-                .filter(a -> a.targetAttrName().equals("Name")).findFirst().orElseThrow();
+                .filter(a -> a.targetAttrName().equals("Name"))
+                .findFirst()
+                .orElseThrow();
         assertThat(nameAssign.expression().resultType()).isEqualTo(TypeInfo.TEXT);
 
         var boolAssign = plan.rules().get(0).assignments().stream()
-                .filter(a -> a.targetAttrName().equals("Aktiv")).findFirst().orElseThrow();
+                .filter(a -> a.targetAttrName().equals("Aktiv"))
+                .findFirst()
+                .orElseThrow();
         assertThat(boolAssign.expression().resultType()).isEqualTo(TypeInfo.BOOLEAN);
     }
 
@@ -96,9 +102,9 @@ class TypedCompilerTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         assertThat(plan.diagnostics().all()).isNotEmpty();
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_UNKNOWN_TARGET_CLASS)
-                        && d.severity() == Severity.ERROR);
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d ->
+                        d.code().equals(DiagnosticCode.MAP_UNKNOWN_TARGET_CLASS) && d.severity() == Severity.ERROR);
         assertThat(plan.rules()).isEmpty();
     }
 
@@ -112,9 +118,9 @@ class TypedCompilerTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_UNKNOWN_TARGET_ATTRIBUTE)
-                        && d.severity() == Severity.ERROR);
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d ->
+                        d.code().equals(DiagnosticCode.MAP_UNKNOWN_TARGET_ATTRIBUTE) && d.severity() == Severity.ERROR);
     }
 
     @Test
@@ -127,9 +133,9 @@ class TypedCompilerTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE)
-                        && d.severity() == Severity.ERROR);
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d ->
+                        d.code().equals(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE) && d.severity() == Severity.ERROR);
     }
 
     @Test
@@ -142,8 +148,7 @@ class TypedCompilerTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_TYPE_MISMATCH));
+        assertThat(plan.diagnostics().all()).anyMatch(d -> d.code().equals(DiagnosticCode.MAP_TYPE_MISMATCH));
     }
 
     @Test
@@ -157,8 +162,8 @@ class TypedCompilerTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_MANDATORY_MISSING)
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_MANDATORY_MISSING)
                         && d.message().contains("Name"));
     }
 
@@ -179,9 +184,9 @@ class TypedCompilerTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_DUPLICATE_TARGET_ASSIGN)
-                        && d.severity() == Severity.ERROR);
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d ->
+                        d.code().equals(DiagnosticCode.MAP_DUPLICATE_TARGET_ASSIGN) && d.severity() == Severity.ERROR);
     }
 
     @Test
@@ -190,7 +195,8 @@ class TypedCompilerTest {
         JobConfig config = new JobConfig();
         config.version = 1;
         addInputOutput(config);
-        var rule = addRule(config, "rule1", "INTERLIS.TIMESYSTEMS.CALENDAR", "out1", "in1", "INTERLIS.TIMESYSTEMS.CALENDAR");
+        var rule = addRule(
+                config, "rule1", "INTERLIS.TIMESYSTEMS.CALENDAR", "out1", "in1", "INTERLIS.TIMESYSTEMS.CALENDAR");
 
         // Compile INTERLIS predefined model
         IliModelService service = new IliModelService();
@@ -213,8 +219,10 @@ class TypedCompilerTest {
         config.version = 1;
         addInputOutput(config);
 
-        var rule1 = addRule(config, "r1", "TestModel.TestTopic.TestClass", "out1", "in1", "TestModel.TestTopic.TestClass");
-        var rule2 = addRule(config, "r2", "TestModel.TestTopic.TestClass", "out1", "in1", "TestModel.TestTopic.TestClass");
+        var rule1 =
+                addRule(config, "r1", "TestModel.TestTopic.TestClass", "out1", "in1", "TestModel.TestTopic.TestClass");
+        var rule2 =
+                addRule(config, "r2", "TestModel.TestTopic.TestClass", "out1", "in1", "TestModel.TestTopic.TestClass");
 
         // r1 -> r2, r2 -> r1 (cycle)
         JobConfig.RefMapping ref1 = new JobConfig.RefMapping();
@@ -230,9 +238,8 @@ class TypedCompilerTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_CYCLIC_DEPENDENCY)
-                        && d.severity() == Severity.ERROR);
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_CYCLIC_DEPENDENCY) && d.severity() == Severity.ERROR);
     }
 
     @Test
@@ -299,11 +306,7 @@ class TypedCompilerTest {
         JobConfig config = new JobConfig();
         config.version = 1;
         addInputOutput(config);
-        addRule(config, "rule1",
-                "TestModel.TestTopic.TestClass",
-                "out1",
-                "in1",
-                "TestModel.TestTopic.TestClass");
+        addRule(config, "rule1", "TestModel.TestTopic.TestClass", "out1", "in1", "TestModel.TestTopic.TestClass");
         return config;
     }
 
@@ -321,9 +324,8 @@ class TypedCompilerTest {
         config.job.outputs.add(out);
     }
 
-    private static JobConfig.RuleSpec addRule(JobConfig config, String id,
-                                               String targetClass, String output,
-                                               String inputId, String sourceClass) {
+    private static JobConfig.RuleSpec addRule(
+            JobConfig config, String id, String targetClass, String output, String inputId, String sourceClass) {
         JobConfig.RuleSpec rule = new JobConfig.RuleSpec();
         rule.id = id;
         rule.target = new JobConfig.TargetSpec();

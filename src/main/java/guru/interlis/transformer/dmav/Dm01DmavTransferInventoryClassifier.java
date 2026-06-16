@@ -1,7 +1,8 @@
 package guru.interlis.transformer.dmav;
 
-import ch.interlis.iom.IomObject;
 import guru.interlis.transformer.model.TransferInventoryClassifier;
+
+import ch.interlis.iom.IomObject;
 
 public final class Dm01DmavTransferInventoryClassifier implements TransferInventoryClassifier {
 

@@ -1,33 +1,32 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.IoxWriter;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
-import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.IliModelCompileResult;
+import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.IoxWriter;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class OidStrategyGoldenTest {
 
@@ -38,8 +37,7 @@ class OidStrategyGoldenTest {
     @BeforeAll
     static void compileModels() {
         IliModelService service = new IliModelService();
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/p5-test.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/p5-test.ili", MODELDIR);
         assertThat(result.hasErrors()).isFalse();
         p5TransferDescription = result.transferDescription();
         p5ModelTs = new TypeSystemFacade(p5TransferDescription);
@@ -55,8 +53,7 @@ class OidStrategyGoldenTest {
         return plan;
     }
 
-    private JobConfig configWithStrategy(String oidStrategy, String namespace,
-                                          String basketStrategy) {
+    private JobConfig configWithStrategy(String oidStrategy, String namespace, String basketStrategy) {
         JobConfig config = new JobConfig();
         config.version = 1;
 
@@ -120,14 +117,12 @@ class OidStrategyGoldenTest {
 
         IoxReader reader = createMockReader(src1, src2);
 
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), new DiagnosticCollector());
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), new DiagnosticCollector());
 
         IoxWriter writer = new CapturingWriter(writtenOids);
 
-        TransformResult result = engine.runTyped(plan,
-                ignored -> createMockReader(src1, src2),
-                Map.of("out1", writer));
+        TransformResult result = engine.runTyped(plan, ignored -> createMockReader(src1, src2), Map.of("out1", writer));
 
         assertThat(result.targetsCreated()).isEqualTo(2);
 
@@ -152,14 +147,12 @@ class OidStrategyGoldenTest {
 
         List<String> writtenOids = new ArrayList<>();
 
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), new DiagnosticCollector());
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), new DiagnosticCollector());
 
         IoxWriter writer = new CapturingWriter(writtenOids);
 
-        engine.runTyped(plan,
-                ignored -> createMockReader(src1, src2),
-                Map.of("out1", writer));
+        engine.runTyped(plan, ignored -> createMockReader(src1, src2), Map.of("out1", writer));
 
         assertThat(writtenOids).hasSize(2);
         assertThat(writtenOids.get(0)).isNotEqualTo(writtenOids.get(1));
@@ -178,14 +171,12 @@ class OidStrategyGoldenTest {
 
         List<String> writtenOids = new ArrayList<>();
 
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), new DiagnosticCollector());
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), new DiagnosticCollector());
 
         IoxWriter writer = new CapturingWriter(writtenOids);
 
-        engine.runTyped(plan,
-                ignored -> createMockReader(src),
-                Map.of("out1", writer));
+        engine.runTyped(plan, ignored -> createMockReader(src), Map.of("out1", writer));
 
         assertThat(writtenOids).containsExactly("ORIGINAL-OID-123");
     }
@@ -217,7 +208,9 @@ class OidStrategyGoldenTest {
         }
 
         @Override
-        public ch.interlis.iox.IoxFactoryCollection getFactory() { return null; }
+        public ch.interlis.iox.IoxFactoryCollection getFactory() {
+            return null;
+        }
 
         @Override
         public void setFactory(ch.interlis.iox.IoxFactoryCollection factory) {}
@@ -226,6 +219,7 @@ class OidStrategyGoldenTest {
     private IoxReader createMockReader(Iom_jObject... objects) {
         return new IoxReader() {
             private final IoxEvent[] events;
+
             {
                 var list = new ArrayList<IoxEvent>();
                 list.add(new ch.interlis.iox_j.StartTransferEvent("test", null, null));
@@ -237,6 +231,7 @@ class OidStrategyGoldenTest {
                 list.add(new ch.interlis.iox_j.EndTransferEvent());
                 events = list.toArray(new IoxEvent[0]);
             }
+
             private int index = 0;
 
             @Override
@@ -254,7 +249,9 @@ class OidStrategyGoldenTest {
             }
 
             @Override
-            public ch.interlis.iox.IoxFactoryCollection getFactory() { return null; }
+            public ch.interlis.iox.IoxFactoryCollection getFactory() {
+                return null;
+            }
 
             @Override
             public void setFactory(ch.interlis.iox.IoxFactoryCollection factory) {}

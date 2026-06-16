@@ -1,20 +1,22 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.model.IliModelCompileResult;
+import guru.interlis.transformer.model.IliModelService;
+
 import ch.interlis.iox.EndTransferEvent;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.ObjectEvent;
-import guru.interlis.transformer.interlis.InterlisIoFactory;
-import guru.interlis.transformer.model.IliModelCompileResult;
-import guru.interlis.transformer.model.IliModelService;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 @Tag("real-data")
 class RealDatasetGeometrySmokeTest {
@@ -35,11 +37,12 @@ class RealDatasetGeometrySmokeTest {
         IliModelCompileResult modelResult = service.compileModel(DM01_MODEL, DM01_MODELDIR);
         if (modelResult.hasErrors()) {
             System.out.println("DM01 model compilation issues (may be expected for real model):");
-            modelResult.diagnostics().all().forEach(d ->
-                    System.out.println("  " + d.severity() + " " + d.code() + ": " + d.message()));
+            modelResult
+                    .diagnostics()
+                    .all()
+                    .forEach(d -> System.out.println("  " + d.severity() + " " + d.code() + ": " + d.message()));
         }
-        assumeTrue(modelResult.transferDescription() != null,
-                "DM01 model did not produce a TransferDescription");
+        assumeTrue(modelResult.transferDescription() != null, "DM01 model did not produce a TransferDescription");
 
         InterlisIoFactory ioFactory = new InterlisIoFactory();
         int totalObjects = 0;
@@ -82,11 +85,12 @@ class RealDatasetGeometrySmokeTest {
         IliModelCompileResult modelResult = service.compileModel(DMAV_MODEL, DMAV_MODELDIR);
         if (modelResult.hasErrors()) {
             System.out.println("DMAV model compilation issues (may be expected for real model):");
-            modelResult.diagnostics().all().forEach(d ->
-                    System.out.println("  " + d.severity() + " " + d.code() + ": " + d.message()));
+            modelResult
+                    .diagnostics()
+                    .all()
+                    .forEach(d -> System.out.println("  " + d.severity() + " " + d.code() + ": " + d.message()));
         }
-        assumeTrue(modelResult.transferDescription() != null,
-                "DMAV model did not produce a TransferDescription");
+        assumeTrue(modelResult.transferDescription() != null, "DMAV model did not produce a TransferDescription");
 
         InterlisIoFactory ioFactory = new InterlisIoFactory();
         int totalObjects = 0;

@@ -49,48 +49,52 @@ public final class ExpressionTypeChecker {
 
         if (source == null) {
             if (diagnostics != null) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE,
                         Severity.ERROR,
                         "Unknown source alias in expression: " + alias,
-                        context.ruleId(), "Check the alias"));
+                        context.ruleId(),
+                        "Check the alias"));
             }
             return TypeInfo.UNKNOWN;
         }
 
         if (attrName == null || attrName.isBlank()) {
-            paths.add(new ResolvedPath(alias, null,
+            paths.add(new ResolvedPath(
+                    alias,
+                    null,
                     source.sourceClass() != null ? source.sourceClass().getName() : null,
                     TypeInfo.REFERENCE));
             return TypeInfo.REFERENCE;
         }
 
         if (source.sourceClass() != null) {
-            ch.interlis.ili2c.metamodel.AttributeDef attrDef =
-                    findAttribute(source.sourceClass(), attrName);
+            ch.interlis.ili2c.metamodel.AttributeDef attrDef = findAttribute(source.sourceClass(), attrName);
             if (attrDef != null) {
                 TypeInfo type = ExpressionCompiler.classifyIliAttr(attrDef);
-                paths.add(new ResolvedPath(alias, attrName,
-                        source.sourceClass().getName(), type));
+                paths.add(new ResolvedPath(alias, attrName, source.sourceClass().getName(), type));
                 return type;
             }
-            ch.interlis.ili2c.metamodel.RoleDef roleDef =
-                    findRole(source.sourceClass(), attrName);
+            ch.interlis.ili2c.metamodel.RoleDef roleDef = findRole(source.sourceClass(), attrName);
             if (roleDef != null) {
-                paths.add(new ResolvedPath(alias, attrName,
-                        source.sourceClass().getName(), TypeInfo.REFERENCE));
+                paths.add(new ResolvedPath(alias, attrName, source.sourceClass().getName(), TypeInfo.REFERENCE));
                 return TypeInfo.REFERENCE;
             }
         }
 
-        paths.add(new ResolvedPath(alias, attrName,
+        paths.add(new ResolvedPath(
+                alias,
+                attrName,
                 source.sourceClass() != null ? source.sourceClass().getName() : null,
                 TypeInfo.UNKNOWN));
 
         if (diagnostics != null) {
-            diagnostics.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE,
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE,
                     Severity.ERROR,
                     "Source attribute not found: " + alias + "." + attrName,
-                    context.ruleId(), "Check the attribute name in source class"));
+                    context.ruleId(),
+                    "Check the attribute name in source class"));
         }
         return TypeInfo.UNKNOWN;
     }
@@ -99,9 +103,12 @@ public final class ExpressionTypeChecker {
         Optional<FunctionDef> defOpt = context.functionRegistry().resolve(call.functionName());
         if (defOpt.isEmpty()) {
             if (diagnostics != null) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.EXPR_UNKNOWN_FUNC, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.EXPR_UNKNOWN_FUNC,
+                        Severity.ERROR,
                         "Unknown function: " + call.functionName(),
-                        context.ruleId(), "Check the function name"));
+                        context.ruleId(),
+                        "Check the function name"));
             }
             for (Expression arg : call.arguments()) {
                 check(arg, paths);
@@ -110,16 +117,19 @@ public final class ExpressionTypeChecker {
         }
 
         FunctionDef def = defOpt.get();
-        List<TypeInfo> argTypes = call.arguments().stream()
-                .map(arg -> check(arg, paths))
-                .toList();
+        List<TypeInfo> argTypes =
+                call.arguments().stream().map(arg -> check(arg, paths)).toList();
 
         if (!def.variadic() && call.arguments().size() != def.parameters().size()) {
             if (diagnostics != null) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.EXPR_WRONG_ARG_COUNT, Severity.ERROR,
-                        "Function '" + def.name() + "' expects " + def.parameters().size()
-                                + " arguments but got " + call.arguments().size(),
-                        context.ruleId(), "Check the function arguments"));
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.EXPR_WRONG_ARG_COUNT,
+                        Severity.ERROR,
+                        "Function '" + def.name() + "' expects "
+                                + def.parameters().size() + " arguments but got "
+                                + call.arguments().size(),
+                        context.ruleId(),
+                        "Check the function arguments"));
             }
         }
 
@@ -127,9 +137,12 @@ public final class ExpressionTypeChecker {
         checkArgTypeCompatibility(def, argTypes);
 
         if (!def.deterministic() && diagnostics != null) {
-            diagnostics.add(new Diagnostic(DiagnosticCode.EXPR_NON_DETERMINISTIC, Severity.WARNING,
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.EXPR_NON_DETERMINISTIC,
+                    Severity.WARNING,
                     "Non-deterministic function used: " + def.name(),
-                    context.ruleId(), "Results may vary between runs"));
+                    context.ruleId(),
+                    "Results may vary between runs"));
         }
 
         TypeInfo enumMapType = inferEnumMapReturnType(def, call);
@@ -142,8 +155,7 @@ public final class ExpressionTypeChecker {
                 : TypeInfo.UNKNOWN;
     }
 
-    private void checkEnumMapFunction(FunctionDef def, FunctionCallExpr call,
-                                       List<TypeInfo> argTypes) {
+    private void checkEnumMapFunction(FunctionDef def, FunctionCallExpr call, List<TypeInfo> argTypes) {
         if (!"enumMap".equalsIgnoreCase(def.name())) return;
         if (call.arguments().size() < 2) return;
 
@@ -155,9 +167,12 @@ public final class ExpressionTypeChecker {
 
         if (enumMaps == null || !enumMaps.containsKey(mapName)) {
             if (diagnostics != null) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.EXPR_ENUM_MAP_MISSING, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.EXPR_ENUM_MAP_MISSING,
+                        Severity.ERROR,
                         "Enum mapping table '" + mapName + "' not found in config",
-                        context.ruleId(), "Define the mapping under mapping.enums"));
+                        context.ruleId(),
+                        "Define the mapping under mapping.enums"));
             }
         }
     }
@@ -198,13 +213,15 @@ public final class ExpressionTypeChecker {
         for (int i = 0; i < Math.min(paramSize, argTypes.size()); i++) {
             TypeInfo paramType = def.parameters().get(i).type();
             TypeInfo argType = argTypes.get(i);
-            if (paramType != TypeInfo.UNKNOWN && argType != TypeInfo.UNKNOWN
-                    && !isTypeCompatible(argType, paramType)) {
+            if (paramType != TypeInfo.UNKNOWN && argType != TypeInfo.UNKNOWN && !isTypeCompatible(argType, paramType)) {
                 if (diagnostics != null) {
-                    diagnostics.add(new Diagnostic(DiagnosticCode.EXPR_WRONG_ARG_TYPE, Severity.WARNING,
-                            "Function '" + def.name() + "' parameter " + (i + 1)
-                                    + " expects " + paramType + " but got " + argType,
-                            context.ruleId(), "Check the argument type"));
+                    diagnostics.add(new Diagnostic(
+                            DiagnosticCode.EXPR_WRONG_ARG_TYPE,
+                            Severity.WARNING,
+                            "Function '" + def.name() + "' parameter " + (i + 1) + " expects " + paramType + " but got "
+                                    + argType,
+                            context.ruleId(),
+                            "Check the argument type"));
                 }
             }
         }
@@ -262,8 +279,7 @@ public final class ExpressionTypeChecker {
         var it = table.getAttributesAndRoles2();
         while (it.hasNext()) {
             ch.interlis.ili2c.metamodel.ViewableTransferElement element = it.next();
-            if (element.obj instanceof ch.interlis.ili2c.metamodel.RoleDef role
-                    && roleName.equals(role.getName())) {
+            if (element.obj instanceof ch.interlis.ili2c.metamodel.RoleDef role && roleName.equals(role.getName())) {
                 return role;
             }
         }

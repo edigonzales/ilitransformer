@@ -1,18 +1,19 @@
 package guru.interlis.transformer.mapping.compiler;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.CompileMode;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class CompileModeTest {
 
@@ -43,9 +44,8 @@ class CompileModeTest {
         // In STRICT mode, the type mismatch WARNING should be upgraded to ERROR
         // Since we add a duplicate with ERROR while keeping the original WARNING,
         // we should find at least one ERROR diagnostic
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.severity() == Severity.ERROR
-                        && d.message().contains("Beschreibung"));
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d -> d.severity() == Severity.ERROR && d.message().contains("Beschreibung"));
     }
 
     @Test
@@ -107,8 +107,8 @@ class CompileModeTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         assertThat(plan.compileMode()).isEqualTo(CompileMode.STRICT);
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.severity() == Severity.WARNING
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d -> d.severity() == Severity.WARNING
                         && d.message().contains("Unknown compileMode")
                         && d.message().contains("allowTodos"));
     }

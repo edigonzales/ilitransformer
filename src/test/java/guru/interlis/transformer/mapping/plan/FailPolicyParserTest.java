@@ -9,10 +9,8 @@ class FailPolicyParserTest {
 
     @Test
     void parseOrDefaultReturnsStrict() {
-        assertThat(FailPolicyParser.parseOrDefault("strict", FailPolicy.STRICT))
-                .isEqualTo(FailPolicy.STRICT);
-        assertThat(FailPolicyParser.parseOrDefault("STRICT", FailPolicy.STRICT))
-                .isEqualTo(FailPolicy.STRICT);
+        assertThat(FailPolicyParser.parseOrDefault("strict", FailPolicy.STRICT)).isEqualTo(FailPolicy.STRICT);
+        assertThat(FailPolicyParser.parseOrDefault("STRICT", FailPolicy.STRICT)).isEqualTo(FailPolicy.STRICT);
     }
 
     @Test
@@ -33,16 +31,13 @@ class FailPolicyParserTest {
 
     @Test
     void parseOrDefaultReturnsDefaultForNull() {
-        assertThat(FailPolicyParser.parseOrDefault(null, FailPolicy.LENIENT))
-                .isEqualTo(FailPolicy.LENIENT);
-        assertThat(FailPolicyParser.parseOrDefault(null, FailPolicy.STRICT))
-                .isEqualTo(FailPolicy.STRICT);
+        assertThat(FailPolicyParser.parseOrDefault(null, FailPolicy.LENIENT)).isEqualTo(FailPolicy.LENIENT);
+        assertThat(FailPolicyParser.parseOrDefault(null, FailPolicy.STRICT)).isEqualTo(FailPolicy.STRICT);
     }
 
     @Test
     void parseOrDefaultReturnsDefaultForBlank() {
-        assertThat(FailPolicyParser.parseOrDefault("  ", FailPolicy.LENIENT))
-                .isEqualTo(FailPolicy.LENIENT);
+        assertThat(FailPolicyParser.parseOrDefault("  ", FailPolicy.LENIENT)).isEqualTo(FailPolicy.LENIENT);
     }
 
     @Test

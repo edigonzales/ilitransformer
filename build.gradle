@@ -1,6 +1,7 @@
 plugins {
     id 'application'
     id 'java'
+    id 'com.diffplug.spotless' version '8.7.0'
 }
 
 group = 'guru.interlis'
@@ -60,6 +61,22 @@ application {
 distributions {
     main {
         distributionBaseName = 'ilitransformer'
+    }
+}
+
+spotless {
+    java {
+        palantirJavaFormat()
+        removeUnusedImports()
+        importOrder('static ', 'guru', 'ch', 'java', 'javax', '')
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format('misc') {
+        target('*.gradle', '*.md', '.gitignore')
+        trimTrailingWhitespace()
+        leadingTabsToSpaces(4)
+        endWithNewline()
     }
 }
 
@@ -139,3 +156,4 @@ tasks.register('validateFeatureMatrix', Test) {
 
 check.dependsOn integrationTest
 check.dependsOn validateFeatureMatrix
+check.dependsOn spotlessCheck

@@ -1,13 +1,11 @@
 package guru.interlis.transformer.mapping.model;
 
-import guru.interlis.transformer.mapping.model.JobConfig;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class JobConfigNormalizerTest {
 

@@ -1,19 +1,20 @@
 package guru.interlis.transformer.mapping.compiler;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class CreateCompilationTest {
 
@@ -40,8 +41,7 @@ class CreateCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).noneMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
+        assertThat(plan.diagnostics().all()).noneMatch(d -> d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
         assertThat(plan.rules().get(0).creates()).isNotEmpty();
     }
 
@@ -57,9 +57,9 @@ class CreateCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_CREATE_UNKNOWN_CLASS)
-                        && d.severity() == Severity.ERROR);
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d ->
+                        d.code().equals(DiagnosticCode.MAP_CREATE_UNKNOWN_CLASS) && d.severity() == Severity.ERROR);
     }
 
     @Test
@@ -70,8 +70,7 @@ class CreateCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).noneMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
+        assertThat(plan.diagnostics().all()).noneMatch(d -> d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
     }
 
     @Test
@@ -81,8 +80,7 @@ class CreateCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).noneMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
+        assertThat(plan.diagnostics().all()).noneMatch(d -> d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
     }
 
     private static JobConfig minimalConfig() {

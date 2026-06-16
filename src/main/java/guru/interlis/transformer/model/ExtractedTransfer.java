@@ -10,5 +10,4 @@ public record ExtractedTransfer(
         Set<String> includedClasses,
         int totalObjects,
         List<String> includedBasketIds,
-        String provenance
-) {}
+        String provenance) {}

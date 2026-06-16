@@ -1,13 +1,14 @@
 package guru.interlis.transformer.geometry;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
 import guru.interlis.transformer.expr.CoordValue;
 import guru.interlis.transformer.expr.GeometryObjectValue;
 import guru.interlis.transformer.expr.NullValue;
 import guru.interlis.transformer.expr.TextValue;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
+
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
 
 public final class IoxGeometryAdapter implements GeometryAdapter {
 

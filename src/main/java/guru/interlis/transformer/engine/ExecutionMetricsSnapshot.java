@@ -13,8 +13,7 @@ public record ExecutionMetricsSnapshot(
         long bagLookups,
         long ruleMatches,
         Map<String, Long> targetsByClass,
-        long elapsedMillis
-) {
+        long elapsedMillis) {
     public ExecutionMetricsSnapshot {
         targetsByClass = Collections.unmodifiableMap(new LinkedHashMap<>(targetsByClass));
     }
@@ -22,7 +21,13 @@ public record ExecutionMetricsSnapshot(
     public String summary() {
         return String.format(
                 "Metrics: %d read, %d filtered, %d targets created, %d written, %d joins, %d bags, %d rule matches in %d ms",
-                sourceRecordsRead, sourceRecordsFiltered, targetsCreated, targetsWritten,
-                joinLookups, bagLookups, ruleMatches, elapsedMillis);
+                sourceRecordsRead,
+                sourceRecordsFiltered,
+                targetsCreated,
+                targetsWritten,
+                joinLookups,
+                bagLookups,
+                ruleMatches,
+                elapsedMillis);
     }
 }

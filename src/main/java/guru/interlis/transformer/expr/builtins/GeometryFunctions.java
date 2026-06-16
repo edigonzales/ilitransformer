@@ -17,8 +17,11 @@ public final class GeometryFunctions {
     private GeometryFunctions() {}
 
     public static void registerAll(FunctionRegistry registry) {
-        registry.register("coordEquals", TypeInfo.BOOLEAN,
-                List.of(new FunctionDef.FunctionParam("coord1", TypeInfo.COORD),
+        registry.register(
+                "coordEquals",
+                TypeInfo.BOOLEAN,
+                List.of(
+                        new FunctionDef.FunctionParam("coord1", TypeInfo.COORD),
                         new FunctionDef.FunctionParam("coord2", TypeInfo.COORD),
                         new FunctionDef.FunctionParam("tolerance", TypeInfo.NUMERIC)),
                 GeometryFunctions::coordEquals);

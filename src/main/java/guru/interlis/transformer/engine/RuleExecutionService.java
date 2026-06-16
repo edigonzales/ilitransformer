@@ -1,6 +1,5 @@
 package guru.interlis.transformer.engine;
 
-import ch.interlis.iom.IomObject;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -16,7 +15,6 @@ import guru.interlis.transformer.loss.LossEvent;
 import guru.interlis.transformer.loss.LossinessCollector;
 import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.CreatePlan;
-import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.JoinCardinality;
 import guru.interlis.transformer.mapping.plan.JoinPlan;
 import guru.interlis.transformer.mapping.plan.JoinType;
@@ -34,6 +32,8 @@ import guru.interlis.transformer.state.SourceLookupIndex;
 import guru.interlis.transformer.state.SourceRecord;
 import guru.interlis.transformer.state.StateStore;
 
+import ch.interlis.iom.IomObject;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -48,24 +48,27 @@ public final class RuleExecutionService {
     private final ReferenceIndex referenceIndex;
     private final LossinessCollector lossinessCollector;
 
-    public RuleExecutionService(ExpressionEngine expressionEngine,
-                                 TargetObjectFactory targetObjectFactory,
-                                 GeometryAdapter geometryAdapter) {
+    public RuleExecutionService(
+            ExpressionEngine expressionEngine,
+            TargetObjectFactory targetObjectFactory,
+            GeometryAdapter geometryAdapter) {
         this(expressionEngine, targetObjectFactory, geometryAdapter, null);
     }
 
-    public RuleExecutionService(ExpressionEngine expressionEngine,
-                                 TargetObjectFactory targetObjectFactory,
-                                 GeometryAdapter geometryAdapter,
-                                 ReferenceIndex referenceIndex) {
+    public RuleExecutionService(
+            ExpressionEngine expressionEngine,
+            TargetObjectFactory targetObjectFactory,
+            GeometryAdapter geometryAdapter,
+            ReferenceIndex referenceIndex) {
         this(expressionEngine, targetObjectFactory, geometryAdapter, referenceIndex, null);
     }
 
-    public RuleExecutionService(ExpressionEngine expressionEngine,
-                                 TargetObjectFactory targetObjectFactory,
-                                 GeometryAdapter geometryAdapter,
-                                 ReferenceIndex referenceIndex,
-                                 LossinessCollector lossinessCollector) {
+    public RuleExecutionService(
+            ExpressionEngine expressionEngine,
+            TargetObjectFactory targetObjectFactory,
+            GeometryAdapter geometryAdapter,
+            ReferenceIndex referenceIndex,
+            LossinessCollector lossinessCollector) {
         this.expressionEngine = expressionEngine;
         this.targetObjectFactory = targetObjectFactory;
         this.geometryAdapter = geometryAdapter;
@@ -97,9 +100,12 @@ public final class RuleExecutionService {
         List<List<String>> cycles = depGraph.cycles();
         if (!cycles.isEmpty()) {
             for (List<String> cycle : cycles) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_CYCLIC_DEPENDENCY, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_CYCLIC_DEPENDENCY,
+                        Severity.ERROR,
                         "Cyclic rule dependency detected: " + cycle,
-                        null, "Break the cycle by restructuring refs or create directives"));
+                        null,
+                        "Break the cycle by restructuring refs or create directives"));
             }
         }
 
@@ -108,17 +114,44 @@ public final class RuleExecutionService {
             if (rule == null) continue;
 
             if (!rule.joins().isEmpty()) {
-                processJoinedRule(rule, plan, dispatchIndex, stateStore, sourceLookupIndex, parentChildIndex,
-                        objectsByOutputAndBasket, sourceAttrTypes, diagnostics, metrics);
+                processJoinedRule(
+                        rule,
+                        plan,
+                        dispatchIndex,
+                        stateStore,
+                        sourceLookupIndex,
+                        parentChildIndex,
+                        objectsByOutputAndBasket,
+                        sourceAttrTypes,
+                        diagnostics,
+                        metrics);
             } else {
-                processSingleSourceRule(rule, plan, dispatchIndex, stateStore,
-                        objectsByOutputAndBasket, expandedTargets, sourceAttrTypes,
-                        diagnostics, metrics, parentChildIndex, sourceLookupIndex);
+                processSingleSourceRule(
+                        rule,
+                        plan,
+                        dispatchIndex,
+                        stateStore,
+                        objectsByOutputAndBasket,
+                        expandedTargets,
+                        sourceAttrTypes,
+                        diagnostics,
+                        metrics,
+                        parentChildIndex,
+                        sourceLookupIndex);
             }
 
             for (CreatePlan create : rule.creates()) {
-                processCreatePlan(create, rule, plan, stateStore,
-                        objectsByOutputAndBasket, sourceAttrTypes, diagnostics, metrics, parentChildIndex, sourceLookupIndex);
+                processCreatePlan(
+                        create,
+                        rule,
+                        plan,
+                        stateStore,
+                        objectsByOutputAndBasket,
+                        sourceAttrTypes,
+                        diagnostics,
+                        metrics,
+                        parentChildIndex,
+                        sourceLookupIndex);
             }
         }
 
@@ -135,16 +168,28 @@ public final class RuleExecutionService {
         return new RuleExecutionResult(objectsByOutputAndBasket);
     }
 
-    private void processSingleSourceRule(RulePlan rule, TransformPlan plan,
-                                          RuleDispatchIndex dispatchIndex, StateStore stateStore,
-                                          Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket,
-                                          Map<String, Map<String, List<IomObject>>> expandedTargets,
-                                          Map<String, Map<String, TypeInfo>> sourceAttrTypes,
-                                          DiagnosticCollector diagnostics, ExecutionMetrics metrics,
-                                          ParentChildIndex parentChildIndex, SourceLookupIndex sourceLookupIndex) {
+    private void processSingleSourceRule(
+            RulePlan rule,
+            TransformPlan plan,
+            RuleDispatchIndex dispatchIndex,
+            StateStore stateStore,
+            Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket,
+            Map<String, Map<String, List<IomObject>>> expandedTargets,
+            Map<String, Map<String, TypeInfo>> sourceAttrTypes,
+            DiagnosticCollector diagnostics,
+            ExecutionMetrics metrics,
+            ParentChildIndex parentChildIndex,
+            SourceLookupIndex sourceLookupIndex) {
         TargetObjectFactory.ObjectCreationContext ctx = new TargetObjectFactory.ObjectCreationContext(
-                objectsByOutputAndBasket, expandedTargets, diagnostics, stateStore,
-                referenceIndex, parentChildIndex, metrics, geometryAdapter, sourceAttrTypes);
+                objectsByOutputAndBasket,
+                expandedTargets,
+                diagnostics,
+                stateStore,
+                referenceIndex,
+                parentChildIndex,
+                metrics,
+                geometryAdapter,
+                sourceAttrTypes);
 
         for (SourcePlan source : rule.sources()) {
             if (source.sourceClass() == null) continue;
@@ -152,8 +197,14 @@ public final class RuleExecutionService {
             for (String inputId : source.inputIds()) {
                 for (SourceRecord record : stateStore.sourceRecords(inputId, scopedClass)) {
                     Map<String, IomObject> sources = Map.of(source.alias(), record.sourceObject());
-                    EvalContext evalCtx = new EvalContext(sources, diagnostics, rule.ruleId(), plan.enumMaps(),
-                            geometryAdapter, sourceAttrTypes).withLookupIndex(sourceLookupIndex);
+                    EvalContext evalCtx = new EvalContext(
+                                    sources,
+                                    diagnostics,
+                                    rule.ruleId(),
+                                    plan.enumMaps(),
+                                    geometryAdapter,
+                                    sourceAttrTypes)
+                            .withLookupIndex(sourceLookupIndex);
 
                     if (!evaluateWhereAndPredicate(source, rule, evalCtx, expressionEngine, metrics)) continue;
 
@@ -166,16 +217,27 @@ public final class RuleExecutionService {
         }
     }
 
-    private void processJoinedRule(RulePlan rule, TransformPlan plan,
-                                    RuleDispatchIndex dispatchIndex, StateStore stateStore,
-                                    SourceLookupIndex sourceLookupIndex,
-                                    ParentChildIndex parentChildIndex,
-                                    Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket,
-                                    Map<String, Map<String, TypeInfo>> sourceAttrTypes,
-                                    DiagnosticCollector diagnostics, ExecutionMetrics metrics) {
+    private void processJoinedRule(
+            RulePlan rule,
+            TransformPlan plan,
+            RuleDispatchIndex dispatchIndex,
+            StateStore stateStore,
+            SourceLookupIndex sourceLookupIndex,
+            ParentChildIndex parentChildIndex,
+            Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket,
+            Map<String, Map<String, TypeInfo>> sourceAttrTypes,
+            DiagnosticCollector diagnostics,
+            ExecutionMetrics metrics) {
         TargetObjectFactory.ObjectCreationContext ctx = new TargetObjectFactory.ObjectCreationContext(
-                objectsByOutputAndBasket, new LinkedHashMap<>(), diagnostics, stateStore,
-                referenceIndex, parentChildIndex, metrics, geometryAdapter, sourceAttrTypes);
+                objectsByOutputAndBasket,
+                new LinkedHashMap<>(),
+                diagnostics,
+                stateStore,
+                referenceIndex,
+                parentChildIndex,
+                metrics,
+                geometryAdapter,
+                sourceAttrTypes);
 
         JoinPlan join = rule.joins().get(0);
         SourcePlan leftPlan = join.left();
@@ -214,9 +276,12 @@ public final class RuleExecutionService {
             String leftAttrValue = readAttributeOrRefOid(leftRecord.sourceObject(), leftAttr);
             if (leftAttrValue == null) {
                 if (join.type() == JoinType.INNER) {
-                    diagnostics.add(new Diagnostic(DiagnosticCode.RUN_JOIN_MISSING, Severity.WARNING,
+                    diagnostics.add(new Diagnostic(
+                            DiagnosticCode.RUN_JOIN_MISSING,
+                            Severity.WARNING,
                             "Join key attribute '" + leftAttr + "' is null in left source. Rule: " + rule.ruleId(),
-                            rule.ruleId(), "Left join or provide non-null join keys"));
+                            rule.ruleId(),
+                            "Left join or provide non-null join keys"));
                 }
                 metrics.recordFiltered();
                 continue;
@@ -228,27 +293,34 @@ public final class RuleExecutionService {
                 SourceRecord match = rightByOid.get(leftAttrValue);
                 rightMatches = match != null ? List.of(match) : List.of();
             } else {
-                LookupKey lookupKey = new LookupKey(null,
+                LookupKey lookupKey = new LookupKey(
+                        null,
                         TargetObjectFactory.getScopedName(rightPlan.sourceClass()),
-                        rightAttr, new CanonicalValue("text", leftAttrValue, true));
+                        rightAttr,
+                        new CanonicalValue("text", leftAttrValue, true));
                 rightMatches = sourceLookupIndex.lookup(lookupKey);
             }
 
             rightMatches = rightMatches.stream()
-                    .filter(r -> rightPlan.inputIds().isEmpty() || rightPlan.inputIds().contains(r.sourceFileId()))
+                    .filter(r -> rightPlan.inputIds().isEmpty()
+                            || rightPlan.inputIds().contains(r.sourceFileId()))
                     .toList();
 
             if (rightMatches.isEmpty()) {
                 if (join.type() == JoinType.INNER) {
                     metrics.recordFiltered();
-                    diagnostics.add(new Diagnostic(DiagnosticCode.RUN_JOIN_MISSING, Severity.WARNING,
+                    diagnostics.add(new Diagnostic(
+                            DiagnosticCode.RUN_JOIN_MISSING,
+                            Severity.WARNING,
                             "No matching right source record for join key " + leftAttr + " = " + leftAttrValue
                                     + ". Rule: " + rule.ruleId(),
-                            rule.ruleId(), "Ensure matching records exist or use LEFT join"));
+                            rule.ruleId(),
+                            "Ensure matching records exist or use LEFT join"));
                     continue;
                 }
-                EvalContext evalCtx = new EvalContext(sources, diagnostics, rule.ruleId(), plan.enumMaps(),
-                        geometryAdapter, sourceAttrTypes).withLookupIndex(sourceLookupIndex);
+                EvalContext evalCtx = new EvalContext(
+                                sources, diagnostics, rule.ruleId(), plan.enumMaps(), geometryAdapter, sourceAttrTypes)
+                        .withLookupIndex(sourceLookupIndex);
                 if (evaluateWhereAndPredicate(leftPlan, rule, evalCtx, expressionEngine, metrics)) {
                     metrics.recordRuleMatch(rule.ruleId());
                     recordLosses(rule, leftRecord, evalCtx);
@@ -260,11 +332,14 @@ public final class RuleExecutionService {
 
             if (rightMatches.size() > 1
                     && (join.expectedCardinality() == JoinCardinality.ONE_TO_ONE
-                        || join.expectedCardinality() == JoinCardinality.MANY_TO_ONE)) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.RUN_JOIN_AMBIGUOUS, Severity.WARNING,
+                            || join.expectedCardinality() == JoinCardinality.MANY_TO_ONE)) {
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.RUN_JOIN_AMBIGUOUS,
+                        Severity.WARNING,
                         "Expected " + join.expectedCardinality() + " but found " + rightMatches.size()
                                 + " matching right records for join key. Rule: " + rule.ruleId(),
-                        rule.ruleId(), "Use MANY_TO_MANY or ONE_TO_MANY cardinality"));
+                        rule.ruleId(),
+                        "Use MANY_TO_MANY or ONE_TO_MANY cardinality"));
             }
 
             for (SourceRecord rightRecord : rightMatches) {
@@ -272,8 +347,14 @@ public final class RuleExecutionService {
                 joinedSources.put(leftPlan.alias(), leftRecord.sourceObject());
                 joinedSources.put(rightPlan.alias(), rightRecord.sourceObject());
 
-                EvalContext joinCtx = new EvalContext(joinedSources, diagnostics, rule.ruleId(), plan.enumMaps(),
-                        geometryAdapter, sourceAttrTypes).withLookupIndex(sourceLookupIndex);
+                EvalContext joinCtx = new EvalContext(
+                                joinedSources,
+                                diagnostics,
+                                rule.ruleId(),
+                                plan.enumMaps(),
+                                geometryAdapter,
+                                sourceAttrTypes)
+                        .withLookupIndex(sourceLookupIndex);
 
                 Value joinResult = expressionEngine.evaluate(join.condition(), joinCtx);
                 if (!isFilterTruthy(joinResult)) {
@@ -304,23 +385,36 @@ public final class RuleExecutionService {
         return null;
     }
 
-    private void processCreatePlan(CreatePlan create, RulePlan parentRule, TransformPlan plan,
-                                    StateStore stateStore,
-                                    Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket,
-                                    Map<String, Map<String, TypeInfo>> sourceAttrTypes,
-                                    DiagnosticCollector diagnostics, ExecutionMetrics metrics,
-                                    ParentChildIndex parentChildIndex, SourceLookupIndex sourceLookupIndex) {
+    private void processCreatePlan(
+            CreatePlan create,
+            RulePlan parentRule,
+            TransformPlan plan,
+            StateStore stateStore,
+            Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket,
+            Map<String, Map<String, TypeInfo>> sourceAttrTypes,
+            DiagnosticCollector diagnostics,
+            ExecutionMetrics metrics,
+            ParentChildIndex parentChildIndex,
+            SourceLookupIndex sourceLookupIndex) {
         TargetObjectFactory.ObjectCreationContext ctx = new TargetObjectFactory.ObjectCreationContext(
-                objectsByOutputAndBasket, new LinkedHashMap<>(), diagnostics, stateStore,
-                referenceIndex, parentChildIndex, metrics, geometryAdapter, sourceAttrTypes);
+                objectsByOutputAndBasket,
+                new LinkedHashMap<>(),
+                diagnostics,
+                stateStore,
+                referenceIndex,
+                parentChildIndex,
+                metrics,
+                geometryAdapter,
+                sourceAttrTypes);
 
         for (SourceRecord record : stateStore.sourceRecords()) {
             SourcePlan sp = findSourcePlan(parentRule, record);
             if (sp == null) continue;
 
             Map<String, IomObject> sources = Map.of(sp.alias(), record.sourceObject());
-            EvalContext evalCtx = new EvalContext(sources, diagnostics, parentRule.ruleId(), plan.enumMaps(),
-                    null, sourceAttrTypes).withLookupIndex(sourceLookupIndex);
+            EvalContext evalCtx = new EvalContext(
+                            sources, diagnostics, parentRule.ruleId(), plan.enumMaps(), null, sourceAttrTypes)
+                    .withLookupIndex(sourceLookupIndex);
 
             targetObjectFactory.createTargetForCreatePlan(create, parentRule, record, evalCtx, plan, ctx);
             metrics.recordTarget(TargetObjectFactory.getScopedName(create.targetClass()));
@@ -344,10 +438,14 @@ public final class RuleExecutionService {
         return TypeSystemFacade.getScopedName(plan.sourceClass()).equals(record.sourceClass());
     }
 
-    private static boolean evaluateWhereAndPredicate(SourcePlan matchedSource, RulePlan rule,
-                                                      EvalContext evalCtx, ExpressionEngine engine,
-                                                      ExecutionMetrics metrics) {
-        if (matchedSource.where() != null && matchedSource.where().sourceText() != null
+    private static boolean evaluateWhereAndPredicate(
+            SourcePlan matchedSource,
+            RulePlan rule,
+            EvalContext evalCtx,
+            ExpressionEngine engine,
+            ExecutionMetrics metrics) {
+        if (matchedSource.where() != null
+                && matchedSource.where().sourceText() != null
                 && !matchedSource.where().sourceText().isBlank()) {
             Value whereResult = engine.evaluate(matchedSource.where(), evalCtx);
             if (!isFilterTruthy(whereResult)) {
@@ -368,7 +466,8 @@ public final class RuleExecutionService {
     static boolean isFilterTruthy(Value value) {
         if (value == null || value.isNull()) return false;
         if (value instanceof BooleanValue bv) return bv.value();
-        if (value instanceof guru.interlis.transformer.expr.TextValue tv) return !tv.value().isEmpty();
+        if (value instanceof guru.interlis.transformer.expr.TextValue tv)
+            return !tv.value().isEmpty();
         if (value instanceof guru.interlis.transformer.expr.NumberValue nv)
             return nv.value().compareTo(java.math.BigDecimal.ZERO) != 0;
         return true;
@@ -407,26 +506,24 @@ public final class RuleExecutionService {
         return result;
     }
 
-    private static void addBagSourceAttributeTypes(Map<String, Map<String, TypeInfo>> result,
-                                                   BagPlan bag) {
+    private static void addBagSourceAttributeTypes(Map<String, Map<String, TypeInfo>> result, BagPlan bag) {
         if (bag == null) {
             return;
         }
         if (bag.fromSource() != null && bag.fromSource().sourceClass() != null) {
-            addSourceAttributeTypes(result, bag.fromSource().alias(), bag.fromSource().sourceClass());
+            addSourceAttributeTypes(
+                    result, bag.fromSource().alias(), bag.fromSource().sourceClass());
         }
         for (BagPlan nestedBag : bag.nestedBags()) {
             addBagSourceAttributeTypes(result, nestedBag);
         }
     }
 
-    private static void addSourceAttributeTypes(Map<String, Map<String, TypeInfo>> result,
-                                                String alias,
-                                                ch.interlis.ili2c.metamodel.Table sourceClass) {
+    private static void addSourceAttributeTypes(
+            Map<String, Map<String, TypeInfo>> result, String alias, ch.interlis.ili2c.metamodel.Table sourceClass) {
         if (alias == null || sourceClass == null) return;
         Map<String, TypeInfo> aliasTypes = result.computeIfAbsent(alias, ignored -> new LinkedHashMap<>());
-        Iterator<ch.interlis.ili2c.metamodel.ViewableTransferElement> it =
-                sourceClass.getAttributesAndRoles2();
+        Iterator<ch.interlis.ili2c.metamodel.ViewableTransferElement> it = sourceClass.getAttributesAndRoles2();
         while (it.hasNext()) {
             ch.interlis.ili2c.metamodel.ViewableTransferElement element = it.next();
             if (element.obj instanceof ch.interlis.ili2c.metamodel.AttributeDef attr) {
@@ -460,7 +557,5 @@ public final class RuleExecutionService {
         return TypeInfo.UNKNOWN;
     }
 
-    public record RuleExecutionResult(
-            Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket
-    ) {}
+    public record RuleExecutionResult(Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket) {}
 }

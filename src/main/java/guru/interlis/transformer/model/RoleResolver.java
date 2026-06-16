@@ -1,8 +1,9 @@
 package guru.interlis.transformer.model;
 
+import guru.interlis.transformer.mapping.plan.RefPlan;
+
 import ch.interlis.ili2c.metamodel.AssociationDef;
 import ch.interlis.ili2c.metamodel.RoleDef;
-import guru.interlis.transformer.mapping.plan.RefPlan;
 
 public final class RoleResolver {
 
@@ -23,10 +24,7 @@ public final class RoleResolver {
     }
 
     public ResolvedRole requireRole(
-            TypeSystemFacade targetTypeSystem,
-            String ownerClass,
-            String roleName,
-            String associationName) {
+            TypeSystemFacade targetTypeSystem, String ownerClass, String roleName, String associationName) {
         if (ownerClass == null || roleName == null) return null;
         TypeSystemFacade.ReferenceInfo ref = targetTypeSystem.resolveReference(ownerClass, roleName);
         if (ref == null) return null;
@@ -39,8 +37,7 @@ public final class RoleResolver {
         }
 
         RoleDef role = ref.role();
-        return new ResolvedRole(role, association, ref.targetClass(),
-                ref.minCardinality(), ref.maxCardinality());
+        return new ResolvedRole(role, association, ref.targetClass(), ref.minCardinality(), ref.maxCardinality());
     }
 
     public String resolveExpectedTargetClass(RefPlan refPlan, String targetClassPath) {

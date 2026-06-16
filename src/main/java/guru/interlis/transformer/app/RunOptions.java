@@ -1,6 +1,7 @@
 package guru.interlis.transformer.app;
 
 import guru.interlis.transformer.mapping.plan.FailPolicy;
+
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -10,11 +11,9 @@ public record RunOptions(
         boolean validateOutput,
         Path reportDirectory,
         boolean keepTemporaryFiles,
-        FailPolicy failPolicyOverride
-) {
+        FailPolicy failPolicyOverride) {
     public RunOptions {
-        modelDirectories = modelDirectories != null
-                ? List.copyOf(modelDirectories) : List.of();
+        modelDirectories = modelDirectories != null ? List.copyOf(modelDirectories) : List.of();
     }
 
     public RunOptions() {
@@ -25,10 +24,8 @@ public record RunOptions(
         this(modelDirectories, false, null, false, null);
     }
 
-    public RunOptions(List<String> modelDirectories,
-                      boolean validateOutput,
-                      Path reportDirectory,
-                      boolean keepTemporaryFiles) {
+    public RunOptions(
+            List<String> modelDirectories, boolean validateOutput, Path reportDirectory, boolean keepTemporaryFiles) {
         this(modelDirectories, validateOutput, reportDirectory, keepTemporaryFiles, null);
     }
 

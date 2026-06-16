@@ -3,16 +3,18 @@ package guru.interlis.transformer.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxWriter;
 import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox.StartTransferEvent;
-import ch.interlis.iom_j.Iom_jObject;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 class OutputWritingServiceTest {
@@ -25,8 +27,7 @@ class OutputWritingServiceTest {
         Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket = new LinkedHashMap<>();
         objectsByOutputAndBasket.put("out1", Map.of("Model.Topic::basket-1", List.of(target)));
 
-        long written = new OutputWritingService().writeOutputs(
-                Map.of("out1", writer), objectsByOutputAndBasket);
+        long written = new OutputWritingService().writeOutputs(Map.of("out1", writer), objectsByOutputAndBasket);
 
         assertThat(written).isEqualTo(1);
         assertThat(writer.startTransferEvent).isNotNull();
@@ -51,16 +52,13 @@ class OutputWritingServiceTest {
         }
 
         @Override
-        public void close() {
-        }
+        public void close() {}
 
         @Override
-        public void flush() {
-        }
+        public void flush() {}
 
         @Override
-        public void setFactory(IoxFactoryCollection factory) {
-        }
+        public void setFactory(IoxFactoryCollection factory) {}
 
         @Override
         public IoxFactoryCollection getFactory() {

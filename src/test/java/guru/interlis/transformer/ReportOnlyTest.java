@@ -29,7 +29,8 @@ class ReportOnlyTest {
                 NAME Hello
                 """);
 
-        Files.writeString(mapping, """
+        Files.writeString(
+                mapping, """
                 version: 1
                 job:
                   description: "Report only test"
@@ -54,9 +55,8 @@ class ReportOnlyTest {
                           class: "TestModel.TestTopic.TestClass"
                       assign:
                         Name: "${s.Name}"
-                """
-                .replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
-                .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
+                """.replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
+                        .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
 
         var options = new RunOptions(List.of("src/test/data/models"), false, null, false);
         DiagnosticCollector diag = new JobRunner().run(mapping, options);
@@ -80,7 +80,8 @@ class ReportOnlyTest {
                 NAME Hello
                 """);
 
-        Files.writeString(mapping, """
+        Files.writeString(
+                mapping, """
                 version: 1
                 job:
                   description: "Report only with dir"
@@ -105,9 +106,8 @@ class ReportOnlyTest {
                           class: "TestModel.TestTopic.TestClass"
                       assign:
                         Name: "${s.Name}"
-                """
-                .replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
-                .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
+                """.replace("INPUT_PLACEHOLDER", input.toString().replace("\\", "\\\\"))
+                        .replace("OUTPUT_PLACEHOLDER", output.toString().replace("\\", "\\\\")));
 
         var options = new RunOptions(List.of("src/test/data/models"), false, reportDir, false);
         DiagnosticCollector diag = new JobRunner().run(mapping, options);

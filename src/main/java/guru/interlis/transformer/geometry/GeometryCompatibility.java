@@ -3,9 +3,7 @@ package guru.interlis.transformer.geometry;
 import java.util.Collections;
 import java.util.List;
 
-public record GeometryCompatibility(
-        boolean compatible,
-        List<String> incompatibilities) {
+public record GeometryCompatibility(boolean compatible, List<String> incompatibilities) {
 
     public static GeometryCompatibility success() {
         return new GeometryCompatibility(true, Collections.emptyList());

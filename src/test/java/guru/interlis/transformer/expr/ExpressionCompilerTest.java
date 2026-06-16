@@ -1,20 +1,18 @@
 package guru.interlis.transformer.expr;
 
-import guru.interlis.transformer.diag.DiagnosticCode;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.expr.builtins.BasicFunctions;
 import guru.interlis.transformer.mapping.plan.CompiledExpression;
 import guru.interlis.transformer.mapping.plan.ExpressionCompileContext;
-import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class ExpressionCompilerTest {
 
@@ -105,8 +103,8 @@ class ExpressionCompilerTest {
     void nonDeterministicWithNow() {
         var reg = new FunctionRegistry();
         reg.registerNonDeterministic("now", TypeInfo.XML_DATE_TIME, List.of(), (a, c) -> NullValue.INSTANCE);
-        ExpressionCompileContext ctx = new ExpressionCompileContext("testRule", Map.of(),
-                TypeInfo.XML_DATE_TIME, reg, Map.of());
+        ExpressionCompileContext ctx =
+                new ExpressionCompileContext("testRule", Map.of(), TypeInfo.XML_DATE_TIME, reg, Map.of());
         CompiledExpression result = compiler.compile("now()", ctx, diagnostics);
         assertThat(result.deterministic()).isFalse();
     }

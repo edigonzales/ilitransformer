@@ -1,22 +1,14 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.iox.EndTransferEvent;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.IoxWriter;
-import ch.interlis.iox.ObjectEvent;
-import ch.interlis.iox_j.EndBasketEvent;
-import ch.interlis.iox_j.StartBasketEvent;
-import ch.interlis.iox_j.StartTransferEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import guru.interlis.transformer.app.IlivalidatorRunner;
 import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
 import guru.interlis.transformer.diag.Diagnostic;
-import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.DiagnosticCode;
+import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
@@ -28,8 +20,17 @@ import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.EndTransferEvent;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.IoxWriter;
+import ch.interlis.iox.ObjectEvent;
+import ch.interlis.iox_j.EndBasketEvent;
+import ch.interlis.iox_j.StartBasketEvent;
+import ch.interlis.iox_j.StartTransferEvent;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,9 +38,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class SurfaceAreaRoundtripIntegrationTest {
 
@@ -49,8 +51,10 @@ class SurfaceAreaRoundtripIntegrationTest {
     private static final String ILI2_BASKET = "DmavSurfaceAreaTestModel.TestTopic";
     private static final String REAL_DMAV_MODEL = "DMAV_Grundstuecke_V1_0";
     private static final String REAL_DMAV_MODELDIR = "src/test/data/av/models/;https://models.interlis.ch";
-    private static final Path REVERSE_MAPPING = Path.of("src/test/resources/mappings/ili2-to-ili1-surface-area-test.yaml");
-    private static final Path FORWARD_MAPPING = Path.of("src/test/resources/mappings/ili1-to-ili2-surface-area-test.yaml");
+    private static final Path REVERSE_MAPPING =
+            Path.of("src/test/resources/mappings/ili2-to-ili1-surface-area-test.yaml");
+    private static final Path FORWARD_MAPPING =
+            Path.of("src/test/resources/mappings/ili1-to-ili2-surface-area-test.yaml");
     private static final Path REAL_DMAV_INPUT = Path.of("src/test/data/av/DMAV_Grundstuecke_V1_0.449.xtf");
 
     private static ch.interlis.ili2c.metamodel.TransferDescription ili1TransferDescription;
@@ -78,27 +82,27 @@ class SurfaceAreaRoundtripIntegrationTest {
         ili2TransferDescription = ili2Result.transferDescription();
         ili2TypeSystem = new TypeSystemFacade(ili2TransferDescription);
 
-        reversePlan = compilePlan(REVERSE_MAPPING,
-                Map.of(ILI2_MODEL, ili2TypeSystem),
-                Map.of(ILI1_MODEL, ili1TypeSystem));
-        forwardPlan = compilePlan(FORWARD_MAPPING,
-                Map.of(ILI1_MODEL, ili1TypeSystem),
-                Map.of(ILI2_MODEL, ili2TypeSystem));
+        reversePlan =
+                compilePlan(REVERSE_MAPPING, Map.of(ILI2_MODEL, ili2TypeSystem), Map.of(ILI1_MODEL, ili1TypeSystem));
+        forwardPlan =
+                compilePlan(FORWARD_MAPPING, Map.of(ILI1_MODEL, ili1TypeSystem), Map.of(ILI2_MODEL, ili2TypeSystem));
     }
 
     @Test
     void surfaceRoundtripPreservesArcAndBoundaries() throws Exception {
-        IomObject source = surfaceObject("SRT1", surface(
-                boundary(
-                        coord(2600000.000, 1200000.000),
-                        arc(2600050.000, 1200100.000, 2600100.000, 1200000.000),
-                        coord(2600000.000, 1200000.000)),
-                boundary(
-                        coord(2600025.000, 1200025.000),
-                        coord(2600075.000, 1200025.000),
-                        coord(2600075.000, 1200075.000),
-                        coord(2600025.000, 1200075.000),
-                        coord(2600025.000, 1200025.000))));
+        IomObject source = surfaceObject(
+                "SRT1",
+                surface(
+                        boundary(
+                                coord(2600000.000, 1200000.000),
+                                arc(2600050.000, 1200100.000, 2600100.000, 1200000.000),
+                                coord(2600000.000, 1200000.000)),
+                        boundary(
+                                coord(2600025.000, 1200025.000),
+                                coord(2600075.000, 1200025.000),
+                                coord(2600075.000, 1200075.000),
+                                coord(2600025.000, 1200075.000),
+                                coord(2600025.000, 1200025.000))));
 
         RoundtripResult roundtrip = runRoundtrip(source);
 
@@ -118,18 +122,19 @@ class SurfaceAreaRoundtripIntegrationTest {
 
         IomObject roundtripObject = findFirstBySuffix(roundtrip.forwardObjects(), ".SurfaceClass");
         assertThat(roundtripObject).isNotNull();
-        assertThat(signature(source, "Perimeter"))
-                .isEqualTo(signature(roundtripObject, "Perimeter"));
+        assertThat(signature(source, "Perimeter")).isEqualTo(signature(roundtripObject, "Perimeter"));
     }
 
     @Test
     void areaRoundtripPreservesGeometryAndWritesPointOnSurface() throws Exception {
-        IomObject source = areaObject("ART1", surface(boundary(
-                coord(2601000.000, 1201000.000),
-                coord(2601100.000, 1201000.000),
-                coord(2601100.000, 1201100.000),
-                coord(2601000.000, 1201100.000),
-                coord(2601000.000, 1201000.000))));
+        IomObject source = areaObject(
+                "ART1",
+                surface(boundary(
+                        coord(2601000.000, 1201000.000),
+                        coord(2601100.000, 1201000.000),
+                        coord(2601100.000, 1201100.000),
+                        coord(2601000.000, 1201100.000),
+                        coord(2601000.000, 1201000.000))));
 
         RoundtripResult roundtrip = runRoundtrip(source);
         String content = Files.readString(roundtrip.itfPath());
@@ -155,30 +160,33 @@ class SurfaceAreaRoundtripIntegrationTest {
 
         IomObject forwardArea = findFirstBySuffix(roundtrip.forwardObjects(), ".AreaClass");
         assertThat(forwardArea).isNotNull();
-        assertThat(signature(source, "Geometrie"))
-                .isEqualTo(signature(forwardArea, "Geometrie"));
+        assertThat(signature(source, "Geometrie")).isEqualTo(signature(forwardArea, "Geometrie"));
     }
 
     @Test
     void areaWithoutInteriorPointProducesDiagnosticAndNoFakeGeometry() throws Exception {
-        Path sourcePath = writeSourceXtf(areaObject("ABAD", surface(boundary(
-                coord(2602000.000, 1202000.000),
-                coord(2602100.000, 1202100.000)))));
+        Path sourcePath = writeSourceXtf(areaObject(
+                "ABAD", surface(boundary(coord(2602000.000, 1202000.000), coord(2602100.000, 1202100.000)))));
 
         Path outputPath = Files.createTempFile("ili1-area-bad-", ".itf");
         DiagnosticCollector diagnostics = new DiagnosticCollector();
         TransformResult result;
         try {
-            result = runTransfer(reversePlan, sourcePath, ili2TransferDescription, outputPath,
-                    ili1TransferDescription, "ili2", "ili1", diagnostics);
+            result = runTransfer(
+                    reversePlan,
+                    sourcePath,
+                    ili2TransferDescription,
+                    outputPath,
+                    ili1TransferDescription,
+                    "ili2",
+                    "ili1",
+                    diagnostics);
         } finally {
             Files.deleteIfExists(sourcePath);
         }
 
         assertThat(result.errors()).isGreaterThan(0);
-        assertThat(diagnostics.all())
-                .extracting(Diagnostic::code)
-                .contains(DiagnosticCode.GEOM_AREA_POINT_MISSING);
+        assertThat(diagnostics.all()).extracting(Diagnostic::code).contains(DiagnosticCode.GEOM_AREA_POINT_MISSING);
 
         List<IomObject> reverseObjects = readAllObjects(outputPath, ili1TransferDescription);
         IomObject reverseArea = findFirstBySuffix(reverseObjects, ".AreaClass");
@@ -232,24 +240,28 @@ class SurfaceAreaRoundtripIntegrationTest {
                         Perimeter: "s.Perimeter"
                 """;
 
-        TransformPlan plan = compilePlan(mapping,
+        TransformPlan plan = compilePlan(
+                mapping,
                 Map.of(REAL_DMAV_MODEL, new TypeSystemFacade(sourceResult.transferDescription())),
                 Map.of(ILI1_MODEL, ili1TypeSystem));
 
         Path outputPath = Files.createTempFile("real-dmav-surface-", ".itf");
         DiagnosticCollector diagnostics = new DiagnosticCollector();
-        TransformResult result = runTransfer(plan, REAL_DMAV_INPUT, sourceResult.transferDescription(), outputPath,
-                ili1TransferDescription, "src", "tgt", diagnostics);
+        TransformResult result = runTransfer(
+                plan,
+                REAL_DMAV_INPUT,
+                sourceResult.transferDescription(),
+                outputPath,
+                ili1TransferDescription,
+                "src",
+                "tgt",
+                diagnostics);
         ValidationResult validation = IlivalidatorRunner.validate(outputPath, List.of(MODELDIR), ILI1_MODEL, null);
         List<IomObject> reverseObjects = readAllObjects(outputPath, ili1TransferDescription);
 
         assertThat(result.errors()).isZero();
-        assertThat(diagnostics.hasErrors())
-                .as(diagnostics.all().toString())
-                .isFalse();
-        assertThat(validation.success())
-                .as(validation.log())
-                .isTrue();
+        assertThat(diagnostics.hasErrors()).as(diagnostics.all().toString()).isFalse();
+        assertThat(validation.success()).as(validation.log()).isTrue();
 
         IomObject surface = findFirstBySuffix(reverseObjects, ".SurfaceClass");
         assertThat(surface).isNotNull();
@@ -263,33 +275,61 @@ class SurfaceAreaRoundtripIntegrationTest {
         Path xtfPath = Files.createTempFile("ili1-back-to-ili2-", ".xtf");
 
         DiagnosticCollector reverseDiagnostics = new DiagnosticCollector();
-        TransformResult reverseResult = runTransfer(reversePlan, sourcePath, ili2TransferDescription, itfPath,
-                ili1TransferDescription, "ili2", "ili1", reverseDiagnostics);
+        TransformResult reverseResult = runTransfer(
+                reversePlan,
+                sourcePath,
+                ili2TransferDescription,
+                itfPath,
+                ili1TransferDescription,
+                "ili2",
+                "ili1",
+                reverseDiagnostics);
         ValidationResult reverseValidation = IlivalidatorRunner.validate(itfPath, List.of(MODELDIR), ILI1_MODEL, null);
         List<IomObject> reverseObjects = readAllObjects(itfPath, ili1TransferDescription);
 
         DiagnosticCollector forwardDiagnostics = new DiagnosticCollector();
-        TransformResult forwardResult = runTransfer(forwardPlan, itfPath, ili1TransferDescription, xtfPath,
-                ili2TransferDescription, "ili1", "ili2", forwardDiagnostics);
+        TransformResult forwardResult = runTransfer(
+                forwardPlan,
+                itfPath,
+                ili1TransferDescription,
+                xtfPath,
+                ili2TransferDescription,
+                "ili1",
+                "ili2",
+                forwardDiagnostics);
         ValidationResult forwardValidation = IlivalidatorRunner.validate(xtfPath, List.of(MODELDIR), ILI2_MODEL, null);
         List<IomObject> forwardObjects = readAllObjects(xtfPath, ili2TransferDescription);
 
         Files.deleteIfExists(sourcePath);
-        return new RoundtripResult(reverseResult, forwardResult, reverseDiagnostics, forwardDiagnostics,
-                reverseValidation, forwardValidation, reverseObjects, forwardObjects, itfPath, xtfPath);
+        return new RoundtripResult(
+                reverseResult,
+                forwardResult,
+                reverseDiagnostics,
+                forwardDiagnostics,
+                reverseValidation,
+                forwardValidation,
+                reverseObjects,
+                forwardObjects,
+                itfPath,
+                xtfPath);
     }
 
-    private TransformResult runTransfer(TransformPlan plan, Path inputPath,
-                                        ch.interlis.ili2c.metamodel.TransferDescription inputTransferDescription,
-                                        Path outputPath,
-                                        ch.interlis.ili2c.metamodel.TransferDescription outputTransferDescription,
-                                        String inputId, String outputId,
-                                        DiagnosticCollector diagnostics) throws Exception {
+    private TransformResult runTransfer(
+            TransformPlan plan,
+            Path inputPath,
+            ch.interlis.ili2c.metamodel.TransferDescription inputTransferDescription,
+            Path outputPath,
+            ch.interlis.ili2c.metamodel.TransferDescription outputTransferDescription,
+            String inputId,
+            String outputId,
+            DiagnosticCollector diagnostics)
+            throws Exception {
         InterlisIoFactory ioFactory = new InterlisIoFactory();
         IoxWriter writer = ioFactory.createWriter(outputPath, outputTransferDescription, diagnostics);
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), diagnostics);
-        return engine.runTyped(plan,
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), diagnostics);
+        return engine.runTyped(
+                plan,
                 ignored -> {
                     try {
                         return ioFactory.createReader(inputPath, inputTransferDescription);
@@ -300,9 +340,9 @@ class SurfaceAreaRoundtripIntegrationTest {
                 Map.of(outputId, writer));
     }
 
-    private static TransformPlan compilePlan(Path path,
-                                             Map<String, TypeSystemFacade> sourceTypes,
-                                             Map<String, TypeSystemFacade> targetTypes) throws Exception {
+    private static TransformPlan compilePlan(
+            Path path, Map<String, TypeSystemFacade> sourceTypes, Map<String, TypeSystemFacade> targetTypes)
+            throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(path.toFile(), JobConfig.class);
         TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTypes, targetTypes);
@@ -312,9 +352,9 @@ class SurfaceAreaRoundtripIntegrationTest {
         return plan;
     }
 
-    private static TransformPlan compilePlan(String yaml,
-                                             Map<String, TypeSystemFacade> sourceTypes,
-                                             Map<String, TypeSystemFacade> targetTypes) throws Exception {
+    private static TransformPlan compilePlan(
+            String yaml, Map<String, TypeSystemFacade> sourceTypes, Map<String, TypeSystemFacade> targetTypes)
+            throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(yaml, JobConfig.class);
         TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTypes, targetTypes);
@@ -345,9 +385,8 @@ class SurfaceAreaRoundtripIntegrationTest {
         return path;
     }
 
-    private List<IomObject> readAllObjects(Path path,
-                                           ch.interlis.ili2c.metamodel.TransferDescription transferDescription)
-            throws Exception {
+    private List<IomObject> readAllObjects(
+            Path path, ch.interlis.ili2c.metamodel.TransferDescription transferDescription) throws Exception {
         InterlisIoFactory ioFactory = new InterlisIoFactory();
         List<IomObject> objects = new ArrayList<>();
         IoxReader reader = ioFactory.createReader(path, transferDescription);
@@ -367,16 +406,16 @@ class SurfaceAreaRoundtripIntegrationTest {
     }
 
     private static IomObject surfaceObject(String nbIdent, IomObject geometry) {
-        Iom_jObject object = new Iom_jObject("DmavSurfaceAreaTestModel.TestTopic.SurfaceClass",
-                "00000000-0000-0000-0000-000000000001");
+        Iom_jObject object = new Iom_jObject(
+                "DmavSurfaceAreaTestModel.TestTopic.SurfaceClass", "00000000-0000-0000-0000-000000000001");
         object.setattrvalue("NBIdent", nbIdent);
         object.addattrobj("Perimeter", geometry);
         return object;
     }
 
     private static IomObject areaObject(String nbIdent, IomObject geometry) {
-        Iom_jObject object = new Iom_jObject("DmavSurfaceAreaTestModel.TestTopic.AreaClass",
-                "00000000-0000-0000-0000-000000000002");
+        Iom_jObject object =
+                new Iom_jObject("DmavSurfaceAreaTestModel.TestTopic.AreaClass", "00000000-0000-0000-0000-000000000002");
         object.setattrvalue("NBIdent", nbIdent);
         object.addattrobj("Geometrie", geometry);
         return object;
@@ -425,9 +464,8 @@ class SurfaceAreaRoundtripIntegrationTest {
     }
 
     private static GeometrySignature signature(IomObject object, String attrName) {
-        IomObject geometry = object != null && object.getattrvaluecount(attrName) > 0
-                ? object.getattrobj(attrName, 0)
-                : null;
+        IomObject geometry =
+                object != null && object.getattrvaluecount(attrName) > 0 ? object.getattrobj(attrName, 0) : null;
         return new GeometrySignature(boundaryCount(geometry), arcCount(geometry));
     }
 
@@ -500,7 +538,8 @@ class SurfaceAreaRoundtripIntegrationTest {
 
     private static IomObject findFirstBySuffix(List<IomObject> objects, String suffix) {
         return objects.stream()
-                .filter(object -> object.getobjecttag() != null && object.getobjecttag().endsWith(suffix))
+                .filter(object ->
+                        object.getobjecttag() != null && object.getobjecttag().endsWith(suffix))
                 .findFirst()
                 .orElse(null);
     }
@@ -512,18 +551,17 @@ class SurfaceAreaRoundtripIntegrationTest {
                 .orElse("<none>");
     }
 
-    private record GeometrySignature(int boundaryCount, int arcCount) {
-    }
+    private record GeometrySignature(int boundaryCount, int arcCount) {}
 
-    private record RoundtripResult(TransformResult reverseResult,
-                                   TransformResult forwardResult,
-                                   DiagnosticCollector reverseDiagnostics,
-                                   DiagnosticCollector forwardDiagnostics,
-                                   ValidationResult reverseValidation,
-                                   ValidationResult forwardValidation,
-                                   List<IomObject> reverseObjects,
-                                   List<IomObject> forwardObjects,
-                                   Path itfPath,
-                                   Path xtfPath) {
-    }
+    private record RoundtripResult(
+            TransformResult reverseResult,
+            TransformResult forwardResult,
+            DiagnosticCollector reverseDiagnostics,
+            DiagnosticCollector forwardDiagnostics,
+            ValidationResult reverseValidation,
+            ValidationResult forwardValidation,
+            List<IomObject> reverseObjects,
+            List<IomObject> forwardObjects,
+            Path itfPath,
+            Path xtfPath) {}
 }

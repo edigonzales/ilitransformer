@@ -1,5 +1,15 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import guru.interlis.transformer.app.IlivalidatorRunner;
+import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
+import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.model.IliModelCompileResult;
+import guru.interlis.transformer.model.IliModelService;
+
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.EndTransferEvent;
@@ -10,22 +20,14 @@ import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox_j.EndBasketEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
-import guru.interlis.transformer.app.IlivalidatorRunner;
-import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
-import guru.interlis.transformer.diag.DiagnosticCollector;
-import guru.interlis.transformer.interlis.InterlisIoFactory;
-import guru.interlis.transformer.model.IliModelCompileResult;
-import guru.interlis.transformer.model.IliModelService;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class CoordRoundtripTest {
 
@@ -47,8 +49,7 @@ class CoordRoundtripTest {
 
     @Test
     void xtfCoordWriteValidateReadBack() throws Exception {
-        IomObject lfp3 = new Iom_jObject(BASKET + ".LFP3",
-                "550e8400-e29b-41d4-a716-446655440000");
+        IomObject lfp3 = new Iom_jObject(BASKET + ".LFP3", "550e8400-e29b-41d4-a716-446655440000");
         lfp3.setattrvalue("NBIdent", "LFP001");
         lfp3.setattrvalue("Nummer", "001");
         Iom_jObject coord = new Iom_jObject("COORD", null);
@@ -70,9 +71,7 @@ class CoordRoundtripTest {
             writer.close();
 
             ValidationResult validation = IlivalidatorRunner.validate(xtfPath, List.of(MODELDIR), MODEL, null);
-            assertThat(validation.success())
-                    .as(validation.log())
-                    .isTrue();
+            assertThat(validation.success()).as(validation.log()).isTrue();
 
             List<IomObject> objects = readAllObjects(xtfPath);
             assertThat(objects).hasSize(1);
@@ -111,9 +110,7 @@ class CoordRoundtripTest {
             writer.flush();
             writer.close();
 
-            assertThat(diagnostics.hasErrors())
-                    .as(diagnostics.all().toString())
-                    .isFalse();
+            assertThat(diagnostics.hasErrors()).as(diagnostics.all().toString()).isFalse();
 
             List<IomObject> objects = readAllObjects(itfPath);
             assertThat(objects).hasSize(1);

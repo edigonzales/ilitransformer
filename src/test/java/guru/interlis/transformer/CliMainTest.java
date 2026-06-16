@@ -3,8 +3,10 @@ package guru.interlis.transformer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import guru.interlis.transformer.app.CliMain;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,9 +95,8 @@ class CliMainTest {
 
     @Test
     void validateMappingWithValidFileExitsZero() {
-        int exitCode = new CommandLine(new CliMain()).execute(
-                "validate-mapping", "--mapping", "src/test/resources/mappings/minimal-valid.yaml"
-        );
+        int exitCode = new CommandLine(new CliMain())
+                .execute("validate-mapping", "--mapping", "src/test/resources/mappings/minimal-valid.yaml");
         assertThat(exitCode).isZero();
         String output = outContent.toString();
         assertThat(output).contains("valid");

@@ -1,12 +1,12 @@
 package guru.interlis.transformer.testutil;
 
+import ch.interlis.iom_j.itf.ItfReader2;
+import ch.interlis.iom_j.xtf.Xtf24Reader;
 import ch.interlis.iox.EndTransferEvent;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox.StartTransferEvent;
-import ch.interlis.iom_j.itf.ItfReader2;
-import ch.interlis.iom_j.xtf.Xtf24Reader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,7 +37,8 @@ public final class RealDatasetCatalog {
 
     public static TransferDatasetDescriptor requireSingleItf(Path root) {
         List<TransferDatasetDescriptor> all = scan(root).stream()
-                .filter(d -> d.format() == TransferFormat.ITF).toList();
+                .filter(d -> d.format() == TransferFormat.ITF)
+                .toList();
         if (all.isEmpty()) {
             throw new IllegalStateException("No ITF transfer found under " + root);
         }
@@ -49,7 +50,8 @@ public final class RealDatasetCatalog {
 
     public static TransferDatasetDescriptor requireSingleXtf(Path root) {
         List<TransferDatasetDescriptor> all = scan(root).stream()
-                .filter(d -> d.format() == TransferFormat.XTF).toList();
+                .filter(d -> d.format() == TransferFormat.XTF)
+                .toList();
         if (all.isEmpty()) {
             throw new IllegalStateException("No XTF transfer found under " + root);
         }
@@ -98,8 +100,7 @@ public final class RealDatasetCatalog {
 
             long size = Files.size(path);
             return java.util.Optional.of(new TransferDatasetDescriptor(
-                    name, path.toAbsolutePath(), format,
-                    List.copyOf(models), List.of(), size));
+                    name, path.toAbsolutePath(), format, List.copyOf(models), List.of(), size));
         } catch (Exception e) {
             return java.util.Optional.empty();
         } finally {

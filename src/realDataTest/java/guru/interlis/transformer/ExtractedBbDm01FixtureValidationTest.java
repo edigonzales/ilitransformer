@@ -1,5 +1,7 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import guru.interlis.transformer.dmav.Dm01DmavFixtures;
 import guru.interlis.transformer.dmav.Dm01DmavPaths;
 import guru.interlis.transformer.model.ConnectedSubgraphExtractor;
@@ -12,17 +14,16 @@ import guru.interlis.transformer.testutil.TransferFormat;
 import guru.interlis.transformer.validation.InProcessIlivalidatorService;
 import guru.interlis.transformer.validation.TransferValidationService;
 import guru.interlis.transformer.validation.ValidationResult;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 @Tag("real-data")
 class ExtractedBbDm01FixtureValidationTest {
@@ -44,8 +45,8 @@ class ExtractedBbDm01FixtureValidationTest {
         extractor = new ConnectedSubgraphExtractor(modelService);
 
         try (var files = Files.walk(DATA_DIR)) {
-            dm01File = files
-                    .filter(f -> f.getFileName().toString().toLowerCase().endsWith(".itf"))
+            dm01File = files.filter(
+                            f -> f.getFileName().toString().toLowerCase().endsWith(".itf"))
                     .filter(Files::isRegularFile)
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("No ITF file found under " + DATA_DIR));
@@ -74,16 +75,15 @@ class ExtractedBbDm01FixtureValidationTest {
         ExtractedTransfer result = extractor.extract(source, request);
 
         assertThat(result.totalObjects()).isGreaterThanOrEqualTo(4);
-        assertThat(result.includedClasses().stream().anyMatch(c -> c.contains("BBNachfuehrung"))).isTrue();
-        assertThat(result.includedClasses().stream().anyMatch(c -> c.contains("BoFlaeche"))).isTrue();
+        assertThat(result.includedClasses().stream().anyMatch(c -> c.contains("BBNachfuehrung")))
+                .isTrue();
+        assertThat(result.includedClasses().stream().anyMatch(c -> c.contains("BoFlaeche")))
+                .isTrue();
 
         TransferValidationService validator = new InProcessIlivalidatorService();
         Path logFile = tempDir.resolve("bb-dm01-validation.log");
-        ValidationResult validation = validator.validate(
-                result.transferFile(),
-                List.of(MODEL_DIR),
-                List.of(DM01_MODEL),
-                logFile);
+        ValidationResult validation =
+                validator.validate(result.transferFile(), List.of(MODEL_DIR), List.of(DM01_MODEL), logFile);
 
         assertThat(validation.valid())
                 .as("DM01 BB fixture must be valid. Log: " + validation.logText())

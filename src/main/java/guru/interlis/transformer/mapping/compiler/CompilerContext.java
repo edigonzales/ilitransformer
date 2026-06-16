@@ -18,5 +18,4 @@ public record CompilerContext(
         Map<String, Map<String, String>> enumMaps,
         OidStrategy oidStrategy,
         String oidNamespace,
-        Map<String, String> globalDefaults
-) {}
+        Map<String, String> globalDefaults) {}

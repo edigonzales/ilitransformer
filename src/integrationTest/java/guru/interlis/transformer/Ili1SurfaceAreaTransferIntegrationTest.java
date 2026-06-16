@@ -1,13 +1,9 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iox.EndTransferEvent;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.IoxWriter;
-import ch.interlis.iox.ObjectEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -22,8 +18,12 @@ import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.iom.IomObject;
+import ch.interlis.iox.EndTransferEvent;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.ObjectEvent;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,15 +32,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class Ili1SurfaceAreaTransferIntegrationTest {
 
     private static final String MODELDIR = "src/test/data/models/";
     private static final Path VALID_INPUT = Path.of("src/test/resources/transfers/ili1-surface-area/input.itf");
-    private static final Path INVALID_INPUT = Path.of("src/test/resources/transfers/ili1-surface-area/input-missing-area-geom.itf");
+    private static final Path INVALID_INPUT =
+            Path.of("src/test/resources/transfers/ili1-surface-area/input-missing-area-geom.itf");
     private static final Path MAPPING_FILE = Path.of("src/test/resources/mappings/ili1-to-ili2-surface-area-test.yaml");
     private static final Path REAL_DM01_INPUT = Path.of("src/test/data/av/so_2549.itf");
     private static final String REAL_DM01_MODELDIR = "https://geo.so.ch/models/;https://models.interlis.ch";
@@ -54,16 +56,14 @@ class Ili1SurfaceAreaTransferIntegrationTest {
     static void compileModels() {
         IliModelService service = new IliModelService();
 
-        IliModelCompileResult ili1Result = service.compileModel(
-                "Ili1SurfaceAreaTestModel", MODELDIR);
+        IliModelCompileResult ili1Result = service.compileModel("Ili1SurfaceAreaTestModel", MODELDIR);
         if (ili1Result.hasErrors()) {
             fail("ILI1 model compilation errors:\n  " + formatDiagnostics(ili1Result));
         }
         ili1Td = ili1Result.transferDescription();
         ili1Ts = new TypeSystemFacade(ili1Td);
 
-        IliModelCompileResult ili2Result = service.compileModel(
-                "DmavSurfaceAreaTestModel", MODELDIR);
+        IliModelCompileResult ili2Result = service.compileModel("DmavSurfaceAreaTestModel", MODELDIR);
         if (ili2Result.hasErrors()) {
             fail("ILI2 model compilation errors:\n  " + formatDiagnostics(ili2Result));
         }
@@ -98,9 +98,7 @@ class Ili1SurfaceAreaTransferIntegrationTest {
     void missingAreaGeometryProducesDiagnosticAndNoFakePolygon() throws Exception {
         TransferRun run = runTransfer(INVALID_INPUT);
 
-        assertThat(run.diagnostics().all())
-                .extracting(Diagnostic::code)
-                .contains(DiagnosticCode.GEOM_INVALID);
+        assertThat(run.diagnostics().all()).extracting(Diagnostic::code).contains(DiagnosticCode.GEOM_INVALID);
 
         List<IomObject> outputObjects = readAllObjects(run.outputPath(), ili2Td);
         IomObject area = findFirstBySuffix(outputObjects, ".AreaClass");
@@ -149,10 +147,9 @@ class Ili1SurfaceAreaTransferIntegrationTest {
     private TransferRun runTransfer(Path inputPath) throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(MAPPING_FILE.toFile(), JobConfig.class);
-        TransformPlan plan = new MappingCompiler().compileTyped(
-                config,
-                Map.of("Ili1SurfaceAreaTestModel", ili1Ts),
-                Map.of("DmavSurfaceAreaTestModel", ili2Ts));
+        TransformPlan plan = new MappingCompiler()
+                .compileTyped(
+                        config, Map.of("Ili1SurfaceAreaTestModel", ili1Ts), Map.of("DmavSurfaceAreaTestModel", ili2Ts));
 
         assertThat(plan.diagnostics().hasErrors())
                 .as("Compiler diagnostics: %s", plan.diagnostics().all())
@@ -161,8 +158,8 @@ class Ili1SurfaceAreaTransferIntegrationTest {
         Path outputPath = Files.createTempFile("ili1-surface-area-", ".xtf");
         DiagnosticCollector diagnostics = new DiagnosticCollector();
         InterlisIoFactory ioFactory = new InterlisIoFactory();
-        TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), new InMemoryStateStore(), diagnostics);
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), diagnostics);
 
         try {
             TransformResult result = engine.runTyped(
@@ -187,8 +184,8 @@ class Ili1SurfaceAreaTransferIntegrationTest {
         };
     }
 
-    private static List<IomObject> readAllObjects(Path path,
-                                                  ch.interlis.ili2c.metamodel.TransferDescription td) throws Exception {
+    private static List<IomObject> readAllObjects(Path path, ch.interlis.ili2c.metamodel.TransferDescription td)
+            throws Exception {
         InterlisIoFactory ioFactory = new InterlisIoFactory();
         List<IomObject> objects = new ArrayList<>();
         IoxReader reader = ioFactory.createReader(path, td);
@@ -221,6 +218,5 @@ class Ili1SurfaceAreaTransferIntegrationTest {
                 .orElse("<none>");
     }
 
-    private record TransferRun(TransformResult result, DiagnosticCollector diagnostics, Path outputPath) {
-    }
+    private record TransferRun(TransformResult result, DiagnosticCollector diagnostics, Path outputPath) {}
 }

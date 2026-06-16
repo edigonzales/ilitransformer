@@ -1,5 +1,7 @@
 package guru.interlis.transformer.expr;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.expr.builtins.BasicFunctions;
@@ -7,13 +9,12 @@ import guru.interlis.transformer.mapping.plan.CompiledExpression;
 import guru.interlis.transformer.mapping.plan.ExpressionCompileContext;
 import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class BarePathValidationTest {
 
@@ -31,22 +32,20 @@ class BarePathValidationTest {
 
     @Test
     void detectsBarePathWithUnknownAlias() {
-        ExpressionCompileContext ctx = new ExpressionCompileContext("r1", Map.of(),
-                TypeInfo.UNKNOWN, registry, Map.of());
+        ExpressionCompileContext ctx =
+                new ExpressionCompileContext("r1", Map.of(), TypeInfo.UNKNOWN, registry, Map.of());
 
         CompiledExpression result = compiler.compile("p.Unbekannt", ctx, diagnostics);
         assertThat(diagnostics.errors()).isGreaterThan(0);
-        assertThat(diagnostics.all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE));
+        assertThat(diagnostics.all()).anyMatch(d -> d.code().equals(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE));
     }
 
     @Test
     void detectsBarePathUnknownAttribute() {
-        Map<String, SourcePlan> sources = Map.of("p",
-                new SourcePlan("p", null, List.of(), null));
+        Map<String, SourcePlan> sources = Map.of("p", new SourcePlan("p", null, List.of(), null));
 
-        ExpressionCompileContext ctx = new ExpressionCompileContext("r1", sources,
-                TypeInfo.UNKNOWN, registry, Map.of());
+        ExpressionCompileContext ctx =
+                new ExpressionCompileContext("r1", sources, TypeInfo.UNKNOWN, registry, Map.of());
 
         CompiledExpression result = compiler.compile("p.Unbekannt", ctx, diagnostics);
         assertThat(diagnostics.errors()).isGreaterThan(0);
@@ -54,11 +53,10 @@ class BarePathValidationTest {
 
     @Test
     void parsesBarePathWithoutBrackets() {
-        Map<String, SourcePlan> sources = Map.of("p",
-                new SourcePlan("p", null, List.of(), null));
+        Map<String, SourcePlan> sources = Map.of("p", new SourcePlan("p", null, List.of(), null));
 
-        ExpressionCompileContext ctx = new ExpressionCompileContext("r1", sources,
-                TypeInfo.UNKNOWN, registry, Map.of());
+        ExpressionCompileContext ctx =
+                new ExpressionCompileContext("r1", sources, TypeInfo.UNKNOWN, registry, Map.of());
 
         CompiledExpression result = compiler.compile("p.Unbekannt", ctx, diagnostics);
         assertThat(result.ast()).isInstanceOf(PathExpr.class);

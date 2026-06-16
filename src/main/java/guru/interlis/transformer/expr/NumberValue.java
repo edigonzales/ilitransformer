@@ -1,7 +1,6 @@
 package guru.interlis.transformer.expr;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 public record NumberValue(BigDecimal value) implements Value {
 

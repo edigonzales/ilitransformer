@@ -8,6 +8,7 @@ import guru.interlis.transformer.expr.NullValue;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.expr.XmlDateTimeValue;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -24,20 +25,25 @@ public final class DateFunctions {
     private DateFunctions() {}
 
     public static void registerAll(FunctionRegistry registry) {
-        registry.register("toXmlDateTime", TypeInfo.XML_DATE_TIME,
+        registry.register(
+                "toXmlDateTime",
+                TypeInfo.XML_DATE_TIME,
                 List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN)),
                 DateFunctions::toXmlDateTime);
 
-        registry.register("toInterlis1Date", TypeInfo.TEXT,
+        registry.register(
+                "toInterlis1Date",
+                TypeInfo.TEXT,
                 List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN)),
                 DateFunctions::toInterlis1Date);
 
-        registry.register("toDate", TypeInfo.DATE,
+        registry.register(
+                "toDate",
+                TypeInfo.DATE,
                 List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN)),
                 DateFunctions::toDate);
 
-        registry.registerNonDeterministic("now", TypeInfo.XML_DATE_TIME,
-                List.of(), DateFunctions::now);
+        registry.registerNonDeterministic("now", TypeInfo.XML_DATE_TIME, List.of(), DateFunctions::now);
     }
 
     static Value toInterlis1Date(List<Value> args, EvalContext ctx) {
@@ -58,7 +64,8 @@ public final class DateFunctions {
                 } catch (DateTimeParseException e3) {
                     try {
                         LocalDate date = LocalDate.parse(text, ILI1_DATE);
-                        return new guru.interlis.transformer.expr.TextValue(date.format(DateTimeFormatter.BASIC_ISO_DATE));
+                        return new guru.interlis.transformer.expr.TextValue(
+                                date.format(DateTimeFormatter.BASIC_ISO_DATE));
                     } catch (DateTimeParseException e4) {
                         return NullValue.INSTANCE;
                     }

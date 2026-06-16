@@ -1,10 +1,11 @@
 package guru.interlis.transformer.cli;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.app.CliMain;
+
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
-
-import static org.assertj.core.api.Assertions.*;
 
 class InspectModelCliTest {
 
@@ -22,36 +23,51 @@ class InspectModelCliTest {
 
     @Test
     void inspectModelWithMinimalModelExitsZero() {
-        int exitCode = runCli("inspect-model",
-                "--model", "src/test/data/models/minimal.ili",
-                "--modeldir", "src/test/data/models/",
-                "--format", "json");
+        int exitCode = runCli(
+                "inspect-model",
+                "--model",
+                "src/test/data/models/minimal.ili",
+                "--modeldir",
+                "src/test/data/models/",
+                "--format",
+                "json");
         assertThat(exitCode).isZero();
     }
 
     @Test
     void inspectModelWithNonexistentModelExitsError() {
-        int exitCode = runCli("inspect-model",
-                "--model", "src/test/data/models/nonexistent.ili",
-                "--modeldir", "src/test/data/models/");
+        int exitCode = runCli(
+                "inspect-model",
+                "--model",
+                "src/test/data/models/nonexistent.ili",
+                "--modeldir",
+                "src/test/data/models/");
         assertThat(exitCode).isNotZero();
     }
 
     @Test
     void inspectModelMarkdownFormatExitsZero() {
-        int exitCode = runCli("inspect-model",
-                "--model", "src/test/data/models/minimal.ili",
-                "--modeldir", "src/test/data/models/",
-                "--format", "markdown");
+        int exitCode = runCli(
+                "inspect-model",
+                "--model",
+                "src/test/data/models/minimal.ili",
+                "--modeldir",
+                "src/test/data/models/",
+                "--format",
+                "markdown");
         assertThat(exitCode).isZero();
     }
 
     @Test
     void inspectModelBothFormatsExitsZero() {
-        int exitCode = runCli("inspect-model",
-                "--model", "src/test/data/models/minimal.ili",
-                "--modeldir", "src/test/data/models/",
-                "--format", "both");
+        int exitCode = runCli(
+                "inspect-model",
+                "--model",
+                "src/test/data/models/minimal.ili",
+                "--modeldir",
+                "src/test/data/models/",
+                "--format",
+                "both");
         assertThat(exitCode).isZero();
     }
 

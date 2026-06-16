@@ -1,12 +1,12 @@
 package guru.interlis.transformer.model;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.mapping.model.JobConfig;
-import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
-import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class ModelRegistryTest {
 
@@ -96,8 +96,7 @@ class ModelRegistryTest {
         ModelRegistry registry = ModelRegistry.builder()
                 .config(config)
                 .buildWithSuppliedTypeSystems(
-                        java.util.Map.of(),
-                        java.util.Map.of("DMAV_FixpunkteAVKategorie3_V1_1", mockTs));
+                        java.util.Map.of(), java.util.Map.of("DMAV_FixpunkteAVKategorie3_V1_1", mockTs));
 
         OutputBinding dmav = registry.requireOutput("dmav");
         assertThat(dmav.outputId()).isEqualTo("dmav");
@@ -118,8 +117,7 @@ class ModelRegistryTest {
         ModelRegistry registry = ModelRegistry.builder()
                 .config(config)
                 .buildWithSuppliedTypeSystems(
-                        java.util.Map.of("SomeVeryLongModelName_V2_3", mockTs),
-                        java.util.Map.of());
+                        java.util.Map.of("SomeVeryLongModelName_V2_3", mockTs), java.util.Map.of());
 
         InputBinding binding = registry.requireInput("src1");
         assertThat(binding.inputId()).isEqualTo("src1");
@@ -134,9 +132,7 @@ class ModelRegistryTest {
 
         ModelRegistry registry = ModelRegistry.builder()
                 .config(config)
-                .buildWithSuppliedTypeSystems(
-                        java.util.Map.of("DM01AVCH24LV95", mockTs),
-                        java.util.Map.of());
+                .buildWithSuppliedTypeSystems(java.util.Map.of("DM01AVCH24LV95", mockTs), java.util.Map.of());
 
         InputBinding dm01 = registry.requireInput("dm01");
         InputBinding gwr = registry.requireInput("gwr");
@@ -162,8 +158,7 @@ class ModelRegistryTest {
         ModelRegistry registry = ModelRegistry.builder()
                 .config(config)
                 .buildWithSuppliedTypeSystems(
-                        java.util.Map.of(),
-                        java.util.Map.of("ModelAlpha", mockTs, "ModelBeta", mockTs));
+                        java.util.Map.of(), java.util.Map.of("ModelAlpha", mockTs, "ModelBeta", mockTs));
 
         OutputBinding a = registry.requireOutput("targetA");
         OutputBinding b = registry.requireOutput("targetB");
@@ -178,9 +173,7 @@ class ModelRegistryTest {
         TypeSystemFacade mockTs = new TypeSystemFacade(null);
         ModelRegistry registry = ModelRegistry.builder()
                 .config(config)
-                .buildWithSuppliedTypeSystems(
-                        java.util.Map.of("DM01AVCH24LV95", mockTs),
-                        java.util.Map.of());
+                .buildWithSuppliedTypeSystems(java.util.Map.of("DM01AVCH24LV95", mockTs), java.util.Map.of());
 
         TypeSystemFacade ts = registry.requireSourceTypeSystem("dm01");
         assertThat(ts).isSameAs(mockTs);
@@ -193,8 +186,7 @@ class ModelRegistryTest {
         ModelRegistry registry = ModelRegistry.builder()
                 .config(config)
                 .buildWithSuppliedTypeSystems(
-                        java.util.Map.of(),
-                        java.util.Map.of("DMAV_FixpunkteAVKategorie3_V1_1", mockTs));
+                        java.util.Map.of(), java.util.Map.of("DMAV_FixpunkteAVKategorie3_V1_1", mockTs));
 
         TypeSystemFacade ts = registry.requireTargetTypeSystem("dmav");
         assertThat(ts).isSameAs(mockTs);

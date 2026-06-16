@@ -20,13 +20,10 @@ import java.util.Set;
 public final class ExpressionCompiler {
 
     public CompiledExpression compile(
-            String expression,
-            ExpressionCompileContext context,
-            DiagnosticCollector diagnostics
-    ) {
+            String expression, ExpressionCompileContext context, DiagnosticCollector diagnostics) {
         if (expression == null || expression.isBlank()) {
-            return new CompiledExpression(expression, new LiteralExpr(NullValue.INSTANCE),
-                    TypeInfo.UNKNOWN, true, Set.of());
+            return new CompiledExpression(
+                    expression, new LiteralExpr(NullValue.INSTANCE), TypeInfo.UNKNOWN, true, Set.of());
         }
 
         String trimmed = expression.trim();
@@ -37,12 +34,14 @@ public final class ExpressionCompiler {
         } catch (ExpressionParseException e) {
             if (diagnostics != null) {
                 diagnostics.add(new Diagnostic(
-                        DiagnosticCode.EXPR_SYNTAX, Severity.ERROR,
+                        DiagnosticCode.EXPR_SYNTAX,
+                        Severity.ERROR,
                         "Expression parse error: " + e.getMessage(),
-                        context.ruleId(), expression));
+                        context.ruleId(),
+                        expression));
             }
-            return new CompiledExpression(trimmed, new LiteralExpr(NullValue.INSTANCE),
-                    TypeInfo.UNKNOWN, false, Set.of());
+            return new CompiledExpression(
+                    trimmed, new LiteralExpr(NullValue.INSTANCE), TypeInfo.UNKNOWN, false, Set.of());
         }
 
         Set<ResolvedPath> paths = new HashSet<>();
@@ -52,8 +51,11 @@ public final class ExpressionCompiler {
         return new CompiledExpression(trimmed, ast, resultType, deterministic, paths);
     }
 
-    private TypeInfo resolveType(Expression expr, ExpressionCompileContext context,
-                                  DiagnosticCollector diagnostics, Set<ResolvedPath> paths) {
+    private TypeInfo resolveType(
+            Expression expr,
+            ExpressionCompileContext context,
+            DiagnosticCollector diagnostics,
+            Set<ResolvedPath> paths) {
         return switch (expr) {
             case LiteralExpr lit -> typeOfLiteral(lit.value());
             case PathExpr path -> resolvePathType(path, context, diagnostics, paths);
@@ -70,68 +72,78 @@ public final class ExpressionCompiler {
         return TypeInfo.UNKNOWN;
     }
 
-    private TypeInfo resolvePathType(PathExpr path, ExpressionCompileContext context,
-                                      DiagnosticCollector diagnostics, Set<ResolvedPath> paths) {
+    private TypeInfo resolvePathType(
+            PathExpr path, ExpressionCompileContext context, DiagnosticCollector diagnostics, Set<ResolvedPath> paths) {
         String alias = path.alias();
         String attrName = path.attributeName();
 
         SourcePlan source = context.sourcesByAlias().get(alias);
         if (source == null) {
             if (diagnostics != null) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE,
                         Severity.ERROR,
                         "Unknown source alias in expression: " + alias,
-                        context.ruleId(), "Check the alias in the expression"));
+                        context.ruleId(),
+                        "Check the alias in the expression"));
             }
             return TypeInfo.UNKNOWN;
         }
 
         if (attrName == null || attrName.isBlank()) {
-            paths.add(new ResolvedPath(alias, null,
+            paths.add(new ResolvedPath(
+                    alias,
+                    null,
                     source.sourceClass() != null ? source.sourceClass().getName() : null,
                     TypeInfo.REFERENCE));
             return TypeInfo.REFERENCE;
         }
 
         if (source.sourceClass() != null) {
-            ch.interlis.ili2c.metamodel.AttributeDef attrDef =
-                    findAttribute(source.sourceClass(), attrName);
+            ch.interlis.ili2c.metamodel.AttributeDef attrDef = findAttribute(source.sourceClass(), attrName);
             if (attrDef != null) {
                 TypeInfo attrType = classifyIliAttr(attrDef);
-                paths.add(new ResolvedPath(alias, attrName,
-                        source.sourceClass().getName(), attrType));
+                paths.add(new ResolvedPath(alias, attrName, source.sourceClass().getName(), attrType));
                 return attrType;
             }
-            ch.interlis.ili2c.metamodel.RoleDef roleDef =
-                    findRole(source.sourceClass(), attrName);
+            ch.interlis.ili2c.metamodel.RoleDef roleDef = findRole(source.sourceClass(), attrName);
             if (roleDef != null) {
-                paths.add(new ResolvedPath(alias, attrName,
-                        source.sourceClass().getName(), TypeInfo.REFERENCE));
+                paths.add(new ResolvedPath(alias, attrName, source.sourceClass().getName(), TypeInfo.REFERENCE));
                 return TypeInfo.REFERENCE;
             }
         }
 
-        paths.add(new ResolvedPath(alias, attrName,
+        paths.add(new ResolvedPath(
+                alias,
+                attrName,
                 source.sourceClass() != null ? source.sourceClass().getName() : null,
                 TypeInfo.UNKNOWN));
 
         if (diagnostics != null) {
-            diagnostics.add(new Diagnostic(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE,
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE,
                     Severity.ERROR,
                     "Source attribute not found: " + alias + "." + attrName,
-                    context.ruleId(), "Check the attribute name in source class"));
+                    context.ruleId(),
+                    "Check the attribute name in source class"));
         }
         return TypeInfo.UNKNOWN;
     }
 
-    private TypeInfo resolveFunctionType(FunctionCallExpr call, ExpressionCompileContext context,
-                                          DiagnosticCollector diagnostics, Set<ResolvedPath> paths) {
+    private TypeInfo resolveFunctionType(
+            FunctionCallExpr call,
+            ExpressionCompileContext context,
+            DiagnosticCollector diagnostics,
+            Set<ResolvedPath> paths) {
         Optional<FunctionDef> defOpt = context.functionRegistry().resolve(call.functionName());
         if (defOpt.isEmpty()) {
             if (diagnostics != null) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.EXPR_UNKNOWN_FUNC, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.EXPR_UNKNOWN_FUNC,
+                        Severity.ERROR,
                         "Unknown function: " + call.functionName(),
-                        context.ruleId(), "Check function name or ensure it is registered"));
+                        context.ruleId(),
+                        "Check function name or ensure it is registered"));
             }
             for (Expression arg : call.arguments()) {
                 resolveType(arg, context, diagnostics, paths);
@@ -152,17 +164,22 @@ public final class ExpressionCompiler {
         int argCount = call.arguments().size();
         if (!def.variadic() && argCount != paramCount) {
             if (diagnostics != null) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.EXPR_WRONG_ARG_COUNT, Severity.ERROR,
-                        "Function '" + def.name() + "' expects " + paramCount
-                                + " arguments but got " + argCount,
-                        context.ruleId(), "Check the function arguments"));
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.EXPR_WRONG_ARG_COUNT,
+                        Severity.ERROR,
+                        "Function '" + def.name() + "' expects " + paramCount + " arguments but got " + argCount,
+                        context.ruleId(),
+                        "Check the function arguments"));
             }
         }
 
         if (!def.deterministic() && diagnostics != null) {
-            diagnostics.add(new Diagnostic(DiagnosticCode.EXPR_NON_DETERMINISTIC, Severity.WARNING,
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.EXPR_NON_DETERMINISTIC,
+                    Severity.WARNING,
                     "Non-deterministic function used: " + def.name(),
-                    context.ruleId(), "Results may vary between runs"));
+                    context.ruleId(),
+                    "Results may vary between runs"));
         }
 
         TypeInfo enumMapType = inferEnumMapReturnType(def, call, context);
@@ -175,8 +192,11 @@ public final class ExpressionCompiler {
                 : TypeInfo.UNKNOWN;
     }
 
-    private TypeInfo resolveConditionalType(ConditionalExpr cond, ExpressionCompileContext context,
-                                             DiagnosticCollector diagnostics, Set<ResolvedPath> paths) {
+    private TypeInfo resolveConditionalType(
+            ConditionalExpr cond,
+            ExpressionCompileContext context,
+            DiagnosticCollector diagnostics,
+            Set<ResolvedPath> paths) {
         resolveType(cond.condition(), context, diagnostics, paths);
         TypeInfo thenType = resolveType(cond.thenExpr(), context, diagnostics, paths);
         TypeInfo elseType = resolveType(cond.elseExpr(), context, diagnostics, paths);
@@ -195,10 +215,12 @@ public final class ExpressionCompiler {
         return false;
     }
 
-    private void checkEnumMapValidation(FunctionDef def, FunctionCallExpr call,
-                                          List<TypeInfo> argTypes,
-                                          ExpressionCompileContext context,
-                                          DiagnosticCollector diagnostics) {
+    private void checkEnumMapValidation(
+            FunctionDef def,
+            FunctionCallExpr call,
+            List<TypeInfo> argTypes,
+            ExpressionCompileContext context,
+            DiagnosticCollector diagnostics) {
         if (!"enumMap".equalsIgnoreCase(def.name())) return;
         if (call.arguments().size() < 2) return;
         if (diagnostics == null) return;
@@ -210,14 +232,16 @@ public final class ExpressionCompiler {
         Map<String, Map<String, String>> enumMaps = context.enumMaps();
 
         if (enumMaps == null || !enumMaps.containsKey(mapName)) {
-            diagnostics.add(new Diagnostic(DiagnosticCode.EXPR_ENUM_MAP_MISSING, Severity.ERROR,
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.EXPR_ENUM_MAP_MISSING,
+                    Severity.ERROR,
                     "Enum mapping table '" + mapName + "' not found in config",
-                    context.ruleId(), "Define the mapping under mapping.enums"));
+                    context.ruleId(),
+                    "Define the mapping under mapping.enums"));
         }
     }
 
-    private TypeInfo inferEnumMapReturnType(FunctionDef def, FunctionCallExpr call,
-                                            ExpressionCompileContext context) {
+    private TypeInfo inferEnumMapReturnType(FunctionDef def, FunctionCallExpr call, ExpressionCompileContext context) {
         if (!"enumMap".equalsIgnoreCase(def.name())) return null;
         if (call.arguments().size() < 2) return TypeInfo.ENUM;
 
@@ -248,20 +272,26 @@ public final class ExpressionCompiler {
         return TypeInfo.ENUM;
     }
 
-    private void checkArgTypeCompatibility(FunctionDef def, List<TypeInfo> argTypes,
-                                            ExpressionCompileContext context,
-                                            DiagnosticCollector diagnostics) {
+    private void checkArgTypeCompatibility(
+            FunctionDef def,
+            List<TypeInfo> argTypes,
+            ExpressionCompileContext context,
+            DiagnosticCollector diagnostics) {
         if (diagnostics == null) return;
         int paramSize = def.parameters().size();
         for (int i = 0; i < Math.min(paramSize, argTypes.size()); i++) {
             TypeInfo paramType = def.parameters().get(i).type();
             TypeInfo argType = argTypes.get(i);
-            if (paramType != TypeInfo.UNKNOWN && argType != TypeInfo.UNKNOWN
+            if (paramType != TypeInfo.UNKNOWN
+                    && argType != TypeInfo.UNKNOWN
                     && !isArgTypeCompatible(argType, paramType)) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.EXPR_WRONG_ARG_TYPE, Severity.WARNING,
-                        "Function '" + def.name() + "' parameter " + (i + 1)
-                                + " expects " + paramType + " but got " + argType,
-                        context.ruleId(), "Check the argument type"));
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.EXPR_WRONG_ARG_TYPE,
+                        Severity.WARNING,
+                        "Function '" + def.name() + "' parameter " + (i + 1) + " expects " + paramType + " but got "
+                                + argType,
+                        context.ruleId(),
+                        "Check the argument type"));
             }
         }
     }
@@ -325,8 +355,7 @@ public final class ExpressionCompiler {
         var it = table.getAttributesAndRoles2();
         while (it.hasNext()) {
             ch.interlis.ili2c.metamodel.ViewableTransferElement element = it.next();
-            if (element.obj instanceof ch.interlis.ili2c.metamodel.RoleDef role
-                    && roleName.equals(role.getName())) {
+            if (element.obj instanceof ch.interlis.ili2c.metamodel.RoleDef role && roleName.equals(role.getName())) {
                 return role;
             }
         }

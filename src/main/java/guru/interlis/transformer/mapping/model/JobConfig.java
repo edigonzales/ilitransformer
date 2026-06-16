@@ -1,11 +1,11 @@
 package guru.interlis.transformer.mapping.model;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class JobConfig {
 
@@ -23,8 +23,10 @@ public final class JobConfig {
         public String name;
         public String description;
         public String direction;
+
         @JsonProperty("failPolicy")
         public String failPolicy = "strict";
+
         public List<String> modeldir;
         public List<InputSpec> inputs = new ArrayList<>();
         public List<OutputSpec> outputs = new ArrayList<>();
@@ -53,12 +55,16 @@ public final class JobConfig {
     public static final class MappingSection {
         @JsonProperty("oidStrategy")
         public OidStrategySpec oidStrategy = new OidStrategySpec();
+
         @JsonProperty("basketStrategy")
         public BasketStrategySpec basketStrategy = new BasketStrategySpec();
+
         public Map<String, Map<String, String>> enums;
         public Map<String, String> defaults;
+
         @JsonProperty("compileMode")
         public String compileMode = "strict";
+
         public List<RuleSpec> rules = new ArrayList<>();
     }
 
@@ -67,6 +73,7 @@ public final class JobConfig {
     public static final class OidStrategySpec {
         @JsonProperty("default")
         public String defaultStrategy = "integer";
+
         public String namespace;
     }
 
@@ -156,6 +163,7 @@ public final class JobConfig {
 
     public static final class TargetSpec {
         public String output;
+
         @JsonProperty("class")
         @JsonAlias("clazz")
         public String clazz;
@@ -197,8 +205,8 @@ public final class JobConfig {
     // -- RefMapping --------------------------------------------------------
 
     public static final class RefMapping {
-        public String target;       // backward compat (target attribute name)
-        public String expr;         // backward compat (expression)
+        public String target; // backward compat (target attribute name)
+        public String expr; // backward compat (expression)
 
         @JsonProperty("association")
         public String association;
@@ -235,12 +243,15 @@ public final class JobConfig {
     public static final class BagSpec {
         @JsonProperty("from")
         public BagFrom from;
+
         public String structure;
         public Map<String, String> assign;
         public String mode;
         public Integer maxItems;
+
         @JsonProperty("parentRef")
         public BagParentRef parentRef;
+
         @JsonProperty("nestedBags")
         public Map<String, BagSpec> nestedBags;
     }
@@ -261,8 +272,10 @@ public final class JobConfig {
 
     public static final class BagFrom {
         public String input;
+
         @JsonProperty("class")
         public String clazz;
+
         public String alias;
         public String where;
     }
@@ -272,6 +285,7 @@ public final class JobConfig {
     public static final class CreateSpec {
         @JsonProperty("class")
         public String clazz;
+
         public Map<String, String> assign;
     }
 

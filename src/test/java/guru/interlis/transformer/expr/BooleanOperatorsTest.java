@@ -1,13 +1,13 @@
 package guru.interlis.transformer.expr;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.expr.builtins.BasicFunctions;
-import guru.interlis.transformer.mapping.plan.TypeInfo;
-import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class BooleanOperatorsTest {
 
@@ -29,9 +29,8 @@ class BooleanOperatorsTest {
         AtomicBoolean secondEvaluated = new AtomicBoolean(false);
         FunctionRegistry registry = new FunctionRegistry();
         BasicFunctions.registerAll(registry);
-        registry.registerNonDeterministic("track", guru.interlis.transformer.mapping.plan.TypeInfo.BOOLEAN,
-                java.util.List.of(),
-                (args, c) -> {
+        registry.registerNonDeterministic(
+                "track", guru.interlis.transformer.mapping.plan.TypeInfo.BOOLEAN, java.util.List.of(), (args, c) -> {
                     secondEvaluated.set(true);
                     return BooleanValue.TRUE;
                 });
@@ -56,9 +55,8 @@ class BooleanOperatorsTest {
         AtomicBoolean secondEvaluated = new AtomicBoolean(false);
         FunctionRegistry registry = new FunctionRegistry();
         BasicFunctions.registerAll(registry);
-        registry.registerNonDeterministic("track", guru.interlis.transformer.mapping.plan.TypeInfo.BOOLEAN,
-                java.util.List.of(),
-                (args, c) -> {
+        registry.registerNonDeterministic(
+                "track", guru.interlis.transformer.mapping.plan.TypeInfo.BOOLEAN, java.util.List.of(), (args, c) -> {
                     secondEvaluated.set(true);
                     return BooleanValue.TRUE;
                 });

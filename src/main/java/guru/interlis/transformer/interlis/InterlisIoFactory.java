@@ -1,7 +1,8 @@
 package guru.interlis.transformer.interlis;
 
-import guru.interlis.transformer.geometry.ItfGeometryWriter;
 import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.geometry.ItfGeometryWriter;
+
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.itf.ItfReader2;
@@ -10,11 +11,12 @@ import ch.interlis.iom_j.xtf.Xtf24Reader;
 import ch.interlis.iom_j.xtf.XtfWriter;
 import ch.interlis.iox.EndTransferEvent;
 import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.IoxWriter;
-import ch.interlis.iox.IoxException;
 import ch.interlis.iox_j.IoxIliReader;
+
 import java.nio.file.Path;
 
 public final class InterlisIoFactory {
@@ -39,8 +41,8 @@ public final class InterlisIoFactory {
         return createWriter(path, transferDescription, null);
     }
 
-    public IoxWriter createWriter(Path path, TransferDescription transferDescription,
-                                  DiagnosticCollector diagnostics) throws Exception {
+    public IoxWriter createWriter(Path path, TransferDescription transferDescription, DiagnosticCollector diagnostics)
+            throws Exception {
         String lowerName = path.getFileName().toString().toLowerCase();
         if (lowerName.endsWith(".itf")) {
             return new ItfGeometryWriter(

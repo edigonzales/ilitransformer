@@ -1,19 +1,19 @@
 package guru.interlis.transformer.mapping.compiler;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCode;
-import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class RuleLevelFilterTest {
 
@@ -49,8 +49,7 @@ class RuleLevelFilterTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.EXPR_SYNTAX));
+        assertThat(plan.diagnostics().all()).anyMatch(d -> d.code().equals(DiagnosticCode.EXPR_SYNTAX));
     }
 
     @Test

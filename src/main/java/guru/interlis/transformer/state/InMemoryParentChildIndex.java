@@ -10,24 +10,16 @@ public final class InMemoryParentChildIndex implements ParentChildIndex {
     private final Map<String, Map<String, Map<String, List<SourceRecord>>>> index = new LinkedHashMap<>();
 
     @Override
-    public void index(
-            String sourceClass,
-            String referenceAttribute,
-            String parentOid,
-            SourceRecord child) {
+    public void index(String sourceClass, String referenceAttribute, String parentOid, SourceRecord child) {
         if (sourceClass == null || referenceAttribute == null || parentOid == null || child == null) return;
-        index
-                .computeIfAbsent(sourceClass, k -> new LinkedHashMap<>())
+        index.computeIfAbsent(sourceClass, k -> new LinkedHashMap<>())
                 .computeIfAbsent(referenceAttribute, k -> new LinkedHashMap<>())
                 .computeIfAbsent(parentOid, k -> new ArrayList<>())
                 .add(child);
     }
 
     @Override
-    public List<SourceRecord> children(
-            String sourceClass,
-            String referenceAttribute,
-            String parentOid) {
+    public List<SourceRecord> children(String sourceClass, String referenceAttribute, String parentOid) {
         if (sourceClass == null || referenceAttribute == null || parentOid == null) return List.of();
         Map<String, Map<String, List<SourceRecord>>> classIndex = index.get(sourceClass);
         if (classIndex == null) return List.of();

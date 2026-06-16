@@ -1,11 +1,12 @@
 package guru.interlis.transformer.state;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import ch.interlis.iom_j.Iom_jObject;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class InMemorySourceLookupIndexTest {
 
@@ -15,8 +16,7 @@ class InMemorySourceLookupIndexTest {
         index.index(sourceRecord("dm01", "Model.T.ClassA", "1", "Name", "TestName"));
 
         List<SourceRecord> hits = index.lookup(
-                new LookupKey(null, "Model.T.ClassA", "Name",
-                        new CanonicalValue("text", "TestName", true)));
+                new LookupKey(null, "Model.T.ClassA", "Name", new CanonicalValue("text", "TestName", true)));
 
         assertThat(hits).hasSize(1);
         assertThat(hits.get(0).sourceObject().getattrvalue("Name")).isEqualTo("TestName");
@@ -31,8 +31,7 @@ class InMemorySourceLookupIndexTest {
         index.index(new SourceRecord("dm01", null, "Model.T.ClassA", obj));
 
         List<SourceRecord> hits = index.lookup(
-                new LookupKey(null, "Model.T.ClassA", "RefAttr",
-                        new CanonicalValue("text", "REF_OID_42", true)));
+                new LookupKey(null, "Model.T.ClassA", "RefAttr", new CanonicalValue("text", "REF_OID_42", true)));
 
         assertThat(hits).hasSize(1);
         assertThat(hits.get(0).sourceObject().getobjectoid()).isEqualTo("1");
@@ -45,14 +44,12 @@ class InMemorySourceLookupIndexTest {
         index.index(sourceRecord("input-B", "Model.T.ClassA", "2", "Name", "ValueA"));
 
         List<SourceRecord> hitsA = index.lookup(
-                new LookupKey("input-A", "Model.T.ClassA", "Name",
-                        new CanonicalValue("text", "ValueA", true)));
+                new LookupKey("input-A", "Model.T.ClassA", "Name", new CanonicalValue("text", "ValueA", true)));
         assertThat(hitsA).hasSize(1);
         assertThat(hitsA.get(0).sourceFileId()).isEqualTo("input-A");
 
         List<SourceRecord> hitsB = index.lookup(
-                new LookupKey("input-B", "Model.T.ClassA", "Name",
-                        new CanonicalValue("text", "ValueA", true)));
+                new LookupKey("input-B", "Model.T.ClassA", "Name", new CanonicalValue("text", "ValueA", true)));
         assertThat(hitsB).hasSize(1);
         assertThat(hitsB.get(0).sourceFileId()).isEqualTo("input-B");
     }
@@ -63,8 +60,7 @@ class InMemorySourceLookupIndexTest {
         index.index(sourceRecord("dm01", "Model.T.ClassA", "1", "Name", "Present"));
 
         List<SourceRecord> hits = index.lookup(
-                new LookupKey(null, "Model.T.ClassA", "Name",
-                        new CanonicalValue("text", "NonExistent", true)));
+                new LookupKey(null, "Model.T.ClassA", "Name", new CanonicalValue("text", "NonExistent", true)));
 
         assertThat(hits).isEmpty();
     }
@@ -75,17 +71,15 @@ class InMemorySourceLookupIndexTest {
         index.index(sourceRecord("dm01", "Model.T.ClassA", "1", "Name", "Shared"));
         index.index(sourceRecord("dm01", "Model.T.ClassA", "2", "Name", "Shared"));
 
-        List<SourceRecord> hits = index.lookup(
-                new LookupKey(null, "Model.T.ClassA", "Name",
-                        new CanonicalValue("text", "Shared", true)));
+        List<SourceRecord> hits =
+                index.lookup(new LookupKey(null, "Model.T.ClassA", "Name", new CanonicalValue("text", "Shared", true)));
 
         assertThat(hits).hasSize(2);
-        assertThat(hits).extracting(r -> r.sourceObject().getobjectoid())
-                .containsExactlyInAnyOrder("1", "2");
+        assertThat(hits).extracting(r -> r.sourceObject().getobjectoid()).containsExactlyInAnyOrder("1", "2");
     }
 
-    private static SourceRecord sourceRecord(String inputId, String tag, String oid,
-                                             String attrName, String attrValue) {
+    private static SourceRecord sourceRecord(
+            String inputId, String tag, String oid, String attrName, String attrValue) {
         Iom_jObject object = new Iom_jObject(tag, oid);
         object.setattrvalue(attrName, attrValue);
         return new SourceRecord(inputId, null, tag, object);

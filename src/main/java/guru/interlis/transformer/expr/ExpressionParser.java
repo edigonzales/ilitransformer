@@ -24,7 +24,8 @@ public final class ExpressionParser {
         if (parser.pos < parser.input.length()) {
             throw new ExpressionParseException(
                     "Unexpected trailing characters: '" + parser.input.substring(parser.pos) + "'",
-                    expression, parser.pos);
+                    expression,
+                    parser.pos);
         }
         return result;
     }
@@ -149,9 +150,10 @@ public final class ExpressionParser {
             case '$':
                 return parsePathRef();
             default:
-                if (ch == '-' || ch == '+' || Character.isDigit(ch)
-                        || (ch == '.' && pos + 1 < input.length()
-                            && Character.isDigit(input.charAt(pos + 1)))) {
+                if (ch == '-'
+                        || ch == '+'
+                        || Character.isDigit(ch)
+                        || (ch == '.' && pos + 1 < input.length() && Character.isDigit(input.charAt(pos + 1)))) {
                     return parseNumberLiteral();
                 }
                 if (startsWithIgnoreCase("null")) {

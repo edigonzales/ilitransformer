@@ -7,6 +7,7 @@ import guru.interlis.transformer.expr.NullValue;
 import guru.interlis.transformer.expr.ReferenceValue;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
+
 import java.util.List;
 
 public final class RefFunctions {
@@ -14,12 +15,17 @@ public final class RefFunctions {
     private RefFunctions() {}
 
     public static void registerAll(FunctionRegistry registry) {
-        registry.register("refOid", TypeInfo.REFERENCE,
+        registry.register(
+                "refOid",
+                TypeInfo.REFERENCE,
                 List.of(new FunctionDef.FunctionParam("ref", TypeInfo.REFERENCE)),
                 RefFunctions::refOid);
 
-        registry.register("refEquals", TypeInfo.BOOLEAN,
-                List.of(new FunctionDef.FunctionParam("a", TypeInfo.REFERENCE),
+        registry.register(
+                "refEquals",
+                TypeInfo.BOOLEAN,
+                List.of(
+                        new FunctionDef.FunctionParam("a", TypeInfo.REFERENCE),
                         new FunctionDef.FunctionParam("b", TypeInfo.REFERENCE)),
                 RefFunctions::refEquals);
     }

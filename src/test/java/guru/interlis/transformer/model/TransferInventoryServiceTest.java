@@ -1,25 +1,26 @@
 package guru.interlis.transformer.model;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.testutil.TransferDatasetDescriptor;
 import guru.interlis.transformer.testutil.TransferFormat;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class TransferInventoryServiceTest {
 
-    private static final Path DM01_ITF = Path.of("src/test/data/DMAV_Version_1_1/DM01-AV-CH.itf")
-            .toAbsolutePath();
+    private static final Path DM01_ITF =
+            Path.of("src/test/data/DMAV_Version_1_1/DM01-AV-CH.itf").toAbsolutePath();
 
     private final IliModelService modelService = new IliModelService();
 
     @Test
     void noOpClassifierProducesEmptyClassifications() {
-        TransferInventoryService service = new TransferInventoryService(modelService,
-                TransferInventoryClassifier.none());
+        TransferInventoryService service =
+                new TransferInventoryService(modelService, TransferInventoryClassifier.none());
         TransferInventory inventory = service.inspect(dm01Descriptor());
         assertThat(inventory.classifications()).isEmpty();
     }
@@ -40,7 +41,9 @@ class TransferInventoryServiceTest {
 
     private static TransferDatasetDescriptor dm01Descriptor() {
         return new TransferDatasetDescriptor(
-                "dm01", DM01_ITF, TransferFormat.ITF,
+                "dm01",
+                DM01_ITF,
+                TransferFormat.ITF,
                 List.of("DM01AVCH24LV95D"),
                 List.of("src/test/data/av/models"),
                 -1L);

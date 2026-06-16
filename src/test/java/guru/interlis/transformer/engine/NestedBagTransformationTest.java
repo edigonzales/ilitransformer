@@ -1,15 +1,16 @@
 package guru.interlis.transformer.engine;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.expr.ExpressionParser;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.BasketPlan;
-import guru.interlis.transformer.mapping.plan.CompiledExpression;
 import guru.interlis.transformer.mapping.plan.CompileMode;
+import guru.interlis.transformer.mapping.plan.CompiledExpression;
+import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.IdentityPlan;
 import guru.interlis.transformer.mapping.plan.OidPlan;
 import guru.interlis.transformer.mapping.plan.RefPlan;
@@ -17,7 +18,6 @@ import guru.interlis.transformer.mapping.plan.RulePlan;
 import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
-import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.state.BasketStrategy;
 import guru.interlis.transformer.state.InMemoryParentChildIndex;
 import guru.interlis.transformer.state.InMemoryReferenceIndex;
@@ -27,14 +27,16 @@ import guru.interlis.transformer.state.OidGenerationService;
 import guru.interlis.transformer.state.OidStrategy;
 import guru.interlis.transformer.state.SourceRecord;
 import guru.interlis.transformer.state.TargetObjectKey;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class NestedBagTransformationTest {
 
@@ -73,30 +75,32 @@ class NestedBagTransformationTest {
         stateStore.addSourceRecord(new SourceRecord("in1", "b1", "Test.Child", child2));
         stateStore.addSourceRecord(new SourceRecord("in1", "b1", "Test.GrandChild", gc1));
         stateStore.addSourceRecord(new SourceRecord("in1", "b1", "Test.GrandChild", gc2));
-        stateStore.addSourceRecord(new SourceRecord("in1","b1", "Test.GrandChild", gc3));
+        stateStore.addSourceRecord(new SourceRecord("in1", "b1", "Test.GrandChild", gc3));
 
-        parentChildIndex.index("Test.Child", "ParentRef", "parent-1",
-                new SourceRecord("in1", "b1", "Test.Child", child1));
-        parentChildIndex.index("Test.Child", "ParentRef", "parent-1",
-                new SourceRecord("in1", "b1", "Test.Child", child2));
-        parentChildIndex.index("Test.GrandChild", "ChildRef", "c1",
-                new SourceRecord("in1", "b1", "Test.GrandChild", gc1));
-        parentChildIndex.index("Test.GrandChild", "ChildRef", "c1",
-                new SourceRecord("in1", "b1", "Test.GrandChild", gc2));
-        parentChildIndex.index("Test.GrandChild", "ChildRef", "c2",
-                new SourceRecord("in1", "b1", "Test.GrandChild", gc3));
+        parentChildIndex.index(
+                "Test.Child", "ParentRef", "parent-1", new SourceRecord("in1", "b1", "Test.Child", child1));
+        parentChildIndex.index(
+                "Test.Child", "ParentRef", "parent-1", new SourceRecord("in1", "b1", "Test.Child", child2));
+        parentChildIndex.index(
+                "Test.GrandChild", "ChildRef", "c1", new SourceRecord("in1", "b1", "Test.GrandChild", gc1));
+        parentChildIndex.index(
+                "Test.GrandChild", "ChildRef", "c1", new SourceRecord("in1", "b1", "Test.GrandChild", gc2));
+        parentChildIndex.index(
+                "Test.GrandChild", "ChildRef", "c2", new SourceRecord("in1", "b1", "Test.GrandChild", gc3));
 
         // Build bag plans
         List<AssignmentPlan> nestedAssignments = new ArrayList<>();
         guru.interlis.transformer.expr.Expression detailAst = ExpressionParser.parse("${gc.Detail}");
-        nestedAssignments.add(new AssignmentPlan("Detail", null,
+        nestedAssignments.add(new AssignmentPlan(
+                "Detail",
+                null,
                 new CompiledExpression("${gc.Detail}", detailAst, TypeInfo.TEXT, true, java.util.Set.of())));
 
         // nested bag: parse real AST for where filter
         SourcePlan nestedSource = new SourcePlan("gc", null, List.of("in1"), null);
         guru.interlis.transformer.expr.Expression nestedAst = ExpressionParser.parse("refEquals(gc.ChildRef, ch)");
-        CompiledExpression nestedWhere = new CompiledExpression("refEquals(gc.ChildRef, ch)",
-                nestedAst, TypeInfo.BOOLEAN, true, java.util.Set.of());
+        CompiledExpression nestedWhere = new CompiledExpression(
+                "refEquals(gc.ChildRef, ch)", nestedAst, TypeInfo.BOOLEAN, true, java.util.Set.of());
         BagPlan nestedBag = new BagPlan(
                 "GrandChildren",
                 nestedSource,
@@ -106,9 +110,12 @@ class NestedBagTransformationTest {
                 BagPlan.BagMode.EMBED,
                 null, // no parentRefAttribute -> falls through to stateStore scan + where
                 "ch", // parentAlias references outer bag's fromSource alias
-                0, null, null, null, null,
-                List.of()
-        );
+                0,
+                null,
+                null,
+                null,
+                null,
+                List.of());
 
         // Outer bag source plan
         SourcePlan outerSource = new SourcePlan("ch", null, List.of("in1"), null);
@@ -117,15 +124,21 @@ class NestedBagTransformationTest {
                 "Children",
                 outerSource,
                 "Test.Child",
-                List.of(new AssignmentPlan("Name", null,
+                List.of(new AssignmentPlan(
+                        "Name",
+                        null,
                         new CompiledExpression("${ch.Name}", outerAst, TypeInfo.TEXT, true, java.util.Set.of()))),
                 null,
                 BagPlan.BagMode.EMBED,
                 "ParentRef",
                 "p",
-                0, null, null, null, null,
+                0,
+                null,
+                null,
+                null,
+                null,
                 List.of(nestedBag) // PASS NESTED BAGS
-        );
+                );
 
         // Parent object binding
         Iom_jObject parentSourceObj = new Iom_jObject("Test.Parent", "parent-1");
@@ -135,16 +148,32 @@ class NestedBagTransformationTest {
 
         // TransformPlan stub
         TransformPlan transformPlan = new TransformPlan(
-                "test", "test", guru.interlis.transformer.mapping.plan.FailPolicy.STRICT,
+                "test",
+                "test",
+                guru.interlis.transformer.mapping.plan.FailPolicy.STRICT,
                 guru.interlis.transformer.mapping.plan.CompileMode.COMPATIBLE,
-                List.of(), Map.of(), Map.of(), new DiagnosticCollector(),
-                null, null, Map.of());
+                List.of(),
+                Map.of(),
+                Map.of(),
+                new DiagnosticCollector(),
+                null,
+                null,
+                Map.of());
 
         // RulePlan stub
         RulePlan rulePlan = new RulePlan(
-                "test-rule", "out1", null,
-                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
-                null, List.of(), List.of());
+                "test-rule",
+                "out1",
+                null,
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                null,
+                List.of(),
+                List.of());
 
         // Bag execution context
         BagExecutionContext ctx = new BagExecutionContext(
@@ -159,18 +188,17 @@ class NestedBagTransformationTest {
                 new LinkedHashMap<>(),
                 null,
                 Map.of(),
-                null
-        );
+                null);
 
         // Service with dummy OID generation
-        guru.interlis.transformer.state.OidGenerationService oidGen = new guru.interlis.transformer.state.OidGenerationService() {
-            @Override
-            public String generate(guru.interlis.transformer.state.OidGenerationRequest request) {
-                return "oid-" + System.currentTimeMillis() + "-" + Math.random();
-            }
-        };
-        BagTransformationService service = new BagTransformationService(
-                new ExpressionEngine(), oidGen);
+        guru.interlis.transformer.state.OidGenerationService oidGen =
+                new guru.interlis.transformer.state.OidGenerationService() {
+                    @Override
+                    public String generate(guru.interlis.transformer.state.OidGenerationRequest request) {
+                        return "oid-" + System.currentTimeMillis() + "-" + Math.random();
+                    }
+                };
+        BagTransformationService service = new BagTransformationService(new ExpressionEngine(), oidGen);
 
         // Execute
         service.embed(ctx);
@@ -219,10 +247,10 @@ class NestedBagTransformationTest {
         SourceRecord parentRecord = new SourceRecord("in1", "b1", "Source.Parent", parentSourceObj);
         SourcePlan parentSourcePlan = new SourcePlan("p", null, List.of("in1"), null);
 
-        CompiledExpression childName = new CompiledExpression("${ch.Name}",
-                ExpressionParser.parse("${ch.Name}"), TypeInfo.TEXT, true, java.util.Set.of());
-        CompiledExpression nestedDetail = new CompiledExpression("${gc.Detail}",
-                ExpressionParser.parse("${gc.Detail}"), TypeInfo.TEXT, true, java.util.Set.of());
+        CompiledExpression childName = new CompiledExpression(
+                "${ch.Name}", ExpressionParser.parse("${ch.Name}"), TypeInfo.TEXT, true, java.util.Set.of());
+        CompiledExpression nestedDetail = new CompiledExpression(
+                "${gc.Detail}", ExpressionParser.parse("${gc.Detail}"), TypeInfo.TEXT, true, java.util.Set.of());
 
         BagPlan nestedExpand = new BagPlan(
                 "NestedItems",
@@ -257,16 +285,31 @@ class NestedBagTransformationTest {
                 List.of(nestedExpand));
 
         TransformPlan transformPlan = new TransformPlan(
-                "test", "test", FailPolicy.STRICT, CompileMode.COMPATIBLE,
-                List.of(), Map.of(), Map.of(), new DiagnosticCollector(),
+                "test",
+                "test",
+                FailPolicy.STRICT,
+                CompileMode.COMPATIBLE,
+                List.of(),
+                Map.of(),
+                Map.of(),
+                new DiagnosticCollector(),
                 new OidPlan(OidStrategy.INTEGER, "test"),
                 new BasketPlan(BasketStrategy.PRESERVE),
                 Map.of());
 
         RulePlan rulePlan = new RulePlan(
-                "expand-rule", "out1", null,
-                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
-                null, List.of(), List.of());
+                "expand-rule",
+                "out1",
+                null,
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                null,
+                List.of(),
+                List.of());
 
         InMemoryStateStore stateStore = new InMemoryStateStore();
         DiagnosticCollector diagnostics = new DiagnosticCollector();
@@ -297,9 +340,11 @@ class NestedBagTransformationTest {
         BagTransformationService service = new BagTransformationService(new ExpressionEngine(), oidGenerator);
         service.expand(ctx);
 
-        IomObject childTarget = stateStore.findTarget(new TargetObjectKey("out1", "Target.Child", "oid-1"))
+        IomObject childTarget = stateStore
+                .findTarget(new TargetObjectKey("out1", "Target.Child", "oid-1"))
                 .orElseThrow();
-        IomObject grandChildTarget = stateStore.findTarget(new TargetObjectKey("out1", "Target.GrandChild", "oid-2"))
+        IomObject grandChildTarget = stateStore
+                .findTarget(new TargetObjectKey("out1", "Target.GrandChild", "oid-2"))
                 .orElseThrow();
 
         assertThat(childTarget.getattrobj("Parent", 0).getobjectrefoid()).isEqualTo("parent-target-1");

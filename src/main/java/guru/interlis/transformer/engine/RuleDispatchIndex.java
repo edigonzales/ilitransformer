@@ -72,7 +72,8 @@ public final class RuleDispatchIndex {
         List<BagExpansionEntry> result = new ArrayList<>();
         for (BagExpansionEntry entry : expandBags) {
             if (entry.parentSource.inputIds().contains(inputId)
-                    && TypeSystemFacade.getScopedName(entry.parentSource.sourceClass()).equals(sourceClass)) {
+                    && TypeSystemFacade.getScopedName(entry.parentSource.sourceClass())
+                            .equals(sourceClass)) {
                 result.add(entry);
             }
         }
@@ -87,10 +88,13 @@ public final class RuleDispatchIndex {
         return (inputId != null ? inputId : "*") + "::" + sourceClass;
     }
 
-    private static void collectBagsRecursive(BagPlan bag, String inputId,
-                                              Map<String, List<BagPlan>> embedMap,
-                                              List<BagExpansionEntry> expandList,
-                                              SourcePlan parentSource, RulePlan rule) {
+    private static void collectBagsRecursive(
+            BagPlan bag,
+            String inputId,
+            Map<String, List<BagPlan>> embedMap,
+            List<BagExpansionEntry> expandList,
+            SourcePlan parentSource,
+            RulePlan rule) {
         if (bag.fromSource().sourceClass() == null) return;
         String className = TypeSystemFacade.getScopedName(bag.fromSource().sourceClass());
         String key = key(inputId, className);

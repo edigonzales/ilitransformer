@@ -1,18 +1,19 @@
 package guru.interlis.transformer.mapping.compiler;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class MandatoryCoveredByDefaultTest {
 
@@ -43,7 +44,8 @@ class MandatoryCoveredByDefaultTest {
 
         // Name should be in assignments via default
         var nameAssign = plan.rules().get(0).assignments().stream()
-                .filter(a -> a.targetAttrName().equals("Name")).findFirst();
+                .filter(a -> a.targetAttrName().equals("Name"))
+                .findFirst();
         assertThat(nameAssign).isPresent();
     }
 
@@ -63,7 +65,8 @@ class MandatoryCoveredByDefaultTest {
 
         // Name should be in assignments via mapping default
         var nameAssign = plan.rules().get(0).assignments().stream()
-                .filter(a -> a.targetAttrName().equals("Name")).findFirst();
+                .filter(a -> a.targetAttrName().equals("Name"))
+                .findFirst();
         assertThat(nameAssign).isPresent();
         assertThat(nameAssign.get().expression().sourceText()).isEqualTo("\"global-default\"");
     }
@@ -80,8 +83,8 @@ class MandatoryCoveredByDefaultTest {
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
         // Should still report mandatory missing (upgraded to ERROR in STRICT mode)
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_MANDATORY_MISSING)
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_MANDATORY_MISSING)
                         && d.message().contains("Name"));
     }
 

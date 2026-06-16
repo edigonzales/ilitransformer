@@ -11,5 +11,4 @@ public record OidGenerationRequest(
         String sourceClass,
         String sourceOid,
         LinkedHashMap<String, CanonicalValue> identityValues,
-        String targetOidType
-) {}
+        String targetOidType) {}

@@ -21,18 +21,24 @@ import java.util.Map;
 
 final class JoinCompiler {
 
-    List<JoinPlan> compileJoins(JobConfig.RuleSpec rule, List<SourcePlan> sourcePlans,
-                                 Map<String, SourcePlan> sourcesByAlias,
-                                 String ruleId, CompilerContext ctx) {
+    List<JoinPlan> compileJoins(
+            JobConfig.RuleSpec rule,
+            List<SourcePlan> sourcePlans,
+            Map<String, SourcePlan> sourcesByAlias,
+            String ruleId,
+            CompilerContext ctx) {
         if (rule.joins == null || rule.joins.isEmpty()) {
             return List.of();
         }
         if (rule.joins.size() > 1) {
-            ctx.diagnostics().add(new Diagnostic(DiagnosticCode.MAP_UNSUPPORTED_FEATURE, Severity.ERROR,
-                    "Only one join per rule is currently supported. Found " + rule.joins.size()
-                            + " joins. Rule: " + ruleId,
-                    ruleId,
-                    "Split the mapping into multiple rules or wait for multi-join support"));
+            ctx.diagnostics()
+                    .add(new Diagnostic(
+                            DiagnosticCode.MAP_UNSUPPORTED_FEATURE,
+                            Severity.ERROR,
+                            "Only one join per rule is currently supported. Found " + rule.joins.size()
+                                    + " joins. Rule: " + ruleId,
+                            ruleId,
+                            "Split the mapping into multiple rules or wait for multi-join support"));
             return List.of();
         }
         List<JoinPlan> result = new ArrayList<>();
@@ -55,9 +61,14 @@ final class JoinCompiler {
             CompiledExpression condition = ctx.expressionCompiler().compile(js.on, exprCtx, ctx.diagnostics());
 
             if (condition == null || !isEquiJoin(condition)) {
-                ctx.diagnostics().add(new Diagnostic(DiagnosticCode.MAP_JOIN_NON_EQUI, Severity.ERROR,
-                        "Join condition is not an indexable equi-join. Only 'left.attr = right.attr' is supported. Rule: " + ruleId,
-                        joinId, "Use a simple equality between attributes from different sources"));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.MAP_JOIN_NON_EQUI,
+                                Severity.ERROR,
+                                "Join condition is not an indexable equi-join. Only 'left.attr = right.attr' is supported. Rule: "
+                                        + ruleId,
+                                joinId,
+                                "Use a simple equality between attributes from different sources"));
                 continue;
             }
 

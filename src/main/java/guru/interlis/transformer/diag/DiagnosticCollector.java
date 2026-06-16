@@ -24,6 +24,8 @@ public final class DiagnosticCollector {
     }
 
     public long warnings() {
-        return diagnostics.stream().filter(d -> d.severity() == Severity.WARNING).count();
+        return diagnostics.stream()
+                .filter(d -> d.severity() == Severity.WARNING)
+                .count();
     }
 }

@@ -1,7 +1,6 @@
 package guru.interlis.transformer.feature;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.io.InputStream;
@@ -14,7 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class FeatureMatrixTest {
 
@@ -85,8 +85,8 @@ class FeatureMatrixTest {
     void entriesReturnUnmodifiableList() {
         var matrix = new FeatureMatrix();
         var entries = matrix.entries();
-        assertThatThrownBy(() -> entries.add(
-                FeatureEntry.of("Test", "0", FeatureStatus.SUPPORTED, "desc", "TestClass")))
+        assertThatThrownBy(
+                        () -> entries.add(FeatureEntry.of("Test", "0", FeatureStatus.SUPPORTED, "desc", "TestClass")))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
@@ -95,10 +95,13 @@ class FeatureMatrixTest {
         var matrix = new FeatureMatrix();
         for (FeatureEntry entry : matrix.entries()) {
             if (entry.status() != FeatureStatus.SUPPORTED) {
-                assertThat(entry.status()).isIn(
-                        FeatureStatus.STUB, FeatureStatus.UNSUPPORTED,
-                        FeatureStatus.EXPERIMENTAL, FeatureStatus.PARTIAL,
-                        FeatureStatus.CONFIG_ONLY);
+                assertThat(entry.status())
+                        .isIn(
+                                FeatureStatus.STUB,
+                                FeatureStatus.UNSUPPORTED,
+                                FeatureStatus.EXPERIMENTAL,
+                                FeatureStatus.PARTIAL,
+                                FeatureStatus.CONFIG_ONLY);
             }
         }
     }
@@ -119,26 +122,21 @@ class FeatureMatrixTest {
                 .as("YAML entry count must match matrix entry count")
                 .hasSize(matrixEntries.size());
 
-        Set<String> matrixNames = matrixEntries.stream()
-                .map(FeatureEntry::feature)
-                .collect(Collectors.toSet());
-        Set<String> yamlNames = yaml.entries.stream()
-                .map(e -> e.feature)
-                .collect(Collectors.toSet());
+        Set<String> matrixNames =
+                matrixEntries.stream().map(FeatureEntry::feature).collect(Collectors.toSet());
+        Set<String> yamlNames = yaml.entries.stream().map(e -> e.feature).collect(Collectors.toSet());
 
-        assertThat(yamlNames)
-                .as("YAML features must match matrix features")
-                .isEqualTo(matrixNames);
+        assertThat(yamlNames).as("YAML features must match matrix features").isEqualTo(matrixNames);
 
         for (FeatureEntryYaml ye : yaml.entries) {
             FeatureEntry me = matrixEntries.stream()
                     .filter(e -> e.feature().equals(ye.feature))
-                    .findFirst().orElseThrow();
+                    .findFirst()
+                    .orElseThrow();
             assertThat(ye.status).isEqualTo(me.status());
             assertThat(ye.phase).isEqualTo(me.phase());
             assertThat(ye.description).isEqualTo(me.description());
-            assertThat(ye.toFeatureEntry().testReferences())
-                    .containsExactlyInAnyOrderElementsOf(me.testReferences());
+            assertThat(ye.toFeatureEntry().testReferences()).containsExactlyInAnyOrderElementsOf(me.testReferences());
         }
     }
 
@@ -186,7 +184,8 @@ class FeatureMatrixTest {
                         }
                     }
                     assertThat(atLeastOneLoaded)
-                            .as("Feature '%s' references test '%s' but no matching class is loadable",
+                            .as(
+                                    "Feature '%s' references test '%s' but no matching class is loadable",
                                     entry.feature(), refTrimmed)
                             .isTrue();
                 }
@@ -206,12 +205,12 @@ class FeatureMatrixTest {
                             .filter(p -> p.getFileName().toString().endsWith("Test.class"))
                             .filter(p -> !p.getFileName().toString().contains("$"))
                             .forEach(p -> {
-                                String simpleName = p.getFileName().toString()
-                                        .replace(".class", "");
+                                String simpleName = p.getFileName().toString().replace(".class", "");
                                 String fqn = classNameFromPath(path, p);
-                                bySimpleName.computeIfAbsent(simpleName,
-                                        k -> new TestClassInfo(new HashSet<>(), true))
-                                        .fullQualifiedNames.add(fqn);
+                                bySimpleName
+                                        .computeIfAbsent(simpleName, k -> new TestClassInfo(new HashSet<>(), true))
+                                        .fullQualifiedNames
+                                        .add(fqn);
                             });
                 }
             }
@@ -219,19 +218,18 @@ class FeatureMatrixTest {
 
         Path projectRoot = detectProjectRoot();
         if (projectRoot != null) {
-            for (String testSourceDir : List.of(
-                    "src/test/java", "src/integrationTest/java", "src/realDataTest/java")) {
+            for (String testSourceDir : List.of("src/test/java", "src/integrationTest/java", "src/realDataTest/java")) {
                 Path dir = projectRoot.resolve(testSourceDir);
                 if (Files.isDirectory(dir)) {
                     Files.walk(dir)
                             .filter(p -> p.getFileName().toString().endsWith("Test.java"))
                             .forEach(p -> {
-                                String simpleName = p.getFileName().toString()
-                                        .replace(".java", "");
+                                String simpleName = p.getFileName().toString().replace(".java", "");
                                 String fqn = classNameFromSourcePath(dir, p);
-                                bySimpleName.computeIfAbsent(simpleName,
-                                        k -> new TestClassInfo(new HashSet<>(), false))
-                                        .fullQualifiedNames.add(fqn);
+                                bySimpleName
+                                        .computeIfAbsent(simpleName, k -> new TestClassInfo(new HashSet<>(), false))
+                                        .fullQualifiedNames
+                                        .add(fqn);
                             });
                 }
             }

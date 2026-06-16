@@ -1,9 +1,7 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iox.*;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.TransformResult;
@@ -14,14 +12,17 @@ import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.*;
 import guru.interlis.transformer.state.*;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class AssociationXtfIntegrationTest {
 
@@ -31,8 +32,7 @@ class AssociationXtfIntegrationTest {
     @BeforeAll
     static void compileModels() {
         IliModelService service = new IliModelService();
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/with-references.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/with-references.ili", MODELDIR);
         assertThat(result.hasErrors())
                 .as("Model compilation errors: %s", result.diagnostics())
                 .isFalse();
@@ -64,7 +64,9 @@ class AssociationXtfIntegrationTest {
         InMemoryReferenceIndex refIndex = new InMemoryReferenceIndex();
 
         TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), stateStore, engineDiag,
+                new ExpressionEngine(),
+                stateStore,
+                engineDiag,
                 new guru.interlis.transformer.geometry.IoxGeometryAdapter(),
                 new DefaultOidGenerationService(),
                 refIndex);
@@ -73,7 +75,8 @@ class AssociationXtfIntegrationTest {
         var capturedRefs = new ArrayList<String>();
         IoxWriter writer = new CapturingRefWriter(capturedOids, capturedRefs);
 
-        TransformResult result = engine.runTyped(plan,
+        TransformResult result = engine.runTyped(
+                plan,
                 id -> {
                     if ("in-classa".equals(id)) return createMockReader(srcA);
                     if ("in-classb".equals(id)) return createMockReader(srcB);
@@ -106,12 +109,15 @@ class AssociationXtfIntegrationTest {
         InMemoryReferenceIndex refIndex = new InMemoryReferenceIndex();
 
         TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), stateStore, engineDiag,
+                new ExpressionEngine(),
+                stateStore,
+                engineDiag,
                 new guru.interlis.transformer.geometry.IoxGeometryAdapter(),
                 new DefaultOidGenerationService(),
                 refIndex);
 
-        TransformResult result = engine.runTyped(plan,
+        TransformResult result = engine.runTyped(
+                plan,
                 id -> {
                     if ("in-classa".equals(id)) return createMockReader(srcA);
                     if ("in-classb".equals(id)) return createMockReader();
@@ -121,8 +127,7 @@ class AssociationXtfIntegrationTest {
 
         assertThat(result.targetsCreated()).isEqualTo(1);
         assertThat(engineDiag.all()).isNotEmpty();
-        assertThat(engineDiag.all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.RUN_REF_MISSING_MANDATORY));
+        assertThat(engineDiag.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_MISSING_MANDATORY));
     }
 
     @Test
@@ -146,12 +151,15 @@ class AssociationXtfIntegrationTest {
         InMemoryReferenceIndex refIndex = new InMemoryReferenceIndex();
 
         TransformationEngine engine = new TransformationEngine(
-                new ExpressionEngine(), stateStore, engineDiag,
+                new ExpressionEngine(),
+                stateStore,
+                engineDiag,
                 new guru.interlis.transformer.geometry.IoxGeometryAdapter(),
                 new DefaultOidGenerationService(),
                 refIndex);
 
-        engine.runTyped(plan,
+        engine.runTyped(
+                plan,
                 id -> {
                     if ("in-classa".equals(id)) return createMockReader(srcA);
                     if ("in-classb".equals(id)) return createMockReader();
@@ -159,8 +167,7 @@ class AssociationXtfIntegrationTest {
                 },
                 Map.of("out1", new CapturingRefWriter(new ArrayList<>(), new ArrayList<>())));
 
-        assertThat(engineDiag.all()).anyMatch(d ->
-                d.message().contains("AtoB"));
+        assertThat(engineDiag.all()).anyMatch(d -> d.message().contains("AtoB"));
     }
 
     private JobConfig p7Config(boolean required) {
@@ -225,6 +232,7 @@ class AssociationXtfIntegrationTest {
     private IoxReader createMockReader(Iom_jObject... objects) {
         return new IoxReader() {
             private final IoxEvent[] events;
+
             {
                 var list = new ArrayList<IoxEvent>();
                 list.add(new ch.interlis.iox_j.StartTransferEvent("test", null, null));
@@ -236,6 +244,7 @@ class AssociationXtfIntegrationTest {
                 list.add(new ch.interlis.iox_j.EndTransferEvent());
                 events = list.toArray(new IoxEvent[0]);
             }
+
             private int index;
 
             @Override
@@ -253,7 +262,9 @@ class AssociationXtfIntegrationTest {
             }
 
             @Override
-            public IoxFactoryCollection getFactory() { return null; }
+            public IoxFactoryCollection getFactory() {
+                return null;
+            }
 
             @Override
             public void setFactory(IoxFactoryCollection factory) {}
@@ -296,7 +307,9 @@ class AssociationXtfIntegrationTest {
         }
 
         @Override
-        public IoxFactoryCollection getFactory() { return null; }
+        public IoxFactoryCollection getFactory() {
+            return null;
+        }
 
         @Override
         public void setFactory(IoxFactoryCollection factory) {}

@@ -1,17 +1,7 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.IoxWriter;
-import ch.interlis.iox_j.EndBasketEvent;
-import ch.interlis.iox_j.EndTransferEvent;
-import ch.interlis.iox_j.ObjectEvent;
-import ch.interlis.iox_j.StartBasketEvent;
-import ch.interlis.iox_j.StartTransferEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
@@ -26,15 +16,27 @@ import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.IoxWriter;
+import ch.interlis.iox_j.EndBasketEvent;
+import ch.interlis.iox_j.EndTransferEvent;
+import ch.interlis.iox_j.ObjectEvent;
+import ch.interlis.iox_j.StartBasketEvent;
+import ch.interlis.iox_j.StartTransferEvent;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class GeometryIntegrationTest {
 
@@ -48,8 +50,7 @@ class GeometryIntegrationTest {
     static void compileModels() {
         IliModelService service = new IliModelService();
 
-        IliModelCompileResult dm01Result = service.compileModel(
-                "src/test/data/models/dm01-geom-test.ili", MODELDIR);
+        IliModelCompileResult dm01Result = service.compileModel("src/test/data/models/dm01-geom-test.ili", MODELDIR);
         if (dm01Result.hasErrors()) {
             String errors = dm01Result.diagnostics().all().stream()
                     .map(d -> d.severity() + " " + d.code() + ": " + d.message())
@@ -58,8 +59,7 @@ class GeometryIntegrationTest {
         }
         dm01Ts = new TypeSystemFacade(dm01Result.transferDescription());
 
-        IliModelCompileResult dmavResult = service.compileModel(
-                "src/test/data/models/dmav-geom-test.ili", MODELDIR);
+        IliModelCompileResult dmavResult = service.compileModel("src/test/data/models/dmav-geom-test.ili", MODELDIR);
         if (dmavResult.hasErrors()) {
             String errors = dmavResult.diagnostics().all().stream()
                     .map(d -> d.severity() + " " + d.code() + ": " + d.message())
@@ -85,7 +85,8 @@ class GeometryIntegrationTest {
         // Verify geometry attribute is classified as COORD, not TEXT
         AssignmentPlan geomAp = plan.rules().get(0).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Geometrie"))
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(geomAp.expression().resultType()).isEqualTo(TypeInfo.COORD);
     }
 
@@ -108,14 +109,12 @@ class GeometryIntegrationTest {
         Path outputPath = Files.createTempFile("dmav-geom-", ".xtf");
         try {
             InterlisIoFactory ioFactory = new InterlisIoFactory();
-            IoxWriter writer = ioFactory.createWriter(outputPath,
-                    dmavTs.getTransferDescription());
+            IoxWriter writer = ioFactory.createWriter(outputPath, dmavTs.getTransferDescription());
 
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(lfp), Map.of("dmav", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(lfp), Map.of("dmav", writer));
 
             assertThat(result.targetsWritten()).isEqualTo(1);
             assertThat(result.errors()).isEqualTo(0);
@@ -165,7 +164,9 @@ class GeometryIntegrationTest {
             }
 
             @Override
-            public ch.interlis.iox.IoxFactoryCollection getFactory() { return null; }
+            public ch.interlis.iox.IoxFactoryCollection getFactory() {
+                return null;
+            }
 
             @Override
             public void setFactory(ch.interlis.iox.IoxFactoryCollection factory) {}
@@ -175,15 +176,31 @@ class GeometryIntegrationTest {
     private static java.util.function.Function<String, IoxReader> onceReaderFactory(Iom_jObject... objects) {
         return new java.util.function.Function<>() {
             private boolean used = false;
+
             @Override
             public IoxReader apply(String inputId) {
                 if (used) {
                     return new IoxReader() {
-                        @Override public IoxEvent read() { return null; }
-                        @Override public void close() {}
-                        @Override public IomObject createIomObject(String tag, String oid) { return new Iom_jObject(tag, oid); }
-                        @Override public ch.interlis.iox.IoxFactoryCollection getFactory() { return null; }
-                        @Override public void setFactory(ch.interlis.iox.IoxFactoryCollection f) {}
+                        @Override
+                        public IoxEvent read() {
+                            return null;
+                        }
+
+                        @Override
+                        public void close() {}
+
+                        @Override
+                        public IomObject createIomObject(String tag, String oid) {
+                            return new Iom_jObject(tag, oid);
+                        }
+
+                        @Override
+                        public ch.interlis.iox.IoxFactoryCollection getFactory() {
+                            return null;
+                        }
+
+                        @Override
+                        public void setFactory(ch.interlis.iox.IoxFactoryCollection f) {}
                     };
                 }
                 used = true;

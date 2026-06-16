@@ -1,20 +1,21 @@
 package guru.interlis.transformer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class GeometryTypeMismatchTest {
 
@@ -26,15 +27,13 @@ class GeometryTypeMismatchTest {
     static void compileModels() {
         IliModelService service = new IliModelService();
 
-        IliModelCompileResult dm01Result = service.compileModel(
-                "src/test/data/models/dm01-geom-test.ili", MODELDIR);
+        IliModelCompileResult dm01Result = service.compileModel("src/test/data/models/dm01-geom-test.ili", MODELDIR);
         if (dm01Result.hasErrors()) {
             fail("DM01 model compilation errors:\n  " + formatDiagnostics(dm01Result));
         }
         dm01Ts = new TypeSystemFacade(dm01Result.transferDescription());
 
-        IliModelCompileResult dmavResult = service.compileModel(
-                "src/test/data/models/dmav-geom-test.ili", MODELDIR);
+        IliModelCompileResult dmavResult = service.compileModel("src/test/data/models/dmav-geom-test.ili", MODELDIR);
         if (dmavResult.hasErrors()) {
             fail("DMAV model compilation errors:\n  " + formatDiagnostics(dmavResult));
         }
@@ -86,13 +85,13 @@ class GeometryTypeMismatchTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(yaml, JobConfig.class);
 
-        TransformPlan plan = new MappingCompiler().compileTyped(
-                config,
-                Map.of("Dm01GeomTestModel", dm01Ts),
-                Map.of("DmavGeomTestModel", dmavTs()));
+        TransformPlan plan = new MappingCompiler()
+                .compileTyped(config, Map.of("Dm01GeomTestModel", dm01Ts), Map.of("DmavGeomTestModel", dmavTs()));
 
         assertThat(plan.diagnostics().hasErrors())
-                .as("Should detect geometry type mismatch, but got: %s", plan.diagnostics().all())
+                .as(
+                        "Should detect geometry type mismatch, but got: %s",
+                        plan.diagnostics().all())
                 .isFalse();
     }
 
@@ -141,13 +140,13 @@ class GeometryTypeMismatchTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(yaml, JobConfig.class);
 
-        TransformPlan plan = new MappingCompiler().compileTyped(
-                config,
-                Map.of("Dm01GeomTestModel", dm01Ts),
-                Map.of("DmavGeomTestModel", dmavTs()));
+        TransformPlan plan = new MappingCompiler()
+                .compileTyped(config, Map.of("Dm01GeomTestModel", dm01Ts), Map.of("DmavGeomTestModel", dmavTs()));
 
         assertThat(plan.diagnostics().hasErrors())
-                .as("Same geometry types should be compatible: %s", plan.diagnostics().all())
+                .as(
+                        "Same geometry types should be compatible: %s",
+                        plan.diagnostics().all())
                 .isFalse();
     }
 

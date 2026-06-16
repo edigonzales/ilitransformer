@@ -1,7 +1,5 @@
 package guru.interlis.transformer.engine;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -18,6 +16,9 @@ import guru.interlis.transformer.state.SourceReferenceSelector;
 import guru.interlis.transformer.state.StateStore;
 import guru.interlis.transformer.state.TargetReference;
 
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,10 +28,7 @@ import java.util.Optional;
 public final class ReferenceResolutionService {
 
     public ReferenceResolutionReport resolveAll(
-            TransformPlan plan,
-            StateStore stateStore,
-            ReferenceIndex referenceIndex,
-            DiagnosticCollector diagnostics) {
+            TransformPlan plan, StateStore stateStore, ReferenceIndex referenceIndex, DiagnosticCollector diagnostics) {
 
         List<DeferredReference> deferredRefs = stateStore.deferredReferences();
         int totalDeferred = deferredRefs.size();
@@ -46,7 +44,8 @@ public final class ReferenceResolutionService {
         for (DeferredReference ref : deferredRefs) {
             SourceReferenceSelector selector = ref.sourceSelector();
             List<TargetReference> candidates;
-            if (selector.referencedSourceOid() != null && selector.referencedSourceOid().startsWith("#")) {
+            if (selector.referencedSourceOid() != null
+                    && selector.referencedSourceOid().startsWith("#")) {
                 candidates = ref.targetRuleId() != null && !ref.targetRuleId().isBlank()
                         ? referenceIndex.findByRuleId(ref.targetRuleId())
                         : List.of();
@@ -63,17 +62,17 @@ public final class ReferenceResolutionService {
                 Severity severity = ref.required()
                         ? failPolicySeverity(plan, Severity.ERROR)
                         : failPolicySeverity(plan, Severity.WARNING);
-                String code = ref.required()
-                        ? DiagnosticCode.RUN_REF_MISSING_MANDATORY
-                        : DiagnosticCode.RUN_REF_UNRESOLVED;
-                String detail = ref.required()
-                        ? "Required reference missing"
-                        : "Optional reference unresolved";
-                diagnostics.add(new Diagnostic(code, severity,
+                String code =
+                        ref.required() ? DiagnosticCode.RUN_REF_MISSING_MANDATORY : DiagnosticCode.RUN_REF_UNRESOLVED;
+                String detail = ref.required() ? "Required reference missing" : "Optional reference unresolved";
+                diagnostics.add(new Diagnostic(
+                        code,
+                        severity,
                         detail + " for role '" + ref.targetRoleName()
                                 + "' (OID " + selector.referencedSourceOid() + ")"
                                 + (ref.associationName() != null
-                                        ? " in association '" + ref.associationName() + "'" : ""),
+                                        ? " in association '" + ref.associationName() + "'"
+                                        : ""),
                         ref.owner().targetClass() + "/" + ref.owner().targetOid(),
                         "Check source OID / basket routing"));
                 if (ref.required()) {
@@ -85,7 +84,9 @@ public final class ReferenceResolutionService {
             }
 
             if (candidates.size() > 1) {
-                diagnostics.add(new Diagnostic(DiagnosticCode.RUN_REF_AMBIGUOUS, Severity.ERROR,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.RUN_REF_AMBIGUOUS,
+                        Severity.ERROR,
                         "Ambiguous reference for OID " + selector.referencedSourceOid()
                                 + " in class " + selector.expectedSourceClass()
                                 + ": found " + candidates.size() + " targets",
@@ -101,7 +102,9 @@ public final class ReferenceResolutionService {
                     && !ref.expectedTargetClass().isEmpty()
                     && !ref.expectedTargetClass().equals(resolvedTarget.targetClass())) {
                 Severity severity = failPolicySeverity(plan, Severity.ERROR);
-                diagnostics.add(new Diagnostic(DiagnosticCode.RUN_REF_TYPE_MISMATCH, severity,
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.RUN_REF_TYPE_MISMATCH,
+                        severity,
                         "Type mismatch for reference " + selector.referencedSourceOid()
                                 + ": expected " + ref.expectedTargetClass()
                                 + " but resolved " + resolvedTarget.targetClass(),
@@ -114,12 +117,14 @@ public final class ReferenceResolutionService {
             // Per-owner cardinality check
             if (ref.targetRoleName() != null && ref.expectedCardinality() != null) {
                 String roleKey = ref.owner().targetClass() + "::" + ref.owner().targetOid();
-                roleCountByOwner.computeIfAbsent(roleKey, k -> new LinkedHashMap<>())
+                roleCountByOwner
+                        .computeIfAbsent(roleKey, k -> new LinkedHashMap<>())
                         .merge(ref.targetRoleName(), 1L, Long::sum);
 
                 long count = roleCountByOwner.get(roleKey).get(ref.targetRoleName());
                 if (count > ref.expectedCardinality().max()) {
-                    diagnostics.add(new Diagnostic(DiagnosticCode.RUN_REF_CARDINALITY,
+                    diagnostics.add(new Diagnostic(
+                            DiagnosticCode.RUN_REF_CARDINALITY,
                             failPolicySeverity(plan, Severity.ERROR),
                             "Cardinality exceeded for role '" + ref.targetRoleName()
                                     + "': max " + ref.expectedCardinality().max()
@@ -141,14 +146,18 @@ public final class ReferenceResolutionService {
             }
         }
 
-        return new ReferenceResolutionReport(resolved, unresolvedOptional, unresolvedMandatory,
-                ambiguous, typeMismatch, cardinalityViolations, totalDeferred);
+        return new ReferenceResolutionReport(
+                resolved,
+                unresolvedOptional,
+                unresolvedMandatory,
+                ambiguous,
+                typeMismatch,
+                cardinalityViolations,
+                totalDeferred);
     }
 
     private int checkRequiredRefsWithoutDeferred(
-            TransformPlan plan,
-            StateStore stateStore,
-            DiagnosticCollector diagnostics) {
+            TransformPlan plan, StateStore stateStore, DiagnosticCollector diagnostics) {
         int missingCount = 0;
         if (plan == null) return 0;
         for (RulePlan rule : plan.rules()) {
@@ -160,8 +169,9 @@ public final class ReferenceResolutionService {
             for (var ref : rule.refs()) {
                 if (!ref.required()) continue;
                 RoleResolver roleResolver = new RoleResolver(targetTs);
-                long minCardinality = roleResolver.getTargetRoleCardinality(
-                        ref, targetClassScoped).min();
+                long minCardinality = roleResolver
+                        .getTargetRoleCardinality(ref, targetClassScoped)
+                        .min();
                 if (minCardinality <= 0) continue;
 
                 List<DeferredReference> deferredRefs = stateStore.deferredReferences();
@@ -177,7 +187,9 @@ public final class ReferenceResolutionService {
 
                 if (!hasResolved) {
                     Severity severity = failPolicySeverity(plan, Severity.ERROR);
-                    diagnostics.add(new Diagnostic(DiagnosticCode.RUN_REF_MISSING_MANDATORY, severity,
+                    diagnostics.add(new Diagnostic(
+                            DiagnosticCode.RUN_REF_MISSING_MANDATORY,
+                            severity,
                             "Required reference missing for role " + ref.targetRoleName(),
                             targetClassScoped,
                             "Ensure source objects have the required reference"));

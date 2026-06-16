@@ -7,6 +7,7 @@ import guru.interlis.transformer.expr.NullValue;
 import guru.interlis.transformer.expr.TextValue;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,36 +17,49 @@ public final class StringFunctions {
 
     public static void registerAll(FunctionRegistry registry) {
         registry.register("concat", TypeInfo.TEXT, List.of(), StringFunctions::concat);
-        registry.register("substring", TypeInfo.TEXT,
-                List.of(new FunctionDef.FunctionParam("value", TypeInfo.TEXT),
+        registry.register(
+                "substring",
+                TypeInfo.TEXT,
+                List.of(
+                        new FunctionDef.FunctionParam("value", TypeInfo.TEXT),
                         new FunctionDef.FunctionParam("start", TypeInfo.NUMERIC),
                         new FunctionDef.FunctionParam("length", TypeInfo.NUMERIC)),
                 StringFunctions::substring);
-        registry.register("trim", TypeInfo.TEXT,
+        registry.register(
+                "trim",
+                TypeInfo.TEXT,
                 List.of(new FunctionDef.FunctionParam("value", TypeInfo.TEXT)),
                 StringFunctions::trim);
-        registry.register("upper", TypeInfo.TEXT,
+        registry.register(
+                "upper",
+                TypeInfo.TEXT,
                 List.of(new FunctionDef.FunctionParam("value", TypeInfo.TEXT)),
                 StringFunctions::upper);
-        registry.register("lower", TypeInfo.TEXT,
+        registry.register(
+                "lower",
+                TypeInfo.TEXT,
                 List.of(new FunctionDef.FunctionParam("value", TypeInfo.TEXT)),
                 StringFunctions::lower);
-        registry.register("replace", TypeInfo.TEXT,
-                List.of(new FunctionDef.FunctionParam("value", TypeInfo.TEXT),
+        registry.register(
+                "replace",
+                TypeInfo.TEXT,
+                List.of(
+                        new FunctionDef.FunctionParam("value", TypeInfo.TEXT),
                         new FunctionDef.FunctionParam("pattern", TypeInfo.TEXT),
                         new FunctionDef.FunctionParam("replacement", TypeInfo.TEXT)),
                 StringFunctions::replace);
-        registry.register("truncate", TypeInfo.TEXT,
-                List.of(new FunctionDef.FunctionParam("value", TypeInfo.TEXT),
+        registry.register(
+                "truncate",
+                TypeInfo.TEXT,
+                List.of(
+                        new FunctionDef.FunctionParam("value", TypeInfo.TEXT),
                         new FunctionDef.FunctionParam("maxLength", TypeInfo.NUMERIC)),
                 StringFunctions::truncate);
     }
 
     static Value concat(List<Value> args, EvalContext ctx) {
-        String result = args.stream()
-                .filter(Value::isDefined)
-                .map(v -> v.asText())
-                .collect(Collectors.joining());
+        String result =
+                args.stream().filter(Value::isDefined).map(v -> v.asText()).collect(Collectors.joining());
         return new TextValue(result);
     }
 
@@ -76,7 +90,8 @@ public final class StringFunctions {
 
     static Value replace(List<Value> args, EvalContext ctx) {
         if (args.size() < 3 || !args.get(0).isDefined()) return NullValue.INSTANCE;
-        return new TextValue(args.get(0).asText().replace(args.get(1).asText(), args.get(2).asText()));
+        return new TextValue(
+                args.get(0).asText().replace(args.get(1).asText(), args.get(2).asText()));
     }
 
     static Value truncate(List<Value> args, EvalContext ctx) {

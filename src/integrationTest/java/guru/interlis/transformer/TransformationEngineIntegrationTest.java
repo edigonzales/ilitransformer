@@ -1,28 +1,31 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.StartTransferEvent;
-import ch.interlis.iox.IoxWriter;
-import ch.interlis.iox.ObjectEvent;
-import guru.interlis.transformer.diag.DiagnosticCollector;
-import guru.interlis.transformer.engine.TransformationEngine;
-import guru.interlis.transformer.expr.ExpressionEngine;
-import guru.interlis.transformer.mapping.model.JobConfig;
-import guru.interlis.transformer.state.InMemoryStateStore;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.engine.TransformationEngine;
+import guru.interlis.transformer.expr.ExpressionEngine;
+import guru.interlis.transformer.mapping.model.JobConfig;
+import guru.interlis.transformer.state.InMemoryStateStore;
+
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.IoxWriter;
+import ch.interlis.iox.ObjectEvent;
+import ch.interlis.iox.StartTransferEvent;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 class TransformationEngineIntegrationTest {
     @Test
@@ -36,15 +39,15 @@ class TransformationEngineIntegrationTest {
         source2.setattrvalue("name", "second");
 
         IoxReader reader = mock(IoxReader.class);
-        when(reader.read()).thenReturn(
-                new ch.interlis.iox_j.StartTransferEvent("test", null, null),
-                new ch.interlis.iox_j.StartBasketEvent("M.S.Topic", "b1"),
-                new ch.interlis.iox_j.ObjectEvent(source1),
-                new ch.interlis.iox_j.ObjectEvent(source2),
-                new ch.interlis.iox_j.EndBasketEvent(),
-                new ch.interlis.iox_j.EndTransferEvent(),
-                null
-        );
+        when(reader.read())
+                .thenReturn(
+                        new ch.interlis.iox_j.StartTransferEvent("test", null, null),
+                        new ch.interlis.iox_j.StartBasketEvent("M.S.Topic", "b1"),
+                        new ch.interlis.iox_j.ObjectEvent(source1),
+                        new ch.interlis.iox_j.ObjectEvent(source2),
+                        new ch.interlis.iox_j.EndBasketEvent(),
+                        new ch.interlis.iox_j.EndTransferEvent(),
+                        null);
 
         IoxWriter writer = mock(IoxWriter.class);
 
@@ -81,7 +84,8 @@ class TransformationEngineIntegrationTest {
         config.mapping.rules.add(rule);
 
         DiagnosticCollector diagnostics = new DiagnosticCollector();
-        TransformationEngine engine = new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), diagnostics);
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), diagnostics);
         engine.run(config, ignored -> reader, Map.of("out1", writer));
 
         assertThat(diagnostics.all()).isEmpty();

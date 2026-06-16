@@ -1,9 +1,10 @@
 package guru.interlis.transformer.geometry;
 
-import guru.interlis.transformer.mapping.plan.TypeInfo;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import guru.interlis.transformer.mapping.plan.TypeInfo;
+
+import org.junit.jupiter.api.Test;
 
 class GeometryCompatibilityServiceTest {
 

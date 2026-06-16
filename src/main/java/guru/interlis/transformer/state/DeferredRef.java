@@ -9,6 +9,4 @@ public record DeferredRef(
         String sourceFileId,
         String sourceBasketId,
         String expectedTargetClass,
-        String targetRuleId
-) {
-}
+        String targetRuleId) {}

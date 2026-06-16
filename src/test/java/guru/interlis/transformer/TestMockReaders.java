@@ -1,15 +1,15 @@
 package guru.interlis.transformer;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxReader;
-import ch.interlis.iom_j.Iom_jObject;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 final class TestMockReaders {
 

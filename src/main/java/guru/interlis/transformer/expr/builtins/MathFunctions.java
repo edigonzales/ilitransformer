@@ -8,6 +8,7 @@ import guru.interlis.transformer.expr.NumberValue;
 import guru.interlis.transformer.expr.TextValue;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
+
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -16,13 +17,19 @@ public final class MathFunctions {
     private MathFunctions() {}
 
     public static void registerAll(FunctionRegistry registry) {
-        registry.register("div", TypeInfo.NUMERIC,
-                List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
+        registry.register(
+                "div",
+                TypeInfo.NUMERIC,
+                List.of(
+                        new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
                         new FunctionDef.FunctionParam("divisor", TypeInfo.NUMERIC)),
                 MathFunctions::div);
 
-        registry.register("mul", TypeInfo.NUMERIC,
-                List.of(new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
+        registry.register(
+                "mul",
+                TypeInfo.NUMERIC,
+                List.of(
+                        new FunctionDef.FunctionParam("value", TypeInfo.UNKNOWN),
                         new FunctionDef.FunctionParam("factor", TypeInfo.NUMERIC)),
                 MathFunctions::mul);
     }

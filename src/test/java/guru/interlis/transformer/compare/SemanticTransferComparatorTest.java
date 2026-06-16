@@ -1,13 +1,15 @@
 package guru.interlis.transformer.compare;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import guru.interlis.transformer.loss.LossEvent;
+
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
-import guru.interlis.transformer.loss.LossEvent;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class SemanticTransferComparatorTest {
 
@@ -44,8 +46,7 @@ class SemanticTransferComparatorTest {
         ComparisonReport report = comparator.compare(List.of(left), List.of(right), profile);
 
         assertThat(report.equivalent()).isFalse();
-        assertThat(report.errors())
-                .anySatisfy(issue -> assertThat(issue.path()).contains("C1"));
+        assertThat(report.errors()).anySatisfy(issue -> assertThat(issue.path()).contains("C1"));
     }
 
     @Test
@@ -83,9 +84,11 @@ class SemanticTransferComparatorTest {
                 .expectedLossReasonCode("DMAV_ONLY")
                 .build();
 
-        ComparisonReport report = comparator.compare(List.of(left), List.of(right), profile,
-                List.of(new LossEvent("lfp3", "Source", "1", "p.LFPArt",
-                        "DMAV_ONLY", "DMAV-only field")));
+        ComparisonReport report = comparator.compare(
+                List.of(left),
+                List.of(right),
+                profile,
+                List.of(new LossEvent("lfp3", "Source", "1", "p.LFPArt", "DMAV_ONLY", "DMAV-only field")));
 
         assertThat(report.equivalent()).as("%s", report.issues()).isTrue();
         assertThat(report.observedLossReasonCodes()).contains("DMAV_ONLY");

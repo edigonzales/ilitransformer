@@ -1,18 +1,18 @@
 package guru.interlis.transformer.dmav;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import ch.interlis.iom.IomObject;
-import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.Test;
 
 class Dm01DmavTransferInventoryClassifierTest {
 
-    private final Dm01DmavTransferInventoryClassifier classifier =
-            new Dm01DmavTransferInventoryClassifier();
+    private final Dm01DmavTransferInventoryClassifier classifier = new Dm01DmavTransferInventoryClassifier();
 
     private record TagEntry(String category, String value) {}
 

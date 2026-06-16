@@ -1,11 +1,13 @@
 package guru.interlis.transformer.geometry;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import guru.interlis.transformer.support.TestGeometries;
+
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
-import guru.interlis.transformer.support.TestGeometries;
-import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class GeometryDeepCopyTest {
 
@@ -37,8 +39,7 @@ class GeometryDeepCopyTest {
     @Test
     void deepCopyPolylineIsIndependent() {
         IomObject original = TestGeometries.polyline(
-                TestGeometries.coord(2600000.0, 1200000.0),
-                TestGeometries.coord(2600100.0, 1200100.0));
+                TestGeometries.coord(2600000.0, 1200000.0), TestGeometries.coord(2600100.0, 1200100.0));
 
         IomObject copy = copier.deepCopy(original);
 
@@ -73,9 +74,7 @@ class GeometryDeepCopyTest {
     @Test
     void deepCopyMultipleRoundsStillCorrect() {
         IomObject original = TestGeometries.surface(TestGeometries.boundary(
-                TestGeometries.coord(0.0, 0.0),
-                TestGeometries.coord(10.0, 10.0),
-                TestGeometries.coord(0.0, 0.0)));
+                TestGeometries.coord(0.0, 0.0), TestGeometries.coord(10.0, 10.0), TestGeometries.coord(0.0, 0.0)));
 
         IomObject first = copier.deepCopy(original);
         IomObject second = copier.deepCopy(first);

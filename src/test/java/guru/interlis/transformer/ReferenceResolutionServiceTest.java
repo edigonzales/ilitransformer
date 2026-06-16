@@ -1,27 +1,32 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.ReferenceResolutionReport;
 import guru.interlis.transformer.engine.ReferenceResolutionService;
 import guru.interlis.transformer.mapping.plan.*;
-import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.*;
-import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class ReferenceResolutionServiceTest {
 
     private static final TransformPlan EMPTY_PLAN = new TransformPlan(
-            "test", "forward", FailPolicy.STRICT, CompileMode.STRICT,
-            List.of(), Map.of(), Map.of(),
+            "test",
+            "forward",
+            FailPolicy.STRICT,
+            CompileMode.STRICT,
+            List.of(),
+            Map.of(),
+            Map.of(),
             new DiagnosticCollector(),
             new OidPlan(OidStrategy.PRESERVE, "ns"),
             new BasketPlan(BasketStrategy.PRESERVE),
@@ -42,20 +47,23 @@ class ReferenceResolutionServiceTest {
         stateStore.registerTarget(new TargetObjectKey("out1", "Model.T.ClassB", "t2"), referenced);
 
         // Index referenced object in ReferenceIndex
-        refIndex.add(new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid2"),
+        refIndex.add(
+                new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid2"),
                 new TargetReference("out1", "Model.T.ClassB", "t2", "rule-b"));
 
         // Add deferred reference: ClassA -> ClassB
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey, "roleB", null,
+                ownerKey,
+                "roleB",
+                null,
                 new SourceReferenceSelector("in1", "b1", "Model.T.ClassB", "oid2"),
-                null, "Model.T.ClassB",
+                null,
+                "Model.T.ClassB",
                 new DeferredReference.Cardinality(0, 1),
                 false));
 
         ReferenceResolutionService service = new ReferenceResolutionService();
-        ReferenceResolutionReport report = service.resolveAll(
-                EMPTY_PLAN, stateStore, refIndex, diag);
+        ReferenceResolutionReport report = service.resolveAll(EMPTY_PLAN, stateStore, refIndex, diag);
 
         assertThat(report.resolved()).isEqualTo(1);
         assertThat(report.ambiguous()).isZero();
@@ -82,19 +90,22 @@ class ReferenceResolutionServiceTest {
         stateStore.registerTarget(ownerKey, owner);
 
         // The referenced ClassA was created earlier
-        refIndex.add(new SourceObjectKey("in1", "b1", "Model.T.ClassA", "oid1"),
+        refIndex.add(
+                new SourceObjectKey("in1", "b1", "Model.T.ClassA", "oid1"),
                 new TargetReference("out1", "Model.T.ClassA", "t1", "rule-a"));
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey, "backRef", null,
+                ownerKey,
+                "backRef",
+                null,
                 new SourceReferenceSelector("in1", "b1", "Model.T.ClassA", "oid1"),
-                null, "Model.T.ClassA",
+                null,
+                "Model.T.ClassA",
                 new DeferredReference.Cardinality(0, 1),
                 false));
 
         ReferenceResolutionService service = new ReferenceResolutionService();
-        ReferenceResolutionReport report = service.resolveAll(
-                EMPTY_PLAN, stateStore, refIndex, diag);
+        ReferenceResolutionReport report = service.resolveAll(EMPTY_PLAN, stateStore, refIndex, diag);
 
         assertThat(report.resolved()).isEqualTo(1);
         assertThat(diag.all()).isEmpty();
@@ -115,20 +126,21 @@ class ReferenceResolutionServiceTest {
         stateStore.registerTarget(ownerKey, owner);
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey, "roleB", null,
+                ownerKey,
+                "roleB",
+                null,
                 new SourceReferenceSelector("in1", "b1", "Model.T.ClassB", "NONEXISTENT"),
-                null, null,
+                null,
+                null,
                 new DeferredReference.Cardinality(0, 1),
                 false)); // optional
 
         ReferenceResolutionService service = new ReferenceResolutionService();
-        ReferenceResolutionReport report = service.resolveAll(
-                EMPTY_PLAN, stateStore, refIndex, diag);
+        ReferenceResolutionReport report = service.resolveAll(EMPTY_PLAN, stateStore, refIndex, diag);
 
         assertThat(report.unresolvedOptional()).isEqualTo(1);
         assertThat(report.unresolvedMandatory()).isZero();
-        assertThat(diag.all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.RUN_REF_UNRESOLVED));
+        assertThat(diag.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_UNRESOLVED));
     }
 
     @Test
@@ -142,19 +154,20 @@ class ReferenceResolutionServiceTest {
         stateStore.registerTarget(ownerKey, owner);
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey, "roleB", null,
+                ownerKey,
+                "roleB",
+                null,
                 new SourceReferenceSelector("in1", "b1", "Model.T.ClassB", "NONEXISTENT"),
-                null, null,
+                null,
+                null,
                 new DeferredReference.Cardinality(1, 1),
                 true)); // mandatory
 
         ReferenceResolutionService service = new ReferenceResolutionService();
-        ReferenceResolutionReport report = service.resolveAll(
-                EMPTY_PLAN, stateStore, refIndex, diag);
+        ReferenceResolutionReport report = service.resolveAll(EMPTY_PLAN, stateStore, refIndex, diag);
 
         assertThat(report.unresolvedMandatory()).isEqualTo(1);
-        assertThat(diag.all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.RUN_REF_MISSING_MANDATORY));
+        assertThat(diag.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_MISSING_MANDATORY));
     }
 
     @Test
@@ -168,25 +181,28 @@ class ReferenceResolutionServiceTest {
         stateStore.registerTarget(ownerKey, owner);
 
         // Two targets with same source key
-        refIndex.add(new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid2"),
+        refIndex.add(
+                new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid2"),
                 new TargetReference("out1", "Model.T.ClassB", "t2", "rule-b"));
-        refIndex.add(new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid2"),
+        refIndex.add(
+                new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid2"),
                 new TargetReference("out1", "Model.T.ClassB", "t3", "rule-b"));
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey, "roleB", null,
+                ownerKey,
+                "roleB",
+                null,
                 new SourceReferenceSelector("in1", "b1", "Model.T.ClassB", "oid2"),
-                null, null,
+                null,
+                null,
                 new DeferredReference.Cardinality(0, 1),
                 false));
 
         ReferenceResolutionService service = new ReferenceResolutionService();
-        ReferenceResolutionReport report = service.resolveAll(
-                EMPTY_PLAN, stateStore, refIndex, diag);
+        ReferenceResolutionReport report = service.resolveAll(EMPTY_PLAN, stateStore, refIndex, diag);
 
         assertThat(report.ambiguous()).isEqualTo(1);
-        assertThat(diag.all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.RUN_REF_AMBIGUOUS));
+        assertThat(diag.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_AMBIGUOUS));
     }
 
     @Test
@@ -199,21 +215,25 @@ class ReferenceResolutionServiceTest {
         TargetObjectKey ownerKey = new TargetObjectKey("out1", "Model.T.Label", "label1");
         stateStore.registerTarget(ownerKey, owner);
 
-        refIndex.add(new SourceObjectKey("in1", "b1", "Model.T.Point", "oid1"),
+        refIndex.add(
+                new SourceObjectKey("in1", "b1", "Model.T.Point", "oid1"),
                 new TargetReference("out1", "Model.T.Point", "point1", "point-rule"));
-        refIndex.add(new SourceObjectKey("in1", "b1", "Model.T.Point", "oid1"),
+        refIndex.add(
+                new SourceObjectKey("in1", "b1", "Model.T.Point", "oid1"),
                 new TargetReference("out1", "Model.T.Symbol", "symbol1", "symbol-rule"));
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey, "labelOf", null,
+                ownerKey,
+                "labelOf",
+                null,
                 new SourceReferenceSelector("in1", "b1", "Model.T.Point", "oid1"),
-                "point-rule", "Model.T.Point",
+                "point-rule",
+                "Model.T.Point",
                 new DeferredReference.Cardinality(1, 1),
                 true));
 
         ReferenceResolutionService service = new ReferenceResolutionService();
-        ReferenceResolutionReport report = service.resolveAll(
-                EMPTY_PLAN, stateStore, refIndex, diag);
+        ReferenceResolutionReport report = service.resolveAll(EMPTY_PLAN, stateStore, refIndex, diag);
 
         assertThat(report.resolved()).isEqualTo(1);
         assertThat(report.ambiguous()).isZero();
@@ -232,23 +252,25 @@ class ReferenceResolutionServiceTest {
         stateStore.registerTarget(ownerKey, owner);
 
         // Source resolves to ClassC but we expect ClassB
-        refIndex.add(new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid2"),
+        refIndex.add(
+                new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid2"),
                 new TargetReference("out1", "Model.T.ClassC", "t2", "rule-c"));
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey, "roleB", null,
+                ownerKey,
+                "roleB",
+                null,
                 new SourceReferenceSelector("in1", "b1", "Model.T.ClassB", "oid2"),
-                null, "Model.T.ClassB", // expected
+                null,
+                "Model.T.ClassB", // expected
                 new DeferredReference.Cardinality(0, 1),
                 false));
 
         ReferenceResolutionService service = new ReferenceResolutionService();
-        ReferenceResolutionReport report = service.resolveAll(
-                EMPTY_PLAN, stateStore, refIndex, diag);
+        ReferenceResolutionReport report = service.resolveAll(EMPTY_PLAN, stateStore, refIndex, diag);
 
         assertThat(report.typeMismatch()).isEqualTo(1);
-        assertThat(diag.all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.RUN_REF_TYPE_MISMATCH));
+        assertThat(diag.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_TYPE_MISMATCH));
     }
 
     @Test
@@ -262,33 +284,39 @@ class ReferenceResolutionServiceTest {
         stateStore.registerTarget(ownerKey, owner);
 
         // Two different targets both matching our lookup
-        refIndex.add(new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid2"),
+        refIndex.add(
+                new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid2"),
                 new TargetReference("out1", "Model.T.ClassB", "t2", "rule-b"));
-        refIndex.add(new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid3"),
+        refIndex.add(
+                new SourceObjectKey("in1", "b1", "Model.T.ClassB", "oid3"),
                 new TargetReference("out1", "Model.T.ClassB", "t3", "rule-b"));
 
         // Max cardinality is 1, but we add 2 refs
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey, "roleB", null,
+                ownerKey,
+                "roleB",
+                null,
                 new SourceReferenceSelector("in1", "b1", "Model.T.ClassB", "oid2"),
-                null, "Model.T.ClassB",
+                null,
+                "Model.T.ClassB",
                 new DeferredReference.Cardinality(0, 1),
                 false));
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey, "roleB", null,
+                ownerKey,
+                "roleB",
+                null,
                 new SourceReferenceSelector("in1", "b1", "Model.T.ClassB", "oid3"),
-                null, "Model.T.ClassB",
+                null,
+                "Model.T.ClassB",
                 new DeferredReference.Cardinality(0, 1),
                 false));
 
         ReferenceResolutionService service = new ReferenceResolutionService();
-        ReferenceResolutionReport report = service.resolveAll(
-                EMPTY_PLAN, stateStore, refIndex, diag);
+        ReferenceResolutionReport report = service.resolveAll(EMPTY_PLAN, stateStore, refIndex, diag);
 
         assertThat(report.cardinalityViolations()).isEqualTo(1);
         assertThat(report.resolved()).isEqualTo(1);
-        assertThat(diag.all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.RUN_REF_CARDINALITY));
+        assertThat(diag.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_CARDINALITY));
     }
 
     @Test
@@ -302,16 +330,18 @@ class ReferenceResolutionServiceTest {
         stateStore.registerTarget(ownerKey, owner);
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey, "roleB", "MyAssociation",
+                ownerKey,
+                "roleB",
+                "MyAssociation",
                 new SourceReferenceSelector("in1", "b1", "Model.T.ClassB", "NONEXISTENT"),
-                null, null,
+                null,
+                null,
                 new DeferredReference.Cardinality(0, 1),
                 false));
 
         ReferenceResolutionService service = new ReferenceResolutionService();
         service.resolveAll(EMPTY_PLAN, stateStore, refIndex, diag);
 
-        assertThat(diag.all()).anyMatch(d ->
-                d.message().contains("MyAssociation"));
+        assertThat(diag.all()).anyMatch(d -> d.message().contains("MyAssociation"));
     }
 }

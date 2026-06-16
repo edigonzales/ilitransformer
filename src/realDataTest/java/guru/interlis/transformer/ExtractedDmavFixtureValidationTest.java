@@ -1,5 +1,7 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import guru.interlis.transformer.dmav.Dm01DmavFixtures;
 import guru.interlis.transformer.dmav.Dm01DmavPaths;
 import guru.interlis.transformer.model.ConnectedSubgraphExtractor;
@@ -12,16 +14,15 @@ import guru.interlis.transformer.testutil.TransferFormat;
 import guru.interlis.transformer.validation.InProcessIlivalidatorService;
 import guru.interlis.transformer.validation.TransferValidationService;
 import guru.interlis.transformer.validation.ValidationResult;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 @Tag("real-data")
 class ExtractedDmavFixtureValidationTest {
@@ -44,12 +45,11 @@ class ExtractedDmavFixtureValidationTest {
         extractor = new ConnectedSubgraphExtractor(modelService);
 
         try (var files = Files.walk(DATA_DIR)) {
-            dmavFile = files
-                    .filter(f -> f.getFileName().toString().toLowerCase().endsWith(".xtf"))
+            dmavFile = files.filter(
+                            f -> f.getFileName().toString().toLowerCase().endsWith(".xtf"))
                     .filter(Files::isRegularFile)
                     .findFirst()
-                    .orElseThrow(() -> new IllegalStateException(
-                            "No XTF file found under " + DATA_DIR));
+                    .orElseThrow(() -> new IllegalStateException("No XTF file found under " + DATA_DIR));
         }
     }
 
@@ -61,9 +61,12 @@ class ExtractedDmavFixtureValidationTest {
                 .isFalse();
 
         TransferDatasetDescriptor source = new TransferDatasetDescriptor(
-                dmavFile.getFileName().toString(), dmavFile.toAbsolutePath(),
+                dmavFile.getFileName().toString(),
+                dmavFile.toAbsolutePath(),
                 TransferFormat.XTF,
-                List.of(UMBRELLA_MODEL), List.of(MODEL_DIR, "https://models.interlis.ch"), dmavFile.toFile().length());
+                List.of(UMBRELLA_MODEL),
+                List.of(MODEL_DIR, "https://models.interlis.ch"),
+                dmavFile.toFile().length());
 
         Path fixtureDir = tempDir.resolve("fixtures");
         Files.createDirectories(fixtureDir);
@@ -73,7 +76,8 @@ class ExtractedDmavFixtureValidationTest {
         ExtractedTransfer result = extractor.extract(source, request);
 
         assertThat(result.totalObjects()).isGreaterThanOrEqualTo(3);
-        assertThat(result.includedClasses().stream().anyMatch(c -> c.contains("LFP3"))).isTrue();
+        assertThat(result.includedClasses().stream().anyMatch(c -> c.contains("LFP3")))
+                .isTrue();
 
         System.out.println("=== DMAV LFP3 Fixture ===");
         System.out.println("File: " + result.transferFile());

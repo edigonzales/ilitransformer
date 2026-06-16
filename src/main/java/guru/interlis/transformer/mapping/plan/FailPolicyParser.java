@@ -10,7 +10,7 @@ public final class FailPolicyParser {
         if (value.equalsIgnoreCase("report_only") || value.equalsIgnoreCase("reportOnly")) {
             return FailPolicy.REPORT_ONLY;
         }
-        throw new IllegalArgumentException("Unknown failPolicy: " + value
-                + " (valid values: strict, lenient, report_only/reportOnly)");
+        throw new IllegalArgumentException(
+                "Unknown failPolicy: " + value + " (valid values: strict, lenient, report_only/reportOnly)");
     }
 }

@@ -13,9 +13,7 @@ final class FeatureEntryYaml {
     FeatureEntryYaml() {}
 
     FeatureEntry toFeatureEntry() {
-        List<String> refs = testReferences != null
-                ? Collections.unmodifiableList(testReferences)
-                : List.of();
+        List<String> refs = testReferences != null ? Collections.unmodifiableList(testReferences) : List.of();
         return new FeatureEntry(feature, phase, status, description, refs);
     }
 }

@@ -1,7 +1,9 @@
 package guru.interlis.transformer.mapping.plan;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
 import guru.interlis.transformer.model.TypeSystemFacade;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+
 import java.nio.file.Path;
 
 public record InputBinding(
@@ -10,5 +12,4 @@ public record InputBinding(
         String declaredModelName,
         TransferFormat format,
         TransferDescription transferDescription,
-        TypeSystemFacade typeSystem
-) {}
+        TypeSystemFacade typeSystem) {}

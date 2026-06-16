@@ -9,5 +9,4 @@ public record ExtractionRequest(
         int maxDepth,
         int maxObjects,
         boolean includeBidirectional,
-        Path targetDir
-) {}
+        Path targetDir) {}

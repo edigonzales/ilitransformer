@@ -16,16 +16,17 @@ public record BagPlan(
         Integer maxItems,
         IdentityPlan identityPlan,
         RefPlan parentRefPlan,
-        List<BagPlan> nestedBags
-) {
+        List<BagPlan> nestedBags) {
     public enum BagMode {
         EMBED,
         EXPAND
     }
 
     public boolean hasParentRef() {
-        return parentRefAttribute != null && !parentRefAttribute.isBlank()
-                && parentAlias != null && !parentAlias.isBlank();
+        return parentRefAttribute != null
+                && !parentRefAttribute.isBlank()
+                && parentAlias != null
+                && !parentAlias.isBlank();
     }
 
     public boolean hasIdentityPlan() {

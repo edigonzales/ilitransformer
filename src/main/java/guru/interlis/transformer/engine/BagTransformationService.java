@@ -1,7 +1,5 @@
 package guru.interlis.transformer.engine;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -14,11 +12,9 @@ import guru.interlis.transformer.loss.LossEvent;
 import guru.interlis.transformer.loss.LossinessCollector;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.BagPlan;
-import guru.interlis.transformer.mapping.plan.OutputBinding;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import guru.interlis.transformer.state.CanonicalValue;
 import guru.interlis.transformer.state.DuplicateTargetOidException;
 import guru.interlis.transformer.state.OidGenerationRequest;
 import guru.interlis.transformer.state.OidGenerationService;
@@ -26,13 +22,16 @@ import guru.interlis.transformer.state.OidStrategy;
 import guru.interlis.transformer.state.SourceRecord;
 import guru.interlis.transformer.state.TargetObjectKey;
 
+import ch.interlis.ili2c.metamodel.AttributeDef;
+import ch.interlis.ili2c.metamodel.Cardinality;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import ch.interlis.ili2c.metamodel.AttributeDef;
-import ch.interlis.ili2c.metamodel.Cardinality;
 
 public final class BagTransformationService {
 
@@ -44,8 +43,10 @@ public final class BagTransformationService {
         this(expressionEngine, oidGenerationService, null);
     }
 
-    public BagTransformationService(ExpressionEngine expressionEngine, OidGenerationService oidGenerationService,
-                                    LossinessCollector lossinessCollector) {
+    public BagTransformationService(
+            ExpressionEngine expressionEngine,
+            OidGenerationService oidGenerationService,
+            LossinessCollector lossinessCollector) {
         this.expressionEngine = expressionEngine;
         this.oidGenerationService = oidGenerationService;
         this.lossinessCollector = lossinessCollector;
@@ -65,10 +66,12 @@ public final class BagTransformationService {
         if (bag.hasParentRef()) {
             String parentOid = ctx.parent().sourceRecord().sourceObject().getobjectoid();
             if (bag.fromSource().sourceClass() != null) {
-                String resolvedSourceClass = TypeSystemFacade.getScopedName(bag.fromSource().sourceClass());
-                bagSourceRecords = ctx.parentChildIndex().children(
-                        resolvedSourceClass, bag.parentRefAttribute(), parentOid);
-                if (bag.fromSource().inputIds() != null && !bag.fromSource().inputIds().isEmpty()) {
+                String resolvedSourceClass =
+                        TypeSystemFacade.getScopedName(bag.fromSource().sourceClass());
+                bagSourceRecords =
+                        ctx.parentChildIndex().children(resolvedSourceClass, bag.parentRefAttribute(), parentOid);
+                if (bag.fromSource().inputIds() != null
+                        && !bag.fromSource().inputIds().isEmpty()) {
                     String inputId = bag.fromSource().inputIds().iterator().next();
                     bagSourceRecords = bagSourceRecords.stream()
                             .filter(r -> inputId.equals(r.sourceFileId()))
@@ -108,12 +111,14 @@ public final class BagTransformationService {
         }
 
         List<SourceRecord> sorted = new ArrayList<>(bagSourceRecords);
-        sorted.sort(Comparator.comparing(sr -> sr.sourceObject().getobjectoid(),
-                Comparator.nullsLast(Comparator.naturalOrder())));
+        sorted.sort(Comparator.comparing(
+                sr -> sr.sourceObject().getobjectoid(), Comparator.nullsLast(Comparator.naturalOrder())));
 
         List<IomObject> structures = new ArrayList<>();
         Map<String, IomObject> parentSources = Map.of(
-                bag.parentAlias() != null ? bag.parentAlias() : ctx.parent().sourcePlan().alias(),
+                bag.parentAlias() != null
+                        ? bag.parentAlias()
+                        : ctx.parent().sourcePlan().alias(),
                 ctx.parent().sourceRecord().sourceObject());
 
         for (SourceRecord sr : sorted) {
@@ -122,11 +127,16 @@ public final class BagTransformationService {
             allSources.put(bag.fromSource().alias(), bagSource);
             allSources.putAll(parentSources);
 
-            EvalContext bagCtx = new EvalContext(allSources, ctx.diagnostics(),
-                    ctx.rule().ruleId(), plan.enumMaps(),
-                    ctx.geometryAdapter(), ctx.sourceAttributeTypes());
+            EvalContext bagCtx = new EvalContext(
+                    allSources,
+                    ctx.diagnostics(),
+                    ctx.rule().ruleId(),
+                    plan.enumMaps(),
+                    ctx.geometryAdapter(),
+                    ctx.sourceAttributeTypes());
 
-            if (bag.whereExpression() != null && bag.whereExpression().sourceText() != null
+            if (bag.whereExpression() != null
+                    && bag.whereExpression().sourceText() != null
                     && !bag.whereExpression().sourceText().isBlank()) {
                 Value whereResult = expressionEngine.evaluate(bag.whereExpression(), bagCtx);
                 if (!isFilterTruthy(whereResult)) {
@@ -137,9 +147,13 @@ public final class BagTransformationService {
             Iom_jObject struct = new Iom_jObject(bag.structureName(), null);
 
             Map<String, IomObject> assignSources = Map.of(bag.fromSource().alias(), bagSource);
-            EvalContext assignCtx = new EvalContext(assignSources, ctx.diagnostics(),
-                    ctx.rule().ruleId(), plan.enumMaps(),
-                    ctx.geometryAdapter(), ctx.sourceAttributeTypes());
+            EvalContext assignCtx = new EvalContext(
+                    assignSources,
+                    ctx.diagnostics(),
+                    ctx.rule().ruleId(),
+                    plan.enumMaps(),
+                    ctx.geometryAdapter(),
+                    ctx.sourceAttributeTypes());
 
             for (AssignmentPlan ap : bag.assignments()) {
                 Value value = expressionEngine.evaluate(ap.expression(), assignCtx);
@@ -165,8 +179,7 @@ public final class BagTransformationService {
                             ctx.expandedTargets(),
                             ctx.geometryAdapter(),
                             ctx.sourceAttributeTypes(),
-                            ctx.referenceIndex()
-                    );
+                            ctx.referenceIndex());
                     embed(nestedCtx);
                 }
             }
@@ -180,12 +193,20 @@ public final class BagTransformationService {
     }
 
     public void expand(BagExecutionContext ctx) {
-        expandBag(ctx.plan(), ctx.parent().sourceRecord(),
-                ctx.parent().sourceRecord().sourceObject(), (Iom_jObject) ctx.target(), ctx);
+        expandBag(
+                ctx.plan(),
+                ctx.parent().sourceRecord(),
+                ctx.parent().sourceRecord().sourceObject(),
+                (Iom_jObject) ctx.target(),
+                ctx);
     }
 
-    private void expandBag(BagPlan bag, SourceRecord parentRecord, IomObject parentObj,
-                           Iom_jObject parentTarget, BagExecutionContext ctx) {
+    private void expandBag(
+            BagPlan bag,
+            SourceRecord parentRecord,
+            IomObject parentObj,
+            Iom_jObject parentTarget,
+            BagExecutionContext ctx) {
         TransformPlan plan = ctx.transformPlan();
 
         String bagAttrName = bag.bagAttrName();
@@ -202,8 +223,8 @@ public final class BagTransformationService {
                         parentObj.getobjectoid(),
                         bagAttrName,
                         "BAG_MAX_ITEMS_EXCEEDED",
-                        "BAG '" + bagAttrName + "' contains " + count
-                                + " items; only " + limit + " can be materialized"));
+                        "BAG '" + bagAttrName + "' contains " + count + " items; only " + limit
+                                + " can be materialized"));
             }
         }
 
@@ -270,12 +291,18 @@ public final class BagTransformationService {
             Map<String, IomObject> assignSources = new LinkedHashMap<>();
             assignSources.put(bag.fromSource().alias(), structure);
             String parentAlias = bag.parentAlias();
-            if (parentAlias != null && !parentAlias.isBlank() && !parentAlias.equals(bag.fromSource().alias())) {
+            if (parentAlias != null
+                    && !parentAlias.isBlank()
+                    && !parentAlias.equals(bag.fromSource().alias())) {
                 assignSources.put(parentAlias, parentObj);
             }
-            EvalContext assignCtx = new EvalContext(assignSources, ctx.diagnostics(),
-                    ctx.rule().ruleId(), plan.enumMaps(),
-                    ctx.geometryAdapter(), ctx.sourceAttributeTypes());
+            EvalContext assignCtx = new EvalContext(
+                    assignSources,
+                    ctx.diagnostics(),
+                    ctx.rule().ruleId(),
+                    plan.enumMaps(),
+                    ctx.geometryAdapter(),
+                    ctx.sourceAttributeTypes());
 
             for (AssignmentPlan ap : bag.assignments()) {
                 Value value = expressionEngine.evaluate(ap.expression(), assignCtx);
@@ -287,12 +314,18 @@ public final class BagTransformationService {
             checkMandatoryAttributes(bagTarget, bag, ctx.diagnostics());
 
             try {
-                ctx.stateStore().registerTarget(
-                        new TargetObjectKey(outputId, bag.structureName(), bagTarget.getobjectoid()),
-                        bagTarget);
+                ctx.stateStore()
+                        .registerTarget(
+                                new TargetObjectKey(outputId, bag.structureName(), bagTarget.getobjectoid()),
+                                bagTarget);
             } catch (DuplicateTargetOidException e) {
-                ctx.diagnostics().add(new Diagnostic(DiagnosticCode.RUN_DUPLICATE_TARGET_OID, Severity.ERROR,
-                        e.getMessage(), bag.structureName(), "This indicates a bug in OID generation"));
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.RUN_DUPLICATE_TARGET_OID,
+                                Severity.ERROR,
+                                e.getMessage(),
+                                bag.structureName(),
+                                "This indicates a bug in OID generation"));
             }
 
             bindParentReference(bag, bagTarget, parentTarget, ctx);
@@ -307,7 +340,9 @@ public final class BagTransformationService {
             // Add to expanded targets for output merging
             String targetTopic = extractTopic(bag.structureName());
             String targetBasketId = BasketRouter.determineTargetBasket(
-                    plan.basketPlan().defaultStrategy(), parentRecord.sourceBasketId(), targetTopic,
+                    plan.basketPlan().defaultStrategy(),
+                    parentRecord.sourceBasketId(),
+                    targetTopic,
                     bag.structureName());
             String basketKey = basketKey(targetTopic, targetBasketId);
             ctx.expandedTargets()
@@ -325,10 +360,12 @@ public final class BagTransformationService {
             }
             String attrName = ap.targetAttrName();
             if (struct.getattrvalue(attrName) == null && struct.getattrvaluecount(attrName) == 0) {
-                diag.add(new Diagnostic(DiagnosticCode.RUN_BAG_MANDATORY_MISSING, Severity.WARNING,
-                        "Mandatory structure attribute not set: " + attrName
-                                + " in structure " + bag.structureName(),
-                        bag.bagAttrName(), "Check bag assignment coverage"));
+                diag.add(new Diagnostic(
+                        DiagnosticCode.RUN_BAG_MANDATORY_MISSING,
+                        Severity.WARNING,
+                        "Mandatory structure attribute not set: " + attrName + " in structure " + bag.structureName(),
+                        bag.bagAttrName(),
+                        "Check bag assignment coverage"));
             }
         }
     }
@@ -455,17 +492,21 @@ public final class BagTransformationService {
         return idx >= 0 ? scopedName.substring(idx + 1) : scopedName;
     }
 
-    private void bindParentReference(BagPlan bag, Iom_jObject bagTarget,
-                                     Iom_jObject parentTarget, BagExecutionContext ctx) {
+    private void bindParentReference(
+            BagPlan bag, Iom_jObject bagTarget, Iom_jObject parentTarget, BagExecutionContext ctx) {
         if (bag.parentRefPlan() == null) {
             return;
         }
         String parentTargetOid = parentTarget.getobjectoid();
         if (parentTargetOid == null || parentTargetOid.isBlank()) {
-            ctx.diagnostics().add(new Diagnostic(DiagnosticCode.RUN_REF_MISSING_MANDATORY, Severity.ERROR,
-                    "Expanded BAG parent target has no OID for role '" + bag.parentRefPlan().targetRoleName() + "'",
-                    bag.structureName() + "/" + bagTarget.getobjectoid(),
-                    "Check BAG OID generation and parent target materialization"));
+            ctx.diagnostics()
+                    .add(new Diagnostic(
+                            DiagnosticCode.RUN_REF_MISSING_MANDATORY,
+                            Severity.ERROR,
+                            "Expanded BAG parent target has no OID for role '"
+                                    + bag.parentRefPlan().targetRoleName() + "'",
+                            bag.structureName() + "/" + bagTarget.getobjectoid(),
+                            "Check BAG OID generation and parent target materialization"));
             return;
         }
         IomObject ref = bagTarget.addattrobj(bag.parentRefPlan().targetRoleName(), Iom_jObject.REF);
@@ -487,14 +528,14 @@ public final class BagTransformationService {
     private static boolean isFilterTruthy(Value value) {
         if (value == null || value.isNull()) return false;
         if (value instanceof BooleanValue bv) return bv.value();
-        if (value instanceof guru.interlis.transformer.expr.TextValue tv) return !tv.value().isEmpty();
+        if (value instanceof guru.interlis.transformer.expr.TextValue tv)
+            return !tv.value().isEmpty();
         if (value instanceof guru.interlis.transformer.expr.NumberValue nv)
             return nv.value().compareTo(java.math.BigDecimal.ZERO) != 0;
         return true;
     }
 
-    private void setBagAttribute(Iom_jObject target, AssignmentPlan ap, Value value,
-                                 BagExecutionContext ctx) {
+    private void setBagAttribute(Iom_jObject target, AssignmentPlan ap, Value value, BagExecutionContext ctx) {
         TypeInfo targetType = ap.expression().resultType();
         if (isGeometryType(targetType) && ctx.geometryAdapter() != null) {
             IomObject geomObj = ctx.geometryAdapter().denormalize(value, targetType);
@@ -510,7 +551,6 @@ public final class BagTransformationService {
     }
 
     private static boolean isGeometryType(TypeInfo type) {
-        return type == TypeInfo.COORD || type == TypeInfo.POLYLINE
-                || type == TypeInfo.SURFACE || type == TypeInfo.AREA;
+        return type == TypeInfo.COORD || type == TypeInfo.POLYLINE || type == TypeInfo.SURFACE || type == TypeInfo.AREA;
     }
 }

@@ -1,10 +1,8 @@
 package guru.interlis.transformer.expr;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-
 import static org.assertj.core.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
 
 class ExpressionParserTest {
 
@@ -149,24 +147,19 @@ class ExpressionParserTest {
 
     @Test
     void rejectsEmptyExpression() {
-        assertThatThrownBy(() -> ExpressionParser.parse(""))
-                .isInstanceOf(ExpressionParseException.class);
-        assertThatThrownBy(() -> ExpressionParser.parse("   "))
-                .isInstanceOf(ExpressionParseException.class);
-        assertThatThrownBy(() -> ExpressionParser.parse(null))
-                .isInstanceOf(ExpressionParseException.class);
+        assertThatThrownBy(() -> ExpressionParser.parse("")).isInstanceOf(ExpressionParseException.class);
+        assertThatThrownBy(() -> ExpressionParser.parse("   ")).isInstanceOf(ExpressionParseException.class);
+        assertThatThrownBy(() -> ExpressionParser.parse(null)).isInstanceOf(ExpressionParseException.class);
     }
 
     @Test
     void rejectsUnterminatedString() {
-        assertThatThrownBy(() -> ExpressionParser.parse("\"unclosed"))
-                .isInstanceOf(ExpressionParseException.class);
+        assertThatThrownBy(() -> ExpressionParser.parse("\"unclosed")).isInstanceOf(ExpressionParseException.class);
     }
 
     @Test
     void rejectsUnterminatedFunctionCall() {
-        assertThatThrownBy(() -> ExpressionParser.parse("func(1, 2"))
-                .isInstanceOf(ExpressionParseException.class);
+        assertThatThrownBy(() -> ExpressionParser.parse("func(1, 2")).isInstanceOf(ExpressionParseException.class);
     }
 
     @Test

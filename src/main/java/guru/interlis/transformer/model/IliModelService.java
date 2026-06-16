@@ -1,9 +1,12 @@
 package guru.interlis.transformer.model;
 
+import guru.interlis.transformer.diag.Diagnostic;
+import guru.interlis.transformer.diag.DiagnosticCode;
+import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.diag.Severity;
+import guru.interlis.transformer.interlis.InterlisModelLoader;
+
 import ch.interlis.ili2c.Ili2cFailure;
-import ch.interlis.ili2c.config.Configuration;
-import ch.interlis.ili2c.config.FileEntry;
-import ch.interlis.ili2c.config.FileEntryKind;
 import ch.interlis.ili2c.metamodel.AbstractClassDef;
 import ch.interlis.ili2c.metamodel.AssociationDef;
 import ch.interlis.ili2c.metamodel.AttributeDef;
@@ -16,11 +19,6 @@ import ch.interlis.ili2c.metamodel.RoleDef;
 import ch.interlis.ili2c.metamodel.Table;
 import ch.interlis.ili2c.metamodel.Topic;
 import ch.interlis.ili2c.metamodel.TransferDescription;
-import guru.interlis.transformer.diag.Diagnostic;
-import guru.interlis.transformer.diag.DiagnosticCode;
-import guru.interlis.transformer.diag.DiagnosticCollector;
-import guru.interlis.transformer.diag.Severity;
-import guru.interlis.transformer.interlis.InterlisModelLoader;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -44,8 +42,7 @@ public final class IliModelService {
                         Severity.ERROR,
                         "Failed to compile model: " + modelName,
                         modelName,
-                        "Check that the model file exists and model directories are correct"
-                ));
+                        "Check that the model file exists and model directories are correct"));
                 return new IliModelCompileResult(null, diagnostics);
             }
         } catch (Ili2cFailure e) {
@@ -54,8 +51,7 @@ public final class IliModelService {
                     Severity.ERROR,
                     "Failed to compile model: " + modelName + " - " + e.getMessage(),
                     modelName,
-                    "Check that the model file exists and model directories are correct"
-            ));
+                    "Check that the model file exists and model directories are correct"));
             return new IliModelCompileResult(null, diagnostics);
         } catch (Throwable e) {
             diagnostics.add(new Diagnostic(
@@ -63,8 +59,7 @@ public final class IliModelService {
                     Severity.ERROR,
                     "Unexpected error compiling model '" + modelName + "': " + e.getMessage(),
                     modelName,
-                    null
-            ));
+                    null));
             return new IliModelCompileResult(null, diagnostics);
         }
         return new IliModelCompileResult(td, diagnostics);
@@ -141,8 +136,8 @@ public final class IliModelService {
         return map;
     }
 
-    private ModelInventory.ClassInventory buildClassInventory(Table table, String modelName,
-                                                               String topicName, Map<String, AssociationDef> associations) {
+    private ModelInventory.ClassInventory buildClassInventory(
+            Table table, String modelName, String topicName, Map<String, AssociationDef> associations) {
         String className = table.getName() != null ? table.getName() : "";
         String path = modelName + "." + topicName + "." + className;
         boolean isAbstract = table.isAbstract();
@@ -309,8 +304,6 @@ public final class IliModelService {
     }
 
     private static boolean isInternalModel(String modelName) {
-        return "INTERLIS".equals(modelName)
-                || "GeometryCHLV95_V2".equals(modelName)
-                || "CoordSystem".equals(modelName);
+        return "INTERLIS".equals(modelName) || "GeometryCHLV95_V2".equals(modelName) || "CoordSystem".equals(modelName);
     }
 }

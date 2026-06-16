@@ -1,7 +1,5 @@
 package guru.interlis.transformer.engine;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -9,7 +7,6 @@ import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.expr.EvalContext;
 import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.geometry.GeometryAdapter;
-import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.CreatePlan;
 import guru.interlis.transformer.mapping.plan.FailPolicy;
@@ -35,8 +32,11 @@ import guru.interlis.transformer.state.SourceRefKey;
 import guru.interlis.transformer.state.SourceReferenceSelector;
 import guru.interlis.transformer.state.StateStore;
 import guru.interlis.transformer.state.TargetObjectKey;
-import guru.interlis.transformer.state.TargetReference;
 import guru.interlis.transformer.state.TargetRefValue;
+import guru.interlis.transformer.state.TargetReference;
+
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -50,19 +50,24 @@ public final class TargetObjectFactory {
     private final AssignmentExecutionService assignmentExecutionService;
     private final BagTransformationService bagTransformationService;
 
-    public TargetObjectFactory(ExpressionEngine expressionEngine,
-                                OidGenerationService oidGenerationService,
-                                AssignmentExecutionService assignmentExecutionService,
-                                BagTransformationService bagTransformationService) {
+    public TargetObjectFactory(
+            ExpressionEngine expressionEngine,
+            OidGenerationService oidGenerationService,
+            AssignmentExecutionService assignmentExecutionService,
+            BagTransformationService bagTransformationService) {
         this.expressionEngine = expressionEngine;
         this.oidGenerationService = oidGenerationService;
         this.assignmentExecutionService = assignmentExecutionService;
         this.bagTransformationService = bagTransformationService;
     }
 
-    public int createTarget(RulePlan rule, SourcePlan matchedSource, SourceRecord driverRecord,
-                             EvalContext evalCtx, TransformPlan plan,
-                             ObjectCreationContext ctx) {
+    public int createTarget(
+            RulePlan rule,
+            SourcePlan matchedSource,
+            SourceRecord driverRecord,
+            EvalContext evalCtx,
+            TransformPlan plan,
+            ObjectCreationContext ctx) {
         int created = 0;
 
         Iom_jObject target = buildTargetObject(rule, matchedSource, driverRecord, plan, ctx);
@@ -85,10 +90,14 @@ public final class TargetObjectFactory {
         return created;
     }
 
-    private Iom_jObject buildTargetObject(RulePlan rule, SourcePlan matchedSource, SourceRecord driverRecord,
-                                           TransformPlan plan, ObjectCreationContext ctx) {
-        Map<String, String> rawIdentityValues = buildIdentityKeyValues(
-                rule.identitySourceKeys(), driverRecord.sourceObject(), matchedSource.alias());
+    private Iom_jObject buildTargetObject(
+            RulePlan rule,
+            SourcePlan matchedSource,
+            SourceRecord driverRecord,
+            TransformPlan plan,
+            ObjectCreationContext ctx) {
+        Map<String, String> rawIdentityValues =
+                buildIdentityKeyValues(rule.identitySourceKeys(), driverRecord.sourceObject(), matchedSource.alias());
         String sourceOid = driverRecord.sourceObject().getobjectoid();
 
         LinkedHashMap<String, CanonicalValue> identityValues = toCanonicalValues(rawIdentityValues);
@@ -109,21 +118,36 @@ public final class TargetObjectFactory {
         try {
             targetOid = oidGenerationService.generate(oidRequest);
         } catch (UnsupportedOperationException e) {
-            ctx.diagnostics().add(new Diagnostic(DiagnosticCode.MAP_EXTERNAL_STRATEGY_UNSUPPORTED, Severity.ERROR,
-                    e.getMessage(), rule.ruleId(),
-                    "Use one of: preserve, integer, uuid, deterministicUuid"));
+            ctx.diagnostics()
+                    .add(new Diagnostic(
+                            DiagnosticCode.MAP_EXTERNAL_STRATEGY_UNSUPPORTED,
+                            Severity.ERROR,
+                            e.getMessage(),
+                            rule.ruleId(),
+                            "Use one of: preserve, integer, uuid, deterministicUuid"));
             targetOid = oidGenerationService.generate(new OidGenerationRequest(
-                    OidStrategy.INTEGER, plan.oidPlan().namespace(), rule.ruleId(),
-                    driverRecord.sourceFileId(), driverRecord.sourceBasketId(), driverRecord.sourceClass(),
-                    sourceOid, identityValues, targetOidType));
+                    OidStrategy.INTEGER,
+                    plan.oidPlan().namespace(),
+                    rule.ruleId(),
+                    driverRecord.sourceFileId(),
+                    driverRecord.sourceBasketId(),
+                    driverRecord.sourceClass(),
+                    sourceOid,
+                    identityValues,
+                    targetOidType));
         }
 
         return new Iom_jObject(getScopedName(rule.targetClass()), targetOid);
     }
 
-    private void deferReferences(RulePlan rule, SourcePlan matchedSource, SourceRecord driverRecord, Iom_jObject target,
-                                  TypeSystemFacade targetTs, TransformPlan plan,
-                                  ObjectCreationContext ctx) {
+    private void deferReferences(
+            RulePlan rule,
+            SourcePlan matchedSource,
+            SourceRecord driverRecord,
+            Iom_jObject target,
+            TypeSystemFacade targetTs,
+            TransformPlan plan,
+            ObjectCreationContext ctx) {
         RoleResolver roleResolver = targetTs != null ? new RoleResolver(targetTs) : null;
 
         for (var ref : rule.refs()) {
@@ -131,30 +155,32 @@ public final class TargetObjectFactory {
             String sourceRefOid = resolveSourceReferenceOid(ref.sourceRef(), matchedSource, driverRecord);
             if (sourceRefOid == null || sourceRefOid.isBlank()) {
                 if (ref.required()) {
-                    ctx.diagnostics().add(new Diagnostic(DiagnosticCode.RUN_REF_MISSING_MANDATORY,
-                            plan.failPolicy() == FailPolicy.LENIENT ? Severity.WARNING : Severity.ERROR,
-                            "Required reference missing for role " + ref.targetRoleName(),
-                            getScopedName(rule.targetClass()) + "/" + target.getobjectoid(),
-                            "Ensure source object has the required reference"));
+                    ctx.diagnostics()
+                            .add(new Diagnostic(
+                                    DiagnosticCode.RUN_REF_MISSING_MANDATORY,
+                                    plan.failPolicy() == FailPolicy.LENIENT ? Severity.WARNING : Severity.ERROR,
+                                    "Required reference missing for role " + ref.targetRoleName(),
+                                    getScopedName(rule.targetClass()) + "/" + target.getobjectoid(),
+                                    "Ensure source object has the required reference"));
                 }
                 continue;
             }
 
             String expectedTargetClass = null;
             if (roleResolver != null) {
-                expectedTargetClass = roleResolver.resolveExpectedTargetClass(
-                        ref, getScopedName(rule.targetClass()));
+                expectedTargetClass = roleResolver.resolveExpectedTargetClass(ref, getScopedName(rule.targetClass()));
             }
-            ctx.stateStore().addDeferredRef(new DeferredRef(
-                    getScopedName(rule.targetClass()),
-                    target.getobjectoid(),
-                    ref.targetRoleName(),
-                    driverRecord.sourceClass(),
-                    sourceRefOid,
-                    driverRecord.sourceFileId(),
-                    driverRecord.sourceBasketId(),
-                    expectedTargetClass,
-                    ref.targetRuleId()));
+            ctx.stateStore()
+                    .addDeferredRef(new DeferredRef(
+                            getScopedName(rule.targetClass()),
+                            target.getobjectoid(),
+                            ref.targetRoleName(),
+                            driverRecord.sourceClass(),
+                            sourceRefOid,
+                            driverRecord.sourceFileId(),
+                            driverRecord.sourceBasketId(),
+                            expectedTargetClass,
+                            ref.targetRuleId()));
 
             ReferenceIndex refIndex = ctx.referenceIndex();
             if (refIndex != null) {
@@ -165,34 +191,49 @@ public final class TargetObjectFactory {
                         ? roleResolver.getAssociationName(ref, getScopedName(rule.targetClass()))
                         : null;
                 var refInfo = resolveReferencedSourceInfo(ref.targetRuleId(), plan);
-                ctx.stateStore().addDeferredReference(new DeferredReference(
-                        new TargetObjectKey(rule.outputId(), getScopedName(rule.targetClass()),
-                                target.getobjectoid()),
-                        ref.targetRoleName(),
-                        associationName,
-                        new SourceReferenceSelector(
-                                refInfo.inputId(),
-                                refInfo.basketId() != null ? refInfo.basketId()
-                                        : driverRecord.sourceBasketId(),
-                                refInfo.expectedSourceClass(),
-                                sourceRefOid),
-                        ref.targetRuleId(),
-                        expectedTargetClass,
-                        roleCard != null
-                                ? new DeferredReference.Cardinality(roleCard.min(), roleCard.max())
-                                : new DeferredReference.Cardinality(0, DeferredReference.Cardinality.UNBOUND),
-                        ref.required()));
+                ctx.stateStore()
+                        .addDeferredReference(new DeferredReference(
+                                new TargetObjectKey(
+                                        rule.outputId(), getScopedName(rule.targetClass()), target.getobjectoid()),
+                                ref.targetRoleName(),
+                                associationName,
+                                new SourceReferenceSelector(
+                                        refInfo.inputId(),
+                                        refInfo.basketId() != null ? refInfo.basketId() : driverRecord.sourceBasketId(),
+                                        refInfo.expectedSourceClass(),
+                                        sourceRefOid),
+                                ref.targetRuleId(),
+                                expectedTargetClass,
+                                roleCard != null
+                                        ? new DeferredReference.Cardinality(roleCard.min(), roleCard.max())
+                                        : new DeferredReference.Cardinality(0, DeferredReference.Cardinality.UNBOUND),
+                                ref.required()));
             }
         }
     }
 
-    private void processBags(RulePlan rule, SourcePlan matchedSource, SourceRecord driverRecord,
-                              Iom_jObject target, TransformPlan plan, ObjectCreationContext ctx) {
+    private void processBags(
+            RulePlan rule,
+            SourcePlan matchedSource,
+            SourceRecord driverRecord,
+            Iom_jObject target,
+            TransformPlan plan,
+            ObjectCreationContext ctx) {
         for (BagPlan bag : rule.bags()) {
             BoundSourceObject parent = new BoundSourceObject(matchedSource, driverRecord);
-            BagExecutionContext bagCtx = new BagExecutionContext(bag, parent, target, plan,
-                    ctx.stateStore(), ctx.parentChildIndex(), ctx.diagnostics(), rule, ctx.expandedTargets(),
-                    ctx.geometryAdapter(), ctx.sourceAttributeTypes(), ctx.referenceIndex());
+            BagExecutionContext bagCtx = new BagExecutionContext(
+                    bag,
+                    parent,
+                    target,
+                    plan,
+                    ctx.stateStore(),
+                    ctx.parentChildIndex(),
+                    ctx.diagnostics(),
+                    rule,
+                    ctx.expandedTargets(),
+                    ctx.geometryAdapter(),
+                    ctx.sourceAttributeTypes(),
+                    ctx.referenceIndex());
             if (bag.isEmbed()) {
                 bagTransformationService.embed(bagCtx);
             } else {
@@ -214,17 +255,32 @@ public final class TargetObjectFactory {
         return count;
     }
 
-    private void registerMapping(RulePlan rule, SourceRecord driverRecord, Iom_jObject target,
-                                  TransformPlan plan, ObjectCreationContext ctx) {
-        ctx.stateStore().putIdMapping(
-                new SourceRefKey(driverRecord.sourceClass(), driverRecord.sourceObject().getobjectoid(),
-                        driverRecord.sourceFileId(), driverRecord.sourceBasketId()),
-                new TargetRefValue(getScopedName(rule.targetClass()), target.getobjectoid(),
-                        rule.outputId(), driverRecord.sourceBasketId()));
-        ctx.stateStore().putIdMapping(
-                new SourceRefKey(null, driverRecord.sourceObject().getobjectoid(), null, null),
-                new TargetRefValue(getScopedName(rule.targetClass()), target.getobjectoid(),
-                        rule.outputId(), driverRecord.sourceBasketId()));
+    private void registerMapping(
+            RulePlan rule,
+            SourceRecord driverRecord,
+            Iom_jObject target,
+            TransformPlan plan,
+            ObjectCreationContext ctx) {
+        ctx.stateStore()
+                .putIdMapping(
+                        new SourceRefKey(
+                                driverRecord.sourceClass(),
+                                driverRecord.sourceObject().getobjectoid(),
+                                driverRecord.sourceFileId(),
+                                driverRecord.sourceBasketId()),
+                        new TargetRefValue(
+                                getScopedName(rule.targetClass()),
+                                target.getobjectoid(),
+                                rule.outputId(),
+                                driverRecord.sourceBasketId()));
+        ctx.stateStore()
+                .putIdMapping(
+                        new SourceRefKey(null, driverRecord.sourceObject().getobjectoid(), null, null),
+                        new TargetRefValue(
+                                getScopedName(rule.targetClass()),
+                                target.getobjectoid(),
+                                rule.outputId(),
+                                driverRecord.sourceBasketId()));
 
         ReferenceIndex refIndex = ctx.referenceIndex();
         if (refIndex != null) {
@@ -235,26 +291,36 @@ public final class TargetObjectFactory {
                             driverRecord.sourceClass(),
                             driverRecord.sourceObject().getobjectoid()),
                     new TargetReference(
-                            rule.outputId(),
-                            getScopedName(rule.targetClass()),
-                            target.getobjectoid(),
-                            rule.ruleId()));
+                            rule.outputId(), getScopedName(rule.targetClass()), target.getobjectoid(), rule.ruleId()));
         }
         try {
-            ctx.stateStore().registerTarget(
-                    new TargetObjectKey(rule.outputId(), getScopedName(rule.targetClass()), target.getobjectoid()),
-                    target);
+            ctx.stateStore()
+                    .registerTarget(
+                            new TargetObjectKey(
+                                    rule.outputId(), getScopedName(rule.targetClass()), target.getobjectoid()),
+                            target);
         } catch (DuplicateTargetOidException e) {
-            ctx.diagnostics().add(new Diagnostic(DiagnosticCode.RUN_DUPLICATE_TARGET_OID, Severity.ERROR,
-                    e.getMessage(), rule.ruleId(), "This indicates a bug in OID generation"));
+            ctx.diagnostics()
+                    .add(new Diagnostic(
+                            DiagnosticCode.RUN_DUPLICATE_TARGET_OID,
+                            Severity.ERROR,
+                            e.getMessage(),
+                            rule.ruleId(),
+                            "This indicates a bug in OID generation"));
         }
     }
 
-    private void addToBasket(RulePlan rule, SourceRecord driverRecord, Iom_jObject target,
-                              TransformPlan plan, ObjectCreationContext ctx) {
+    private void addToBasket(
+            RulePlan rule,
+            SourceRecord driverRecord,
+            Iom_jObject target,
+            TransformPlan plan,
+            ObjectCreationContext ctx) {
         String targetTopic = extractTopic(getScopedName(rule.targetClass()));
         String targetBasketId = BasketRouter.determineTargetBasket(
-                plan.basketPlan().defaultStrategy(), driverRecord.sourceBasketId(), targetTopic,
+                plan.basketPlan().defaultStrategy(),
+                driverRecord.sourceBasketId(),
+                targetTopic,
                 getScopedName(rule.targetClass()));
         String basketKey = basketKey(targetTopic, targetBasketId);
         ctx.objectsByOutputAndBasket()
@@ -263,9 +329,13 @@ public final class TargetObjectFactory {
                 .add(target);
     }
 
-    public int createTargetForCreatePlan(CreatePlan create, RulePlan parentRule, SourceRecord record,
-                                          EvalContext evalCtx, TransformPlan plan,
-                                          ObjectCreationContext ctx) {
+    public int createTargetForCreatePlan(
+            CreatePlan create,
+            RulePlan parentRule,
+            SourceRecord record,
+            EvalContext evalCtx,
+            TransformPlan plan,
+            ObjectCreationContext ctx) {
         String targetOid;
         try {
             targetOid = oidGenerationService.generate(new OidGenerationRequest(
@@ -307,22 +377,25 @@ public final class TargetObjectFactory {
             }
             String sourceRefOid = readSourceReferenceOid(record.sourceObject(), attrName);
             if (sourceRefOid != null && !sourceRefOid.isBlank()) {
-                ctx.stateStore().addDeferredRef(new DeferredRef(
-                        getScopedName(create.targetClass()),
-                        target.getobjectoid(),
-                        ref.targetRoleName(),
-                        record.sourceClass(),
-                        sourceRefOid,
-                        record.sourceFileId(),
-                        record.sourceBasketId(),
-                        null,
-                        ref.targetRuleId()));
+                ctx.stateStore()
+                        .addDeferredRef(new DeferredRef(
+                                getScopedName(create.targetClass()),
+                                target.getobjectoid(),
+                                ref.targetRoleName(),
+                                record.sourceClass(),
+                                sourceRefOid,
+                                record.sourceFileId(),
+                                record.sourceBasketId(),
+                                null,
+                                ref.targetRuleId()));
             }
         }
 
         String targetTopic = extractTopic(getScopedName(create.targetClass()));
         String targetBasketId = BasketRouter.determineTargetBasket(
-                plan.basketPlan().defaultStrategy(), record.sourceBasketId(), targetTopic,
+                plan.basketPlan().defaultStrategy(),
+                record.sourceBasketId(),
+                targetTopic,
                 getScopedName(create.targetClass()));
         String basketKey = basketKey(targetTopic, targetBasketId);
         ctx.objectsByOutputAndBasket()
@@ -344,8 +417,8 @@ public final class TargetObjectFactory {
         return source.getattrvalue(roleName);
     }
 
-    private static String resolveSourceReferenceOid(String sourceRef, SourcePlan matchedSource,
-                                                     SourceRecord driverRecord) {
+    private static String resolveSourceReferenceOid(
+            String sourceRef, SourcePlan matchedSource, SourceRecord driverRecord) {
         if (sourceRef == null || sourceRef.isBlank()) return null;
         String trimmed = sourceRef.trim();
         if (trimmed.startsWith("#")) {
@@ -366,8 +439,8 @@ public final class TargetObjectFactory {
         return readSourceReferenceOid(driverRecord.sourceObject(), attrName);
     }
 
-    private static Map<String, String> buildIdentityKeyValues(List<String> identitySourceKeys,
-                                                               IomObject sourceObject, String alias) {
+    private static Map<String, String> buildIdentityKeyValues(
+            List<String> identitySourceKeys, IomObject sourceObject, String alias) {
         if (identitySourceKeys == null || identitySourceKeys.isEmpty()) {
             return Map.of();
         }
@@ -410,9 +483,10 @@ public final class TargetObjectFactory {
             if (targetRuleId.equals(rp.ruleId())) {
                 if (!rp.sources().isEmpty()) {
                     SourcePlan sp = rp.sources().get(0);
-                    String inputId = !sp.inputIds().isEmpty() ? sp.inputIds().iterator().next() : null;
-                    String sourceClass = sp.sourceClass() != null
-                            ? TypeSystemFacade.getScopedName(sp.sourceClass()) : null;
+                    String inputId =
+                            !sp.inputIds().isEmpty() ? sp.inputIds().iterator().next() : null;
+                    String sourceClass =
+                            sp.sourceClass() != null ? TypeSystemFacade.getScopedName(sp.sourceClass()) : null;
                     return new ReferenceSourceInfo(inputId, null, sourceClass);
                 }
             }
@@ -445,8 +519,7 @@ public final class TargetObjectFactory {
             ParentChildIndex parentChildIndex,
             ExecutionMetrics metrics,
             GeometryAdapter geometryAdapter,
-            Map<String, Map<String, TypeInfo>> sourceAttributeTypes
-    ) {
+            Map<String, Map<String, TypeInfo>> sourceAttributeTypes) {
         public void recordTargetsCreated(int count) {
             if (metrics != null) {
                 for (int i = 0; i < count; i++) {

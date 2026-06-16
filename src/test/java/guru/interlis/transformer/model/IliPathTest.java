@@ -1,8 +1,8 @@
 package guru.interlis.transformer.model;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
 
 class IliPathTest {
 
@@ -88,8 +88,7 @@ class IliPathTest {
     void partsAreImmutable() {
         IliPath path = IliPath.parse("A.B.C.D");
         assertThat(path.parts()).containsExactly("A", "B", "C", "D");
-        assertThatThrownBy(() -> path.parts().add("X"))
-                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> path.parts().add("X")).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test

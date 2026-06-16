@@ -1,10 +1,12 @@
 package guru.interlis.transformer.expr;
 
-import ch.interlis.iom_j.Iom_jObject;
-import guru.interlis.transformer.mapping.plan.TypeInfo;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.*;
+
+import guru.interlis.transformer.mapping.plan.TypeInfo;
+
+import ch.interlis.iom_j.Iom_jObject;
+
+import org.junit.jupiter.api.Test;
 
 class ValueTest {
 
@@ -72,20 +74,17 @@ class ValueTest {
 
     @Test
     void asTextThrowsOnNonText() {
-        assertThatThrownBy(() -> NullValue.INSTANCE.asText())
-                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> NullValue.INSTANCE.asText()).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
     void asNumberThrowsOnNonNumber() {
-        assertThatThrownBy(() -> NullValue.INSTANCE.asNumber())
-                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> NullValue.INSTANCE.asNumber()).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
     void asBooleanThrowsOnNonBoolean() {
-        assertThatThrownBy(() -> NullValue.INSTANCE.asBoolean())
-                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> NullValue.INSTANCE.asBoolean()).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
@@ -94,8 +93,7 @@ class ValueTest {
         coord.setattrvalue("C1", "1.0");
         coord.setattrvalue("C2", "2.0");
 
-        GeometryObjectValue value = new GeometryObjectValue(
-                TypeInfo.COORD, coord, new CoordValue(1.0, 2.0));
+        GeometryObjectValue value = new GeometryObjectValue(TypeInfo.COORD, coord, new CoordValue(1.0, 2.0));
 
         coord.setattrvalue("C1", "9.0");
 

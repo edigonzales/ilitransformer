@@ -1,6 +1,7 @@
 package guru.interlis.transformer.mapping.compiler;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.InputBinding;
@@ -9,13 +10,12 @@ import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class TransformPlanBindingTest {
 
@@ -34,9 +34,7 @@ class TransformPlanBindingTest {
         testConfig = minimalConfig();
         modelRegistry = ModelRegistry.builder()
                 .config(testConfig)
-                .buildWithSuppliedTypeSystems(
-                        Map.of("TestModel", testModelTs),
-                        Map.of("TestModel", testModelTs));
+                .buildWithSuppliedTypeSystems(Map.of("TestModel", testModelTs), Map.of("TestModel", testModelTs));
     }
 
     private static JobConfig minimalConfig() {

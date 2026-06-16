@@ -1,18 +1,7 @@
 package guru.interlis.transformer;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.IoxWriter;
-import ch.interlis.iox_j.EndBasketEvent;
-import ch.interlis.iox_j.EndTransferEvent;
-import ch.interlis.iox_j.ObjectEvent;
-import ch.interlis.iox_j.StartBasketEvent;
-import ch.interlis.iox_j.StartTransferEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
@@ -25,15 +14,28 @@ import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.IoxWriter;
+import ch.interlis.iox_j.EndBasketEvent;
+import ch.interlis.iox_j.EndTransferEvent;
+import ch.interlis.iox_j.ObjectEvent;
+import ch.interlis.iox_j.StartBasketEvent;
+import ch.interlis.iox_j.StartTransferEvent;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class DmavToDm01Lfp3IntegrationTest {
 
@@ -114,10 +116,9 @@ class DmavToDm01Lfp3IntegrationTest {
             IoxWriter writer = ioFactory.createWriter(outputPath, dm01TransferDescription);
 
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(nf, lfp), Map.of("dm01", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dm01", writer));
 
             assertThat(result.targetsWritten()).isEqualTo(2);
             assertThat(result.errors()).isEqualTo(0);
@@ -172,8 +173,8 @@ class DmavToDm01Lfp3IntegrationTest {
             IoxWriter writer = ioFactory.createWriter(outputPath, dm01TransferDescription);
 
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
             engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dm01", writer));
 
             String content = Files.readString(outputPath);
@@ -216,8 +217,8 @@ class DmavToDm01Lfp3IntegrationTest {
             IoxWriter writer = ioFactory.createWriter(outputPath, dm01TransferDescription);
 
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
             engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dm01", writer));
 
             String content = Files.readString(outputPath);
@@ -264,17 +265,16 @@ class DmavToDm01Lfp3IntegrationTest {
             IoxWriter writer = ioFactory.createWriter(outputPath, dm01TransferDescription);
 
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(nf, lfp), Map.of("dm01", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dm01", writer));
 
             assertThat(result.summary()).contains("INTEGER");
             String content = Files.readString(outputPath);
             // SCNT format writes objects:
             // OBJE <oid> <attr1> <attr2> ...
-            assertThat(content).contains("OBJE 1");  // LFP3Nachfuehrung OID 1
-            assertThat(content).contains("OBJE 2");  // LFP3 OID 2
+            assertThat(content).contains("OBJE 1"); // LFP3Nachfuehrung OID 1
+            assertThat(content).contains("OBJE 2"); // LFP3 OID 2
 
         } finally {
             Files.deleteIfExists(outputPath);
@@ -312,10 +312,9 @@ class DmavToDm01Lfp3IntegrationTest {
             IoxWriter writer = ioFactory.createWriter(outputPath, dm01TransferDescription);
 
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
-            TransformResult result = engine.runTyped(plan,
-                    onceReaderFactory(nf, lfp), Map.of("dm01", writer));
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dm01", writer));
 
             assertThat(result.targetsWritten()).isEqualTo(2);
             assertThat(result.errors()).isEqualTo(0);
@@ -362,7 +361,9 @@ class DmavToDm01Lfp3IntegrationTest {
             }
 
             @Override
-            public ch.interlis.iox.IoxFactoryCollection getFactory() { return null; }
+            public ch.interlis.iox.IoxFactoryCollection getFactory() {
+                return null;
+            }
 
             @Override
             public void setFactory(ch.interlis.iox.IoxFactoryCollection factory) {}
@@ -372,15 +373,31 @@ class DmavToDm01Lfp3IntegrationTest {
     private static java.util.function.Function<String, IoxReader> onceReaderFactory(Iom_jObject... objects) {
         return new java.util.function.Function<>() {
             private boolean used = false;
+
             @Override
             public IoxReader apply(String inputId) {
                 if (used) {
                     return new IoxReader() {
-                        @Override public IoxEvent read() { return null; }
-                        @Override public void close() {}
-                        @Override public IomObject createIomObject(String tag, String oid) { return new Iom_jObject(tag, oid); }
-                        @Override public ch.interlis.iox.IoxFactoryCollection getFactory() { return null; }
-                        @Override public void setFactory(ch.interlis.iox.IoxFactoryCollection f) {}
+                        @Override
+                        public IoxEvent read() {
+                            return null;
+                        }
+
+                        @Override
+                        public void close() {}
+
+                        @Override
+                        public IomObject createIomObject(String tag, String oid) {
+                            return new Iom_jObject(tag, oid);
+                        }
+
+                        @Override
+                        public ch.interlis.iox.IoxFactoryCollection getFactory() {
+                            return null;
+                        }
+
+                        @Override
+                        public void setFactory(ch.interlis.iox.IoxFactoryCollection f) {}
                     };
                 }
                 used = true;

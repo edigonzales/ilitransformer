@@ -1,9 +1,10 @@
 package guru.interlis.transformer.geometry;
 
+import guru.interlis.transformer.mapping.plan.TypeInfo;
+
 import ch.interlis.ili2c.metamodel.AttributeDef;
 import ch.interlis.ili2c.metamodel.CoordType;
 import ch.interlis.ili2c.metamodel.Type;
-import guru.interlis.transformer.mapping.plan.TypeInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,10 +12,7 @@ import java.util.List;
 public final class GeometryCompatibilityService {
 
     public GeometryCompatibility check(
-            TypeInfo sourceType,
-            TypeInfo targetType,
-            AttributeDef sourceAttribute,
-            AttributeDef targetAttribute) {
+            TypeInfo sourceType, TypeInfo targetType, AttributeDef sourceAttribute, AttributeDef targetAttribute) {
 
         List<String> issues = new ArrayList<>();
 
@@ -46,8 +44,7 @@ public final class GeometryCompatibilityService {
         }
     }
 
-    private void checkPolylineCompatibility(List<String> issues) {
-    }
+    private void checkPolylineCompatibility(List<String> issues) {}
 
     private boolean is3DCoord(AttributeDef attribute) {
         if (attribute == null) {

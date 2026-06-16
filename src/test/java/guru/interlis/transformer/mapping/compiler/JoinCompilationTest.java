@@ -1,18 +1,19 @@
 package guru.interlis.transformer.mapping.compiler;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class JoinCompilationTest {
 
@@ -40,8 +41,7 @@ class JoinCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).noneMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
+        assertThat(plan.diagnostics().all()).noneMatch(d -> d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
         assertThat(plan.rules().get(0).joins()).isNotEmpty();
         assertThat(plan.rules().get(0).joins().get(0).type().name()).isEqualTo("INNER");
     }
@@ -75,9 +75,8 @@ class JoinCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_JOIN_NON_EQUI)
-                        && d.severity() == Severity.ERROR);
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_JOIN_NON_EQUI) && d.severity() == Severity.ERROR);
     }
 
     @Test
@@ -93,9 +92,9 @@ class JoinCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_JOIN_UNKNOWN_ALIAS)
-                        && d.severity() == Severity.ERROR);
+        assertThat(plan.diagnostics().all())
+                .anyMatch(
+                        d -> d.code().equals(DiagnosticCode.MAP_JOIN_UNKNOWN_ALIAS) && d.severity() == Severity.ERROR);
     }
 
     @Test
@@ -111,9 +110,8 @@ class JoinCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_JOIN_SELF_REF)
-                        && d.severity() == Severity.ERROR);
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_JOIN_SELF_REF) && d.severity() == Severity.ERROR);
     }
 
     @Test
@@ -129,8 +127,8 @@ class JoinCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_JOIN_INVALID)
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_JOIN_INVALID)
                         && d.severity() == Severity.ERROR
                         && d.message().contains("outer"));
     }
@@ -143,8 +141,7 @@ class JoinCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).noneMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
+        assertThat(plan.diagnostics().all()).noneMatch(d -> d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
     }
 
     @Test
@@ -154,8 +151,7 @@ class JoinCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).noneMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
+        assertThat(plan.diagnostics().all()).noneMatch(d -> d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
     }
 
     @Test
@@ -179,8 +175,8 @@ class JoinCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE)
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE)
                         && d.severity() == Severity.ERROR
                         && d.message().contains("Only one join"));
         assertThat(plan.rules().get(0).joins()).isEmpty();

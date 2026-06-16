@@ -1,10 +1,11 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
-import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class MappingCompilerTest {
 
@@ -42,8 +43,7 @@ class MappingCompilerTest {
 
     @Test
     void validatesMinimalConfig() {
-        assertThatCode(() -> new MappingCompiler().validate(minimalConfig()))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> new MappingCompiler().validate(minimalConfig())).doesNotThrowAnyException();
     }
 
     @Test
@@ -136,16 +136,15 @@ class MappingCompilerTest {
         JobConfig.RuleSpec rule = new JobConfig.RuleSpec();
         rule.id = "r1";
         rule.targetClass = "M.T.C"; // flat format
-        rule.output = "out1";       // flat format
+        rule.output = "out1"; // flat format
         JobConfig.SourceSpec src = new JobConfig.SourceSpec();
         src.alias = "s";
-        src.input = "in1";          // single string input
+        src.input = "in1"; // single string input
         src.clazz = "M.S.C";
         rule.sources.add(src);
         config.mapping.rules.add(rule);
 
-        assertThatCode(() -> new MappingCompiler().validate(config))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> new MappingCompiler().validate(config)).doesNotThrowAnyException();
 
         // Effective accessors also work on flat format after normalization
         var normalized = new MappingCompiler().compile(config).config();

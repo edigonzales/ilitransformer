@@ -11,8 +11,7 @@ public record ComparisonProfile(
         double numericTolerance,
         Map<String, List<String>> businessKeys,
         Set<String> ignoredAttributes,
-        Set<String> expectedLossReasonCodes
-) {
+        Set<String> expectedLossReasonCodes) {
     public static final double DEFAULT_NUMERIC_TOLERANCE = 0.001;
 
     public ComparisonProfile {
@@ -20,10 +19,8 @@ public record ComparisonProfile(
             throw new IllegalArgumentException("numericTolerance must be >= 0");
         }
         businessKeys = copyBusinessKeys(businessKeys);
-        ignoredAttributes = ignoredAttributes != null
-                ? Set.copyOf(ignoredAttributes) : Set.of();
-        expectedLossReasonCodes = expectedLossReasonCodes != null
-                ? Set.copyOf(expectedLossReasonCodes) : Set.of();
+        ignoredAttributes = ignoredAttributes != null ? Set.copyOf(ignoredAttributes) : Set.of();
+        expectedLossReasonCodes = expectedLossReasonCodes != null ? Set.copyOf(expectedLossReasonCodes) : Set.of();
     }
 
     public static Builder builder() {
@@ -111,8 +108,7 @@ public record ComparisonProfile(
         }
 
         public ComparisonProfile build() {
-            return new ComparisonProfile(numericTolerance, businessKeys,
-                    ignoredAttributes, expectedLossReasonCodes);
+            return new ComparisonProfile(numericTolerance, businessKeys, ignoredAttributes, expectedLossReasonCodes);
         }
     }
 }

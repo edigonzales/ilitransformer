@@ -8,33 +8,32 @@ import guru.interlis.transformer.dmav.CorrelationWorkbookImporter;
 
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
+
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(
         name = "import-correlation",
         description = "Import DM01/DMAV correlation hints from XLSX",
-        mixinStandardHelpOptions = true
-)
+        mixinStandardHelpOptions = true)
 public final class ImportCorrelationCommand implements Callable<Integer> {
 
     @Option(
             names = {"--xlsx"},
             required = true,
-            description = "Path to the correlation XLSX file"
-    )
+            description = "Path to the correlation XLSX file")
     private Path xlsx;
 
     @Option(
             names = {"--out"},
-            description = "Output path for correlation-hints.json (default: build/generated/dm01-dmav/correlation-hints.json)"
-    )
+            description =
+                    "Output path for correlation-hints.json (default: build/generated/dm01-dmav/correlation-hints.json)")
     private Path out = Path.of("build/generated/dm01-dmav/correlation-hints.json");
 
     @Option(
             names = {"--report"},
-            description = "Output path for import report (default: build/reports/dm01-dmav/correlation-import-report.md)"
-    )
+            description =
+                    "Output path for import report (default: build/reports/dm01-dmav/correlation-import-report.md)")
     private Path report = Path.of("build/reports/dm01-dmav/correlation-import-report.md");
 
     @Override

@@ -1,10 +1,12 @@
 package guru.interlis.transformer.expr;
 
-import ch.interlis.iom.IomObject;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.geometry.GeometryAdapter;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.state.SourceLookupIndex;
+
+import ch.interlis.iom.IomObject;
+
 import java.util.Map;
 
 public record EvalContext(
@@ -14,10 +16,13 @@ public record EvalContext(
         Map<String, Map<String, String>> enumMaps,
         GeometryAdapter geometryAdapter,
         Map<String, Map<String, TypeInfo>> sourceAttributeTypes,
-        SourceLookupIndex lookupIndex
-) {
+        SourceLookupIndex lookupIndex) {
 
-    public EvalContext(Map<String, IomObject> sources, DiagnosticCollector diagnostics, String ruleId, Map<String, Map<String, String>> enumMaps) {
+    public EvalContext(
+            Map<String, IomObject> sources,
+            DiagnosticCollector diagnostics,
+            String ruleId,
+            Map<String, Map<String, String>> enumMaps) {
         this(sources, diagnostics, ruleId, enumMaps, null, null, null);
     }
 
@@ -25,10 +30,13 @@ public record EvalContext(
         this(sources, diagnostics, ruleId, null, null, null, null);
     }
 
-    public EvalContext(Map<String, IomObject> sources, DiagnosticCollector diagnostics, String ruleId,
-                       Map<String, Map<String, String>> enumMaps,
-                       GeometryAdapter geometryAdapter,
-                       Map<String, Map<String, TypeInfo>> sourceAttributeTypes) {
+    public EvalContext(
+            Map<String, IomObject> sources,
+            DiagnosticCollector diagnostics,
+            String ruleId,
+            Map<String, Map<String, String>> enumMaps,
+            GeometryAdapter geometryAdapter,
+            Map<String, Map<String, TypeInfo>> sourceAttributeTypes) {
         this(sources, diagnostics, ruleId, enumMaps, geometryAdapter, sourceAttributeTypes, null);
     }
 

@@ -1,15 +1,16 @@
 package guru.interlis.transformer.geometry;
 
-import ch.interlis.iom_j.Iom_jObject;
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.expr.CoordValue;
 import guru.interlis.transformer.expr.GeometryObjectValue;
-import guru.interlis.transformer.expr.NullValue;
 import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.support.TestGeometries;
-import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import ch.interlis.iom_j.Iom_jObject;
+
+import org.junit.jupiter.api.Test;
 
 class IoxGeometryAdapterTest {
 
@@ -53,8 +54,7 @@ class IoxGeometryAdapterTest {
     @Test
     void normalizePolylineRoundtrip() {
         var polyline = TestGeometries.polyline(
-                TestGeometries.coord(2600000.0, 1200000.0),
-                TestGeometries.coord(2600100.0, 1200100.0));
+                TestGeometries.coord(2600000.0, 1200000.0), TestGeometries.coord(2600100.0, 1200100.0));
 
         Value result = adapter.normalize(polyline, TypeInfo.POLYLINE);
         assertThat(result).isInstanceOf(GeometryObjectValue.class);
@@ -72,9 +72,7 @@ class IoxGeometryAdapterTest {
     @Test
     void normalizeSurfaceFromIoxIliStructure() {
         var outer = TestGeometries.surface(TestGeometries.boundary(
-                TestGeometries.coord(0.0, 0.0),
-                TestGeometries.coord(10.0, 0.0),
-                TestGeometries.coord(10.0, 10.0)));
+                TestGeometries.coord(0.0, 0.0), TestGeometries.coord(10.0, 0.0), TestGeometries.coord(10.0, 10.0)));
 
         Value result = adapter.normalize(outer, TypeInfo.SURFACE);
         assertThat(result).isInstanceOf(GeometryObjectValue.class);
@@ -127,12 +125,10 @@ class IoxGeometryAdapterTest {
     @Test
     void denormalizeAreaAcceptsCompatibleSurfaceGeometry() {
         var geometry = TestGeometries.surface(TestGeometries.boundary(
-                TestGeometries.coord(1.0, 1.0),
-                TestGeometries.coord(2.0, 1.0),
-                TestGeometries.coord(1.0, 1.0)));
+                TestGeometries.coord(1.0, 1.0), TestGeometries.coord(2.0, 1.0), TestGeometries.coord(1.0, 1.0)));
 
-        Iom_jObject result = (Iom_jObject) adapter.denormalize(
-                new GeometryObjectValue(TypeInfo.SURFACE, geometry), TypeInfo.AREA);
+        Iom_jObject result =
+                (Iom_jObject) adapter.denormalize(new GeometryObjectValue(TypeInfo.SURFACE, geometry), TypeInfo.AREA);
         assertThat(result).isNotNull();
         assertThat(result.getattrvaluecount("surface")).isEqualTo(1);
     }

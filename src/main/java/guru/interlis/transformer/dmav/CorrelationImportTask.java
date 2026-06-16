@@ -40,8 +40,14 @@ public final class CorrelationImportTask {
         exporter.writeReport(result, report);
 
         System.out.println("Imported " + result.hintCount() + " correlation hints");
-        System.out.println("  DM01→DMAV: " + result.hints().stream().filter(h -> h.direction() == Direction.DM01_TO_DMAV).count());
-        System.out.println("  DMAV→DM01: " + result.hints().stream().filter(h -> h.direction() == Direction.DMAV_TO_DM01).count());
+        System.out.println("  DM01→DMAV: "
+                + result.hints().stream()
+                        .filter(h -> h.direction() == Direction.DM01_TO_DMAV)
+                        .count());
+        System.out.println("  DMAV→DM01: "
+                + result.hints().stream()
+                        .filter(h -> h.direction() == Direction.DMAV_TO_DM01)
+                        .count());
         System.out.println("  Errors:   " + result.errorCount());
         System.out.println("  Warnings: " + result.warningCount());
         System.out.println("JSON:  " + out);

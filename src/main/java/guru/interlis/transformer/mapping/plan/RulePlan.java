@@ -14,5 +14,4 @@ public record RulePlan(
         java.util.List<String> identitySourceKeys,
         CompiledExpression predicate,
         java.util.List<JoinPlan> joins,
-        java.util.List<CreatePlan> creates
-) {}
+        java.util.List<CreatePlan> creates) {}

@@ -1,13 +1,14 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.state.DefaultOidGenerationService;
 import guru.interlis.transformer.state.OidGenerationRequest;
 import guru.interlis.transformer.state.OidStrategy;
-import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class MissingSourceOidTest {
 
@@ -16,11 +17,9 @@ class MissingSourceOidTest {
     @Test
     void deterministicUuidWithoutSourceOidUsesFallbackSequence() {
         OidGenerationRequest req1 = new OidGenerationRequest(
-                OidStrategy.DETERMINISTIC_UUID, "ns", "r1",
-                "in1", "b1", "C", null, new LinkedHashMap<>(), null);
+                OidStrategy.DETERMINISTIC_UUID, "ns", "r1", "in1", "b1", "C", null, new LinkedHashMap<>(), null);
         OidGenerationRequest req2 = new OidGenerationRequest(
-                OidStrategy.DETERMINISTIC_UUID, "ns", "r1",
-                "in1", "b1", "C", null, new LinkedHashMap<>(), null);
+                OidStrategy.DETERMINISTIC_UUID, "ns", "r1", "in1", "b1", "C", null, new LinkedHashMap<>(), null);
 
         String oid1 = service.generate(req1);
         String oid2 = service.generate(req2);
@@ -33,11 +32,9 @@ class MissingSourceOidTest {
     @Test
     void deterministicUuidWithBlankSourceOidUsesFallbackSequence() {
         OidGenerationRequest req1 = new OidGenerationRequest(
-                OidStrategy.DETERMINISTIC_UUID, "ns", "r1",
-                "in1", "b1", "C", "", new LinkedHashMap<>(), null);
+                OidStrategy.DETERMINISTIC_UUID, "ns", "r1", "in1", "b1", "C", "", new LinkedHashMap<>(), null);
         OidGenerationRequest req2 = new OidGenerationRequest(
-                OidStrategy.DETERMINISTIC_UUID, "ns", "r1",
-                "in1", "b1", "C", "", new LinkedHashMap<>(), null);
+                OidStrategy.DETERMINISTIC_UUID, "ns", "r1", "in1", "b1", "C", "", new LinkedHashMap<>(), null);
 
         String oid1 = service.generate(req1);
         String oid2 = service.generate(req2);
@@ -48,8 +45,7 @@ class MissingSourceOidTest {
     @Test
     void preserveStrategyWithoutSourceOidFallsBackToInteger() {
         OidGenerationRequest req = new OidGenerationRequest(
-                OidStrategy.PRESERVE, null, "r1",
-                "in1", "b1", "C", null, new LinkedHashMap<>(), null);
+                OidStrategy.PRESERVE, null, "r1", "in1", "b1", "C", null, new LinkedHashMap<>(), null);
 
         String oid = service.generate(req);
         assertThat(oid).isNotNull();

@@ -12,7 +12,6 @@ public interface TransferInventoryClassifier {
     }
 
     static TransferInventoryClassifier none() {
-        return (object, sink) -> {
-        };
+        return (object, sink) -> {};
     }
 }

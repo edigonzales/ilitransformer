@@ -1,11 +1,10 @@
 package guru.interlis.transformer.mapping.plan;
 
-import ch.interlis.ili2c.metamodel.Table;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class RuleDependencyGraphTest {
 
@@ -56,9 +55,19 @@ class RuleDependencyGraphTest {
     }
 
     private static RulePlan rule(String id, RefPlan... refs) {
-        return new RulePlan(id, "", null, List.of(), List.of(),
-                List.of(refs), List.of(), List.of(), List.of(), null,
-                List.of(), List.of());
+        return new RulePlan(
+                id,
+                "",
+                null,
+                List.of(),
+                List.of(),
+                List.of(refs),
+                List.of(),
+                List.of(),
+                List.of(),
+                null,
+                List.of(),
+                List.of());
     }
 
     private static RefPlan ref(String targetRuleId) {

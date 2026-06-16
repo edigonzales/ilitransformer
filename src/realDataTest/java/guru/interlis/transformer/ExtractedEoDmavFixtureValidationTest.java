@@ -1,5 +1,7 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import guru.interlis.transformer.dmav.Dm01DmavFixtures;
 import guru.interlis.transformer.dmav.Dm01DmavPaths;
 import guru.interlis.transformer.model.ConnectedSubgraphExtractor;
@@ -12,17 +14,16 @@ import guru.interlis.transformer.testutil.TransferFormat;
 import guru.interlis.transformer.validation.InProcessIlivalidatorService;
 import guru.interlis.transformer.validation.TransferValidationService;
 import guru.interlis.transformer.validation.ValidationResult;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 @Tag("real-data")
 class ExtractedEoDmavFixtureValidationTest {
@@ -44,8 +45,8 @@ class ExtractedEoDmavFixtureValidationTest {
         extractor = new ConnectedSubgraphExtractor(modelService);
 
         try (var files = Files.walk(DATA_DIR)) {
-            dmavFile = files
-                    .filter(f -> f.getFileName().toString().toLowerCase().endsWith(".xtf"))
+            dmavFile = files.filter(
+                            f -> f.getFileName().toString().toLowerCase().endsWith(".xtf"))
                     .filter(Files::isRegularFile)
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("No XTF file found under " + DATA_DIR));
@@ -54,8 +55,8 @@ class ExtractedEoDmavFixtureValidationTest {
 
     @Test
     void extractAndValidateDmavEoFixture() throws Exception {
-        IliModelCompileResult compileResult = modelService.compileModel(
-                UMBRELLA_MODEL, Dm01DmavPaths.LOCAL_AND_REMOTE_MODEL_DIRS);
+        IliModelCompileResult compileResult =
+                modelService.compileModel(UMBRELLA_MODEL, Dm01DmavPaths.LOCAL_AND_REMOTE_MODEL_DIRS);
         assertThat(compileResult.hasErrors())
                 .as("DMAV model compilation: " + compileResult.diagnostics())
                 .isFalse();
@@ -75,8 +76,10 @@ class ExtractedEoDmavFixtureValidationTest {
         ExtractedTransfer result = extractor.extract(source, request);
 
         assertThat(result.totalObjects()).isGreaterThanOrEqualTo(3);
-        assertThat(result.includedClasses().stream().anyMatch(c -> c.contains("EONachfuehrung"))).isTrue();
-        assertThat(result.includedClasses().stream().anyMatch(c -> c.contains("Einzelobjekt"))).isTrue();
+        assertThat(result.includedClasses().stream().anyMatch(c -> c.contains("EONachfuehrung")))
+                .isTrue();
+        assertThat(result.includedClasses().stream().anyMatch(c -> c.contains("Einzelobjekt")))
+                .isTrue();
 
         TransferValidationService validator = new InProcessIlivalidatorService();
         Path logFile = tempDir.resolve("eo-dmav-validation.log");

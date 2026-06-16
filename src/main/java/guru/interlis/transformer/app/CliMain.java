@@ -14,24 +14,23 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @Command(
-    name = "ilitransformer",
-    description = "Generic INTERLIS transformation engine",
-    mixinStandardHelpOptions = true,
-    version = "ilitransformer 0.1.0",
-    subcommands = {
-        CliMain.TransformCommand.class,
-        CliMain.ValidateMappingCommand.class,
-        CliMain.ValidateTransferCommand.class,
-        InspectModelCommand.class,
-        Dm01DmavCommand.class
-    }
-)
+        name = "ilitransformer",
+        description = "Generic INTERLIS transformation engine",
+        mixinStandardHelpOptions = true,
+        version = "ilitransformer 0.1.0",
+        subcommands = {
+            CliMain.TransformCommand.class,
+            CliMain.ValidateMappingCommand.class,
+            CliMain.ValidateTransferCommand.class,
+            InspectModelCommand.class,
+            Dm01DmavCommand.class
+        })
 public final class CliMain implements Callable<Integer> {
 
     @Override
@@ -47,48 +46,38 @@ public final class CliMain implements Callable<Integer> {
 
     // -- TransformCommand --------------------------------------------------
 
-    @Command(
-        name = "transform",
-        description = "Run an INTERLIS transformation",
-        mixinStandardHelpOptions = true
-    )
+    @Command(name = "transform", description = "Run an INTERLIS transformation", mixinStandardHelpOptions = true)
     static final class TransformCommand implements Callable<Integer> {
 
         @Option(
-            names = {"-m", "--mapping"},
-            required = true,
-            description = "Mapping YAML configuration file"
-        )
+                names = {"-m", "--mapping"},
+                required = true,
+                description = "Mapping YAML configuration file")
         private Path mapping;
 
         @Option(
-            names = {"--modeldir"},
-            description = "Model directory path for INTERLIS model resolution (can be specified multiple times)"
-        )
+                names = {"--modeldir"},
+                description = "Model directory path for INTERLIS model resolution (can be specified multiple times)")
         private List<String> modeldirs = new ArrayList<>();
 
         @Option(
-            names = {"--validate"},
-            description = "Run ilivalidator on the output after transformation"
-        )
+                names = {"--validate"},
+                description = "Run ilivalidator on the output after transformation")
         private boolean validate;
 
         @Option(
-            names = {"--report"},
-            description = "Output directory for transformation reports (JSON and Markdown)"
-        )
+                names = {"--report"},
+                description = "Output directory for transformation reports (JSON and Markdown)")
         private Path report;
 
         @Option(
-            names = {"--fail-policy"},
-            description = "Error handling policy: strict, lenient, or report_only (default: strict)"
-        )
+                names = {"--fail-policy"},
+                description = "Error handling policy: strict, lenient, or report_only (default: strict)")
         private String failPolicy;
 
         @Option(
-            names = {"--keep-temp"},
-            description = "Keep temporary output files on failure for debugging"
-        )
+                names = {"--keep-temp"},
+                description = "Keep temporary output files on failure for debugging")
         private boolean keepTemp;
 
         @Override
@@ -103,21 +92,17 @@ public final class CliMain implements Callable<Integer> {
                 }
             }
 
-            RunOptions options = new RunOptions(
-                    modeldirs != null ? modeldirs : List.of(),
-                    validate,
-                    report,
-                    keepTemp,
-                    override);
+            RunOptions options =
+                    new RunOptions(modeldirs != null ? modeldirs : List.of(), validate, report, keepTemp, override);
 
             DiagnosticCollector diagnostics = new JobRunner().run(mapping, options);
 
             for (Diagnostic d : diagnostics.all()) {
                 String level = d.severity().name();
                 if (level.equals("INFO")) continue;
-                System.out.printf("[%s] %s: %s (%s)%n",
-                        level, d.code(), d.message(),
-                        d.sourcePath() != null ? d.sourcePath() : "");
+                System.out.printf(
+                        "[%s] %s: %s (%s)%n",
+                        level, d.code(), d.message(), d.sourcePath() != null ? d.sourcePath() : "");
             }
 
             return diagnostics.hasErrors() ? 1 : 0;
@@ -127,23 +112,20 @@ public final class CliMain implements Callable<Integer> {
     // -- ValidateMappingCommand --------------------------------------------
 
     @Command(
-        name = "validate-mapping",
-        description = "Validate a mapping configuration without executing a transformation",
-        mixinStandardHelpOptions = true
-    )
+            name = "validate-mapping",
+            description = "Validate a mapping configuration without executing a transformation",
+            mixinStandardHelpOptions = true)
     static final class ValidateMappingCommand implements Callable<Integer> {
 
         @Option(
-            names = {"-m", "--mapping"},
-            required = true,
-            description = "Mapping YAML configuration file"
-        )
+                names = {"-m", "--mapping"},
+                required = true,
+                description = "Mapping YAML configuration file")
         private Path mapping;
 
         @Option(
-            names = {"--modeldir"},
-            description = "Model directory path for INTERLIS model resolution (can be specified multiple times)"
-        )
+                names = {"--modeldir"},
+                description = "Model directory path for INTERLIS model resolution (can be specified multiple times)")
         private List<String> modeldirs = new ArrayList<>();
 
         @Override
@@ -181,41 +163,35 @@ public final class CliMain implements Callable<Integer> {
     // -- ValidateTransferCommand -------------------------------------------
 
     @Command(
-        name = "validate-transfer",
-        description = "Validate an INTERLIS transfer file against its model",
-        mixinStandardHelpOptions = true
-    )
+            name = "validate-transfer",
+            description = "Validate an INTERLIS transfer file against its model",
+            mixinStandardHelpOptions = true)
     static final class ValidateTransferCommand implements Callable<Integer> {
 
         @Option(
-            names = {"-f", "--file"},
-            required = true,
-            description = "INTERLIS transfer file (ITF or XTF)"
-        )
+                names = {"-f", "--file"},
+                required = true,
+                description = "INTERLIS transfer file (ITF or XTF)")
         private Path file;
 
         @Option(
-            names = {"--modeldir"},
-            required = true,
-            description = "Model directory path for INTERLIS model resolution (can be specified multiple times)"
-        )
+                names = {"--modeldir"},
+                required = true,
+                description = "Model directory path for INTERLIS model resolution (can be specified multiple times)")
         private List<String> modeldirs;
 
         @Option(
-            names = {"--model"},
-            required = true,
-            description = "INTERLIS model name (can be specified multiple times)"
-        )
+                names = {"--model"},
+                required = true,
+                description = "INTERLIS model name (can be specified multiple times)")
         private List<String> models;
 
         @Option(
-            names = {"--log"},
-            description = "Path for validation log output"
-        )
+                names = {"--log"},
+                description = "Path for validation log output")
         private Path log;
 
-        private static final TransferValidationService validationService =
-                new InProcessIlivalidatorService();
+        private static final TransferValidationService validationService = new InProcessIlivalidatorService();
 
         @Override
         public Integer call() throws Exception {

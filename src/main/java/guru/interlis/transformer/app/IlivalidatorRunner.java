@@ -24,12 +24,11 @@ public final class IlivalidatorRunner {
      * @deprecated Use {@link TransferValidationService#validate(Path, List, List, Path)} instead.
      */
     @Deprecated(since = "25", forRemoval = false)
-    public static ValidationResult validate(
-            Path dataFile, List<String> modelDirs, String modelName, Path logFile) throws Exception {
+    public static ValidationResult validate(Path dataFile, List<String> modelDirs, String modelName, Path logFile)
+            throws Exception {
 
         guru.interlis.transformer.validation.ValidationResult result =
-                service.validate(dataFile, modelDirs,
-                        modelName != null ? List.of(modelName) : List.of(), logFile);
+                service.validate(dataFile, modelDirs, modelName != null ? List.of(modelName) : List.of(), logFile);
 
         return new ValidationResult(result.valid(), result.logText());
     }
@@ -57,7 +56,8 @@ public final class IlivalidatorRunner {
         }
 
         if (file == null || modelDirs == null || model == null) {
-            System.err.println("Usage: IlivalidatorRunner --file <path> --modeldir <dirs> --model <name> [--log <path>]");
+            System.err.println(
+                    "Usage: IlivalidatorRunner --file <path> --modeldir <dirs> --model <name> [--log <path>]");
             return 1;
         }
 

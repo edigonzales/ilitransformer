@@ -1,7 +1,8 @@
 package guru.interlis.transformer.engine;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import ch.interlis.iom_j.Iom_jObject;
-import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -9,7 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class DeterministicOutputOrderTest {
 
@@ -52,8 +53,7 @@ class DeterministicOutputOrderTest {
         list2.add(new Iom_jObject("Model.Topic.ClassB", "3"));
         list2.add(new Iom_jObject("Model.Topic.ClassA", "2"));
 
-        Comparator<ch.interlis.iom.IomObject> cmp = Comparator.comparing(
-                ch.interlis.iom.IomObject::getobjecttag)
+        Comparator<ch.interlis.iom.IomObject> cmp = Comparator.comparing(ch.interlis.iom.IomObject::getobjecttag)
                 .thenComparing(ch.interlis.iom.IomObject::getobjectoid);
 
         var sorted1 = new ArrayList<>(list1);

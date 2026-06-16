@@ -1,5 +1,14 @@
 package guru.interlis.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import guru.interlis.transformer.app.IlivalidatorRunner;
+import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
+import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.model.IliModelCompileResult;
+import guru.interlis.transformer.model.IliModelService;
+
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.EndTransferEvent;
@@ -10,21 +19,14 @@ import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox_j.EndBasketEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
-import guru.interlis.transformer.app.IlivalidatorRunner;
-import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
-import guru.interlis.transformer.interlis.InterlisIoFactory;
-import guru.interlis.transformer.model.IliModelCompileResult;
-import guru.interlis.transformer.model.IliModelService;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class XtfReadOwnOutputTest {
 
@@ -46,8 +48,7 @@ class XtfReadOwnOutputTest {
 
     @Test
     void ownXtfOutputCanBeReadBackWithModelContext() throws Exception {
-        IomObject surfaceObj = new Iom_jObject(BASKET + ".SurfaceClass",
-                "550e8400-e29b-41d4-a716-446655440000");
+        IomObject surfaceObj = new Iom_jObject(BASKET + ".SurfaceClass", "550e8400-e29b-41d4-a716-446655440000");
         surfaceObj.setattrvalue("NBIdent", "RT001");
         IomObject geom = surface(boundary(
                 coord(2600000.000, 1200000.000),
@@ -70,9 +71,7 @@ class XtfReadOwnOutputTest {
             writer.close();
 
             ValidationResult validation = IlivalidatorRunner.validate(xtfPath, List.of(MODELDIR), MODEL, null);
-            assertThat(validation.success())
-                    .as(validation.log())
-                    .isTrue();
+            assertThat(validation.success()).as(validation.log()).isTrue();
 
             IoxReader reader = ioFactory.createReader(xtfPath, transferDescription);
             List<IomObject> readBack = new ArrayList<>();
@@ -91,7 +90,8 @@ class XtfReadOwnOutputTest {
 
             assertThat(readBack).isNotEmpty();
             IomObject readSurface = readBack.stream()
-                    .filter(obj -> obj.getobjecttag() != null && obj.getobjecttag().endsWith(".SurfaceClass"))
+                    .filter(obj ->
+                            obj.getobjecttag() != null && obj.getobjecttag().endsWith(".SurfaceClass"))
                     .findFirst()
                     .orElse(null);
             assertThat(readSurface).isNotNull();
@@ -104,22 +104,23 @@ class XtfReadOwnOutputTest {
 
     @Test
     void ownXtfWithHolesCanBeReadBack() throws Exception {
-        IomObject surfaceObj = new Iom_jObject(BASKET + ".SurfaceClass",
-                "550e8400-e29b-41d4-a716-446655440002");
+        IomObject surfaceObj = new Iom_jObject(BASKET + ".SurfaceClass", "550e8400-e29b-41d4-a716-446655440002");
         surfaceObj.setattrvalue("NBIdent", "HOLE01");
-        surfaceObj.addattrobj("Perimeter", surface(
-                boundary(
-                        coord(2603000.000, 1203000.000),
-                        coord(2603200.000, 1203000.000),
-                        coord(2603200.000, 1203200.000),
-                        coord(2603000.000, 1203200.000),
-                        coord(2603000.000, 1203000.000)),
-                boundary(
-                        coord(2603050.000, 1203050.000),
-                        coord(2603150.000, 1203050.000),
-                        coord(2603150.000, 1203150.000),
-                        coord(2603050.000, 1203150.000),
-                        coord(2603050.000, 1203050.000))));
+        surfaceObj.addattrobj(
+                "Perimeter",
+                surface(
+                        boundary(
+                                coord(2603000.000, 1203000.000),
+                                coord(2603200.000, 1203000.000),
+                                coord(2603200.000, 1203200.000),
+                                coord(2603000.000, 1203200.000),
+                                coord(2603000.000, 1203000.000)),
+                        boundary(
+                                coord(2603050.000, 1203050.000),
+                                coord(2603150.000, 1203050.000),
+                                coord(2603150.000, 1203150.000),
+                                coord(2603050.000, 1203150.000),
+                                coord(2603050.000, 1203050.000))));
 
         Path xtfPath = Files.createTempFile("own-output-hole-", ".xtf");
         try {
@@ -134,9 +135,7 @@ class XtfReadOwnOutputTest {
             writer.close();
 
             ValidationResult validation = IlivalidatorRunner.validate(xtfPath, List.of(MODELDIR), MODEL, null);
-            assertThat(validation.success())
-                    .as(validation.log())
-                    .isTrue();
+            assertThat(validation.success()).as(validation.log()).isTrue();
 
             IoxReader reader = ioFactory.createReader(xtfPath, transferDescription);
             List<IomObject> readBack = new ArrayList<>();
@@ -155,7 +154,8 @@ class XtfReadOwnOutputTest {
 
             assertThat(readBack).isNotEmpty();
             IomObject readSurface = readBack.stream()
-                    .filter(obj -> obj.getobjecttag() != null && obj.getobjecttag().endsWith(".SurfaceClass"))
+                    .filter(obj ->
+                            obj.getobjecttag() != null && obj.getobjecttag().endsWith(".SurfaceClass"))
                     .findFirst()
                     .orElse(null);
             assertThat(readSurface).isNotNull();

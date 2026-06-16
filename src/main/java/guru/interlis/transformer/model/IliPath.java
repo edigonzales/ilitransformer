@@ -34,8 +34,7 @@ public final class IliPath {
             parts.add(cleaned);
         }
         if (parts.size() < 3) {
-            throw new IllegalArgumentException(
-                    "Path must contain at least Model.Topic.Class, got: " + path);
+            throw new IllegalArgumentException("Path must contain at least Model.Topic.Class, got: " + path);
         }
         String model = parts.get(0);
         String topic = parts.get(1);

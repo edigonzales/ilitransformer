@@ -14,19 +14,9 @@ public record TransferInventory(
         List<ClassStats> classStats,
         List<String> geometryTypes,
         Map<String, Integer> referenceCounts,
-        Map<String, List<String>> classifications
-) {
-    public record BasketSummary(
-            String bid,
-            String topic,
-            long objectCount
-    ) {}
+        Map<String, List<String>> classifications) {
+    public record BasketSummary(String bid, String topic, long objectCount) {}
 
     public record ClassStats(
-            String className,
-            long count,
-            String oidType,
-            List<String> geometryAttrs,
-            boolean hasReferences
-    ) {}
+            String className, long count, String oidType, List<String> geometryAttrs, boolean hasReferences) {}
 }

@@ -1,7 +1,8 @@
 package guru.interlis.transformer.compare;
 
-import ch.interlis.iom.IomObject;
 import guru.interlis.transformer.loss.LossEvent;
+
+import ch.interlis.iom.IomObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,9 +18,7 @@ import java.util.stream.Collectors;
 public final class SemanticTransferComparator {
 
     public ComparisonReport compare(
-            Collection<IomObject> left,
-            Collection<IomObject> right,
-            ComparisonProfile profile) {
+            Collection<IomObject> left, Collection<IomObject> right, ComparisonProfile profile) {
         return compare(left, right, profile, List.of());
     }
 
@@ -53,28 +52,36 @@ public final class SemanticTransferComparator {
                 continue;
             }
             if (leftObjects.size() != 1 || rightObjects.size() != 1) {
-                issues.add(error(key, "business key is not unique",
-                        String.valueOf(leftObjects.size()), String.valueOf(rightObjects.size())));
+                issues.add(error(
+                        key,
+                        "business key is not unique",
+                        String.valueOf(leftObjects.size()),
+                        String.valueOf(rightObjects.size())));
                 continue;
             }
             matched++;
             compareObject(key, leftObjects.get(0), rightObjects.get(0), profile, issues);
         }
 
-        Set<String> observedReasons = observedLossEvents == null ? Set.of() : observedLossEvents.stream()
-                .map(LossEvent::reasonCode)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<String> observedReasons = observedLossEvents == null
+                ? Set.of()
+                : observedLossEvents.stream()
+                        .map(LossEvent::reasonCode)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
 
         for (String expectedReason : profile.expectedLossReasonCodes()) {
             if (!observedReasons.contains(expectedReason)) {
-                issues.add(error("lossiness", "expected loss reason was not observed",
-                        expectedReason, observedReasons.toString()));
+                issues.add(error(
+                        "lossiness",
+                        "expected loss reason was not observed",
+                        expectedReason,
+                        observedReasons.toString()));
             }
         }
 
-        return new ComparisonReport(left.size(), right.size(), matched, issues,
-                observedReasons, profile.expectedLossReasonCodes());
+        return new ComparisonReport(
+                left.size(), right.size(), matched, issues, observedReasons, profile.expectedLossReasonCodes());
     }
 
     private Map<String, List<IomObject>> index(
@@ -128,8 +135,7 @@ public final class SemanticTransferComparator {
         }
         if (!Objects.equals(shortName(left.getobjecttag()), shortName(right.getobjecttag()))
                 && !profile.ignores(path + "._type")) {
-            issues.add(error(path + "._type", "object type differs",
-                    left.getobjecttag(), right.getobjecttag()));
+            issues.add(error(path + "._type", "object type differs", left.getobjecttag(), right.getobjecttag()));
         }
 
         Set<String> attrs = new LinkedHashSet<>();
@@ -154,8 +160,11 @@ public final class SemanticTransferComparator {
         int leftCount = safeValueCount(left, attr);
         int rightCount = safeValueCount(right, attr);
         if (leftCount != rightCount) {
-            issues.add(error(path + "._count", "attribute value count differs",
-                    String.valueOf(leftCount), String.valueOf(rightCount)));
+            issues.add(error(
+                    path + "._count",
+                    "attribute value count differs",
+                    String.valueOf(leftCount),
+                    String.valueOf(rightCount)));
             return;
         }
         if (leftCount == 0) {
@@ -208,29 +217,24 @@ public final class SemanticTransferComparator {
         }
         Double leftNumber = parseNumber(left);
         Double rightNumber = parseNumber(right);
-        if (leftNumber != null && rightNumber != null
+        if (leftNumber != null
+                && rightNumber != null
                 && Math.abs(leftNumber - rightNumber) <= profile.numericTolerance()) {
             return;
         }
         issues.add(error(path, "scalar value differs", left, right));
     }
 
-    private List<ValueNode> attributeValues(
-            IomObject object,
-            String attr,
-            ComparisonProfile profile,
-            String path) {
+    private List<ValueNode> attributeValues(IomObject object, String attr, ComparisonProfile profile, String path) {
         List<ValueNode> values = new ArrayList<>();
         int count = safeValueCount(object, attr);
         for (int i = 0; i < count; i++) {
             IomObject child = childValue(object, attr, i);
             if (child != null) {
                 if (child.getobjectrefoid() != null) {
-                    values.add(new ValueNode(null, null, child.getobjectrefoid(),
-                            "ref:" + child.getobjectrefoid()));
+                    values.add(new ValueNode(null, null, child.getobjectrefoid(), "ref:" + child.getobjectrefoid()));
                 } else {
-                    values.add(new ValueNode(null, child, null,
-                            canonicalObject(child, profile, path + "[" + i + "]")));
+                    values.add(new ValueNode(null, child, null, canonicalObject(child, profile, path + "[" + i + "]")));
                 }
             } else if (i == 0) {
                 String scalar = object.getattrvalue(attr);
@@ -336,19 +340,10 @@ public final class SemanticTransferComparator {
         return idx >= 0 ? tag.substring(idx + 1) : tag;
     }
 
-    private ComparisonReport.ComparisonIssue error(
-            String path,
-            String message,
-            String leftValue,
-            String rightValue) {
+    private ComparisonReport.ComparisonIssue error(String path, String message, String leftValue, String rightValue) {
         return new ComparisonReport.ComparisonIssue(
                 ComparisonReport.Severity.ERROR, path, message, leftValue, rightValue);
     }
 
-    private record ValueNode(
-            String scalar,
-            IomObject object,
-            String referenceOid,
-            String canonical
-    ) {}
+    private record ValueNode(String scalar, IomObject object, String referenceOid, String canonical) {}
 }

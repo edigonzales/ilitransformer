@@ -1,9 +1,9 @@
 package guru.interlis.transformer;
 
-import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iox.IoxReader;
-import ch.interlis.iox.IoxWriter;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
@@ -12,21 +12,23 @@ import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.IliModelCompileResult;
+import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.IoxWriter;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 class ScalarMappingIntegrationTest {
 
@@ -38,8 +40,7 @@ class ScalarMappingIntegrationTest {
     @BeforeAll
     static void compileModels() {
         IliModelService service = new IliModelService();
-        IliModelCompileResult result = service.compileModel(
-                "src/test/data/models/p5-test.ili", MODELDIR);
+        IliModelCompileResult result = service.compileModel("src/test/data/models/p5-test.ili", MODELDIR);
         assertThat(result.hasErrors())
                 .as("Model compilation errors: %s", result.diagnostics())
                 .isFalse();
@@ -81,8 +82,8 @@ class ScalarMappingIntegrationTest {
             IoxWriter writer = ioFactory.createWriter(outputPath, p5TransferDescription);
 
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
             java.util.function.Function<String, IoxReader> readerFactory = inputId -> {
                 try {
                     return mockReader(src1, src2);
@@ -90,8 +91,7 @@ class ScalarMappingIntegrationTest {
                     throw new RuntimeException(e);
                 }
             };
-            TransformResult result = engine.runTyped(plan, readerFactory,
-                    Map.of("out1", writer));
+            TransformResult result = engine.runTyped(plan, readerFactory, Map.of("out1", writer));
 
             assertThat(result.sourceRecordsRead()).isEqualTo(2);
             assertThat(result.sourceRecordsFiltered()).isEqualTo(0);
@@ -131,8 +131,8 @@ class ScalarMappingIntegrationTest {
             IoxWriter writer = ioFactory.createWriter(outputPath, p5TransferDescription);
 
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
             java.util.function.Function<String, IoxReader> readerFactory = inputId -> {
                 try {
                     return mockReader(src1, src2);
@@ -140,9 +140,7 @@ class ScalarMappingIntegrationTest {
                     throw new RuntimeException(e);
                 }
             };
-            TransformResult result = engine.runTyped(plan,
-                    readerFactory,
-                    Map.of("out1", writer));
+            TransformResult result = engine.runTyped(plan, readerFactory, Map.of("out1", writer));
 
             assertThat(result.sourceRecordsRead()).isEqualTo(2);
             assertThat(result.sourceRecordsFiltered()).isEqualTo(2);
@@ -178,8 +176,8 @@ class ScalarMappingIntegrationTest {
             IoxWriter writer = ioFactory.createWriter(outputPath, p5TransferDescription);
 
             DiagnosticCollector engineDiag = new DiagnosticCollector();
-            TransformationEngine engine = new TransformationEngine(
-                    new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
             java.util.function.Function<String, IoxReader> readerFactory = inputId -> {
                 try {
                     return mockReader(src1, src2);
@@ -187,9 +185,7 @@ class ScalarMappingIntegrationTest {
                     throw new RuntimeException(e);
                 }
             };
-            TransformResult result = engine.runTyped(plan,
-                    readerFactory,
-                    Map.of("out1", writer));
+            TransformResult result = engine.runTyped(plan, readerFactory, Map.of("out1", writer));
 
             assertThat(result.sourceRecordsRead()).isEqualTo(2);
             assertThat(result.sourceRecordsFiltered()).isEqualTo(0);
@@ -242,19 +238,18 @@ class ScalarMappingIntegrationTest {
 
     private IoxReader mockReader(Iom_jObject obj1, Iom_jObject obj2) throws Exception {
         IoxReader reader = mock(IoxReader.class);
-        when(reader.read()).thenReturn(
-                new ch.interlis.iox_j.StartTransferEvent("test", null, null),
-                new ch.interlis.iox_j.StartBasketEvent("P5Model.P5Topic", "b1"),
-                new ch.interlis.iox_j.ObjectEvent(obj1),
-                new ch.interlis.iox_j.ObjectEvent(obj2),
-                new ch.interlis.iox_j.EndBasketEvent(),
-                new ch.interlis.iox_j.EndTransferEvent(),
-                null,
-                null,
-                null,
-                null
-
-        );
+        when(reader.read())
+                .thenReturn(
+                        new ch.interlis.iox_j.StartTransferEvent("test", null, null),
+                        new ch.interlis.iox_j.StartBasketEvent("P5Model.P5Topic", "b1"),
+                        new ch.interlis.iox_j.ObjectEvent(obj1),
+                        new ch.interlis.iox_j.ObjectEvent(obj2),
+                        new ch.interlis.iox_j.EndBasketEvent(),
+                        new ch.interlis.iox_j.EndTransferEvent(),
+                        null,
+                        null,
+                        null,
+                        null);
         return reader;
     }
 }

@@ -1,11 +1,12 @@
 package guru.interlis.transformer.model;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
 import guru.interlis.transformer.interlis.InterlisModelLoader;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
 import guru.interlis.transformer.mapping.plan.TransferFormat;
+
+import ch.interlis.ili2c.metamodel.TransferDescription;
 
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -121,8 +122,7 @@ public final class ModelRegistry {
                 TypeSystemFacade ts = registry.tsByModel.get(input.model);
                 Path path = input.path != null ? Path.of(input.path) : null;
                 TransferFormat format = parseFormat(input.format);
-                registry.inputsById.put(input.id, new InputBinding(
-                        input.id, path, input.model, format, td, ts));
+                registry.inputsById.put(input.id, new InputBinding(input.id, path, input.model, format, td, ts));
             }
 
             // Build OutputBindings
@@ -131,8 +131,7 @@ public final class ModelRegistry {
                 TypeSystemFacade ts = registry.tsByModel.get(output.model);
                 Path path = output.path != null ? Path.of(output.path) : null;
                 TransferFormat format = parseFormat(output.format);
-                registry.outputsById.put(output.id, new OutputBinding(
-                        output.id, path, output.model, format, td, ts));
+                registry.outputsById.put(output.id, new OutputBinding(output.id, path, output.model, format, td, ts));
             }
 
             return registry;
@@ -147,7 +146,8 @@ public final class ModelRegistry {
             }
         }
 
-        private static TransferDescription loadModel(InterlisModelLoader modelLoader, String modelName, String modelDir) {
+        private static TransferDescription loadModel(
+                InterlisModelLoader modelLoader, String modelName, String modelDir) {
             try {
                 return modelLoader.compileModel(modelName, modelDir);
             } catch (Exception ex) {
@@ -160,8 +160,7 @@ public final class ModelRegistry {
          * For use by the deprecated {@code MappingCompiler.compileTyped(JobConfig, Map, Map)} only.
          */
         public ModelRegistry buildWithSuppliedTypeSystems(
-                Map<String, TypeSystemFacade> sourceTypeSystems,
-                Map<String, TypeSystemFacade> targetTypeSystems) {
+                Map<String, TypeSystemFacade> sourceTypeSystems, Map<String, TypeSystemFacade> targetTypeSystems) {
             if (config == null) {
                 throw new IllegalStateException("JobConfig must be set");
             }
@@ -174,8 +173,7 @@ public final class ModelRegistry {
                 TransferDescription td = ts != null ? ts.getTransferDescription() : null;
                 Path path = input.path != null ? Path.of(input.path) : null;
                 TransferFormat format = parseFormat(input.format);
-                registry.inputsById.put(input.id, new InputBinding(
-                        input.id, path, input.model, format, td, ts));
+                registry.inputsById.put(input.id, new InputBinding(input.id, path, input.model, format, td, ts));
                 if (td != null) {
                     registry.tdByModel.putIfAbsent(input.model, td);
                     registry.tsByModel.putIfAbsent(input.model, ts);
@@ -188,8 +186,7 @@ public final class ModelRegistry {
                 TransferDescription td = ts != null ? ts.getTransferDescription() : null;
                 Path path = output.path != null ? Path.of(output.path) : null;
                 TransferFormat format = parseFormat(output.format);
-                registry.outputsById.put(output.id, new OutputBinding(
-                        output.id, path, output.model, format, td, ts));
+                registry.outputsById.put(output.id, new OutputBinding(output.id, path, output.model, format, td, ts));
                 if (td != null) {
                     registry.tdByModel.putIfAbsent(output.model, td);
                     registry.tsByModel.putIfAbsent(output.model, ts);

@@ -1,13 +1,15 @@
 package guru.interlis.transformer.engine;
 
-import ch.interlis.iom_j.Iom_jObject;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import guru.interlis.transformer.state.SourceRecord;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+
+import ch.interlis.iom_j.Iom_jObject;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 class SourceIndexingServiceTest {
 

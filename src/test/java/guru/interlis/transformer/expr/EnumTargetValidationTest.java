@@ -1,17 +1,18 @@
 package guru.interlis.transformer.expr;
 
+import static org.assertj.core.api.Assertions.*;
+
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.expr.builtins.BasicFunctions;
 import guru.interlis.transformer.expr.builtins.EnumFunctions;
 import guru.interlis.transformer.mapping.plan.ExpressionCompileContext;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class EnumTargetValidationTest {
 
@@ -28,26 +29,21 @@ class EnumTargetValidationTest {
 
     @Test
     void enumMapWithExistingTableDoesNotError() {
-        Map<String, Map<String, String>> enumMaps = Map.of("MyMap",
-                Map.of("A", "X", "B", "Y"));
+        Map<String, Map<String, String>> enumMaps = Map.of("MyMap", Map.of("A", "X", "B", "Y"));
         DiagnosticCollector diagnostics = new DiagnosticCollector();
-        ExpressionCompileContext ctx = new ExpressionCompileContext("r1", Map.of(),
-                TypeInfo.ENUM, registry, enumMaps);
+        ExpressionCompileContext ctx = new ExpressionCompileContext("r1", Map.of(), TypeInfo.ENUM, registry, enumMaps);
 
         compiler.compile("enumMap(${s.Status}, \"MyMap\")", ctx, diagnostics);
-        assertThat(diagnostics.all()).noneMatch(d ->
-                d.code().equals(DiagnosticCode.EXPR_ENUM_MAP_MISSING));
+        assertThat(diagnostics.all()).noneMatch(d -> d.code().equals(DiagnosticCode.EXPR_ENUM_MAP_MISSING));
     }
 
     @Test
     void enumMapWithMissingTableReportsError() {
         DiagnosticCollector diagnostics = new DiagnosticCollector();
-        ExpressionCompileContext ctx = new ExpressionCompileContext("r1", Map.of(),
-                TypeInfo.ENUM, registry, Map.of());
+        ExpressionCompileContext ctx = new ExpressionCompileContext("r1", Map.of(), TypeInfo.ENUM, registry, Map.of());
 
         compiler.compile("enumMap(${s.Status}, \"NonExistent\")", ctx, diagnostics);
-        assertThat(diagnostics.all()).anyMatch(d ->
-                d.code().equals(DiagnosticCode.EXPR_ENUM_MAP_MISSING));
+        assertThat(diagnostics.all()).anyMatch(d -> d.code().equals(DiagnosticCode.EXPR_ENUM_MAP_MISSING));
     }
 
     @Test

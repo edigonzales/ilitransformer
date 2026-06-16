@@ -1,8 +1,5 @@
 package guru.interlis.transformer.engine;
 
-import guru.interlis.transformer.state.BasketStrategy;
-import guru.interlis.transformer.state.OidStrategy;
-
 public record TransformResult(
         long sourceRecordsRead,
         long sourceRecordsFiltered,
@@ -11,12 +8,17 @@ public record TransformResult(
         long errors,
         long warnings,
         String oidStrategy,
-        String basketStrategy
-) {
+        String basketStrategy) {
     public String summary() {
         return String.format(
                 "Transform summary: %d source records read, %d filtered, %d targets created, %d written (%d errors, %d warnings) [OID: %s, Basket: %s]",
-                sourceRecordsRead, sourceRecordsFiltered, targetsCreated, targetsWritten,
-                errors, warnings, oidStrategy, basketStrategy);
+                sourceRecordsRead,
+                sourceRecordsFiltered,
+                targetsCreated,
+                targetsWritten,
+                errors,
+                warnings,
+                oidStrategy,
+                basketStrategy);
     }
 }

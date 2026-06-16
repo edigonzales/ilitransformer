@@ -1,10 +1,5 @@
 package guru.interlis.transformer.engine;
 
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.Iom_jObject;
-import guru.interlis.transformer.diag.Diagnostic;
-import guru.interlis.transformer.diag.DiagnosticCode;
-import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.expr.CoordValue;
 import guru.interlis.transformer.expr.EvalContext;
 import guru.interlis.transformer.expr.ExpressionEngine;
@@ -14,6 +9,9 @@ import guru.interlis.transformer.geometry.GeometryAdapter;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.TypeSystemFacade;
+
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
 
 import java.util.List;
 
@@ -28,10 +26,7 @@ public final class AssignmentExecutionService {
     }
 
     public void execute(
-            List<AssignmentPlan> assignments,
-            EvalContext evalCtx,
-            Iom_jObject target,
-            TypeSystemFacade targetTs) {
+            List<AssignmentPlan> assignments, EvalContext evalCtx, Iom_jObject target, TypeSystemFacade targetTs) {
         for (AssignmentPlan ap : assignments) {
             Value value = expressionEngine.evaluate(ap.expression(), evalCtx);
             if (value.isDefined()) {
@@ -40,14 +35,14 @@ public final class AssignmentExecutionService {
         }
     }
 
-    private void setTargetAttribute(Iom_jObject target, AssignmentPlan ap, Value value,
-                                     TypeSystemFacade targetTs) {
+    private void setTargetAttribute(Iom_jObject target, AssignmentPlan ap, Value value, TypeSystemFacade targetTs) {
         TypeInfo targetType = ap.expression().resultType();
         if (isGeometryType(targetType)) {
             IomObject geomObj = geometryAdapter.denormalize(value, targetType);
             if (geomObj != null) {
                 target.addattrobj(ap.targetAttrName(), geomObj);
-                if (targetType == TypeInfo.AREA && value instanceof GeometryObjectValue gov
+                if (targetType == TypeInfo.AREA
+                        && value instanceof GeometryObjectValue gov
                         && isIli1TargetClass(targetTs, target.getobjecttag())) {
                     addAreaPointHelper(target, ap.targetAttrName(), gov.pointOnSurface());
                 }
@@ -90,7 +85,6 @@ public final class AssignmentExecutionService {
     }
 
     private static boolean isGeometryType(TypeInfo type) {
-        return type == TypeInfo.COORD || type == TypeInfo.POLYLINE
-                || type == TypeInfo.SURFACE || type == TypeInfo.AREA;
+        return type == TypeInfo.COORD || type == TypeInfo.POLYLINE || type == TypeInfo.SURFACE || type == TypeInfo.AREA;
     }
 }

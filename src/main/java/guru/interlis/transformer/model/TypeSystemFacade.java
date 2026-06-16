@@ -8,7 +8,6 @@ import ch.interlis.ili2c.metamodel.CompositionType;
 import ch.interlis.ili2c.metamodel.Container;
 import ch.interlis.ili2c.metamodel.Domain;
 import ch.interlis.ili2c.metamodel.Element;
-import ch.interlis.ili2c.metamodel.Enumeration;
 import ch.interlis.ili2c.metamodel.EnumerationType;
 import ch.interlis.ili2c.metamodel.Extendable;
 import ch.interlis.ili2c.metamodel.Model;
@@ -38,8 +37,7 @@ public final class TypeSystemFacade {
             String targetClass,
             long minCardinality,
             long maxCardinality,
-            boolean attributeReference
-    ) {}
+            boolean attributeReference) {}
 
     public boolean classExists(String qualifiedPath) {
         return resolveClass(qualifiedPath) != null;
@@ -67,8 +65,7 @@ public final class TypeSystemFacade {
                     while (telIt.hasNext()) {
                         Element tel = telIt.next();
                         if (tel instanceof Table table) {
-                            if (table.getName() != null
-                                    && table.getName().equals(path.className())) {
+                            if (table.getName() != null && table.getName().equals(path.className())) {
                                 return table;
                             }
                         }
@@ -197,7 +194,10 @@ public final class TypeSystemFacade {
         AttributeDef attr = findAttribute(table, roleName);
         if (attr != null && attr.getDomain() instanceof ReferenceType refType) {
             Cardinality card = attr.getCardinality();
-            return new ReferenceInfo(roleName, null, null,
+            return new ReferenceInfo(
+                    roleName,
+                    null,
+                    null,
                     className(refType.getReferred()),
                     card != null ? card.getMinimum() : 0,
                     card != null ? card.getMaximum() : 1,
@@ -221,7 +221,10 @@ public final class TypeSystemFacade {
                 if (role.getName() == null || !role.getName().equals(roleName)) continue;
                 if (!hasOppositeDestination(assoc, role, ownerClass)) continue;
                 Cardinality card = role.getCardinality();
-                return new ReferenceInfo(roleName, role, assoc,
+                return new ReferenceInfo(
+                        roleName,
+                        role,
+                        assoc,
                         className(role.getDestination()),
                         card != null ? card.getMinimum() : 0,
                         card != null ? card.getMaximum() : Cardinality.UNBOUND,
@@ -251,7 +254,11 @@ public final class TypeSystemFacade {
                     targetClass = className(role.getDestination());
                 }
                 Cardinality card = role.getCardinality();
-                return new ReferenceInfo(roleName, role, association, targetClass,
+                return new ReferenceInfo(
+                        roleName,
+                        role,
+                        association,
+                        targetClass,
                         card != null ? card.getMinimum() : 0,
                         card != null ? card.getMaximum() : Cardinality.UNBOUND,
                         false);
@@ -293,7 +300,8 @@ public final class TypeSystemFacade {
         if (candidate instanceof Table candidateTable) {
             return getScopedName(candidateTable).equals(getScopedName(table));
         }
-        return candidate != null && candidate.getName() != null
+        return candidate != null
+                && candidate.getName() != null
                 && candidate.getName().equals(table.getName());
     }
 

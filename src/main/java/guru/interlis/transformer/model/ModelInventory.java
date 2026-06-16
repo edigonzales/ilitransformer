@@ -2,18 +2,8 @@ package guru.interlis.transformer.model;
 
 import java.util.List;
 
-public record ModelInventory(
-        String modelName,
-        String modelVersion,
-        String issuer,
-        List<TopicInventory> topics
-) {
-    public record TopicInventory(
-            String name,
-            String basketOidType,
-            String oidType,
-            List<ClassInventory> classes
-    ) {}
+public record ModelInventory(String modelName, String modelVersion, String issuer, List<TopicInventory> topics) {
+    public record TopicInventory(String name, String basketOidType, String oidType, List<ClassInventory> classes) {}
 
     public record ClassInventory(
             String name,
@@ -22,20 +12,9 @@ public record ModelInventory(
             String baseClass,
             boolean isAbstract,
             List<AttributeInventory> attributes,
-            List<RoleInventory> roles
-    ) {}
+            List<RoleInventory> roles) {}
 
-    public record AttributeInventory(
-            String name,
-            String typeString,
-            String cardinality,
-            boolean mandatory
-    ) {}
+    public record AttributeInventory(String name, String typeString, String cardinality, boolean mandatory) {}
 
-    public record RoleInventory(
-            String name,
-            String association,
-            String targetClass,
-            String cardinality
-    ) {}
+    public record RoleInventory(String name, String association, String targetClass, String cardinality) {}
 }
