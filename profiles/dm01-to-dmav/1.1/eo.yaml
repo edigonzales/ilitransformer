@@ -118,7 +118,7 @@ mapping:
         Perimeter: "nf.Perimeter"
         GueltigerEintrag: "toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1))"
 
-    - id: einzelobjekt
+    - id: einzelobjekt-gueltig
       target:
         output: dmav
         class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Einzelobjekt"
@@ -126,6 +126,15 @@ mapping:
         - alias: eo
           input: dm01
           class: "DM01AVCH24LV95D.Einzelobjekte.Einzelobjekt"
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
+      joins:
+        - left: eo
+          right: nf
+          on: "eq(eo.Entstehung, nf)"
+          type: inner
+      where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       assign:
         Qualitaetsstandard: "eo.Qualitaet"
         Einzelobjektart: "enumMap(eo.Art, 'EOArt_DM01_DMAV')"
@@ -245,7 +254,143 @@ mapping:
             rule: eo-nachfuehrung-gueltig
             sourceRef: "eo.Entstehung"
 
-    - id: messpunkt
+    - id: einzelobjekt-projektiert
+      target:
+        output: dmav
+        class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Einzelobjekt"
+      sources:
+        - alias: eo
+          input: dm01
+          class: "DM01AVCH24LV95D.Einzelobjekte.Einzelobjekt"
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
+      joins:
+        - left: eo
+          right: nf
+          on: "eq(eo.Entstehung, nf)"
+          type: inner
+      where: "nf.Gueltigkeit == #projektiert"
+      assign:
+        Qualitaetsstandard: "eo.Qualitaet"
+        Einzelobjektart: "enumMap(eo.Art, 'EOArt_DM01_DMAV')"
+        Objektstatus: "#projektiert"
+        EGID: "lookup('DM01AVCH24LV95D.Einzelobjekte.Objektnummer', 'Objektnummer_von', oid(eo), 'GWR_EGID')"
+      bags:
+        Flaechenelement:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Einzelobjekte.Flaechenelement"
+            alias: fe
+          parentRef:
+            attribute: Flaechenelement_von
+            parentAlias: eo
+          assign:
+            Geometrie: "fe.Geometrie"
+          nestedBags:
+            Symbolposition:
+              from:
+                input: dm01
+                class: "DM01AVCH24LV95D.Einzelobjekte.FlaechenelementSymbol"
+                alias: fes
+              parentRef:
+                attribute: FlaechenelementSymbol_von
+                parentAlias: fe
+              assign:
+                Position: "fes.Pos"
+                Orientierung: "coalesce(fes.Ori, 100.0)"
+        Linienelement:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Einzelobjekte.Linienelement"
+            alias: le
+          parentRef:
+            attribute: Linienelement_von
+            parentAlias: eo
+          assign:
+            Geometrie: "le.Geometrie"
+          nestedBags:
+            Symbolposition:
+              from:
+                input: dm01
+                class: "DM01AVCH24LV95D.Einzelobjekte.LinienelementSymbol"
+                alias: les
+              parentRef:
+                attribute: LinienelementSymbol_von
+                parentAlias: le
+              assign:
+                Position: "les.Pos"
+                Orientierung: "les.Ori"
+        Punktelement:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Einzelobjekte.Punktelement"
+            alias: pe
+          parentRef:
+            attribute: Punktelement_von
+            parentAlias: eo
+          assign:
+            Geometrie: "pe.Geometrie"
+            SymbolOri: "pe.Ori"
+        Objektname:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Einzelobjekte.Objektname"
+            alias: on
+          parentRef:
+            attribute: Objektname_von
+            parentAlias: eo
+          assign:
+            Name: "on.Name"
+          nestedBags:
+            Textposition:
+              from:
+                input: dm01
+                class: "DM01AVCH24LV95D.Einzelobjekte.ObjektnamePos"
+                alias: onp
+              parentRef:
+                attribute: ObjektnamePos_von
+                parentAlias: on
+              assign:
+                Position: "onp.Pos"
+                Orientierung: "coalesce(onp.Ori, 100.0)"
+                HReferenzpunkt: "coalesce(onp.HAli, 'Center')"
+                VReferenzpunkt: "coalesce(onp.VAli, 'Half')"
+                Textgroesse: "enumMap(coalesce(onp.Groesse, 'mittel'), 'Schriftgroesse_DM01_DMAV')"
+        Objektnummer:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Einzelobjekte.Objektnummer"
+            alias: onu
+          parentRef:
+            attribute: Objektnummer_von
+            parentAlias: eo
+          assign:
+            Nummer: "onu.Nummer"
+          nestedBags:
+            Textposition:
+              from:
+                input: dm01
+                class: "DM01AVCH24LV95D.Einzelobjekte.ObjektnummerPos"
+                alias: onup
+              parentRef:
+                attribute: ObjektnummerPos_von
+                parentAlias: onu
+              assign:
+                Position: "onup.Pos"
+                Orientierung: "coalesce(onup.Ori, 100.0)"
+                HReferenzpunkt: "coalesce(onup.HAli, 'Center')"
+                VReferenzpunkt: "coalesce(onup.VAli, 'Half')"
+                Textgroesse: "enumMap(coalesce(onup.Groesse, 'mittel'), 'Schriftgroesse_DM01_DMAV')"
+      refs:
+        - association: "Entstehung_Einzelobjekt"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: eo-nachfuehrung-projektiert
+            sourceRef: "eo.Entstehung"
+
+    - id: messpunkt-ohne-entstehung
       target:
         output: dmav
         class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Messpunkt"
@@ -253,6 +398,33 @@ mapping:
         - alias: ep
           input: dm01
           class: "DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt"
+          where: "notDefined(ep.Entstehung)"
+      identity:
+        sourceKey: ["ep.Identifikator"]
+      assign:
+        Nummer: "ep.Identifikator"
+        Geometrie: "ep.Geometrie"
+        Lagegenauigkeit: "div(ep.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(ep.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        IstExaktDefiniert: "enumMap(ep.ExaktDefiniert, 'ExaktDefiniert_DM01_DMAV')"
+
+    - id: messpunkt-gueltig
+      target:
+        output: dmav
+        class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Messpunkt"
+      sources:
+        - alias: ep
+          input: dm01
+          class: "DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt"
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
+      joins:
+        - left: ep
+          right: nf
+          on: "eq(ep.Entstehung, nf)"
+          type: inner
+      where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       identity:
         sourceKey: ["ep.Identifikator"]
       assign:
@@ -267,4 +439,37 @@ mapping:
           required: false
           targetObject:
             rule: eo-nachfuehrung-gueltig
+            sourceRef: "ep.Entstehung"
+
+    - id: messpunkt-projektiert
+      target:
+        output: dmav
+        class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Messpunkt"
+      sources:
+        - alias: ep
+          input: dm01
+          class: "DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt"
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
+      joins:
+        - left: ep
+          right: nf
+          on: "eq(ep.Entstehung, nf)"
+          type: inner
+      where: "nf.Gueltigkeit == #projektiert"
+      identity:
+        sourceKey: ["ep.Identifikator"]
+      assign:
+        Nummer: "ep.Identifikator"
+        Geometrie: "ep.Geometrie"
+        Lagegenauigkeit: "div(ep.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(ep.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        IstExaktDefiniert: "enumMap(ep.ExaktDefiniert, 'ExaktDefiniert_DM01_DMAV')"
+      refs:
+        - association: "Entstehung_Messpunkt"
+          role: "Entstehung"
+          required: false
+          targetObject:
+            rule: eo-nachfuehrung-projektiert
             sourceRef: "ep.Entstehung"
