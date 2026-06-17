@@ -46,6 +46,20 @@ public final class IlimapLexer {
         return pending.type() != IlimapTokenType.EOF;
     }
 
+    public void skipTo(int targetOffset) {
+        pending = null;
+        while (offset < targetOffset && offset < length) {
+            char c = source.charAt(offset);
+            offset++;
+            if (c == '\n') {
+                line++;
+                column = 1;
+            } else {
+                column++;
+            }
+        }
+    }
+
     public List<IlimapToken> tokenize() {
         List<IlimapToken> tokens = new ArrayList<>();
         while (hasNext()) {

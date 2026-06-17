@@ -13,6 +13,7 @@ public final class IlimapReservedWords {
             "sourceRef", "create", "loss", "sourcePath", "reasonCode", "description", "when",
             "metadata", "direction", "roundtrip", "lossiness",
             "name", "modeldir", "path", "model", "format", "namespace",
+            "failPolicy", "compileMode", "strategy",
             "true", "false", "null"
     );
 
