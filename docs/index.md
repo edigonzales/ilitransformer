@@ -58,6 +58,7 @@ mapping:
 |---|---|
 | [cli.md](cli.md) | CLI-Referenz (transform, validate-mapping, inspect-model, dm01-dmav) |
 | [mapping-dsl.md](mapping-dsl.md) | Mapping-DSL-Syntax und Semantik |
+| [ilimap-dsl-v2.md](ilimap-dsl-v2.md) | Entwurf fuer eine eigene `.ilimap` Mapping-DSL v2 |
 | [expressions.md](expressions.md) | Expression-Sprache und Builtin-Funktionen |
 | [architecture.md](architecture.md) | Architektur-Ubersicht (Komponenten, Datenfluss, Design-Entscheidungen) |
 | [testing.md](testing.md) | Testsuiten, Gradle-Integration, CI |
