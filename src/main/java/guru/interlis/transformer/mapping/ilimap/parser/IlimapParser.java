@@ -297,6 +297,30 @@ public final class IlimapParser {
                         advance();
                         yield parseRuleDefaults();
                     }
+                    case "join" -> {
+                        advance();
+                        yield parseJoinStmt();
+                    }
+                    case "bag" -> {
+                        advance();
+                        yield parseBagBlock();
+                    }
+                    case "ref" -> {
+                        advance();
+                        yield parseRefBlock();
+                    }
+                    case "create" -> {
+                        advance();
+                        yield parseCreateBlock();
+                    }
+                    case "loss" -> {
+                        advance();
+                        yield parseLossBlock();
+                    }
+                    case "metadata" -> {
+                        advance();
+                        yield parseMetadataBlock();
+                    }
                     default -> throw parseError(
                             "unexpected keyword '" + token.text() + "' inside rule", token);
                 });
@@ -385,6 +409,295 @@ public final class IlimapParser {
     private IlimapDefaultsBlock parseRuleDefaults() {
         IlimapToken defaultsKeyword = lastConsumed();
         return parseDefaultsBlockContent(defaultsKeyword);
+    }
+
+    private IlimapJoinStmt parseJoinStmt() {
+        IlimapToken joinKeyword = lastConsumed();
+        IlimapToken typeToken = next();
+        if (!typeToken.isKeyword("inner") && !typeToken.isKeyword("left")) {
+            throw parseError(
+                    "expected 'inner' or 'left' after 'join' but got '" + typeToken.text() + "'",
+                    typeToken);
+        }
+        String joinType = typeToken.text();
+        String leftAlias = expectIdentifier();
+        expectKeyword("to");
+        String rightAlias = expectIdentifier();
+        expectKeyword("on");
+        IlimapExpressionText on = readExpression();
+        IlimapSourceRange range = new IlimapSourceRange(joinKeyword.range().start(), on.range().end());
+        return new IlimapJoinStmt(joinType, leftAlias, rightAlias, on, range);
+    }
+
+    private IlimapBagBlock parseBagBlock() {
+        IlimapToken bagKeyword = lastConsumed();
+        String id = expectIdentifier();
+        expectToken(IlimapTokenType.LBRACE);
+
+        IlimapBagFromStmt from = null;
+        String structure = null;
+        String mode = null;
+        Integer maxItems = null;
+        IlimapParentRefStmt parentRef = null;
+        IlimapAssignmentBlock assign = null;
+        List<IlimapBagBlock> nestedBags = new ArrayList<>();
+
+        while (!peekType(IlimapTokenType.RBRACE)) {
+            IlimapToken token = peek();
+            if (token.type() == IlimapTokenType.KEYWORD) {
+                switch (token.text()) {
+                    case "from" -> {
+                        advance();
+                        from = parseBagFromStmt();
+                    }
+                    case "structure" -> {
+                        advance();
+                        structure = expectString();
+                        expectToken(IlimapTokenType.SEMICOLON);
+                    }
+                    case "mode" -> {
+                        advance();
+                        IlimapToken modeToken = next();
+                        if (modeToken.isKeyword("embed") || modeToken.isKeyword("expand")) {
+                            mode = modeToken.text();
+                        } else {
+                            throw parseError(
+                                    "expected 'embed' or 'expand' after 'mode' but got '"
+                                            + modeToken.text() + "'",
+                                    modeToken);
+                        }
+                        expectToken(IlimapTokenType.SEMICOLON);
+                    }
+                    case "maxItems" -> {
+                        advance();
+                        IlimapToken numberToken = expectToken(IlimapTokenType.NUMBER);
+                        try {
+                            maxItems = Integer.parseInt(numberToken.text());
+                        } catch (NumberFormatException e) {
+                            throw parseError(
+                                    "maxItems must be an integer, got '" + numberToken.text() + "'",
+                                    numberToken);
+                        }
+                        expectToken(IlimapTokenType.SEMICOLON);
+                    }
+                    case "parentRef" -> {
+                        advance();
+                        parentRef = parseParentRefStmt();
+                    }
+                    case "assign" -> {
+                        advance();
+                        assign = parseRuleAssign();
+                    }
+                    case "bag" -> {
+                        advance();
+                        nestedBags.add(parseBagBlock());
+                    }
+                    default -> throw parseError(
+                            "unexpected keyword '" + token.text() + "' inside bag", token);
+                }
+            } else {
+                throw parseError(
+                        "unexpected token '" + token.text() + "' inside bag", token);
+            }
+        }
+
+        IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
+        IlimapSourceRange range = new IlimapSourceRange(bagKeyword.range().start(), end);
+        return new IlimapBagBlock(id, from, structure, mode, maxItems, parentRef, assign, nestedBags, range);
+    }
+
+    private IlimapBagFromStmt parseBagFromStmt() {
+        IlimapToken fromKeyword = lastConsumed();
+        String alias = expectIdentifier();
+        expectKeyword("in");
+        String inputId = expectIdentifier();
+        expectKeyword("class");
+        String sourceClass = expectString();
+        IlimapExpressionText where = null;
+        if (peekKeyword("where")) {
+            advance();
+            where = readExpression();
+        }
+        IlimapSourcePosition end;
+        if (where != null) {
+            end = where.range().end();
+        } else {
+            end = expectToken(IlimapTokenType.SEMICOLON).range().end();
+        }
+        IlimapSourceRange range = new IlimapSourceRange(fromKeyword.range().start(), end);
+        return new IlimapBagFromStmt(alias, inputId, sourceClass, where, range);
+    }
+
+    private IlimapParentRefStmt parseParentRefStmt() {
+        IlimapToken parentRefKeyword = lastConsumed();
+        IlimapToken kindToken = next();
+        if (!kindToken.isKeyword("attribute") && !kindToken.isKeyword("role")) {
+            throw parseError(
+                    "expected 'attribute' or 'role' after 'parentRef' but got '"
+                            + kindToken.text() + "'",
+                    kindToken);
+        }
+        String kind = kindToken.text();
+        String name = expectString();
+        expectKeyword("parent");
+        String parentAlias = expectIdentifier();
+        IlimapSourcePosition end = expectToken(IlimapTokenType.SEMICOLON).range().end();
+        IlimapSourceRange range = new IlimapSourceRange(parentRefKeyword.range().start(), end);
+        return new IlimapParentRefStmt(kind, name, parentAlias, range);
+    }
+
+    private IlimapRefBlock parseRefBlock() {
+        IlimapToken refKeyword = lastConsumed();
+        String id = expectIdentifier();
+
+        IlimapToken nextToken = peek();
+        if (nextToken.type() == IlimapTokenType.ARROW && nextToken.text().equals("->")) {
+            throw parseError(
+                    "ref short form '->' is not supported in v2.0; use the long form with 'target rule'",
+                    nextToken);
+        }
+
+        expectToken(IlimapTokenType.LBRACE);
+
+        String association = null;
+        String role = null;
+        boolean required = false;
+        String targetRuleId = null;
+        IlimapExpressionText sourceRef = null;
+
+        while (!peekType(IlimapTokenType.RBRACE)) {
+            IlimapToken token = peek();
+            if (token.type() == IlimapTokenType.KEYWORD) {
+                switch (token.text()) {
+                    case "association" -> {
+                        advance();
+                        association = expectString();
+                        expectToken(IlimapTokenType.SEMICOLON);
+                    }
+                    case "role" -> {
+                        advance();
+                        role = expectString();
+                        expectToken(IlimapTokenType.SEMICOLON);
+                    }
+                    case "required" -> {
+                        advance();
+                        required = true;
+                        expectToken(IlimapTokenType.SEMICOLON);
+                    }
+                    case "target" -> {
+                        advance();
+                        expectKeyword("rule");
+                        targetRuleId = expectIdentifier();
+                        expectKeyword("sourceRef");
+                        sourceRef = readExpression();
+                    }
+                    default -> throw parseError(
+                            "unexpected keyword '" + token.text() + "' inside ref", token);
+                }
+            } else {
+                throw parseError(
+                        "unexpected token '" + token.text() + "' inside ref", token);
+            }
+        }
+
+        IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
+        IlimapSourceRange range = new IlimapSourceRange(refKeyword.range().start(), end);
+        return new IlimapRefBlock(id, association, role, required, targetRuleId, sourceRef, range);
+    }
+
+    private IlimapCreateBlock parseCreateBlock() {
+        IlimapToken createKeyword = lastConsumed();
+        expectKeyword("class");
+        String targetClass = expectString();
+        expectToken(IlimapTokenType.LBRACE);
+
+        IlimapAssignmentBlock assign = null;
+        while (!peekType(IlimapTokenType.RBRACE)) {
+            IlimapToken token = peek();
+            if (token.type() == IlimapTokenType.KEYWORD && token.text().equals("assign")) {
+                advance();
+                assign = parseRuleAssign();
+            } else {
+                throw parseError(
+                        "unexpected token '" + token.text() + "' inside create", token);
+            }
+        }
+
+        IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
+        IlimapSourceRange range = new IlimapSourceRange(createKeyword.range().start(), end);
+        return new IlimapCreateBlock(targetClass, assign, range);
+    }
+
+    private IlimapLossBlock parseLossBlock() {
+        IlimapToken lossKeyword = lastConsumed();
+        expectToken(IlimapTokenType.LBRACE);
+
+        IlimapExpressionText sourcePath = null;
+        String reasonCode = null;
+        String description = null;
+        IlimapExpressionText when = null;
+
+        while (!peekType(IlimapTokenType.RBRACE)) {
+            IlimapToken fieldToken = next();
+            if (!isKeywordOrIdentifier(fieldToken)) {
+                throw parseError("expected field name", fieldToken);
+            }
+            switch (fieldToken.text()) {
+                case "sourcePath" -> sourcePath = readExpression();
+                case "reasonCode" -> {
+                    reasonCode = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "description" -> {
+                    description = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "when" -> when = readExpression();
+                default -> throw parseError(
+                        "unexpected field '" + fieldToken.text() + "' in loss block", fieldToken);
+            }
+        }
+
+        IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
+        IlimapSourceRange range = new IlimapSourceRange(lossKeyword.range().start(), end);
+        return new IlimapLossBlock(sourcePath, reasonCode, description, when, range);
+    }
+
+    private IlimapMetadataBlock parseMetadataBlock() {
+        IlimapToken metadataKeyword = lastConsumed();
+        expectToken(IlimapTokenType.LBRACE);
+
+        String direction = null;
+        String roundtrip = null;
+        String lossiness = null;
+
+        while (!peekType(IlimapTokenType.RBRACE)) {
+            IlimapToken fieldToken = next();
+            if (!isKeywordOrIdentifier(fieldToken)) {
+                throw parseError("expected field name", fieldToken);
+            }
+            switch (fieldToken.text()) {
+                case "direction" -> {
+                    direction = expectStringOrIdentifier();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "roundtrip" -> {
+                    roundtrip = expectStringOrIdentifier();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "lossiness" -> {
+                    lossiness = expectStringOrIdentifier();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                default -> throw parseError(
+                        "unexpected field '" + fieldToken.text() + "' in metadata block",
+                        fieldToken);
+            }
+        }
+
+        IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
+        IlimapSourceRange range = new IlimapSourceRange(metadataKeyword.range().start(), end);
+        return new IlimapMetadataBlock(direction, roundtrip, lossiness, range);
     }
 
     private IlimapAssignment parseAssignment() {

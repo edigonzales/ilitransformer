@@ -160,6 +160,12 @@ public final class IlimapSemanticValidator {
                 case IlimapAssignmentBlock ignored -> assignCount++;
                 case IlimapDefaultsBlock ignored -> defaultsCount++;
                 case IlimapWhereStmt ignored -> {}
+                case IlimapJoinStmt ignored -> {}
+                case IlimapBagBlock ignored -> {}
+                case IlimapRefBlock ignored -> {}
+                case IlimapCreateBlock ignored -> {}
+                case IlimapLossBlock ignored -> {}
+                case IlimapMetadataBlock ignored -> {}
             }
         }
 
@@ -263,6 +269,10 @@ public final class IlimapSemanticValidator {
                 validateDuplicateAssignments(defaultsBlock.assignments(), "defaults", rule.id(), diagnostics);
             }
         }
+
+        validateBags(rule, ruleScope, symbols, diagnostics);
+        validateRefs(rule, symbols, diagnostics);
+        validateJoins(rule, ruleScope, diagnostics);
     }
 
     private void validateDuplicateAssignments(
@@ -278,6 +288,144 @@ public final class IlimapSemanticValidator {
                                 + "' in " + blockType + " block of rule '" + ruleId + "'",
                         formatRange(assignment.range()),
                         "Remove the duplicate assignment"));
+            }
+        }
+    }
+
+    private void validateBags(
+            IlimapRuleBlock rule, IlimapScope ruleScope,
+            IlimapSymbolTable symbols, DiagnosticCollector diagnostics) {
+        Set<String> seenBagIds = new HashSet<>();
+        for (var element : rule.elements()) {
+            if (element instanceof IlimapBagBlock bag) {
+                validateBag(bag, seenBagIds, ruleScope, symbols, rule.id(), diagnostics);
+            }
+        }
+    }
+
+    private void validateBag(
+            IlimapBagBlock bag, Set<String> seenBagIds, IlimapScope parentScope,
+            IlimapSymbolTable symbols, String ruleId, DiagnosticCollector diagnostics) {
+        if (!seenBagIds.add(bag.id())) {
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.ILIMAP_DUPLICATE_ELEMENT,
+                    Severity.ERROR,
+                    "duplicate bag '" + bag.id() + "' in rule '" + ruleId + "'",
+                    formatRange(bag.range()),
+                    "Use a unique bag name"));
+        }
+
+        if (bag.from() == null) {
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.ILIMAP_MISSING_BAG_FROM,
+                    Severity.ERROR,
+                    "bag '" + bag.id() + "' must have a 'from' statement",
+                    formatRange(bag.range()),
+                    null));
+        }
+
+        IlimapScope bagScope = new IlimapScope(parentScope);
+
+        if (bag.from() != null) {
+            IlimapIdentifierRules.requireAliasId(
+                    bag.from().alias(), diagnostics, bag.from().range());
+
+            if (symbols.resolveInput(bag.from().inputId()).isEmpty()) {
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.ILIMAP_UNKNOWN_INPUT,
+                        Severity.ERROR,
+                        "bag '" + bag.id() + "' references unknown input '"
+                                + bag.from().inputId() + "'",
+                        formatRange(bag.from().range()),
+                        "Declare an input with this ID"));
+            }
+
+            bagScope.define(
+                    new IlimapSymbol(IlimapSymbolKind.SOURCE_ALIAS, bag.from().alias(), bag),
+                    diagnostics);
+        }
+
+        if (bag.mode() != null && !bag.mode().equals("embed") && !bag.mode().equals("expand")) {
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.ILIMAP_INVALID_BAG_MODE,
+                    Severity.ERROR,
+                    "bag '" + bag.id() + "' has invalid mode '" + bag.mode()
+                            + "'; must be 'embed' or 'expand'",
+                    formatRange(bag.range()),
+                    null));
+        }
+
+        if (bag.maxItems() != null && bag.maxItems() <= 0) {
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.ILIMAP_INVALID_MAX_ITEMS,
+                    Severity.ERROR,
+                    "bag '" + bag.id() + "' has maxItems " + bag.maxItems()
+                            + "; must be greater than 0",
+                    formatRange(bag.range()),
+                    null));
+        }
+
+        if (bag.parentRef() != null) {
+            String parentAlias = bag.parentRef().parentAlias();
+            if (parentScope.resolve(parentAlias).isEmpty()) {
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.ILIMAP_UNKNOWN_PARENT_ALIAS,
+                        Severity.ERROR,
+                        "parentRef references unknown alias '" + parentAlias + "'",
+                        formatRange(bag.parentRef().range()),
+                        "Use an alias declared in a source or enclosing bag"));
+            }
+        }
+
+        if (bag.assign() != null) {
+            validateDuplicateAssignments(
+                    bag.assign().assignments(), "bag '" + bag.id() + "' assign", ruleId, diagnostics);
+        }
+
+        Set<String> nestedBagIds = new HashSet<>();
+        for (IlimapBagBlock nested : bag.nestedBags()) {
+            validateBag(nested, nestedBagIds, bagScope, symbols, ruleId, diagnostics);
+        }
+    }
+
+    private void validateRefs(
+            IlimapRuleBlock rule, IlimapSymbolTable symbols, DiagnosticCollector diagnostics) {
+        for (var element : rule.elements()) {
+            if (element instanceof IlimapRefBlock ref) {
+                if (ref.targetRuleId() != null
+                        && symbols.resolveRule(ref.targetRuleId()).isEmpty()) {
+                    diagnostics.add(new Diagnostic(
+                            DiagnosticCode.ILIMAP_UNKNOWN_RULE,
+                            Severity.ERROR,
+                            "ref '" + ref.id() + "' references unknown rule '"
+                                    + ref.targetRuleId() + "'",
+                            formatRange(ref.range()),
+                            "Declare a rule with this ID"));
+                }
+            }
+        }
+    }
+
+    private void validateJoins(
+            IlimapRuleBlock rule, IlimapScope ruleScope, DiagnosticCollector diagnostics) {
+        for (var element : rule.elements()) {
+            if (element instanceof IlimapJoinStmt join) {
+                if (ruleScope.resolve(join.leftAlias()).isEmpty()) {
+                    diagnostics.add(new Diagnostic(
+                            DiagnosticCode.ILIMAP_UNKNOWN_PARENT_ALIAS,
+                            Severity.ERROR,
+                            "join references unknown alias '" + join.leftAlias() + "'",
+                            formatRange(join.range()),
+                            "Declare a source with this alias"));
+                }
+                if (ruleScope.resolve(join.rightAlias()).isEmpty()) {
+                    diagnostics.add(new Diagnostic(
+                            DiagnosticCode.ILIMAP_UNKNOWN_PARENT_ALIAS,
+                            Severity.ERROR,
+                            "join references unknown alias '" + join.rightAlias() + "'",
+                            formatRange(join.range()),
+                            "Declare a source with this alias"));
+                }
             }
         }
     }
@@ -307,8 +455,43 @@ public final class IlimapSemanticValidator {
                 }
             }
             case IlimapTargetStmt ignored -> {}
+            case IlimapJoinStmt join -> result.add(join.on());
+            case IlimapBagBlock bag -> collectBagExpressions(bag, result);
+            case IlimapRefBlock ref -> {
+                if (ref.sourceRef() != null) {
+                    result.add(ref.sourceRef());
+                }
+            }
+            case IlimapCreateBlock create -> {
+                if (create.assign() != null) {
+                    create.assign().assignments().forEach(a -> result.add(a.expression()));
+                }
+            }
+            case IlimapLossBlock loss -> {
+                if (loss.sourcePath() != null) {
+                    result.add(loss.sourcePath());
+                }
+                if (loss.when() != null) {
+                    result.add(loss.when());
+                }
+            }
+            case IlimapMetadataBlock ignored -> {}
         }
         return result;
+    }
+
+    private void collectBagExpressions(IlimapBagBlock bag, List<IlimapExpressionText> result) {
+        if (bag.from() != null && bag.from().where() != null) {
+            result.add(bag.from().where());
+        }
+        if (bag.assign() != null) {
+            bag.assign().assignments().forEach(a -> result.add(a.expression()));
+        }
+        if (bag.nestedBags() != null) {
+            for (IlimapBagBlock nested : bag.nestedBags()) {
+                collectBagExpressions(nested, result);
+            }
+        }
     }
 
     private void checkEnumMapRefsInExpression(

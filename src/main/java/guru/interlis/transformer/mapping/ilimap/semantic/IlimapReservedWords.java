@@ -9,7 +9,7 @@ public final class IlimapReservedWords {
             "mapping", "v2", "job", "input", "output", "oid", "basket", "enum", "defaults",
             "rule", "target", "source", "from", "in", "class", "where", "join", "inner", "left",
             "to", "on", "identity", "assign", "bag", "structure", "mode", "embed", "expand",
-            "maxItems", "parentRef", "attribute", "role", "ref", "association", "required",
+            "maxItems", "parentRef", "parent", "attribute", "role", "ref", "association", "required",
             "sourceRef", "create", "loss", "sourcePath", "reasonCode", "description", "when",
             "metadata", "direction", "roundtrip", "lossiness",
             "name", "modeldir", "path", "model", "format", "namespace",

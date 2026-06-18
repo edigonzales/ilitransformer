@@ -143,4 +143,11 @@ public final class DiagnosticCode {
     public static final String ILIMAP_DUPLICATE_ASSIGNMENT = "ILITRF-ILIMAP-DUPLICATE-ASSIGNMENT";
     public static final String ILIMAP_ENUM_MAP_STRING_REF = "ILITRF-ILIMAP-ENUM-MAP-STRING-REF";
     public static final String ILIMAP_UNSUPPORTED_FEATURE = "ILITRF-ILIMAP-UNSUPPORTED-FEATURE";
+
+    // ilimap v2 – Full rule structure (Phase P5)
+    public static final String ILIMAP_UNKNOWN_RULE = "ILITRF-ILIMAP-UNKNOWN-RULE";
+    public static final String ILIMAP_INVALID_MAX_ITEMS = "ILITRF-ILIMAP-INVALID-MAX-ITEMS";
+    public static final String ILIMAP_INVALID_BAG_MODE = "ILITRF-ILIMAP-INVALID-BAG-MODE";
+    public static final String ILIMAP_UNKNOWN_PARENT_ALIAS = "ILITRF-ILIMAP-UNKNOWN-PARENT-ALIAS";
+    public static final String ILIMAP_MISSING_BAG_FROM = "ILITRF-ILIMAP-MISSING-BAG-FROM";
 }

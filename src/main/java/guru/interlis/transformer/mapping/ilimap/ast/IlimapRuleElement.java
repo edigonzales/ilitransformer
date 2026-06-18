@@ -6,4 +6,10 @@ public sealed interface IlimapRuleElement extends IlimapAstNode
                 IlimapWhereStmt,
                 IlimapIdentityStmt,
                 IlimapAssignmentBlock,
-                IlimapDefaultsBlock {}
+                IlimapDefaultsBlock,
+                IlimapJoinStmt,
+                IlimapBagBlock,
+                IlimapRefBlock,
+                IlimapCreateBlock,
+                IlimapLossBlock,
+                IlimapMetadataBlock {}

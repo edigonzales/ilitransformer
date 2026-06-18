@@ -159,6 +159,79 @@ public final class IlimapToJobConfigMapper {
                         spec.assign = mapAssignments(assignBlock.assignments(), symbols);
                 case IlimapDefaultsBlock defaultsBlock ->
                         spec.defaults = mapAssignments(defaultsBlock.assignments(), symbols);
+                case IlimapJoinStmt join -> {
+                    if (spec.joins == null) {
+                        spec.joins = new ArrayList<>();
+                    }
+                    JobConfig.JoinSpec js = new JobConfig.JoinSpec();
+                    js.type = join.joinType();
+                    js.left = join.leftAlias();
+                    js.right = join.rightAlias();
+                    js.on = normalizer.normalizeForJobConfig(join.on(), symbols);
+                    spec.joins.add(js);
+                }
+                case IlimapBagBlock bag -> {
+                    if (spec.bags == null) {
+                        spec.bags = new LinkedHashMap<>();
+                    }
+                    spec.bags.put(bag.id(), mapBag(bag, symbols));
+                }
+                case IlimapRefBlock ref -> {
+                    if (spec.refs == null) {
+                        spec.refs = new ArrayList<>();
+                    }
+                    JobConfig.RefMapping rm = new JobConfig.RefMapping();
+                    rm.target = ref.id();
+                    rm.association = ref.association();
+                    rm.role = ref.role();
+                    rm.required = ref.required();
+                    if (ref.targetRuleId() != null) {
+                        rm.targetObject = new JobConfig.RefMapping.RefTargetObject();
+                        rm.targetObject.rule = ref.targetRuleId();
+                        if (ref.sourceRef() != null) {
+                            rm.targetObject.sourceRef =
+                                    normalizer.normalizeForJobConfig(ref.sourceRef(), symbols);
+                        }
+                        rm.targetRule = ref.targetRuleId();
+                        if (ref.sourceRef() != null) {
+                            rm.sourceRef =
+                                    normalizer.normalizeForJobConfig(ref.sourceRef(), symbols);
+                        }
+                    }
+                    spec.refs.add(rm);
+                }
+                case IlimapCreateBlock create -> {
+                    if (spec.create == null) {
+                        spec.create = new ArrayList<>();
+                    }
+                    JobConfig.CreateSpec cs = new JobConfig.CreateSpec();
+                    cs.clazz = create.targetClass();
+                    if (create.assign() != null) {
+                        cs.assign = mapAssignments(create.assign().assignments(), symbols);
+                    }
+                    spec.create.add(cs);
+                }
+                case IlimapLossBlock loss -> {
+                    if (spec.losses == null) {
+                        spec.losses = new ArrayList<>();
+                    }
+                    JobConfig.LossSpec ls = new JobConfig.LossSpec();
+                    if (loss.sourcePath() != null) {
+                        ls.sourcePath = normalizer.normalizeForJobConfig(loss.sourcePath(), symbols);
+                    }
+                    ls.reasonCode = loss.reasonCode();
+                    ls.description = loss.description();
+                    if (loss.when() != null) {
+                        ls.when = normalizer.normalizeForJobConfig(loss.when(), symbols);
+                    }
+                    spec.losses.add(ls);
+                }
+                case IlimapMetadataBlock meta -> {
+                    spec.metadata = new JobConfig.MetadataSpec();
+                    spec.metadata.direction = meta.direction();
+                    spec.metadata.roundtrip = meta.roundtrip();
+                    spec.metadata.lossiness = meta.lossiness();
+                }
             }
         }
         return spec;
@@ -171,6 +244,41 @@ public final class IlimapToJobConfigMapper {
             map.put(a.targetAttribute(), normalizer.normalizeForJobConfig(a.expression(), symbols));
         }
         return map;
+    }
+
+    private JobConfig.BagSpec mapBag(IlimapBagBlock bag, IlimapSymbolTable symbols) {
+        JobConfig.BagSpec bs = new JobConfig.BagSpec();
+        if (bag.from() != null) {
+            bs.from = new JobConfig.BagFrom();
+            bs.from.alias = bag.from().alias();
+            bs.from.input = bag.from().inputId();
+            bs.from.clazz = bag.from().sourceClass();
+            if (bag.from().where() != null) {
+                bs.from.where = normalizer.normalizeForJobConfig(bag.from().where(), symbols);
+            }
+        }
+        bs.structure = bag.structure();
+        bs.mode = bag.mode();
+        bs.maxItems = bag.maxItems();
+        if (bag.parentRef() != null) {
+            bs.parentRef = new JobConfig.BagParentRef();
+            bs.parentRef.parentAlias = bag.parentRef().parentAlias();
+            if ("attribute".equals(bag.parentRef().kind())) {
+                bs.parentRef.attribute = bag.parentRef().name();
+            } else if ("role".equals(bag.parentRef().kind())) {
+                bs.parentRef.role = bag.parentRef().name();
+            }
+        }
+        if (bag.assign() != null) {
+            bs.assign = mapAssignments(bag.assign().assignments(), symbols);
+        }
+        if (bag.nestedBags() != null && !bag.nestedBags().isEmpty()) {
+            bs.nestedBags = new LinkedHashMap<>();
+            for (IlimapBagBlock nested : bag.nestedBags()) {
+                bs.nestedBags.put(nested.id(), mapBag(nested, symbols));
+            }
+        }
+        return bs;
     }
 
     static String literalToString(IlimapLiteral literal) {
