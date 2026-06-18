@@ -13,4 +13,5 @@ public record IlimapBagBlock(
         IlimapParentRefStmt parentRef,
         IlimapAssignmentBlock assign,
         List<IlimapBagBlock> nestedBags,
-        IlimapSourceRange range) implements IlimapRuleElement, IlimapBagElement {}
+        IlimapSourceRange range)
+        implements IlimapRuleElement, IlimapBagElement {}

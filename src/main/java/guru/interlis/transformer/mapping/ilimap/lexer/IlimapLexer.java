@@ -1,9 +1,9 @@
 package guru.interlis.transformer.mapping.ilimap.lexer;
 
+import guru.interlis.transformer.mapping.ilimap.semantic.IlimapReservedWords;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import guru.interlis.transformer.mapping.ilimap.semantic.IlimapReservedWords;
 
 public final class IlimapLexer {
 
@@ -96,16 +96,18 @@ public final class IlimapLexer {
         if (c == '-' && peekChar(1) == '>') {
             return twoCharToken(IlimapTokenType.ARROW, start);
         }
-        return singleCharToken(switch (c) {
-            case '{' -> IlimapTokenType.LBRACE;
-            case '}' -> IlimapTokenType.RBRACE;
-            case '(' -> IlimapTokenType.LPAREN;
-            case ')' -> IlimapTokenType.RPAREN;
-            case ',' -> IlimapTokenType.COMMA;
-            case ';' -> IlimapTokenType.SEMICOLON;
-            case '=' -> IlimapTokenType.EQUALS;
-            default -> throw lexerError("unexpected character '" + c + "'");
-        }, start);
+        return singleCharToken(
+                switch (c) {
+                    case '{' -> IlimapTokenType.LBRACE;
+                    case '}' -> IlimapTokenType.RBRACE;
+                    case '(' -> IlimapTokenType.LPAREN;
+                    case ')' -> IlimapTokenType.RPAREN;
+                    case ',' -> IlimapTokenType.COMMA;
+                    case ';' -> IlimapTokenType.SEMICOLON;
+                    case '=' -> IlimapTokenType.EQUALS;
+                    default -> throw lexerError("unexpected character '" + c + "'");
+                },
+                start);
     }
 
     private void skipWhitespaceAndComments() {
@@ -250,7 +252,8 @@ public final class IlimapLexer {
     private IlimapToken twoCharToken(IlimapTokenType type, IlimapSourcePosition start) {
         char c1 = source.charAt(offset);
         char c2 = source.charAt(offset + 1);
-        advance(); advance();
+        advance();
+        advance();
         var end = currentPosition();
         return new IlimapToken(type, "" + c1 + c2, new IlimapSourceRange(start, end));
     }
@@ -287,8 +290,7 @@ public final class IlimapLexer {
     }
 
     private boolean isIdentifierPart(char c) {
-        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
-                || (c >= '0' && c <= '9') || c == '_' || c == '-';
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
     }
 
     private IlimapSourcePosition currentPosition() {

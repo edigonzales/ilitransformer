@@ -14,6 +14,7 @@ import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.loss.LossinessCollector;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler.CompileResult;
+import guru.interlis.transformer.mapping.ilimap.IlimapLoadException;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.model.MappingLoader;
 import guru.interlis.transformer.mapping.plan.FailPolicy;
@@ -59,14 +60,42 @@ public final class JobRunner {
 
     public CompileResult validateMapping(Path configPath) throws Exception {
         MappingLoader loader = new MappingLoader();
-        JobConfig config = loader.load(configPath);
+        JobConfig config;
+        try {
+            config = loader.load(configPath);
+        } catch (IlimapLoadException e) {
+            DiagnosticCollector diagnostics = new DiagnosticCollector();
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.ILIMAP_LOAD_FAILED, Severity.ERROR, e.getMessage(), configPath.toString(), null));
+            return new CompileResult(null, diagnostics);
+        }
         return new MappingCompiler().compile(config);
     }
 
     public PreparedJob prepare(Path mappingFile, RunOptions options) throws Exception {
         Path baseDirectory = mappingFile.toAbsolutePath().getParent();
         MappingLoader loader = new MappingLoader();
-        JobConfig config = loader.load(mappingFile);
+        JobConfig config;
+        try {
+            config = loader.load(mappingFile);
+        } catch (IlimapLoadException e) {
+            DiagnosticCollector diagnostics = new DiagnosticCollector();
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.ILIMAP_LOAD_FAILED, Severity.ERROR, e.getMessage(), mappingFile.toString(), null));
+            TransformPlan errorPlan = new TransformPlan(
+                    null,
+                    null,
+                    FailPolicy.STRICT,
+                    null,
+                    List.of(),
+                    Map.of(),
+                    Map.of(),
+                    diagnostics,
+                    null,
+                    null,
+                    Map.of());
+            return new PreparedJob(errorPlan, null, baseDirectory);
+        }
 
         ModelRegistry modelRegistry = ModelRegistry.builder()
                 .config(config)

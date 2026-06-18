@@ -150,4 +150,8 @@ public final class DiagnosticCode {
     public static final String ILIMAP_INVALID_BAG_MODE = "ILITRF-ILIMAP-INVALID-BAG-MODE";
     public static final String ILIMAP_UNKNOWN_PARENT_ALIAS = "ILITRF-ILIMAP-UNKNOWN-PARENT-ALIAS";
     public static final String ILIMAP_MISSING_BAG_FROM = "ILITRF-ILIMAP-MISSING-BAG-FROM";
+
+    // ilimap v2 – Syntax / Load (Phase P8)
+    public static final String ILIMAP_SYNTAX_ERROR = "ILITRF-ILIMAP-SYNTAX-ERROR";
+    public static final String ILIMAP_LOAD_FAILED = "ILITRF-ILIMAP-LOAD-FAILED";
 }

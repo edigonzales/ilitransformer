@@ -13,21 +13,15 @@ import java.util.regex.Pattern;
 
 public final class IlimapSemanticValidator {
 
-    private static final Set<String> VALID_FAIL_POLICIES =
-            Set.of("strict", "lenient", "reportOnly", "report_only");
-    private static final Set<String> VALID_COMPILE_MODES =
-            Set.of("strict", "compatible", "report");
-    private static final Set<String> VALID_OID_STRATEGIES =
-            Set.of("preserve", "integer", "uuid", "deterministicUuid");
-    private static final Set<String> RESERVED_OID_STRATEGIES =
-            Set.of("external");
+    private static final Set<String> VALID_FAIL_POLICIES = Set.of("strict", "lenient", "reportOnly", "report_only");
+    private static final Set<String> VALID_COMPILE_MODES = Set.of("strict", "compatible", "report");
+    private static final Set<String> VALID_OID_STRATEGIES = Set.of("preserve", "integer", "uuid", "deterministicUuid");
+    private static final Set<String> RESERVED_OID_STRATEGIES = Set.of("external");
     private static final Set<String> VALID_BASKET_STRATEGIES =
             Set.of("preserve", "generateUuid", "preserveOrGenerateUuid", "byTopic");
-    private static final Set<String> RESERVED_BASKET_STRATEGIES =
-            Set.of("expression");
+    private static final Set<String> RESERVED_BASKET_STRATEGIES = Set.of("expression");
 
-    private static final Pattern ENUM_MAP_PATTERN =
-            Pattern.compile("enumMap\\s*\\(");
+    private static final Pattern ENUM_MAP_PATTERN = Pattern.compile("enumMap\\s*\\(");
 
     public IlimapSemanticResult validate(IlimapDocument document) {
         var diagnostics = new DiagnosticCollector();
@@ -86,33 +80,54 @@ public final class IlimapSemanticValidator {
         }
         for (var enumBlock : document.enums()) {
             IlimapIdentifierRules.requireSymbolId(enumBlock.id(), diagnostics, enumBlock.range());
-            scope.define(
-                    new IlimapSymbol(IlimapSymbolKind.ENUM_MAP, enumBlock.id(), enumBlock),
-                    diagnostics);
+            scope.define(new IlimapSymbol(IlimapSymbolKind.ENUM_MAP, enumBlock.id(), enumBlock), diagnostics);
         }
     }
 
     private void validateStrategies(IlimapDocument document, DiagnosticCollector diagnostics) {
         if (document.job() != null) {
-            validateOptionalStrategy(document.job().failPolicy(), VALID_FAIL_POLICIES,
-                    Collections.emptySet(), "failPolicy", document.job().range(), diagnostics);
-            validateOptionalStrategy(document.job().compileMode(), VALID_COMPILE_MODES,
-                    Collections.emptySet(), "compileMode", document.job().range(), diagnostics);
+            validateOptionalStrategy(
+                    document.job().failPolicy(),
+                    VALID_FAIL_POLICIES,
+                    Collections.emptySet(),
+                    "failPolicy",
+                    document.job().range(),
+                    diagnostics);
+            validateOptionalStrategy(
+                    document.job().compileMode(),
+                    VALID_COMPILE_MODES,
+                    Collections.emptySet(),
+                    "compileMode",
+                    document.job().range(),
+                    diagnostics);
         }
         if (document.oid() != null && document.oid().strategy() != null) {
-            validateOptionalStrategy(document.oid().strategy(), VALID_OID_STRATEGIES,
-                    RESERVED_OID_STRATEGIES, "oid strategy", document.oid().range(), diagnostics);
+            validateOptionalStrategy(
+                    document.oid().strategy(),
+                    VALID_OID_STRATEGIES,
+                    RESERVED_OID_STRATEGIES,
+                    "oid strategy",
+                    document.oid().range(),
+                    diagnostics);
         }
         if (document.basket() != null && document.basket().strategy() != null) {
-            validateOptionalStrategy(document.basket().strategy(), VALID_BASKET_STRATEGIES,
-                    RESERVED_BASKET_STRATEGIES, "basket strategy",
-                    document.basket().range(), diagnostics);
+            validateOptionalStrategy(
+                    document.basket().strategy(),
+                    VALID_BASKET_STRATEGIES,
+                    RESERVED_BASKET_STRATEGIES,
+                    "basket strategy",
+                    document.basket().range(),
+                    diagnostics);
         }
     }
 
     private void validateOptionalStrategy(
-            String value, Set<String> valid, Set<String> reserved,
-            String label, IlimapSourceRange range, DiagnosticCollector diagnostics) {
+            String value,
+            Set<String> valid,
+            Set<String> reserved,
+            String label,
+            IlimapSourceRange range,
+            DiagnosticCollector diagnostics) {
         if (value == null) {
             return;
         }
@@ -135,15 +150,13 @@ public final class IlimapSemanticValidator {
         }
     }
 
-    private void validateRules(
-            IlimapDocument document, IlimapSymbolTable symbols, DiagnosticCollector diagnostics) {
+    private void validateRules(IlimapDocument document, IlimapSymbolTable symbols, DiagnosticCollector diagnostics) {
         for (var rule : document.rules()) {
             validateRule(rule, symbols, diagnostics);
         }
     }
 
-    private void validateRule(
-            IlimapRuleBlock rule, IlimapSymbolTable symbols, DiagnosticCollector diagnostics) {
+    private void validateRule(IlimapRuleBlock rule, IlimapSymbolTable symbols, DiagnosticCollector diagnostics) {
         IlimapScope ruleScope = symbols.scopeFor(rule);
 
         List<IlimapTargetStmt> targets = new ArrayList<>();
@@ -244,9 +257,7 @@ public final class IlimapSemanticValidator {
                         formatRange(source.range()),
                         "Use a unique alias"));
             } else {
-                ruleScope.define(
-                        new IlimapSymbol(IlimapSymbolKind.SOURCE_ALIAS, alias, source),
-                        diagnostics);
+                ruleScope.define(new IlimapSymbol(IlimapSymbolKind.SOURCE_ALIAS, alias, source), diagnostics);
             }
 
             for (String inputId : source.inputIds()) {
@@ -276,16 +287,15 @@ public final class IlimapSemanticValidator {
     }
 
     private void validateDuplicateAssignments(
-            List<IlimapAssignment> assignments, String blockType,
-            String ruleId, DiagnosticCollector diagnostics) {
+            List<IlimapAssignment> assignments, String blockType, String ruleId, DiagnosticCollector diagnostics) {
         Set<String> seen = new HashSet<>();
         for (var assignment : assignments) {
             if (!seen.add(assignment.targetAttribute())) {
                 diagnostics.add(new Diagnostic(
                         DiagnosticCode.ILIMAP_DUPLICATE_ASSIGNMENT,
                         Severity.ERROR,
-                        "duplicate assignment to '" + assignment.targetAttribute()
-                                + "' in " + blockType + " block of rule '" + ruleId + "'",
+                        "duplicate assignment to '" + assignment.targetAttribute() + "' in " + blockType
+                                + " block of rule '" + ruleId + "'",
                         formatRange(assignment.range()),
                         "Remove the duplicate assignment"));
             }
@@ -293,8 +303,7 @@ public final class IlimapSemanticValidator {
     }
 
     private void validateBags(
-            IlimapRuleBlock rule, IlimapScope ruleScope,
-            IlimapSymbolTable symbols, DiagnosticCollector diagnostics) {
+            IlimapRuleBlock rule, IlimapScope ruleScope, IlimapSymbolTable symbols, DiagnosticCollector diagnostics) {
         Set<String> seenBagIds = new HashSet<>();
         for (var element : rule.elements()) {
             if (element instanceof IlimapBagBlock bag) {
@@ -304,8 +313,12 @@ public final class IlimapSemanticValidator {
     }
 
     private void validateBag(
-            IlimapBagBlock bag, Set<String> seenBagIds, IlimapScope parentScope,
-            IlimapSymbolTable symbols, String ruleId, DiagnosticCollector diagnostics) {
+            IlimapBagBlock bag,
+            Set<String> seenBagIds,
+            IlimapScope parentScope,
+            IlimapSymbolTable symbols,
+            String ruleId,
+            DiagnosticCollector diagnostics) {
         if (!seenBagIds.add(bag.id())) {
             diagnostics.add(new Diagnostic(
                     DiagnosticCode.ILIMAP_DUPLICATE_ELEMENT,
@@ -341,16 +354,14 @@ public final class IlimapSemanticValidator {
             }
 
             bagScope.define(
-                    new IlimapSymbol(IlimapSymbolKind.SOURCE_ALIAS, bag.from().alias(), bag),
-                    diagnostics);
+                    new IlimapSymbol(IlimapSymbolKind.SOURCE_ALIAS, bag.from().alias(), bag), diagnostics);
         }
 
         if (bag.mode() != null && !bag.mode().equals("embed") && !bag.mode().equals("expand")) {
             diagnostics.add(new Diagnostic(
                     DiagnosticCode.ILIMAP_INVALID_BAG_MODE,
                     Severity.ERROR,
-                    "bag '" + bag.id() + "' has invalid mode '" + bag.mode()
-                            + "'; must be 'embed' or 'expand'",
+                    "bag '" + bag.id() + "' has invalid mode '" + bag.mode() + "'; must be 'embed' or 'expand'",
                     formatRange(bag.range()),
                     null));
         }
@@ -359,8 +370,7 @@ public final class IlimapSemanticValidator {
             diagnostics.add(new Diagnostic(
                     DiagnosticCode.ILIMAP_INVALID_MAX_ITEMS,
                     Severity.ERROR,
-                    "bag '" + bag.id() + "' has maxItems " + bag.maxItems()
-                            + "; must be greater than 0",
+                    "bag '" + bag.id() + "' has maxItems " + bag.maxItems() + "; must be greater than 0",
                     formatRange(bag.range()),
                     null));
         }
@@ -388,8 +398,7 @@ public final class IlimapSemanticValidator {
         }
     }
 
-    private void validateRefs(
-            IlimapRuleBlock rule, IlimapSymbolTable symbols, DiagnosticCollector diagnostics) {
+    private void validateRefs(IlimapRuleBlock rule, IlimapSymbolTable symbols, DiagnosticCollector diagnostics) {
         for (var element : rule.elements()) {
             if (element instanceof IlimapRefBlock ref) {
                 if (ref.targetRuleId() != null
@@ -397,8 +406,7 @@ public final class IlimapSemanticValidator {
                     diagnostics.add(new Diagnostic(
                             DiagnosticCode.ILIMAP_UNKNOWN_RULE,
                             Severity.ERROR,
-                            "ref '" + ref.id() + "' references unknown rule '"
-                                    + ref.targetRuleId() + "'",
+                            "ref '" + ref.id() + "' references unknown rule '" + ref.targetRuleId() + "'",
                             formatRange(ref.range()),
                             "Declare a rule with this ID"));
                 }
@@ -406,8 +414,7 @@ public final class IlimapSemanticValidator {
         }
     }
 
-    private void validateJoins(
-            IlimapRuleBlock rule, IlimapScope ruleScope, DiagnosticCollector diagnostics) {
+    private void validateJoins(IlimapRuleBlock rule, IlimapScope ruleScope, DiagnosticCollector diagnostics) {
         for (var element : rule.elements()) {
             if (element instanceof IlimapJoinStmt join) {
                 if (ruleScope.resolve(join.leftAlias()).isEmpty()) {
@@ -434,8 +441,7 @@ public final class IlimapSemanticValidator {
             IlimapDocument document, IlimapSymbolTable symbols, DiagnosticCollector diagnostics) {
         for (var rule : document.rules()) {
             for (var element : rule.elements()) {
-                collectExpressions(element).forEach(expr ->
-                        checkEnumMapRefsInExpression(expr, symbols, diagnostics));
+                collectExpressions(element).forEach(expr -> checkEnumMapRefsInExpression(expr, symbols, diagnostics));
             }
         }
     }
@@ -443,10 +449,8 @@ public final class IlimapSemanticValidator {
     private List<IlimapExpressionText> collectExpressions(IlimapRuleElement element) {
         List<IlimapExpressionText> result = new ArrayList<>();
         switch (element) {
-            case IlimapAssignmentBlock block ->
-                    block.assignments().forEach(a -> result.add(a.expression()));
-            case IlimapDefaultsBlock block ->
-                    block.assignments().forEach(a -> result.add(a.expression()));
+            case IlimapAssignmentBlock block -> block.assignments().forEach(a -> result.add(a.expression()));
+            case IlimapDefaultsBlock block -> block.assignments().forEach(a -> result.add(a.expression()));
             case IlimapWhereStmt where -> result.add(where.expression());
             case IlimapIdentityStmt identity -> result.addAll(identity.expressions());
             case IlimapSourceStmt source -> {
@@ -514,8 +518,7 @@ public final class IlimapSemanticValidator {
                 diagnostics.add(new Diagnostic(
                         DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF,
                         Severity.WARNING,
-                        "enumMap uses string literal \"" + unquoted
-                                + "\"; prefer symbolic enum map reference",
+                        "enumMap uses string literal \"" + unquoted + "\"; prefer symbolic enum map reference",
                         formatRange(expr.range()),
                         "Use " + unquoted + " instead of \"" + unquoted + "\""));
                 if (symbols.resolveEnumMap(unquoted).isEmpty()) {
@@ -581,6 +584,6 @@ public final class IlimapSemanticValidator {
         if (range == null) {
             return null;
         }
-        return "line " + range.start().line() + ", column " + range.start().column();
+        return range.start().line() + ":" + range.start().column();
     }
 }

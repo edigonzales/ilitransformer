@@ -15,15 +15,11 @@ public final class IlimapIdentifierRules {
     private static final Pattern ALIAS_ID_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9_]*");
 
     public static boolean isValidSymbolId(String value) {
-        return value != null
-                && SYMBOL_ID_PATTERN.matcher(value).matches()
-                && !IlimapReservedWords.isReserved(value);
+        return value != null && SYMBOL_ID_PATTERN.matcher(value).matches() && !IlimapReservedWords.isReserved(value);
     }
 
     public static boolean isValidAliasId(String value) {
-        return value != null
-                && ALIAS_ID_PATTERN.matcher(value).matches()
-                && !IlimapReservedWords.isReserved(value);
+        return value != null && ALIAS_ID_PATTERN.matcher(value).matches() && !IlimapReservedWords.isReserved(value);
     }
 
     public static void requireSymbolId(String value, DiagnosticCollector diagnostics, IlimapSourceRange range) {

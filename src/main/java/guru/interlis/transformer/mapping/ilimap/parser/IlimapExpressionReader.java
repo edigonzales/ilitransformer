@@ -128,7 +128,8 @@ public final class IlimapExpressionReader {
                 }
                 var startPos = new IlimapSourcePosition(startOffset, startLine, startColumn);
                 var endPos = new IlimapSourcePosition(pos, line, column);
-                return new IlimapExpressionText(text.toString().stripTrailing(), new IlimapSourceRange(startPos, endPos));
+                return new IlimapExpressionText(
+                        text.toString().stripTrailing(), new IlimapSourceRange(startPos, endPos));
             }
 
             text.append(c);

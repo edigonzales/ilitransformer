@@ -7,4 +7,5 @@ public record IlimapLossBlock(
         String reasonCode,
         String description,
         IlimapExpressionText when,
-        IlimapSourceRange range) implements IlimapRuleElement {}
+        IlimapSourceRange range)
+        implements IlimapRuleElement {}

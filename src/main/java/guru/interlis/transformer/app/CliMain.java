@@ -56,7 +56,7 @@ public final class CliMain implements Callable<Integer> {
         @Option(
                 names = {"-m", "--mapping"},
                 required = true,
-                description = "Mapping YAML configuration file")
+                description = "Mapping configuration file (YAML or .ilimap)")
         private Path mapping;
 
         @Option(
@@ -124,7 +124,7 @@ public final class CliMain implements Callable<Integer> {
         @Option(
                 names = {"-m", "--mapping"},
                 required = true,
-                description = "Mapping YAML configuration file")
+                description = "Mapping configuration file (YAML or .ilimap)")
         private Path mapping;
 
         @Option(

@@ -3,12 +3,10 @@ package guru.interlis.transformer.mapping.ilimap.parser;
 import static org.assertj.core.api.Assertions.*;
 
 import guru.interlis.transformer.mapping.ilimap.ast.*;
-import guru.interlis.transformer.mapping.ilimap.lexer.IlimapSourcePosition;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -182,8 +180,7 @@ class IlimapParserMinimalTest {
         assertThat(assign.assignments().get(0).targetAttribute()).isEqualTo("num");
         assertThat(assign.assignments().get(0).expression().text()).isEqualTo("p.num");
         assertThat(assign.assignments().get(1).targetAttribute()).isEqualTo("desc");
-        assertThat(assign.assignments().get(1).expression().text())
-                .isEqualTo("replace(p.desc, \";\", \",\")");
+        assertThat(assign.assignments().get(1).expression().text()).isEqualTo("replace(p.desc, \";\", \",\")");
     }
 
     @Test
@@ -204,15 +201,13 @@ class IlimapParserMinimalTest {
 
         IlimapDocument doc = parser.parseDocument();
         IlimapRuleBlock rule = doc.rules().get(0);
-        IlimapAssignmentBlock assign =
-                (IlimapAssignmentBlock) rule.elements().stream()
-                        .filter(e -> e instanceof IlimapAssignmentBlock)
-                        .findFirst()
-                        .orElseThrow();
+        IlimapAssignmentBlock assign = (IlimapAssignmentBlock) rule.elements().stream()
+                .filter(e -> e instanceof IlimapAssignmentBlock)
+                .findFirst()
+                .orElseThrow();
 
         assertThat(assign.assignments()).hasSize(1);
-        assertThat(assign.assignments().get(0).expression().text())
-                .isEqualTo("replace(p.Text, \";\", \",\")");
+        assertThat(assign.assignments().get(0).expression().text()).isEqualTo("replace(p.Text, \";\", \",\")");
     }
 
     @Test
@@ -263,10 +258,8 @@ class IlimapParserMinimalTest {
 
         assertThat(doc.defaults()).isNotNull();
         assertThat(doc.defaults().assignments()).hasSize(1);
-        assertThat(doc.defaults().assignments().get(0).targetAttribute())
-                .isEqualTo("globalAttr");
-        assertThat(doc.defaults().assignments().get(0).expression().text())
-                .isEqualTo("\"global\"");
+        assertThat(doc.defaults().assignments().get(0).targetAttribute()).isEqualTo("globalAttr");
+        assertThat(doc.defaults().assignments().get(0).expression().text()).isEqualTo("\"global\"");
     }
 
     @Test
@@ -367,8 +360,7 @@ class IlimapParserMinimalTest {
 
     @Test
     void parsesMinimalLfp3FixtureFile() throws IOException {
-        String source = Files.readString(
-                Path.of("src/test/resources/mapping/ilimap/minimal-lfp3.ilimap"));
+        String source = Files.readString(Path.of("src/test/resources/mapping/ilimap/minimal-lfp3.ilimap"));
         var parser = new IlimapParser(source);
         IlimapDocument doc = parser.parseDocument();
 

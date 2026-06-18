@@ -35,11 +35,12 @@ Run an INTERLIS transformation.
 
 ```bash
 ilitransformer transform --mapping mapping.yaml [--modeldir <dir>] [--validate] [--report <dir>]
+ilitransformer transform --mapping mapping.ilimap [--modeldir <dir>] [--validate] [--report <dir>]
 ```
 
 | Option | Required | Description |
 |---|---|---|
-| `-m`, `--mapping` | Yes | Mapping YAML configuration file |
+| `-m`, `--mapping` | Yes | Mapping configuration file (YAML or .ilimap) |
 | `--modeldir` | No | Model directory path for INTERLIS model resolution |
 | `--validate` | No | Run ilivalidator on the output after transformation |
 | `--report` | No | Output directory for transformation reports |
@@ -47,14 +48,17 @@ ilitransformer transform --mapping mapping.yaml [--modeldir <dir>] [--validate] 
 Examples:
 
 ```bash
-# Basic transformation
+# Basic transformation with YAML
 ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml
 
+# Basic transformation with .ilimap
+ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.ilimap
+
 # With model directory
-ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml --modeldir "src/test/data/av/models/;https://models.interlis.ch"
+ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.ilimap --modeldir "src/test/data/av/models/;https://models.interlis.ch"
 
 # With validation
-ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.yaml --modeldir "src/test/data/av/models/" --validate --report build/reports/lfp3
+ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.ilimap --modeldir "src/test/data/av/models/" --validate --report build/reports/lfp3
 ```
 
 Exit codes:
@@ -67,11 +71,34 @@ Validate a mapping configuration without executing a transformation.
 
 ```bash
 ilitransformer validate-mapping --mapping mapping.yaml
+ilitransformer validate-mapping --mapping mapping.ilimap
 ```
 
 | Option | Required | Description |
 |---|---|---|
-| `-m`, `--mapping` | Yes | Mapping YAML configuration file |
+| `-m`, `--mapping` | Yes | Mapping configuration file (YAML or .ilimap) |
+| `--modeldir` | No | Model directory path for INTERLIS model resolution |
+
+For `.ilimap` files, syntax and semantic errors are reported with file, line, and column information.
+
+### convert-mapping
+
+Convert a YAML mapping configuration to `.ilimap` format.
+
+```bash
+ilitransformer convert-mapping --from mapping.yaml --to mapping.ilimap
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--from`, `--input` | Yes | Source YAML mapping file |
+| `--to`, `--output` | Yes | Target .ilimap output file |
+
+Example:
+
+```bash
+ilitransformer convert-mapping --from profiles/dm01-to-dmav/1.1/lfp3.yaml --to profiles/dm01-to-dmav/1.1/lfp3.ilimap
+```
 
 ### inspect-model
 

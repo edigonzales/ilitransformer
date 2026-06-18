@@ -1,7 +1,11 @@
 package guru.interlis.transformer.mapping.ilimap;
 
+import guru.interlis.transformer.diag.Diagnostic;
+import guru.interlis.transformer.diag.DiagnosticCode;
+import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapDocument;
 import guru.interlis.transformer.mapping.ilimap.jobconfig.IlimapToJobConfigMapper;
+import guru.interlis.transformer.mapping.ilimap.parser.IlimapExpressionReader;
 import guru.interlis.transformer.mapping.ilimap.parser.IlimapParser;
 import guru.interlis.transformer.mapping.ilimap.semantic.IlimapSemanticResult;
 import guru.interlis.transformer.mapping.ilimap.semantic.IlimapSemanticValidator;
@@ -11,6 +15,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public final class IlimapLoader {
@@ -19,10 +24,10 @@ public final class IlimapLoader {
         IlimapLoadResult result = loadDetailed(path);
         if (result.hasErrors()) {
             String messages = result.diagnostics().stream()
-                    .filter(d -> d.severity() == guru.interlis.transformer.diag.Severity.ERROR)
-                    .map(d -> d.message())
+                    .filter(d -> d.severity() == Severity.ERROR)
+                    .map(d -> d.sourcePath() != null ? d.sourcePath() + ": " + d.message() : d.message())
                     .collect(Collectors.joining("; "));
-            throw new IlimapLoadException(path + ": " + messages);
+            throw new IlimapLoadException(messages);
         }
         return result.jobConfig();
     }
@@ -31,7 +36,7 @@ public final class IlimapLoader {
         IlimapLoadResult result = loadDetailed(source, baseDirectory);
         if (result.hasErrors()) {
             String messages = result.diagnostics().stream()
-                    .filter(d -> d.severity() == guru.interlis.transformer.diag.Severity.ERROR)
+                    .filter(d -> d.severity() == Severity.ERROR)
                     .map(d -> d.message())
                     .collect(Collectors.joining("; "));
             throw new IlimapLoadException(messages);
@@ -46,23 +51,57 @@ public final class IlimapLoader {
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to read ilimap file: " + path, e);
         }
-        return loadDetailed(source, path.toAbsolutePath().getParent());
+        IlimapLoadResult result = loadDetailed(source, path.toAbsolutePath().getParent());
+        return enrichWithFilePath(result, path.toString());
     }
 
     public IlimapLoadResult loadDetailed(String source, Path baseDirectory) {
-        IlimapDocument document = new IlimapParser(source).parseDocument();
+        IlimapDocument document;
+        try {
+            document = new IlimapParser(source).parseDocument();
+        } catch (IlimapParser.ParseException e) {
+            String location = e.position.line() + ":" + e.position.column();
+            String cleanMessage = stripPositionPrefix(e.getMessage());
+            Diagnostic diag =
+                    new Diagnostic(DiagnosticCode.ILIMAP_SYNTAX_ERROR, Severity.ERROR, cleanMessage, location, null);
+            return new IlimapLoadResult(null, null, null, List.of(diag));
+        } catch (IlimapExpressionReader.ReaderException e) {
+            String cleanMessage = stripPositionPrefix(e.getMessage());
+            Diagnostic diag =
+                    new Diagnostic(DiagnosticCode.ILIMAP_SYNTAX_ERROR, Severity.ERROR, cleanMessage, null, null);
+            return new IlimapLoadResult(null, null, null, List.of(diag));
+        }
+
         IlimapSemanticResult semanticResult = new IlimapSemanticValidator().validate(document);
 
         JobConfig jobConfig = null;
         if (!semanticResult.hasErrors()) {
-            jobConfig = new IlimapToJobConfigMapper()
-                    .map(document, semanticResult.symbols(), baseDirectory);
+            jobConfig = new IlimapToJobConfigMapper().map(document, semanticResult.symbols(), baseDirectory);
         }
 
-        return new IlimapLoadResult(
-                document,
-                semanticResult.symbols(),
-                jobConfig,
-                semanticResult.diagnostics());
+        return new IlimapLoadResult(document, semanticResult.symbols(), jobConfig, semanticResult.diagnostics());
+    }
+
+    private static IlimapLoadResult enrichWithFilePath(IlimapLoadResult result, String filePath) {
+        if (filePath == null || result.diagnostics().isEmpty()) {
+            return result;
+        }
+        List<Diagnostic> enriched = result.diagnostics().stream()
+                .map(d -> {
+                    String path = d.sourcePath() != null ? filePath + ":" + d.sourcePath() : filePath;
+                    return new Diagnostic(d.code(), d.severity(), d.message(), path, d.suggestion());
+                })
+                .toList();
+        return new IlimapLoadResult(result.document(), result.symbols(), result.jobConfig(), enriched);
+    }
+
+    private static String stripPositionPrefix(String message) {
+        if (message != null && message.startsWith("at line ")) {
+            int colonSpace = message.indexOf(": ");
+            if (colonSpace >= 0) {
+                return message.substring(colonSpace + 2);
+            }
+        }
+        return message;
     }
 }

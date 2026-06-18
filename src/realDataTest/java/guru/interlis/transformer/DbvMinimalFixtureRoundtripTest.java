@@ -14,7 +14,6 @@ import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.dmav.Dm01DmavFixtures;
 import guru.interlis.transformer.dmav.Dm01DmavPaths;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
-import guru.interlis.transformer.loss.LossEvent;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 
@@ -30,7 +29,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
@@ -148,8 +146,7 @@ class DbvMinimalFixtureRoundtripTest {
 
     private List<IomObject> semanticDmavObjects(Path path) throws Exception {
         return readObjects(path, dmavTd).stream()
-                .filter(obj -> hasSuffix(obj, ".DBVNachfuehrung")
-                        || hasSuffix(obj, ".DauerndeBodenverschiebung"))
+                .filter(obj -> hasSuffix(obj, ".DBVNachfuehrung") || hasSuffix(obj, ".DauerndeBodenverschiebung"))
                 .toList();
     }
 

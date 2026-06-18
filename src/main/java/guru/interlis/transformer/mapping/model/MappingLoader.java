@@ -1,11 +1,12 @@
 package guru.interlis.transformer.mapping.model;
 
+import guru.interlis.transformer.mapping.ilimap.IlimapLoader;
+
 import java.io.IOException;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import guru.interlis.transformer.mapping.ilimap.IlimapLoader;
 
 public final class MappingLoader {
 

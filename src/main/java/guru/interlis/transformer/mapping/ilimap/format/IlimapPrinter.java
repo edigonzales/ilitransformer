@@ -242,14 +242,13 @@ final class IlimapPrinter {
     }
 
     private void printJoin(IlimapJoinStmt join) {
-        line("join " + join.joinType() + " " + join.leftAlias()
-                + " to " + join.rightAlias() + " on " + join.on().text().strip() + ";");
+        line("join " + join.joinType() + " " + join.leftAlias() + " to " + join.rightAlias() + " on "
+                + join.on().text().strip() + ";");
     }
 
     private void printIdentity(IlimapIdentityStmt identity) {
-        List<String> parts = identity.expressions().stream()
-                .map(e -> e.text().strip())
-                .toList();
+        List<String> parts =
+                identity.expressions().stream().map(e -> e.text().strip()).toList();
         line("identity " + String.join(", ", parts) + ";");
     }
 
@@ -261,7 +260,8 @@ final class IlimapPrinter {
 
     private void printAssignments(List<IlimapAssignment> assignments) {
         for (IlimapAssignment assignment : assignments) {
-            line(assignment.targetAttribute() + " = " + assignment.expression().text().strip() + ";");
+            line(assignment.targetAttribute() + " = "
+                    + assignment.expression().text().strip() + ";");
         }
     }
 
@@ -305,8 +305,8 @@ final class IlimapPrinter {
     }
 
     private void printParentRef(IlimapParentRefStmt parentRef) {
-        line("parentRef " + parentRef.kind() + " " + quoted(parentRef.name())
-                + " parent " + parentRef.parentAlias() + ";");
+        line("parentRef " + parentRef.kind() + " " + quoted(parentRef.name()) + " parent " + parentRef.parentAlias()
+                + ";");
     }
 
     private void printRef(IlimapRefBlock ref) {
@@ -322,8 +322,8 @@ final class IlimapPrinter {
                 line("required;");
             }
             if (ref.targetRuleId() != null && ref.sourceRef() != null) {
-                line("target rule " + ref.targetRuleId()
-                        + " sourceRef " + ref.sourceRef().text().strip() + ";");
+                line("target rule " + ref.targetRuleId() + " sourceRef "
+                        + ref.sourceRef().text().strip() + ";");
             }
         });
         line("}");

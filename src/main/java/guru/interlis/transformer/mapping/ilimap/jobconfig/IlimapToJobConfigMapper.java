@@ -148,7 +148,7 @@ public final class IlimapToJobConfigMapper {
                     spec.sources.add(sourceSpec);
                 }
                 case IlimapWhereStmt where ->
-                        spec.where = normalizer.normalizeForJobConfig(where.expression(), symbols);
+                    spec.where = normalizer.normalizeForJobConfig(where.expression(), symbols);
                 case IlimapIdentityStmt identity -> {
                     spec.identity = new JobConfig.IdentitySpec();
                     spec.identity.sourceKey = identity.expressions().stream()
@@ -156,9 +156,9 @@ public final class IlimapToJobConfigMapper {
                             .toList();
                 }
                 case IlimapAssignmentBlock assignBlock ->
-                        spec.assign = mapAssignments(assignBlock.assignments(), symbols);
+                    spec.assign = mapAssignments(assignBlock.assignments(), symbols);
                 case IlimapDefaultsBlock defaultsBlock ->
-                        spec.defaults = mapAssignments(defaultsBlock.assignments(), symbols);
+                    spec.defaults = mapAssignments(defaultsBlock.assignments(), symbols);
                 case IlimapJoinStmt join -> {
                     if (spec.joins == null) {
                         spec.joins = new ArrayList<>();
@@ -189,13 +189,11 @@ public final class IlimapToJobConfigMapper {
                         rm.targetObject = new JobConfig.RefMapping.RefTargetObject();
                         rm.targetObject.rule = ref.targetRuleId();
                         if (ref.sourceRef() != null) {
-                            rm.targetObject.sourceRef =
-                                    normalizer.normalizeForJobConfig(ref.sourceRef(), symbols);
+                            rm.targetObject.sourceRef = normalizer.normalizeForJobConfig(ref.sourceRef(), symbols);
                         }
                         rm.targetRule = ref.targetRuleId();
                         if (ref.sourceRef() != null) {
-                            rm.sourceRef =
-                                    normalizer.normalizeForJobConfig(ref.sourceRef(), symbols);
+                            rm.sourceRef = normalizer.normalizeForJobConfig(ref.sourceRef(), symbols);
                         }
                     }
                     spec.refs.add(rm);

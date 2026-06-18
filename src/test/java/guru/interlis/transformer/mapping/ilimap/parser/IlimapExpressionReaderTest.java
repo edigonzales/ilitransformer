@@ -2,7 +2,6 @@ package guru.interlis.transformer.mapping.ilimap.parser;
 
 import static org.assertj.core.api.Assertions.*;
 
-import guru.interlis.transformer.mapping.ilimap.ast.IlimapExpressionText;
 import guru.interlis.transformer.mapping.ilimap.parser.IlimapExpressionReader.ReaderException;
 
 import org.junit.jupiter.api.Test;
@@ -28,8 +27,7 @@ class IlimapExpressionReaderTest {
     @Test
     void doesNotStopAtSemicolonInsideString() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "replace(p.Text, \";\", \",\"); next", 0);
+        var result = reader.readUntilStatementSemicolon("replace(p.Text, \";\", \",\"); next", 0);
 
         assertThat(result.text()).isEqualTo("replace(p.Text, \";\", \",\")");
     }
@@ -37,8 +35,7 @@ class IlimapExpressionReaderTest {
     @Test
     void ignoresSemicolonInsideString() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "x = \"hello; world\" + y;", 0);
+        var result = reader.readUntilStatementSemicolon("x = \"hello; world\" + y;", 0);
 
         assertThat(result.text()).isEqualTo("x = \"hello; world\" + y");
     }
@@ -46,8 +43,7 @@ class IlimapExpressionReaderTest {
     @Test
     void doesNotStopAtSemicolonInsideFunctionArgumentString() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "concat(\"a;b\", \";c\");", 0);
+        var result = reader.readUntilStatementSemicolon("concat(\"a;b\", \";c\");", 0);
 
         assertThat(result.text()).isEqualTo("concat(\"a;b\", \";c\")");
     }
@@ -55,8 +51,7 @@ class IlimapExpressionReaderTest {
     @Test
     void ignoresSemicolonInsideFunctionCall() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "replace(x, \";\", \":\");", 0);
+        var result = reader.readUntilStatementSemicolon("replace(x, \";\", \":\");", 0);
 
         assertThat(result.text()).isEqualTo("replace(x, \";\", \":\")");
     }
@@ -64,8 +59,7 @@ class IlimapExpressionReaderTest {
     @Test
     void doesNotStopAtSemicolonInsideBlockComment() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "x /* comment with ; inside */ + 1; y", 0);
+        var result = reader.readUntilStatementSemicolon("x /* comment with ; inside */ + 1; y", 0);
 
         assertThat(result.text()).doesNotContain("/*");
         assertThat(result.text()).contains("x");
@@ -75,8 +69,7 @@ class IlimapExpressionReaderTest {
     @Test
     void ignoresSemicolonInsideBlockComment() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "a /* ; */ b;", 0);
+        var result = reader.readUntilStatementSemicolon("a /* ; */ b;", 0);
 
         assertThat(result.text()).doesNotContain("/*");
         assertThat(result.text()).doesNotContain("*/");
@@ -87,8 +80,7 @@ class IlimapExpressionReaderTest {
     @Test
     void ignoresSemicolonInsideLineComment() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "a // comment with ; inside\n+ b;", 0);
+        var result = reader.readUntilStatementSemicolon("a // comment with ; inside\n+ b;", 0);
 
         assertThat(result.text()).doesNotContain("//");
         assertThat(result.text()).doesNotContain("comment");
@@ -99,8 +91,7 @@ class IlimapExpressionReaderTest {
     @Test
     void doesNotStopAtSemicolonInsideNestedParentheses() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "outer(inner(a=\"test;x\", b=2), c);", 0);
+        var result = reader.readUntilStatementSemicolon("outer(inner(a=\"test;x\", b=2), c);", 0);
 
         assertThat(result.text()).isEqualTo("outer(inner(a=\"test;x\", b=2), c)");
     }
@@ -109,8 +100,7 @@ class IlimapExpressionReaderTest {
     void reportsUnbalancedParentheses() {
         var reader = new IlimapExpressionReader();
 
-        assertThatThrownBy(() -> reader.readUntilStatementSemicolon(
-                "func(a, b(;", 0))
+        assertThatThrownBy(() -> reader.readUntilStatementSemicolon("func(a, b(;", 0))
                 .isInstanceOf(ReaderException.class)
                 .hasMessageContaining("unbalanced");
     }
@@ -119,8 +109,7 @@ class IlimapExpressionReaderTest {
     void reportsUnterminatedStringLiteral() {
         var reader = new IlimapExpressionReader();
 
-        assertThatThrownBy(() -> reader.readUntilStatementSemicolon(
-                "x = \"unterminated;", 0))
+        assertThatThrownBy(() -> reader.readUntilStatementSemicolon("x = \"unterminated;", 0))
                 .isInstanceOf(ReaderException.class)
                 .hasMessageContaining("unterminated string literal");
     }
@@ -136,8 +125,7 @@ class IlimapExpressionReaderTest {
     @Test
     void preservesExpressionWithoutSemicolon() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "x + y + z", 0);
+        var result = reader.readUntilStatementSemicolon("x + y + z", 0);
 
         assertThat(result.text()).isEqualTo("x + y + z");
     }
@@ -145,8 +133,7 @@ class IlimapExpressionReaderTest {
     @Test
     void handlesNestedBraces() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "{a: 1; b: 2};", 0);
+        var result = reader.readUntilStatementSemicolon("{a: 1; b: 2};", 0);
 
         assertThat(result.text()).isEqualTo("{a: 1; b: 2}");
     }
@@ -154,8 +141,7 @@ class IlimapExpressionReaderTest {
     @Test
     void stopsAtSemicolonOnlyWhenAllNestingClosed() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "f(g(h(\";\")));", 0);
+        var result = reader.readUntilStatementSemicolon("f(g(h(\";\")));", 0);
 
         assertThat(result.text()).isEqualTo("f(g(h(\";\")))");
     }
@@ -163,8 +149,7 @@ class IlimapExpressionReaderTest {
     @Test
     void handlesStartOffset() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "aaa bbb = p.Name; ccc", 8);
+        var result = reader.readUntilStatementSemicolon("aaa bbb = p.Name; ccc", 8);
 
         assertThat(result.text()).isEqualTo("= p.Name");
     }
@@ -172,8 +157,7 @@ class IlimapExpressionReaderTest {
     @Test
     void tracksRangeCorrectly() {
         var reader = new IlimapExpressionReader();
-        var result = reader.readUntilStatementSemicolon(
-                "p.Name;", 0);
+        var result = reader.readUntilStatementSemicolon("p.Name;", 0);
 
         assertThat(result.range().start().offset()).isEqualTo(0);
         assertThat(result.range().start().line()).isEqualTo(1);

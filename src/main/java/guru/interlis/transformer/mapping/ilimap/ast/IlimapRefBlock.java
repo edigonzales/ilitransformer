@@ -9,4 +9,5 @@ public record IlimapRefBlock(
         boolean required,
         String targetRuleId,
         IlimapExpressionText sourceRef,
-        IlimapSourceRange range) implements IlimapRuleElement {}
+        IlimapSourceRange range)
+        implements IlimapRuleElement {}

@@ -1,0 +1,19 @@
+mapping v2 {
+  input src {
+    path "in.xtf";
+    model "M";
+    format xtf;
+  }
+
+  output tgt {
+    path "out.xtf";
+    model "M";
+    format xtf;
+  }
+
+  rule r1 {
+    target nonexistent class "M.T.C";
+    source s from src class "M.T.C";
+    assign { X = s.X; }
+  }
+}

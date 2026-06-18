@@ -39,25 +39,23 @@ public final class IlimapParser {
             outputs.add(parseOutputBlock());
         }
 
-        IlimapOidBlock oid =
-                peekKeyword("oid") ? parseOidBlock() : null;
-        IlimapBasketStmt basket =
-                peekKeyword("basket") ? parseBasketStmt() : null;
+        IlimapOidBlock oid = peekKeyword("oid") ? parseOidBlock() : null;
+        IlimapBasketStmt basket = peekKeyword("basket") ? parseBasketStmt() : null;
 
         List<IlimapEnumBlock> enums = new ArrayList<>();
         while (peekKeyword("enum")) {
             enums.add(parseEnumBlock());
         }
 
-        IlimapDefaultsBlock defaults =
-                peekKeyword("defaults") ? parseTopLevelDefaults() : null;
+        IlimapDefaultsBlock defaults = peekKeyword("defaults") ? parseTopLevelDefaults() : null;
 
         List<IlimapRuleBlock> rules = new ArrayList<>();
         while (peekKeyword("rule")) {
             rules.add(parseRuleBlock());
         }
 
-        IlimapSourcePosition rbracePos = expectToken(IlimapTokenType.RBRACE).range().end();
+        IlimapSourcePosition rbracePos =
+                expectToken(IlimapTokenType.RBRACE).range().end();
         expectToken(IlimapTokenType.EOF);
 
         IlimapSourceRange range = new IlimapSourceRange(docStart, rbracePos);
@@ -134,8 +132,7 @@ public final class IlimapParser {
                 case "path" -> path = expectString();
                 case "model" -> model = expectString();
                 case "format" -> format = expectStringOrIdentifier();
-                default -> throw parseError(
-                        "unexpected field '" + field + "' in input block", fieldToken);
+                default -> throw parseError("unexpected field '" + field + "' in input block", fieldToken);
             }
             expectToken(IlimapTokenType.SEMICOLON);
         }
@@ -164,8 +161,7 @@ public final class IlimapParser {
                 case "path" -> path = expectString();
                 case "model" -> model = expectString();
                 case "format" -> format = expectStringOrIdentifier();
-                default -> throw parseError(
-                        "unexpected field '" + field + "' in output block", fieldToken);
+                default -> throw parseError("unexpected field '" + field + "' in output block", fieldToken);
             }
             expectToken(IlimapTokenType.SEMICOLON);
         }
@@ -191,8 +187,7 @@ public final class IlimapParser {
             switch (field) {
                 case "strategy" -> strategy = expectStringOrIdentifier();
                 case "namespace" -> namespace = expectString();
-                default -> throw parseError(
-                        "unexpected field '" + field + "' in oid block", fieldToken);
+                default -> throw parseError("unexpected field '" + field + "' in oid block", fieldToken);
             }
             expectToken(IlimapTokenType.SEMICOLON);
         }
@@ -206,7 +201,8 @@ public final class IlimapParser {
         IlimapToken basketKeyword = expectKeyword("basket");
         String strategy = expectStringOrIdentifier();
         IlimapToken semicolon = expectToken(IlimapTokenType.SEMICOLON);
-        IlimapSourceRange range = new IlimapSourceRange(basketKeyword.range().start(), semicolon.range().end());
+        IlimapSourceRange range = new IlimapSourceRange(
+                basketKeyword.range().start(), semicolon.range().end());
         return new IlimapBasketStmt(strategy, range);
     }
 
@@ -230,7 +226,8 @@ public final class IlimapParser {
         IlimapLiteral source = parseLiteral();
         expectToken(IlimapTokenType.ARROW);
         IlimapLiteral target = parseLiteral();
-        IlimapSourcePosition semicolonEnd = expectToken(IlimapTokenType.SEMICOLON).range().end();
+        IlimapSourcePosition semicolonEnd =
+                expectToken(IlimapTokenType.SEMICOLON).range().end();
         IlimapSourceRange range = new IlimapSourceRange(start, semicolonEnd);
         return new IlimapEnumEntry(source, target, range);
     }
@@ -240,8 +237,7 @@ public final class IlimapParser {
         return switch (token.type()) {
             case STRING -> new IlimapLiteral.StringLit(token.text(), token.range());
             case NUMBER -> new IlimapLiteral.NumberLit(token.text(), token.range());
-            case BOOLEAN -> new IlimapLiteral.BooleanLit(
-                    Boolean.parseBoolean(token.text()), token.range());
+            case BOOLEAN -> new IlimapLiteral.BooleanLit(Boolean.parseBoolean(token.text()), token.range());
             case NULL -> new IlimapLiteral.NullLit(token.range());
             case HASH_LITERAL -> new IlimapLiteral.HashLit(token.text(), token.range());
             default -> throw parseError("expected literal value", token);
@@ -272,61 +268,60 @@ public final class IlimapParser {
         while (!peekType(IlimapTokenType.RBRACE)) {
             IlimapToken token = peek();
             if (token.type() == IlimapTokenType.KEYWORD) {
-                elements.add(switch (token.text()) {
-                    case "target" -> {
-                        advance();
-                        yield parseTargetStmt();
-                    }
-                    case "source" -> {
-                        advance();
-                        yield parseSourceStmt();
-                    }
-                    case "where" -> {
-                        advance();
-                        yield parseWhereStmt();
-                    }
-                    case "identity" -> {
-                        advance();
-                        yield parseIdentityStmt();
-                    }
-                    case "assign" -> {
-                        advance();
-                        yield parseRuleAssign();
-                    }
-                    case "defaults" -> {
-                        advance();
-                        yield parseRuleDefaults();
-                    }
-                    case "join" -> {
-                        advance();
-                        yield parseJoinStmt();
-                    }
-                    case "bag" -> {
-                        advance();
-                        yield parseBagBlock();
-                    }
-                    case "ref" -> {
-                        advance();
-                        yield parseRefBlock();
-                    }
-                    case "create" -> {
-                        advance();
-                        yield parseCreateBlock();
-                    }
-                    case "loss" -> {
-                        advance();
-                        yield parseLossBlock();
-                    }
-                    case "metadata" -> {
-                        advance();
-                        yield parseMetadataBlock();
-                    }
-                    default -> throw parseError(
-                            "unexpected keyword '" + token.text() + "' inside rule", token);
-                });
+                elements.add(
+                        switch (token.text()) {
+                            case "target" -> {
+                                advance();
+                                yield parseTargetStmt();
+                            }
+                            case "source" -> {
+                                advance();
+                                yield parseSourceStmt();
+                            }
+                            case "where" -> {
+                                advance();
+                                yield parseWhereStmt();
+                            }
+                            case "identity" -> {
+                                advance();
+                                yield parseIdentityStmt();
+                            }
+                            case "assign" -> {
+                                advance();
+                                yield parseRuleAssign();
+                            }
+                            case "defaults" -> {
+                                advance();
+                                yield parseRuleDefaults();
+                            }
+                            case "join" -> {
+                                advance();
+                                yield parseJoinStmt();
+                            }
+                            case "bag" -> {
+                                advance();
+                                yield parseBagBlock();
+                            }
+                            case "ref" -> {
+                                advance();
+                                yield parseRefBlock();
+                            }
+                            case "create" -> {
+                                advance();
+                                yield parseCreateBlock();
+                            }
+                            case "loss" -> {
+                                advance();
+                                yield parseLossBlock();
+                            }
+                            case "metadata" -> {
+                                advance();
+                                yield parseMetadataBlock();
+                            }
+                            default -> throw parseError("unexpected keyword '" + token.text() + "' inside rule", token);
+                        });
             } else {
-                throw parseError(
-                        "unexpected token '" + token.text() + "' inside rule", token);
+                throw parseError("unexpected token '" + token.text() + "' inside rule", token);
             }
         }
 
@@ -340,7 +335,8 @@ public final class IlimapParser {
         String outputId = expectIdentifier();
         expectKeyword("class");
         String targetClass = expectString();
-        IlimapSourcePosition end = expectToken(IlimapTokenType.SEMICOLON).range().end();
+        IlimapSourcePosition end =
+                expectToken(IlimapTokenType.SEMICOLON).range().end();
         IlimapSourceRange range = new IlimapSourceRange(targetKeyword.range().start(), end);
         return new IlimapTargetStmt(outputId, targetClass, range);
     }
@@ -375,7 +371,8 @@ public final class IlimapParser {
     private IlimapWhereStmt parseWhereStmt() {
         IlimapToken whereKeyword = lastConsumed();
         IlimapExpressionText expression = readExpression();
-        IlimapSourceRange range = new IlimapSourceRange(whereKeyword.range().start(), expression.range().end());
+        IlimapSourceRange range = new IlimapSourceRange(
+                whereKeyword.range().start(), expression.range().end());
         return new IlimapWhereStmt(expression, range);
     }
 
@@ -390,7 +387,8 @@ public final class IlimapParser {
                 expressions.add(new IlimapExpressionText(part.strip(), blob.range()));
             }
         }
-        IlimapSourceRange range = new IlimapSourceRange(identityKeyword.range().start(), blob.range().end());
+        IlimapSourceRange range = new IlimapSourceRange(
+                identityKeyword.range().start(), blob.range().end());
         return new IlimapIdentityStmt(expressions, range);
     }
 
@@ -415,9 +413,7 @@ public final class IlimapParser {
         IlimapToken joinKeyword = lastConsumed();
         IlimapToken typeToken = next();
         if (!typeToken.isKeyword("inner") && !typeToken.isKeyword("left")) {
-            throw parseError(
-                    "expected 'inner' or 'left' after 'join' but got '" + typeToken.text() + "'",
-                    typeToken);
+            throw parseError("expected 'inner' or 'left' after 'join' but got '" + typeToken.text() + "'", typeToken);
         }
         String joinType = typeToken.text();
         String leftAlias = expectIdentifier();
@@ -425,7 +421,8 @@ public final class IlimapParser {
         String rightAlias = expectIdentifier();
         expectKeyword("on");
         IlimapExpressionText on = readExpression();
-        IlimapSourceRange range = new IlimapSourceRange(joinKeyword.range().start(), on.range().end());
+        IlimapSourceRange range =
+                new IlimapSourceRange(joinKeyword.range().start(), on.range().end());
         return new IlimapJoinStmt(joinType, leftAlias, rightAlias, on, range);
     }
 
@@ -462,8 +459,7 @@ public final class IlimapParser {
                             mode = modeToken.text();
                         } else {
                             throw parseError(
-                                    "expected 'embed' or 'expand' after 'mode' but got '"
-                                            + modeToken.text() + "'",
+                                    "expected 'embed' or 'expand' after 'mode' but got '" + modeToken.text() + "'",
                                     modeToken);
                         }
                         expectToken(IlimapTokenType.SEMICOLON);
@@ -475,8 +471,7 @@ public final class IlimapParser {
                             maxItems = Integer.parseInt(numberToken.text());
                         } catch (NumberFormatException e) {
                             throw parseError(
-                                    "maxItems must be an integer, got '" + numberToken.text() + "'",
-                                    numberToken);
+                                    "maxItems must be an integer, got '" + numberToken.text() + "'", numberToken);
                         }
                         expectToken(IlimapTokenType.SEMICOLON);
                     }
@@ -492,12 +487,10 @@ public final class IlimapParser {
                         advance();
                         nestedBags.add(parseBagBlock());
                     }
-                    default -> throw parseError(
-                            "unexpected keyword '" + token.text() + "' inside bag", token);
+                    default -> throw parseError("unexpected keyword '" + token.text() + "' inside bag", token);
                 }
             } else {
-                throw parseError(
-                        "unexpected token '" + token.text() + "' inside bag", token);
+                throw parseError("unexpected token '" + token.text() + "' inside bag", token);
             }
         }
 
@@ -533,15 +526,14 @@ public final class IlimapParser {
         IlimapToken kindToken = next();
         if (!kindToken.isKeyword("attribute") && !kindToken.isKeyword("role")) {
             throw parseError(
-                    "expected 'attribute' or 'role' after 'parentRef' but got '"
-                            + kindToken.text() + "'",
-                    kindToken);
+                    "expected 'attribute' or 'role' after 'parentRef' but got '" + kindToken.text() + "'", kindToken);
         }
         String kind = kindToken.text();
         String name = expectString();
         expectKeyword("parent");
         String parentAlias = expectIdentifier();
-        IlimapSourcePosition end = expectToken(IlimapTokenType.SEMICOLON).range().end();
+        IlimapSourcePosition end =
+                expectToken(IlimapTokenType.SEMICOLON).range().end();
         IlimapSourceRange range = new IlimapSourceRange(parentRefKeyword.range().start(), end);
         return new IlimapParentRefStmt(kind, name, parentAlias, range);
     }
@@ -553,8 +545,7 @@ public final class IlimapParser {
         IlimapToken nextToken = peek();
         if (nextToken.type() == IlimapTokenType.ARROW && nextToken.text().equals("->")) {
             throw parseError(
-                    "ref short form '->' is not supported in v2.0; use the long form with 'target rule'",
-                    nextToken);
+                    "ref short form '->' is not supported in v2.0; use the long form with 'target rule'", nextToken);
         }
 
         expectToken(IlimapTokenType.LBRACE);
@@ -591,12 +582,10 @@ public final class IlimapParser {
                         expectKeyword("sourceRef");
                         sourceRef = readExpression();
                     }
-                    default -> throw parseError(
-                            "unexpected keyword '" + token.text() + "' inside ref", token);
+                    default -> throw parseError("unexpected keyword '" + token.text() + "' inside ref", token);
                 }
             } else {
-                throw parseError(
-                        "unexpected token '" + token.text() + "' inside ref", token);
+                throw parseError("unexpected token '" + token.text() + "' inside ref", token);
             }
         }
 
@@ -618,8 +607,7 @@ public final class IlimapParser {
                 advance();
                 assign = parseRuleAssign();
             } else {
-                throw parseError(
-                        "unexpected token '" + token.text() + "' inside create", token);
+                throw parseError("unexpected token '" + token.text() + "' inside create", token);
             }
         }
 
@@ -653,8 +641,7 @@ public final class IlimapParser {
                     expectToken(IlimapTokenType.SEMICOLON);
                 }
                 case "when" -> when = readExpression();
-                default -> throw parseError(
-                        "unexpected field '" + fieldToken.text() + "' in loss block", fieldToken);
+                default -> throw parseError("unexpected field '" + fieldToken.text() + "' in loss block", fieldToken);
             }
         }
 
@@ -689,9 +676,8 @@ public final class IlimapParser {
                     lossiness = expectStringOrIdentifier();
                     expectToken(IlimapTokenType.SEMICOLON);
                 }
-                default -> throw parseError(
-                        "unexpected field '" + fieldToken.text() + "' in metadata block",
-                        fieldToken);
+                default ->
+                    throw parseError("unexpected field '" + fieldToken.text() + "' in metadata block", fieldToken);
             }
         }
 
@@ -705,15 +691,15 @@ public final class IlimapParser {
         String attribute = expectIdentifier();
         expectToken(IlimapTokenType.EQUALS);
         IlimapExpressionText expression = readExpression();
-        IlimapSourceRange range = new IlimapSourceRange(start, expression.range().end());
+        IlimapSourceRange range =
+                new IlimapSourceRange(start, expression.range().end());
         return new IlimapAssignment(attribute, expression, range);
     }
 
     private IlimapExpressionText readExpression() {
         IlimapToken token = peek();
         int startOffset = token.range().start().offset();
-        IlimapExpressionText result =
-                expressionReader.readUntilStatementSemicolon(source, startOffset);
+        IlimapExpressionText result = expressionReader.readUntilStatementSemicolon(source, startOffset);
         int afterSemicolon = result.range().end().offset() + 1;
         lexer.skipTo(afterSemicolon);
         return result;
@@ -778,9 +764,7 @@ public final class IlimapParser {
     private IlimapToken expectToken(IlimapTokenType type) {
         IlimapToken token = next();
         if (token.type() != type) {
-            throw parseError(
-                    "expected '" + type + "' but got '" + token.text() + "' (" + token.type() + ")",
-                    token);
+            throw parseError("expected '" + type + "' but got '" + token.text() + "' (" + token.type() + ")", token);
         }
         return token;
     }
@@ -788,9 +772,7 @@ public final class IlimapParser {
     private String expectIdentifier() {
         IlimapToken token = next();
         if (token.type() != IlimapTokenType.IDENTIFIER) {
-            throw parseError(
-                    "expected identifier but got '" + token.text() + "' (" + token.type() + ")",
-                    token);
+            throw parseError("expected identifier but got '" + token.text() + "' (" + token.type() + ")", token);
         }
         return token.text();
     }
@@ -813,8 +795,7 @@ public final class IlimapParser {
 
     private ParseException parseError(String message, IlimapToken token) {
         IlimapSourcePosition pos = token.range().start();
-        return new ParseException(
-                "at line " + pos.line() + ", column " + pos.column() + ": " + message, pos);
+        return new ParseException("at line " + pos.line() + ", column " + pos.column() + ": " + message, pos);
     }
 
     public static final class ParseException extends RuntimeException {

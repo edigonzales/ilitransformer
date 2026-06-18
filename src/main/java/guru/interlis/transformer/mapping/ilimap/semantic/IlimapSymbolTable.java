@@ -19,22 +19,18 @@ public final class IlimapSymbolTable {
     }
 
     public Optional<IlimapSymbol> resolveRule(String id) {
-        return topLevel.resolveLocal(id)
-                .filter(s -> s.kind() == IlimapSymbolKind.RULE);
+        return topLevel.resolveLocal(id).filter(s -> s.kind() == IlimapSymbolKind.RULE);
     }
 
     public Optional<IlimapSymbol> resolveInput(String id) {
-        return topLevel.resolveLocal(id)
-                .filter(s -> s.kind() == IlimapSymbolKind.INPUT);
+        return topLevel.resolveLocal(id).filter(s -> s.kind() == IlimapSymbolKind.INPUT);
     }
 
     public Optional<IlimapSymbol> resolveOutput(String id) {
-        return topLevel.resolveLocal(id)
-                .filter(s -> s.kind() == IlimapSymbolKind.OUTPUT);
+        return topLevel.resolveLocal(id).filter(s -> s.kind() == IlimapSymbolKind.OUTPUT);
     }
 
     public Optional<IlimapSymbol> resolveEnumMap(String id) {
-        return topLevel.resolveLocal(id)
-                .filter(s -> s.kind() == IlimapSymbolKind.ENUM_MAP);
+        return topLevel.resolveLocal(id).filter(s -> s.kind() == IlimapSymbolKind.ENUM_MAP);
     }
 }

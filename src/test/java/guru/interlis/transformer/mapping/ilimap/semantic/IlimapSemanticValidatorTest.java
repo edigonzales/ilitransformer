@@ -4,13 +4,12 @@ import static org.assertj.core.api.Assertions.*;
 
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
-import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapDocument;
 import guru.interlis.transformer.mapping.ilimap.parser.IlimapParser;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+
+import org.junit.jupiter.api.Test;
 
 class IlimapSemanticValidatorTest {
 
@@ -176,7 +175,8 @@ class IlimapSemanticValidatorTest {
                 """);
 
         assertThat(result.hasErrors()).isTrue();
-        assertThat(diagnosticsWithCode(result, DiagnosticCode.ILIMAP_MISSING_INPUT)).isNotEmpty();
+        assertThat(diagnosticsWithCode(result, DiagnosticCode.ILIMAP_MISSING_INPUT))
+                .isNotEmpty();
     }
 
     @Test
@@ -191,7 +191,8 @@ class IlimapSemanticValidatorTest {
                 """);
 
         assertThat(result.hasErrors()).isTrue();
-        assertThat(diagnosticsWithCode(result, DiagnosticCode.ILIMAP_MISSING_OUTPUT)).isNotEmpty();
+        assertThat(diagnosticsWithCode(result, DiagnosticCode.ILIMAP_MISSING_OUTPUT))
+                .isNotEmpty();
     }
 
     @Test
@@ -204,7 +205,8 @@ class IlimapSemanticValidatorTest {
                 """);
 
         assertThat(result.hasErrors()).isTrue();
-        assertThat(diagnosticsWithCode(result, DiagnosticCode.ILIMAP_MISSING_RULE)).isNotEmpty();
+        assertThat(diagnosticsWithCode(result, DiagnosticCode.ILIMAP_MISSING_RULE))
+                .isNotEmpty();
     }
 
     @Test
@@ -305,7 +307,8 @@ class IlimapSemanticValidatorTest {
                 """);
 
         assertThat(result.hasErrors()).isTrue();
-        assertThat(diagnosticsWithCode(result, DiagnosticCode.ILIMAP_MISSING_TARGET)).isNotEmpty();
+        assertThat(diagnosticsWithCode(result, DiagnosticCode.ILIMAP_MISSING_TARGET))
+                .isNotEmpty();
     }
 
     @Test
@@ -321,7 +324,8 @@ class IlimapSemanticValidatorTest {
                 """);
 
         assertThat(result.hasErrors()).isTrue();
-        assertThat(diagnosticsWithCode(result, DiagnosticCode.ILIMAP_MISSING_SOURCE)).isNotEmpty();
+        assertThat(diagnosticsWithCode(result, DiagnosticCode.ILIMAP_MISSING_SOURCE))
+                .isNotEmpty();
     }
 
     @Test
@@ -367,8 +371,6 @@ class IlimapSemanticValidatorTest {
     }
 
     private static List<Diagnostic> diagnosticsWithCode(IlimapSemanticResult result, String code) {
-        return result.diagnostics().stream()
-                .filter(d -> d.code().equals(code))
-                .toList();
+        return result.diagnostics().stream().filter(d -> d.code().equals(code)).toList();
     }
 }

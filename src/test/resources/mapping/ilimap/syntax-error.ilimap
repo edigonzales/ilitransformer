@@ -1,0 +1,4 @@
+mapping v2 {
+  input src { path "in.xtf"; model "M"; format xtf; }
+  output tgt { path "out.xtf" model "M"; }
+}

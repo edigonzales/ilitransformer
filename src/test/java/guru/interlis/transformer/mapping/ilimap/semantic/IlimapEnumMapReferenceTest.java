@@ -8,9 +8,9 @@ import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapDocument;
 import guru.interlis.transformer.mapping.ilimap.parser.IlimapParser;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+
+import org.junit.jupiter.api.Test;
 
 class IlimapEnumMapReferenceTest {
 
@@ -41,8 +41,10 @@ class IlimapEnumMapReferenceTest {
                 }
                 """);
 
-        assertThat(errorsWithCode(result, DiagnosticCode.ILIMAP_UNKNOWN_ENUM_MAP)).isEmpty();
-        assertThat(warningsWithCode(result, DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF)).isEmpty();
+        assertThat(errorsWithCode(result, DiagnosticCode.ILIMAP_UNKNOWN_ENUM_MAP))
+                .isEmpty();
+        assertThat(warningsWithCode(result, DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF))
+                .isEmpty();
         assertThat(result.hasErrors()).isFalse();
     }
 
@@ -67,8 +69,11 @@ class IlimapEnumMapReferenceTest {
                 """);
 
         assertThat(result.hasErrors()).isFalse();
-        assertThat(warningsWithCode(result, DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF)).hasSize(1);
-        assertThat(warningsWithCode(result, DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF).get(0).message())
+        assertThat(warningsWithCode(result, DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF))
+                .hasSize(1);
+        assertThat(warningsWithCode(result, DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF)
+                        .get(0)
+                        .message())
                 .contains("MyEnum");
     }
 
@@ -110,7 +115,8 @@ class IlimapEnumMapReferenceTest {
                 """);
 
         assertThat(result.hasErrors()).isTrue();
-        assertThat(warningsWithCode(result, DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF)).hasSize(1);
+        assertThat(warningsWithCode(result, DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF))
+                .hasSize(1);
         assertThat(errorsWithCode(result, DiagnosticCode.ILIMAP_UNKNOWN_ENUM_MAP))
                 .anyMatch(d -> d.message().contains("GhostEnum"));
     }

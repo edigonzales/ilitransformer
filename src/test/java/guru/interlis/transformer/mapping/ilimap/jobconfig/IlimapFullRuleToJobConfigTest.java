@@ -19,7 +19,9 @@ class IlimapFullRuleToJobConfigTest {
     private JobConfig mapFromSource(String source) {
         IlimapDocument doc = new IlimapParser(source).parseDocument();
         IlimapSemanticResult sem = new IlimapSemanticValidator().validate(doc);
-        assertThat(sem.hasErrors()).as("semantic validation should pass: %s", sem.diagnostics()).isFalse();
+        assertThat(sem.hasErrors())
+                .as("semantic validation should pass: %s", sem.diagnostics())
+                .isFalse();
         return mapper.map(doc, sem.symbols(), Path.of("."));
     }
 

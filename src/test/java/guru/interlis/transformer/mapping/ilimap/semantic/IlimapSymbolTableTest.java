@@ -9,9 +9,9 @@ import guru.interlis.transformer.mapping.ilimap.ast.*;
 import guru.interlis.transformer.mapping.ilimap.lexer.IlimapSourcePosition;
 import guru.interlis.transformer.mapping.ilimap.lexer.IlimapSourceRange;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+
+import org.junit.jupiter.api.Test;
 
 class IlimapSymbolTableTest {
 
@@ -40,8 +40,7 @@ class IlimapSymbolTableTest {
         var diagnostics = new DiagnosticCollector();
         var input = dummyInput("src");
 
-        table.topLevelScope().define(
-                new IlimapSymbol(IlimapSymbolKind.INPUT, "src", input), diagnostics);
+        table.topLevelScope().define(new IlimapSymbol(IlimapSymbolKind.INPUT, "src", input), diagnostics);
 
         assertThat(diagnostics.all()).isEmpty();
         assertThat(table.resolveInput("src")).isPresent();
@@ -54,10 +53,8 @@ class IlimapSymbolTableTest {
         var table = new IlimapSymbolTable();
         var diagnostics = new DiagnosticCollector();
 
-        table.topLevelScope().define(
-                new IlimapSymbol(IlimapSymbolKind.OUTPUT, "out", dummyOutput("out")), diagnostics);
-        table.topLevelScope().define(
-                new IlimapSymbol(IlimapSymbolKind.RULE, "r1", dummyRule("r1")), diagnostics);
+        table.topLevelScope().define(new IlimapSymbol(IlimapSymbolKind.OUTPUT, "out", dummyOutput("out")), diagnostics);
+        table.topLevelScope().define(new IlimapSymbol(IlimapSymbolKind.RULE, "r1", dummyRule("r1")), diagnostics);
 
         assertThat(diagnostics.all()).isEmpty();
         assertThat(table.resolveOutput("out")).isPresent();
@@ -70,9 +67,8 @@ class IlimapSymbolTableTest {
         var table = new IlimapSymbolTable();
         var diagnostics = new DiagnosticCollector();
 
-        table.topLevelScope().define(
-                new IlimapSymbol(IlimapSymbolKind.ENUM_MAP, "MyEnum", dummyEnum("MyEnum")),
-                diagnostics);
+        table.topLevelScope()
+                .define(new IlimapSymbol(IlimapSymbolKind.ENUM_MAP, "MyEnum", dummyEnum("MyEnum")), diagnostics);
 
         assertThat(diagnostics.all()).isEmpty();
         assertThat(table.resolveEnumMap("MyEnum")).isPresent();
@@ -84,10 +80,8 @@ class IlimapSymbolTableTest {
         var table = new IlimapSymbolTable();
         var diagnostics = new DiagnosticCollector();
 
-        table.topLevelScope().define(
-                new IlimapSymbol(IlimapSymbolKind.INPUT, "src", dummyInput("src")), diagnostics);
-        table.topLevelScope().define(
-                new IlimapSymbol(IlimapSymbolKind.INPUT, "src", dummyInput("src")), diagnostics);
+        table.topLevelScope().define(new IlimapSymbol(IlimapSymbolKind.INPUT, "src", dummyInput("src")), diagnostics);
+        table.topLevelScope().define(new IlimapSymbol(IlimapSymbolKind.INPUT, "src", dummyInput("src")), diagnostics);
 
         assertThat(diagnostics.all()).hasSize(1);
         assertThat(diagnostics.all().get(0).code()).isEqualTo(DiagnosticCode.ILIMAP_DUPLICATE_ID);
@@ -100,8 +94,7 @@ class IlimapSymbolTableTest {
         var diagnostics = new DiagnosticCollector();
         var rule = dummyRule("r1");
 
-        table.topLevelScope().define(
-                new IlimapSymbol(IlimapSymbolKind.INPUT, "src", dummyInput("src")), diagnostics);
+        table.topLevelScope().define(new IlimapSymbol(IlimapSymbolKind.INPUT, "src", dummyInput("src")), diagnostics);
 
         IlimapScope ruleScope = table.scopeFor(rule);
         assertThat(ruleScope.resolve("src")).isPresent();
@@ -114,13 +107,11 @@ class IlimapSymbolTableTest {
         var diagnostics = new DiagnosticCollector();
         var rule = dummyRule("r1");
 
-        table.topLevelScope().define(
-                new IlimapSymbol(IlimapSymbolKind.INPUT, "p", dummyInput("p")), diagnostics);
+        table.topLevelScope().define(new IlimapSymbol(IlimapSymbolKind.INPUT, "p", dummyInput("p")), diagnostics);
 
         IlimapScope ruleScope = table.scopeFor(rule);
         var sourceStmt = new IlimapSourceStmt("p", List.of("p"), "M.A", null, DUMMY_RANGE);
-        ruleScope.define(
-                new IlimapSymbol(IlimapSymbolKind.SOURCE_ALIAS, "p", sourceStmt), diagnostics);
+        ruleScope.define(new IlimapSymbol(IlimapSymbolKind.SOURCE_ALIAS, "p", sourceStmt), diagnostics);
 
         assertThat(ruleScope.resolveLocal("p")).isPresent();
         assertThat(ruleScope.resolveLocal("p").get().kind()).isEqualTo(IlimapSymbolKind.SOURCE_ALIAS);

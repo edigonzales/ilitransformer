@@ -19,7 +19,9 @@ class IlimapToJobConfigMapperTest {
     private JobConfig mapFromSource(String source) {
         IlimapDocument doc = new IlimapParser(source).parseDocument();
         IlimapSemanticResult sem = new IlimapSemanticValidator().validate(doc);
-        assertThat(sem.hasErrors()).as("semantic validation should pass: %s", sem.diagnostics()).isFalse();
+        assertThat(sem.hasErrors())
+                .as("semantic validation should pass: %s", sem.diagnostics())
+                .isFalse();
         return mapper.map(doc, sem.symbols(), Path.of("."));
     }
 
@@ -274,8 +276,7 @@ class IlimapToJobConfigMapperTest {
                 """;
         JobConfig config = mapFromSource(source);
         assertThat(config.mapping.rules.get(0).identity).isNotNull();
-        assertThat(config.mapping.rules.get(0).identity.sourceKey)
-                .containsExactly("s.Id", "s.Name");
+        assertThat(config.mapping.rules.get(0).identity.sourceKey).containsExactly("s.Id", "s.Name");
     }
 
     @Test
@@ -311,7 +312,6 @@ class IlimapToJobConfigMapperTest {
                 }
                 """;
         JobConfig config = mapFromSource(source);
-        assertThat(config.mapping.rules.get(0).assign.get("Status"))
-                .isEqualTo("enumMap(s.Type, \"StatusMap\")");
+        assertThat(config.mapping.rules.get(0).assign.get("Status")).isEqualTo("enumMap(s.Type, \"StatusMap\")");
     }
 }

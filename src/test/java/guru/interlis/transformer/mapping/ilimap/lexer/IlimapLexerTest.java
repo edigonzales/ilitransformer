@@ -69,8 +69,12 @@ class IlimapLexerTest {
         var lexer = new IlimapLexer("assign { #Cat1 => #Cat2; }");
         List<IlimapToken> tokens = lexer.tokenize();
 
-        assertThat(tokens).anyMatch(t -> t.type() == IlimapTokenType.HASH_LITERAL && t.text().equals("#Cat1"));
-        assertThat(tokens).anyMatch(t -> t.type() == IlimapTokenType.HASH_LITERAL && t.text().equals("#Cat2"));
+        assertThat(tokens)
+                .anyMatch(t ->
+                        t.type() == IlimapTokenType.HASH_LITERAL && t.text().equals("#Cat1"));
+        assertThat(tokens)
+                .anyMatch(t ->
+                        t.type() == IlimapTokenType.HASH_LITERAL && t.text().equals("#Cat2"));
     }
 
     @Test
@@ -144,15 +148,18 @@ class IlimapLexerTest {
 
     @Test
     void tokenizesAllTokenTypes() {
-        var lexer = new IlimapLexer("rule r1 { target dmav => class \"Cls\"; assign { a = b(c, 42, true, false, null); } }");
+        var lexer = new IlimapLexer(
+                "rule r1 { target dmav => class \"Cls\"; assign { a = b(c, 42, true, false, null); } }");
         List<IlimapToken> tokens = lexer.tokenize();
 
         assertThat(tokens).anyMatch(t -> t.isKeyword("rule"));
         assertThat(tokens).anyMatch(t -> t.type() == IlimapTokenType.IDENTIFIER);
         assertThat(tokens).anyMatch(t -> t.type() == IlimapTokenType.STRING);
         assertThat(tokens).anyMatch(t -> t.type() == IlimapTokenType.NUMBER);
-        assertThat(tokens).anyMatch(t -> t.type() == IlimapTokenType.BOOLEAN && t.text().equals("true"));
-        assertThat(tokens).anyMatch(t -> t.type() == IlimapTokenType.BOOLEAN && t.text().equals("false"));
+        assertThat(tokens)
+                .anyMatch(t -> t.type() == IlimapTokenType.BOOLEAN && t.text().equals("true"));
+        assertThat(tokens)
+                .anyMatch(t -> t.type() == IlimapTokenType.BOOLEAN && t.text().equals("false"));
         assertThat(tokens).anyMatch(t -> t.type() == IlimapTokenType.NULL);
         assertThat(tokens).anyMatch(t -> t.type() == IlimapTokenType.ARROW);
     }

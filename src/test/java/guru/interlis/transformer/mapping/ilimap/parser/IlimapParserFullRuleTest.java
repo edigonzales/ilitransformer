@@ -1,12 +1,13 @@
 package guru.interlis.transformer.mapping.ilimap.parser;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import guru.interlis.transformer.mapping.ilimap.ast.*;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
 
 class IlimapParserFullRuleTest {
 
@@ -28,7 +29,8 @@ class IlimapParserFullRuleTest {
         IlimapJoinStmt join = elements.stream()
                 .filter(e -> e instanceof IlimapJoinStmt)
                 .map(e -> (IlimapJoinStmt) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(join.joinType()).isEqualTo("inner");
         assertThat(join.leftAlias()).isEqualTo("s");
         assertThat(join.rightAlias()).isEqualTo("t");
@@ -52,7 +54,8 @@ class IlimapParserFullRuleTest {
         IlimapJoinStmt join = doc.rules().get(0).elements().stream()
                 .filter(e -> e instanceof IlimapJoinStmt)
                 .map(e -> (IlimapJoinStmt) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(join.joinType()).isEqualTo("left");
     }
 
@@ -82,7 +85,8 @@ class IlimapParserFullRuleTest {
         IlimapBagBlock bag = doc.rules().get(0).elements().stream()
                 .filter(e -> e instanceof IlimapBagBlock)
                 .map(e -> (IlimapBagBlock) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(bag.id()).isEqualTo("Textposition");
         assertThat(bag.from()).isNotNull();
         assertThat(bag.from().alias()).isEqualTo("pos");
@@ -126,7 +130,8 @@ class IlimapParserFullRuleTest {
         IlimapBagBlock outer = doc.rules().get(0).elements().stream()
                 .filter(e -> e instanceof IlimapBagBlock)
                 .map(e -> (IlimapBagBlock) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(outer.id()).isEqualTo("Outer");
         assertThat(outer.nestedBags()).hasSize(1);
         IlimapBagBlock inner = outer.nestedBags().get(0);
@@ -157,7 +162,8 @@ class IlimapParserFullRuleTest {
         IlimapBagBlock bag = doc.rules().get(0).elements().stream()
                 .filter(e -> e instanceof IlimapBagBlock)
                 .map(e -> (IlimapBagBlock) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(bag.parentRef().kind()).isEqualTo("role");
         assertThat(bag.parentRef().name()).isEqualTo("MyRole");
         assertThat(bag.parentRef().parentAlias()).isEqualTo("s");
@@ -182,7 +188,8 @@ class IlimapParserFullRuleTest {
         IlimapBagBlock bag = doc.rules().get(0).elements().stream()
                 .filter(e -> e instanceof IlimapBagBlock)
                 .map(e -> (IlimapBagBlock) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(bag.mode()).isEqualTo("expand");
     }
 
@@ -211,7 +218,8 @@ class IlimapParserFullRuleTest {
         IlimapRefBlock ref = doc.rules().get(1).elements().stream()
                 .filter(e -> e instanceof IlimapRefBlock)
                 .map(e -> (IlimapRefBlock) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(ref.id()).isEqualTo("Entstehung");
         assertThat(ref.association()).isEqualTo("Entstehung_LFP3");
         assertThat(ref.role()).isEqualTo("Entstehung");
@@ -260,7 +268,8 @@ class IlimapParserFullRuleTest {
         IlimapCreateBlock create = doc.rules().get(0).elements().stream()
                 .filter(e -> e instanceof IlimapCreateBlock)
                 .map(e -> (IlimapCreateBlock) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(create.targetClass()).isEqualTo("M.Extra");
         assertThat(create.assign()).isNotNull();
         assertThat(create.assign().assignments()).hasSize(1);
@@ -284,7 +293,8 @@ class IlimapParserFullRuleTest {
         IlimapCreateBlock create = doc.rules().get(0).elements().stream()
                 .filter(e -> e instanceof IlimapCreateBlock)
                 .map(e -> (IlimapCreateBlock) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(create.targetClass()).isEqualTo("M.Extra");
         assertThat(create.assign()).isNull();
     }
@@ -310,7 +320,8 @@ class IlimapParserFullRuleTest {
         IlimapLossBlock loss = doc.rules().get(0).elements().stream()
                 .filter(e -> e instanceof IlimapLossBlock)
                 .map(e -> (IlimapLossBlock) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(loss.sourcePath().text()).isEqualTo("s.SymbolOri");
         assertThat(loss.reasonCode()).isEqualTo("not-representable");
         assertThat(loss.description()).isEqualTo("Orientierung nicht abbildbar.");
@@ -337,7 +348,8 @@ class IlimapParserFullRuleTest {
         IlimapMetadataBlock meta = doc.rules().get(0).elements().stream()
                 .filter(e -> e instanceof IlimapMetadataBlock)
                 .map(e -> (IlimapMetadataBlock) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(meta.direction()).isEqualTo("forward");
         assertThat(meta.roundtrip()).isEqualTo("notGuaranteed");
         assertThat(meta.lossiness()).isEqualTo("minor");
@@ -361,7 +373,8 @@ class IlimapParserFullRuleTest {
         IlimapBagBlock bag = doc.rules().get(0).elements().stream()
                 .filter(e -> e instanceof IlimapBagBlock)
                 .map(e -> (IlimapBagBlock) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(bag.from().where()).isNull();
     }
 
@@ -383,7 +396,8 @@ class IlimapParserFullRuleTest {
         IlimapRefBlock ref = doc.rules().get(0).elements().stream()
                 .filter(e -> e instanceof IlimapRefBlock)
                 .map(e -> (IlimapRefBlock) e)
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         assertThat(ref.association()).isNull();
         assertThat(ref.role()).isNull();
         assertThat(ref.required()).isFalse();

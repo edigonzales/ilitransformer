@@ -38,7 +38,8 @@ public final class IlimapScope {
             String rangeInfo = null;
             if (symbol.node() != null) {
                 var range = symbol.node().range();
-                rangeInfo = "line " + range.start().line() + ", column " + range.start().column();
+                rangeInfo = "line " + range.start().line() + ", column "
+                        + range.start().column();
             }
             diagnostics.add(new Diagnostic(
                     DiagnosticCode.ILIMAP_DUPLICATE_ID,

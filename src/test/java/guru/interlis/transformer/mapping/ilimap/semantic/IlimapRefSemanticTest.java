@@ -1,14 +1,15 @@
 package guru.interlis.transformer.mapping.ilimap.semantic;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapDocument;
 import guru.interlis.transformer.mapping.ilimap.parser.IlimapParser;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class IlimapRefSemanticTest {
 
@@ -122,8 +123,6 @@ class IlimapRefSemanticTest {
     }
 
     private static List<Diagnostic> diagnosticsWithCode(IlimapSemanticResult result, String code) {
-        return result.diagnostics().stream()
-                .filter(d -> d.code().equals(code))
-                .toList();
+        return result.diagnostics().stream().filter(d -> d.code().equals(code)).toList();
     }
 }

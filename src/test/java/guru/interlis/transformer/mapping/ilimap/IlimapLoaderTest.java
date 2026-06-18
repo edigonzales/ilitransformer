@@ -2,7 +2,7 @@ package guru.interlis.transformer.mapping.ilimap;
 
 import static org.assertj.core.api.Assertions.*;
 
-import guru.interlis.transformer.mapping.ilimap.parser.IlimapParser;
+import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
 
 import java.nio.file.Path;
@@ -79,8 +79,29 @@ class IlimapLoaderTest {
                   input src { path "in.xtf" model }
                 }
                 """;
-        assertThatThrownBy(() -> loader.load(source, Path.of(".")))
-                .isInstanceOf(IlimapParser.ParseException.class);
+        assertThatThrownBy(() -> loader.load(source, Path.of("."))).isInstanceOf(IlimapLoadException.class);
+    }
+
+    @Test
+    void loadDetailedReturnsDiagnosticsForSyntaxError() {
+        String source = """
+                mapping v2 {
+                  input src { path "in.xtf" model }
+                }
+                """;
+        IlimapLoadResult result = loader.loadDetailed(source, Path.of("."));
+        assertThat(result.hasErrors()).isTrue();
+        assertThat(result.diagnostics())
+                .anyMatch(d -> d.code().equals("ILITRF-ILIMAP-SYNTAX-ERROR") && d.severity() == Severity.ERROR);
+        assertThat(result.jobConfig()).isNull();
+    }
+
+    @Test
+    void loadDetailedFromPathIncludesFilePathInDiagnostics() {
+        Path path = Path.of("src/test/resources/mapping/ilimap/minimal-lfp3.ilimap");
+        IlimapLoadResult result = loader.loadDetailed(path);
+        assertThat(result.hasErrors()).isFalse();
+        assertThat(result.jobConfig()).isNotNull();
     }
 
     @Test

@@ -1,15 +1,16 @@
 package guru.interlis.transformer.mapping.ilimap.format;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import guru.interlis.transformer.mapping.ilimap.ast.*;
 import guru.interlis.transformer.mapping.ilimap.parser.IlimapParser;
-import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class IlimapFormatterRoundtripTest {
 
@@ -235,9 +236,6 @@ class IlimapFormatterRoundtripTest {
 
     @SuppressWarnings("unchecked")
     private <T extends IlimapRuleElement> List<T> ruleElements(IlimapRuleBlock rule, Class<T> type) {
-        return rule.elements().stream()
-                .filter(type::isInstance)
-                .map(e -> (T) e)
-                .toList();
+        return rule.elements().stream().filter(type::isInstance).map(e -> (T) e).toList();
     }
 }

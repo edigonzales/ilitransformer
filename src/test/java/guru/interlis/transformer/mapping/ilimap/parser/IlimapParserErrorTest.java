@@ -62,8 +62,7 @@ class IlimapParserErrorTest {
                 }
                 """);
 
-        assertThatThrownBy(parser::parseDocument)
-                .isInstanceOf(ParseException.class);
+        assertThatThrownBy(parser::parseDocument).isInstanceOf(ParseException.class);
     }
 
     @Test
@@ -83,8 +82,7 @@ class IlimapParserErrorTest {
                 }
                 """);
 
-        assertThatThrownBy(parser::parseDocument)
-                .isInstanceOf(ParseException.class);
+        assertThatThrownBy(parser::parseDocument).isInstanceOf(ParseException.class);
     }
 
     @Test
@@ -128,8 +126,7 @@ class IlimapParserErrorTest {
                   }
                 """);
 
-        assertThatThrownBy(parser::parseDocument)
-                .isInstanceOf(ParseException.class);
+        assertThatThrownBy(parser::parseDocument).isInstanceOf(ParseException.class);
     }
 
     @Test
@@ -145,8 +142,7 @@ class IlimapParserErrorTest {
                 }
                 """);
 
-        assertThatThrownBy(parser::parseDocument)
-                .isInstanceOf(ParseException.class);
+        assertThatThrownBy(parser::parseDocument).isInstanceOf(ParseException.class);
     }
 
     @Test
@@ -174,8 +170,7 @@ class IlimapParserErrorTest {
     void rejectsEmptyMapping() {
         var parser = new IlimapParser("");
 
-        assertThatThrownBy(parser::parseDocument)
-                .isInstanceOf(ParseException.class);
+        assertThatThrownBy(parser::parseDocument).isInstanceOf(ParseException.class);
     }
 
     @Test

@@ -1,10 +1,11 @@
 package guru.interlis.transformer.mapping.ilimap.format;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapDocument;
 import guru.interlis.transformer.mapping.ilimap.parser.IlimapParser;
-import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class IlimapFormatterTest {
 
@@ -268,9 +269,8 @@ class IlimapFormatterTest {
                 }
                 """);
         String result = formatter.format(doc);
-        long defaultsCount = result.lines()
-                .filter(l -> l.strip().equals("defaults {"))
-                .count();
+        long defaultsCount =
+                result.lines().filter(l -> l.strip().equals("defaults {")).count();
         assertThat(defaultsCount).isEqualTo(2);
     }
 

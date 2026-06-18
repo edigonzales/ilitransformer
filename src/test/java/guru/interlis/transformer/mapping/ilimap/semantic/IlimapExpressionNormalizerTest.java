@@ -22,9 +22,8 @@ class IlimapExpressionNormalizerTest {
     private IlimapSymbolTable tableWithEnum(String enumName) {
         var table = new IlimapSymbolTable();
         var enumBlock = new IlimapEnumBlock(enumName, List.of(), DUMMY);
-        table.topLevelScope().define(
-                new IlimapSymbol(IlimapSymbolKind.ENUM_MAP, enumName, enumBlock),
-                new DiagnosticCollector());
+        table.topLevelScope()
+                .define(new IlimapSymbol(IlimapSymbolKind.ENUM_MAP, enumName, enumBlock), new DiagnosticCollector());
         return table;
     }
 
