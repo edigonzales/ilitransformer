@@ -407,3 +407,13 @@ entries:
     description: "Ref short form (-> / using) is reserved for a later version"
     testReferences:
       - "IlimapRefSemanticTest"
+  - feature: "ILIMAP includes/macros"
+    phase: "-"
+    status: UNSUPPORTED
+    description: "Macro and include system — not planned for v2"
+    testReferences: []
+  - feature: "ILIMAP qualified INTERLIS names as tokens"
+    phase: "-"
+    status: UNSUPPORTED
+    description: "INTERLIS model/class paths are strings, not qualified tokens"
+    testReferences: []

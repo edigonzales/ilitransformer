@@ -2,6 +2,10 @@
 
 Die Mapping-Datei ist eine YAML-Konfiguration, die die Transformation von INTERLIS-Transferdaten steuert. Sie wird durch den `MappingCompiler` in einen typisierten Ausführungsplan (`TransformPlan`) übersetzt.
 
+> **Hinweis:** Fuer neue Profile ist die [`.ilimap`-DSL (v2)](ilimap-v2.md) das bevorzugte
+> Autorenformat. Bestehende YAML-Mappings koennen mit `ilitransformer convert-mapping`
+> konvertiert werden.
+
 Für DM01/DMAV gilt:
 
 - produktive, versionierte Profile liegen unter `profiles/`

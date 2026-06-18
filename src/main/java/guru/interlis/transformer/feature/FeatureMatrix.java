@@ -17,7 +17,7 @@ public final class FeatureMatrix {
 
     private static final List<FeatureEntry> ENTRIES = buildEntries();
 
-    FeatureMatrix() {}
+    public FeatureMatrix() {}
 
     public List<FeatureEntry> entries() {
         return Collections.unmodifiableList(ENTRIES);

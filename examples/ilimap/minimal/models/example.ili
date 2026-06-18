@@ -1,0 +1,22 @@
+INTERLIS 2.4;
+
+MODEL ExampleModel (en)
+  AT "http://example.ilitransformer.ch" VERSION "2026-06-07" =
+  TOPIC ExampleTopic =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.STANDARDOID;
+
+    CLASS SourceClass =
+      Name: MANDATORY TEXT*60;
+      Count: 0 .. 9999;
+      Active: BOOLEAN;
+    END SourceClass;
+
+    CLASS TargetClass =
+      Label: MANDATORY TEXT*60;
+      Size: 0 .. 9999;
+      Enabled: BOOLEAN;
+    END TargetClass;
+
+  END ExampleTopic;
+END ExampleModel.
