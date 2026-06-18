@@ -4,12 +4,15 @@ import guru.interlis.transformer.cli.Dm01DmavCommand;
 import guru.interlis.transformer.cli.InspectModelCommand;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.mapping.ilimap.convert.ConvertException;
+import guru.interlis.transformer.mapping.ilimap.convert.YamlToIlimapConverter;
 import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.FailPolicyParser;
 import guru.interlis.transformer.validation.InProcessIlivalidatorService;
 import guru.interlis.transformer.validation.TransferValidationService;
 import guru.interlis.transformer.validation.ValidationResult;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +31,7 @@ import picocli.CommandLine.Option;
             CliMain.TransformCommand.class,
             CliMain.ValidateMappingCommand.class,
             CliMain.ValidateTransferCommand.class,
+            CliMain.ConvertMappingCommand.class,
             InspectModelCommand.class,
             Dm01DmavCommand.class
         })
@@ -208,6 +212,43 @@ public final class CliMain implements Callable<Integer> {
                 System.out.println(result.logText());
             }
             return result.valid() ? 0 : 1;
+        }
+    }
+
+    // -- ConvertMappingCommand ---------------------------------------------
+
+    @Command(
+            name = "convert-mapping",
+            description = "Convert a YAML mapping configuration to .ilimap format",
+            mixinStandardHelpOptions = true)
+    static final class ConvertMappingCommand implements Callable<Integer> {
+
+        @Option(
+                names = {"--from", "--input"},
+                required = true,
+                description = "Source YAML mapping file")
+        private Path from;
+
+        @Option(
+                names = {"--to", "--output"},
+                required = true,
+                description = "Target .ilimap output file")
+        private Path to;
+
+        @Override
+        public Integer call() {
+            try {
+                String result = new YamlToIlimapConverter().convert(from);
+                Files.writeString(to, result);
+                System.out.println("Converted: " + from + " -> " + to);
+                return 0;
+            } catch (ConvertException e) {
+                System.err.println("Conversion failed: " + e.getMessage());
+                return 1;
+            } catch (Exception e) {
+                System.err.println("Error: " + e.getMessage());
+                return 1;
+            }
         }
     }
 }
