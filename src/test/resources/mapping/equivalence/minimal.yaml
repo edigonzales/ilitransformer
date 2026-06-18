@@ -1,0 +1,46 @@
+version: 1
+
+job:
+  name: "equivalence-test"
+  description: "Minimal equivalence test mapping"
+  direction: "forward"
+  failPolicy: "strict"
+  inputs:
+    - id: src
+      path: "input/source.xtf"
+      model: "SourceModel"
+      format: "xtf"
+  outputs:
+    - id: tgt
+      path: "output/target.xtf"
+      model: "TargetModel"
+      format: "xtf"
+
+mapping:
+  compileMode: "compatible"
+  oidStrategy:
+    default: "uuid"
+  basketStrategy:
+    default: "preserve"
+  enums:
+    StatusMap:
+      "active": "true"
+      "inactive": "false"
+  rules:
+    - id: transform-item
+      target:
+        output: tgt
+        class: "TargetModel.Topic.TargetClass"
+      sources:
+        - alias: s
+          inputs:
+            - src
+          class: "SourceModel.Topic.SourceClass"
+      where: "s.Active == true"
+      identity:
+        sourceKey:
+          - "s.Id"
+      assign:
+        Name: "s.Name"
+        Description: "s.Description"
+        Status: 'enumMap(s.Type, "StatusMap")'

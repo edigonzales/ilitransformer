@@ -1,0 +1,42 @@
+mapping v2 "equivalence-test" {
+  job {
+    description "Minimal equivalence test mapping";
+    direction forward;
+    failPolicy strict;
+    compileMode compatible;
+  }
+
+  input src {
+    path "input/source.xtf";
+    model "SourceModel";
+    format xtf;
+  }
+
+  output tgt {
+    path "output/target.xtf";
+    model "TargetModel";
+    format xtf;
+  }
+
+  oid { strategy uuid; }
+
+  basket preserve;
+
+  enum StatusMap {
+    "active" => true;
+    "inactive" => false;
+  }
+
+  rule transform-item {
+    target tgt class "TargetModel.Topic.TargetClass";
+    source s from src class "SourceModel.Topic.SourceClass";
+    where s.Active == true;
+    identity s.Id;
+
+    assign {
+      Name = s.Name;
+      Description = s.Description;
+      Status = enumMap(s.Type, StatusMap);
+    }
+  }
+}
