@@ -67,10 +67,9 @@ mapping:
         - alias: lok
           input: dm01
           class: "DM01AVCH24LV95D.Gebaeudeadressen.Lokalisation"
-      identity:
-        sourceKey: ["lok.Nummerierungsprinzip", "lok.Art"]
       assign:
         Nummerierungsprinzip: "lok.Nummerierungsprinzip"
+        LokalisationNummer: "lok.LokalisationNummer"
         AttributeProvisorisch: "enumMap(lok.AttributeProvisorisch, 'JaNein_DM01_DMAV')"
         IstOffizielleBezeichnung: "enumMap(lok.IstOffizielleBezeichnung, 'JaNein_DM01_DMAV')"
         Lokalisationsstatus: "lok.Status"
@@ -101,6 +100,16 @@ mapping:
           assign:
             Geometrie: "ss.Geometrie"
             IstAchse: "enumMap(ss.IstAchse, 'IstAchse_DM01_DMAV')"
+        BenanntesGebiet:
+          from:
+            input: dm01
+            class: "DM01AVCH24LV95D.Gebaeudeadressen.BenanntesGebiet"
+            alias: bg
+          parentRef:
+            attribute: BenanntesGebiet_von
+            parentAlias: lok
+          assign:
+            Geometrie: "bg.Flaeche"
       refs:
         - association: "Entstehung_Lokalisation"
           role: "Entstehung"
@@ -117,8 +126,6 @@ mapping:
         - alias: ge
           input: dm01
           class: "DM01AVCH24LV95D.Gebaeudeadressen.Gebaeudeeingang"
-      identity:
-        sourceKey: ["ge.Hausnummer"]
       assign:
         Gebaeudestatus: "ge.Status"
         InAenderung: "enumMap(ge.InAenderung, 'JaNein_DM01_DMAV')"
