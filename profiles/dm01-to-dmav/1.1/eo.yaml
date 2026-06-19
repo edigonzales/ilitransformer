@@ -122,6 +122,7 @@ mapping:
       target:
         output: dmav
         class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Einzelobjekt"
+      where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       sources:
         - alias: eo
           input: dm01
@@ -134,7 +135,6 @@ mapping:
           right: nf
           on: "eq(eo.Entstehung, nf)"
           type: inner
-      where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       assign:
         Qualitaetsstandard: "eo.Qualitaet"
         Einzelobjektart: "enumMap(eo.Art, 'EOArt_DM01_DMAV')"
@@ -258,6 +258,7 @@ mapping:
       target:
         output: dmav
         class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Einzelobjekt"
+      where: "nf.Gueltigkeit == #projektiert"
       sources:
         - alias: eo
           input: dm01
@@ -270,7 +271,6 @@ mapping:
           right: nf
           on: "eq(eo.Entstehung, nf)"
           type: inner
-      where: "nf.Gueltigkeit == #projektiert"
       assign:
         Qualitaetsstandard: "eo.Qualitaet"
         Einzelobjektart: "enumMap(eo.Art, 'EOArt_DM01_DMAV')"
@@ -412,10 +412,12 @@ mapping:
       target:
         output: dmav
         class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Messpunkt"
+      where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       sources:
         - alias: ep
           input: dm01
           class: "DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt"
+          where: "defined(ep.Entstehung)"
         - alias: nf
           input: dm01
           class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
@@ -424,7 +426,6 @@ mapping:
           right: nf
           on: "eq(ep.Entstehung, nf)"
           type: inner
-      where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       identity:
         sourceKey: ["ep.Identifikator"]
       assign:
@@ -445,10 +446,12 @@ mapping:
       target:
         output: dmav
         class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Messpunkt"
+      where: "nf.Gueltigkeit == #projektiert"
       sources:
         - alias: ep
           input: dm01
           class: "DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt"
+          where: "defined(ep.Entstehung)"
         - alias: nf
           input: dm01
           class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
@@ -457,7 +460,6 @@ mapping:
           right: nf
           on: "eq(ep.Entstehung, nf)"
           type: inner
-      where: "nf.Gueltigkeit == #projektiert"
       identity:
         sourceKey: ["ep.Identifikator"]
       assign:
