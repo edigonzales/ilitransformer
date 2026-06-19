@@ -1,6 +1,6 @@
 # DM01 ↔ DMAV Use Case
 
-Die produktiven, versionierten Profile für diesen Use Case liegen unter `profiles/`. Topic-Fixtures liegen unter `src/test/resources/fixtures/dm01-dmav/`: kuratierte `*-minimal`-Fixtures für Roundtrip-/Validator-Gates sowie `*-real-extract`-Fixtures, die aus `src/test/data/DMAV_Version_1_1/` extrahiert und separat evidenzgeführt werden.
+Die produktiven, versionierten Profile für diesen Use Case liegen unter `profiles/`. Topic-Fixtures liegen unter `src/test/resources/fixtures/dm01-dmav/`: kuratierte `*-minimal`-Fixtures für Roundtrip-/Validator-Gates sowie `*-real-extract`-Fixtures, die aus `src/test/data/DMAV_Version_1_1/` extrahiert und separat evidenzgeführt werden. Reproduzierbare Voll-Läufe mit externen Originaldatensätzen liegen als manifestgesteuerte Bundles unter `products/dm01-dmav/full-runs/`.
 
 Der primäre produktionsnahe Use Case des ilitransformer ist die Transformation von INTERLIS-Transferdaten zwischen **DM01** (AV93, INTERLIS 1, ITF) und **DMAV** (INTERLIS 2.4, XTF).
 

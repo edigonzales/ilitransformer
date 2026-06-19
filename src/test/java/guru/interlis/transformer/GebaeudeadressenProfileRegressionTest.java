@@ -10,7 +10,6 @@ import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.dmav.Dm01DmavFixtures;
-import guru.interlis.transformer.dmav.Dm01DmavPaths;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
@@ -122,13 +121,11 @@ class GebaeudeadressenProfileRegressionTest {
 
     private PreparedJob prepareProfile() throws Exception {
         Path materializedProfile = tempDir.resolve("gebaeudeadressen-regression.yaml");
-        String yaml = Files.readString(PROFILE, StandardCharsets.UTF_8).replace(
-                """
+        String yaml = Files.readString(PROFILE, StandardCharsets.UTF_8).replace("""
                   modeldir:
                     - "https://models.geo.admin.ch/"
                     - "models/"
-                """,
-                """
+                """, """
                   modeldir:
                     - "src/test/data/av/models"
                     - "https://models.interlis.ch"

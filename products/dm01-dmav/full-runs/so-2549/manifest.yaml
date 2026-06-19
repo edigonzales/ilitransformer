@@ -1,0 +1,76 @@
+datasetSlug: so-2549
+description: Full-run bundle for the original SO-2549 DM01 dataset into the DMAV umbrella model.
+direction: dm01-to-dmav
+failPolicy: strict
+
+source:
+  pathHint: ./source/2549.ch.so.agi.av.dm01_ch.itf
+  sha256: a24986c97092b1fbd1bbba1aa76c82c2e1976a2e719bd045eb27087f582128fd
+  model: DM01AVCH24LV95D
+  format: itf
+  inputId: dm01
+
+output:
+  outputId: dmav
+  model: DMAVTYM_Alles_V1_1
+  format: xtf
+  fileName: dmav-so-2549.xtf
+
+mapping:
+  oidStrategy: deterministicUuid
+  oidNamespace: dm01-to-dmav-so-2549-all
+  basketStrategy: byTopic
+  compileMode: compatible
+
+report:
+  expectedSummary: ./expected-summary.yaml
+
+modeldirs:
+  - src/test/data/av/models
+  - https://models.interlis.ch
+  - https://models.geo.admin.ch
+  - https://models.kgk-cgc.ch
+
+topics:
+  include:
+    - id: bb
+      fallbackYaml: profiles/dm01-to-dmav/1.1/bb.yaml
+    - id: dbv
+      fallbackYaml: profiles/dm01-to-dmav/1.1/dbv.yaml
+    - id: eo
+      fallbackYaml: profiles/dm01-to-dmav/1.1/eo.yaml
+    - id: fpds2
+      fallbackYaml: profiles/dm01-to-dmav/1.1/fpds2.yaml
+    - id: gebaeudeadressen
+      fallbackYaml: profiles/dm01-to-dmav/1.1/gebaeudeadressen.yaml
+    - id: hfp3
+      fallbackYaml: profiles/dm01-to-dmav/1.1/hfp3.yaml
+    - id: lfp3
+      preferredIlimap: profiles/dm01-to-dmav/1.1/lfp3.ilimap
+    - id: nomenklatur
+      fallbackYaml: profiles/dm01-to-dmav/1.1/nomenklatur.yaml
+    - id: rohrleitungen
+      fallbackYaml: profiles/dm01-to-dmav/1.1/rohrleitungen.yaml
+    - id: toleranzstufen
+      fallbackYaml: profiles/dm01-to-dmav/1.1/toleranzstufen.yaml
+  exclude:
+    - id: fixpunktelv
+      reason: "validate-mapping: target classes DMAV_FixpunkteLV_V1_0.FixpunkteLV.LFP1 and HFP1 are not present under output model DMAVTYM_Alles_V1_1."
+    - id: hoheitsgrenzenlv
+      reason: "validate-mapping: target class DMAV_HoheitsgrenzenLV_V1_0.HoheitsgrenzenLV.Landesgrenze is not present under output model DMAVTYM_Alles_V1_1."
+    - id: plzortschaft
+      reason: "validate-mapping: target classes DMAV_PLZ_Ortschaft_V1_0.PLZ_Ortschaft.Ortschaft and PLZ are not present under output model DMAVTYM_Alles_V1_1."
+    - id: gs
+      reason: "transform: required Entstehung_Grenzpunkt references are missing for source OID 7."
+    - id: hoheitsgrenzen
+      reason: "transform: ambiguous #first references in DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung; multiple target candidates are found."
+
+sourceTopicsWithoutProfile:
+  - DM01AVCH24LV95D.Hoehen
+  - DM01AVCH24LV95D.Nummerierungsbereiche
+  - DM01AVCH24LV95D.Planeinteilungen
+  - DM01AVCH24LV95D.Planrahmen
+
+sourceTopicsPresentInDataset:
+  - DM01AVCH24LV95D.Nummerierungsbereiche
+  - DM01AVCH24LV95D.Planeinteilungen

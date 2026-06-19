@@ -2,6 +2,8 @@ package guru.interlis.transformer.docs;
 
 import static org.assertj.core.api.Assertions.*;
 
+import guru.interlis.transformer.feature.FeatureEntry;
+import guru.interlis.transformer.feature.FeatureMatrix;
 import guru.interlis.transformer.mapping.ilimap.IlimapLoader;
 import guru.interlis.transformer.mapping.ilimap.parser.IlimapParser;
 import guru.interlis.transformer.mapping.ilimap.semantic.IlimapSemanticValidator;
@@ -13,9 +15,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
-
-import guru.interlis.transformer.feature.FeatureEntry;
-import guru.interlis.transformer.feature.FeatureMatrix;
 
 import org.junit.jupiter.api.Test;
 
@@ -118,7 +117,8 @@ class DocumentationExampleTest {
                     try (Stream<Path> walk = Files.walk(path)) {
                         walk.filter(p -> p.getFileName().toString().endsWith("Test.class"))
                                 .filter(p -> !p.getFileName().toString().contains("$"))
-                                .forEach(p -> names.add(p.getFileName().toString().replace(".class", "")));
+                                .forEach(p ->
+                                        names.add(p.getFileName().toString().replace(".class", "")));
                     }
                 }
             }
@@ -128,7 +128,8 @@ class DocumentationExampleTest {
 
     private static Path detectProjectRoot() {
         try {
-            var codeSource = DocumentationExampleTest.class.getProtectionDomain().getCodeSource();
+            var codeSource =
+                    DocumentationExampleTest.class.getProtectionDomain().getCodeSource();
             if (codeSource != null && codeSource.getLocation() != null) {
                 Path current = Path.of(codeSource.getLocation().toURI());
                 while (current != null) {

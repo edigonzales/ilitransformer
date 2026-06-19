@@ -14,11 +14,13 @@
 ./gradlew test
 ./gradlew integrationTest
 ./gradlew realDataTest
+./gradlew runDm01DmavFullRun -Pdm01DmavFullRunManifest=products/dm01-dmav/full-runs/so-2549/manifest.yaml -Pdm01DmavFullRunSource=/abs/pfad/zur/quelle.itf
 ./gradlew check
 ```
 
 - `check` hängt an `integrationTest`, aber bewusst nicht an `realDataTest`.
 - `realDataTest` ist für langsame Echtdaten- und Profil-Regression separat ausführbar.
+- `runDm01DmavFullRun` ist ein opt-in Produktlauf für manifestgesteuerte externe Volldatensätze und hängt bewusst nicht an `check`.
 
 ## CI-Integration
 
@@ -40,6 +42,7 @@ separaten GitHub-Actions-Workflow (`.github/workflows/real-data.yml`):
 | `src/test/resources/transfers/` | kleine kuratierte Transfer-Fixtures |
 | `src/test/resources/fixtures/dm01-dmav/` | Topic-Fixtures mit kuratierten `*-minimal`- und extractor-owned `*-real-extract`-Transfers |
 | `src/test/resources/dm01-dmav/` | Snapshots für Report-Tests |
+| `products/dm01-dmav/full-runs/` | manifestgesteuerte Voll-Run-Bundles mit normalisierten Soll-Reports |
 
 ## Was `realDataTest` abdeckt
 
@@ -52,6 +55,24 @@ separaten GitHub-Actions-Workflow (`.github/workflows/real-data.yml`):
 - Extraktion und Validierung kleiner `real-extract`-Fixtures aus den vollständigen Datensätzen
 
 Die Suite ist absichtlich separat, damit `check` lokal und in CI schnell bleibt.
+
+## Opt-in Full Runs
+
+Manifestgesteuerte Voll-Läufe gegen externe Originaldatensätze sind Produktartefakte, keine Standard-Testfixtures. Sie laufen bewusst nur manuell:
+
+```bash
+./products/dm01-dmav/full-runs/run-full-run.sh so-2549 /abs/pfad/zur/2549.ch.so.agi.av.dm01_ch.itf
+```
+
+oder direkt über Gradle:
+
+```bash
+./gradlew runDm01DmavFullRun \
+  -Pdm01DmavFullRunManifest=products/dm01-dmav/full-runs/so-2549/manifest.yaml \
+  -Pdm01DmavFullRunSource=/abs/pfad/zur/2549.ch.so.agi.av.dm01_ch.itf
+```
+
+Der Lauf validiert Fingerprint, Transformation, `ilivalidator` und die normalisierte Summary gegen das eingecheckte `expected-summary.yaml`.
 
 ## Wichtige Testklassen
 

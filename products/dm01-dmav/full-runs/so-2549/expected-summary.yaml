@@ -1,0 +1,66 @@
+datasetSlug: so-2549
+direction: dm01-to-dmav
+sourceSha256: a24986c97092b1fbd1bbba1aa76c82c2e1976a2e719bd045eb27087f582128fd
+counts:
+  sourceRecordsRead: 1860
+  sourceRecordsFiltered: 78
+  targetsCreated: 288
+  targetsWritten: 288
+  errors: 0
+  warnings: 61
+includedTopics:
+  - bb
+  - dbv
+  - eo
+  - fpds2
+  - gebaeudeadressen
+  - hfp3
+  - lfp3
+  - nomenklatur
+  - rohrleitungen
+  - toleranzstufen
+excludedTopics:
+  - id: fixpunktelv
+    reason: "validate-mapping: target classes DMAV_FixpunkteLV_V1_0.FixpunkteLV.LFP1 and HFP1 are not present under output model DMAVTYM_Alles_V1_1."
+  - id: hoheitsgrenzenlv
+    reason: "validate-mapping: target class DMAV_HoheitsgrenzenLV_V1_0.HoheitsgrenzenLV.Landesgrenze is not present under output model DMAVTYM_Alles_V1_1."
+  - id: plzortschaft
+    reason: "validate-mapping: target classes DMAV_PLZ_Ortschaft_V1_0.PLZ_Ortschaft.Ortschaft and PLZ are not present under output model DMAVTYM_Alles_V1_1."
+  - id: gs
+    reason: "transform: required Entstehung_Grenzpunkt references are missing for source OID 7."
+  - id: hoheitsgrenzen
+    reason: "transform: ambiguous #first references in DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung; multiple target candidates are found."
+sourceTopicsWithoutProfile:
+  - DM01AVCH24LV95D.Hoehen
+  - DM01AVCH24LV95D.Nummerierungsbereiche
+  - DM01AVCH24LV95D.Planeinteilungen
+  - DM01AVCH24LV95D.Planrahmen
+sourceTopicsPresentInDataset:
+  - DM01AVCH24LV95D.Nummerierungsbereiche
+  - DM01AVCH24LV95D.Planeinteilungen
+targetsByClass:
+  DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.BBNachfuehrung: 9
+  DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung: 126
+  DMAV_Einzelobjekte_V1_1.Einzelobjekte.EONachfuehrung: 8
+  DMAV_Einzelobjekte_V1_1.Einzelobjekte.Einzelobjekt: 61
+  DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3: 14
+  DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3Nachfuehrung: 3
+  DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.GANachfuehrung: 5
+  DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Gebaeudeeingang: 34
+  DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Lokalisation: 9
+  DMAV_Nomenklatur_V1_1.Nomenklatur.Flurname: 9
+  DMAV_Nomenklatur_V1_1.Nomenklatur.NKNachfuehrung: 3
+  DMAV_Nomenklatur_V1_1.Nomenklatur.Ortsname: 1
+  DMAV_Toleranzstufen_V1_1.Toleranzstufen.TSNachfuehrung: 1
+  DMAV_Toleranzstufen_V1_1.Toleranzstufen.Toleranzstufe: 1
+  KGKCGC_FPDS2_V1_1.FPDS2.FixpunkteNachfuehrung: 1
+  KGKCGC_FPDS2_V1_1.FPDS2.UebersichtGeodienst: 1
+  KGKCGC_FPDS2_V1_1.FPDS2.UebersichtMassstab: 1
+  KGKCGC_FPDS2_V1_1.FPDS2.Zustaendigkeit: 1
+warningsByCode:
+  ILITRF-LOOKUP-NO-MATCH: 61
+warningsByRule:
+  eo-einzelobjekt-gueltig:
+    ILITRF-LOOKUP-NO-MATCH: 54
+  eo-einzelobjekt-projektiert:
+    ILITRF-LOOKUP-NO-MATCH: 7

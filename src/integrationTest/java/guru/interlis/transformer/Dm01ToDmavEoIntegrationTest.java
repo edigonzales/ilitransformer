@@ -131,10 +131,10 @@ class Dm01ToDmavEoIntegrationTest {
         nummerProjektiert.setattrvalue("Nummer", "EO-PROJ");
         nummerProjektiert.setattrvalue("GWR_EGID", "77");
 
-        Iom_jObject messpunktOhneEntstehung = messpunkt("20", null, "EP-NULL", "2600020.0", "1200020.0", "5", "ja", "Ja");
+        Iom_jObject messpunktOhneEntstehung =
+                messpunkt("20", null, "EP-NULL", "2600020.0", "1200020.0", "5", "ja", "Ja");
         Iom_jObject messpunktGueltig = messpunkt("21", "1", "EP-REAL", "2600030.0", "1200030.0", "6", "ja", "Nein");
-        Iom_jObject messpunktProjektiert =
-                messpunkt("22", "2", "EP-PROJ", "2600040.0", "1200040.0", "7", "nein", "Ja");
+        Iom_jObject messpunktProjektiert = messpunkt("22", "2", "EP-PROJ", "2600040.0", "1200040.0", "7", "nein", "Ja");
 
         Path outputPath = Files.createTempFile("dmav-eo-", ".xtf");
         Path validationLog = Files.createTempFile("dmav-eo-", ".log");
@@ -164,14 +164,11 @@ class Dm01ToDmavEoIntegrationTest {
             assertThat(result.sourceRecordsRead()).isEqualTo(11);
             assertThat(result.targetsWritten()).isGreaterThanOrEqualTo(7);
             assertThat(result.errors()).isZero();
-            assertThat(engineDiag.errors())
-                    .as(engineDiag.all().toString())
-                    .isZero();
+            assertThat(engineDiag.errors()).as(engineDiag.all().toString()).isZero();
             assertThat(engineDiag.all().stream()
                             .map(d -> d.code() == null ? "" : d.code())
                             .anyMatch(code ->
-                                    code.contains("RUN_REF_MISSING_MANDATORY")
-                                            || code.contains("RUN_REF_UNRESOLVED")))
+                                    code.contains("RUN_REF_MISSING_MANDATORY") || code.contains("RUN_REF_UNRESOLVED")))
                     .isFalse();
 
             IlivalidatorRunner.ValidationResult validation =
@@ -179,7 +176,8 @@ class Dm01ToDmavEoIntegrationTest {
             assertThat(validation.success()).as(validation.log()).isTrue();
 
             List<IomObject> objects = readAllObjects(outputPath);
-            List<String> objectTags = objects.stream().map(IomObject::getobjecttag).toList();
+            List<String> objectTags =
+                    objects.stream().map(IomObject::getobjecttag).toList();
             List<IomObject> nachfuehrungen = objects.stream()
                     .filter(obj -> obj.getobjecttag().endsWith(".EONachfuehrung"))
                     .toList();
@@ -215,10 +213,17 @@ class Dm01ToDmavEoIntegrationTest {
                     .filter(obj -> obj.getobjecttag().endsWith(".Messpunkt"))
                     .collect(Collectors.toMap(obj -> obj.getattrvalue("Nummer"), Function.identity()));
 
-            assertThat(messpunktByNummer.get("EP-NULL").getattrvaluecount("Entstehung")).isZero();
-            assertThat(messpunktByNummer.get("EP-REAL").getattrobj("Entstehung", 0).getobjectrefoid())
+            assertThat(messpunktByNummer.get("EP-NULL").getattrvaluecount("Entstehung"))
+                    .isZero();
+            assertThat(messpunktByNummer
+                            .get("EP-REAL")
+                            .getattrobj("Entstehung", 0)
+                            .getobjectrefoid())
                     .isEqualTo(nachfuehrungOidByIdentifikator.get("ID-REAL"));
-            assertThat(messpunktByNummer.get("EP-PROJ").getattrobj("Entstehung", 0).getobjectrefoid())
+            assertThat(messpunktByNummer
+                            .get("EP-PROJ")
+                            .getattrobj("Entstehung", 0)
+                            .getobjectrefoid())
                     .isEqualTo(nachfuehrungOidByIdentifikator.get("ID-PROJ"));
         } finally {
             Files.deleteIfExists(outputPath);
@@ -229,8 +234,7 @@ class Dm01ToDmavEoIntegrationTest {
     private static TransformPlan compilePlan() throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
-        return new MappingCompiler()
-                .compileTyped(config, Map.of(SOURCE_MODEL, dm01Ts), Map.of(TARGET_MODEL, dmavTs));
+        return new MappingCompiler().compileTyped(config, Map.of(SOURCE_MODEL, dm01Ts), Map.of(TARGET_MODEL, dmavTs));
     }
 
     private static Iom_jObject coord(String c1, String c2) {
@@ -241,8 +245,14 @@ class Dm01ToDmavEoIntegrationTest {
     }
 
     private static Iom_jObject messpunkt(
-            String oid, String entstehungOid, String identifikator, String c1, String c2, String lageGen,
-            String lageZuv, String exaktDefiniert) {
+            String oid,
+            String entstehungOid,
+            String identifikator,
+            String c1,
+            String c2,
+            String lageGen,
+            String lageZuv,
+            String exaktDefiniert) {
         Iom_jObject messpunkt = new Iom_jObject("DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt", oid);
         if (entstehungOid != null) {
             messpunkt.addattrobj("Entstehung", Iom_jObject.REF).setobjectrefoid(entstehungOid);

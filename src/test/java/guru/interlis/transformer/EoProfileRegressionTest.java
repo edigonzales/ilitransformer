@@ -99,10 +99,14 @@ class EoProfileRegressionTest {
 
         Map<String, Element> einzelobjekteByArt = indexByChildText(einzelobjekte, "Einzelobjektart");
         assertThat(einzelobjekteByArt).containsKeys("Brunnen", "Quelle");
-        assertThat(directChildText(einzelobjekteByArt.get("Brunnen"), "Objektstatus")).isEqualTo("real");
-        assertThat(directChildText(einzelobjekteByArt.get("Quelle"), "Objektstatus")).isEqualTo("projektiert");
-        assertThat(directChildren(einzelobjekteByArt.get("Brunnen"), "Entstehung")).hasSize(1);
-        assertThat(directChildren(einzelobjekteByArt.get("Quelle"), "Entstehung")).hasSize(1);
+        assertThat(directChildText(einzelobjekteByArt.get("Brunnen"), "Objektstatus"))
+                .isEqualTo("real");
+        assertThat(directChildText(einzelobjekteByArt.get("Quelle"), "Objektstatus"))
+                .isEqualTo("projektiert");
+        assertThat(directChildren(einzelobjekteByArt.get("Brunnen"), "Entstehung"))
+                .hasSize(1);
+        assertThat(directChildren(einzelobjekteByArt.get("Quelle"), "Entstehung"))
+                .hasSize(1);
         assertThat(directChildren(einzelobjekteByArt.get("Brunnen"), "Entstehung")
                         .get(0)
                         .getAttributeNS(ILI_NS, "ref"))
@@ -121,13 +125,11 @@ class EoProfileRegressionTest {
 
     private PreparedJob prepareProfile() throws Exception {
         Path materializedProfile = tempDir.resolve("eo-regression.yaml");
-        String yaml = Files.readString(PROFILE, StandardCharsets.UTF_8).replace(
-                """
+        String yaml = Files.readString(PROFILE, StandardCharsets.UTF_8).replace("""
                   modeldir:
                     - "https://models.geo.admin.ch/"
                     - "models/"
-                """,
-                """
+                """, """
                   modeldir:
                     - "src/test/data/av/models"
                     - "https://models.interlis.ch"
@@ -138,8 +140,7 @@ class EoProfileRegressionTest {
 
     private Iom_jObject[] sourceObjects() {
         Iom_jObject nfGueltig = nachfuehrung("nf-g", "EO_NB", "EO-G", "Gueltig", "gueltig", "2025-03-15");
-        Iom_jObject nfProjektiert =
-                nachfuehrung("nf-p", "EO_NB", "EO-P", "Projektiert", "projektiert", "2025-03-16");
+        Iom_jObject nfProjektiert = nachfuehrung("nf-p", "EO_NB", "EO-P", "Projektiert", "projektiert", "2025-03-16");
 
         Iom_jObject eoGueltig = einzelobjekt("eo-g", "nf-g", "AV93", "Brunnen");
         Iom_jObject eoProjektiert = einzelobjekt("eo-p", "nf-p", "AV93", "Quelle");
@@ -171,7 +172,13 @@ class EoProfileRegressionTest {
     }
 
     private Iom_jObject messpunkt(
-            String oid, String entstehungOid, String identifikator, double x, double y, String lageZuv, String exaktDefiniert) {
+            String oid,
+            String entstehungOid,
+            String identifikator,
+            double x,
+            double y,
+            String lageZuv,
+            String exaktDefiniert) {
         Iom_jObject ep = new Iom_jObject("DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt", oid);
         if (entstehungOid != null) {
             ep.setattrvalue("Entstehung", entstehungOid);

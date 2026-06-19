@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class JobConfig {
@@ -136,24 +137,28 @@ public final class JobConfig {
 
         /** @deprecated Use {@link JobConfigNormalizer#getEffectiveTargetClass(RuleSpec)} instead. */
         @Deprecated
+        @JsonIgnore
         public String getEffectiveTargetClass() {
             return JobConfigNormalizer.getEffectiveTargetClass(this);
         }
 
         /** @deprecated Use {@link JobConfigNormalizer#getEffectiveTargetOutput(RuleSpec)} instead. */
         @Deprecated
+        @JsonIgnore
         public String getEffectiveTargetOutput() {
             return JobConfigNormalizer.getEffectiveTargetOutput(this);
         }
 
         /** @deprecated Use {@link JobConfigNormalizer#getAllAttributes(RuleSpec)} instead. */
         @Deprecated
+        @JsonIgnore
         public List<AttributeMapping> getAllAttributes() {
             return JobConfigNormalizer.getAllAttributes(this);
         }
 
         /** @deprecated Use {@link JobConfigNormalizer#getEffectiveRefs(RuleSpec)} instead. */
         @Deprecated
+        @JsonIgnore
         public List<RefMapping> getEffectiveRefs() {
             return JobConfigNormalizer.getEffectiveRefs(this);
         }
@@ -190,6 +195,7 @@ public final class JobConfig {
 
         /** @deprecated Use {@link JobConfigNormalizer#getInputIds(SourceSpec)} instead. */
         @Deprecated
+        @JsonIgnore
         public List<String> getInputIds() {
             return JobConfigNormalizer.getInputIds(this);
         }

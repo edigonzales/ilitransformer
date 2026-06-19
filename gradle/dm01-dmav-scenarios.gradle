@@ -31,3 +31,42 @@ tasks.register('validateTransfer', JavaExec) {
         ]
     }
 }
+
+tasks.register('runDm01DmavFullRun', JavaExec) {
+    group = 'dm01-dmav'
+    description = 'Run a manifest-driven DM01 to DMAV full dataset bundle'
+    classpath = configurations.validator + sourceSets.main.runtimeClasspath
+    mainClass = 'guru.interlis.transformer.dmav.fullrun.Dm01DmavFullRunTask'
+
+    doFirst {
+        def manifest = project.findProperty('dm01DmavFullRunManifest')
+        if (!manifest) {
+            throw new GradleException(
+                    "Usage: ./gradlew runDm01DmavFullRun -Pdm01DmavFullRunManifest=<file> "
+                            + "[-Pdm01DmavFullRunSource=<file>] "
+                            + "[-Pdm01DmavFullRunReportDir=<dir>] "
+                            + "[-Pdm01DmavFullRunOutput=<file>]"
+            )
+        }
+
+        args = [
+            '--manifest', manifest.toString(),
+            '--repo-root', project.projectDir.toString()
+        ]
+
+        def source = project.findProperty('dm01DmavFullRunSource')
+        if (source) {
+            args += ['--source', source.toString()]
+        }
+
+        def reportDir = project.findProperty('dm01DmavFullRunReportDir')
+        if (reportDir) {
+            args += ['--report-dir', reportDir.toString()]
+        }
+
+        def output = project.findProperty('dm01DmavFullRunOutput')
+        if (output) {
+            args += ['--output', output.toString()]
+        }
+    }
+}

@@ -45,6 +45,8 @@ public final class Dm01DmavPaths {
     public static final String DMAV_ROHRLEITUNGEN_MODEL = "DMAV_Rohrleitungen_V1_1";
 
     public static final Path PROFILE_ROOT = Path.of("profiles");
+    public static final Path PRODUCT_ROOT = Path.of("products/dm01-dmav");
+    public static final Path FULL_RUN_ROOT = PRODUCT_ROOT.resolve("full-runs");
     public static final Path FIXTURE_ROOT = Path.of("src/test/resources/fixtures/dm01-dmav");
     public static final Path FULL_DATASET_DIR = Path.of("src/test/data/DMAV_Version_1_1");
     public static final Path FULL_DM01_DATASET = FULL_DATASET_DIR.resolve("DM01-AV-CH.itf");
@@ -91,5 +93,9 @@ public final class Dm01DmavPaths {
 
     public static Path dmavToDm01Profile(String topic) {
         return PROFILE_ROOT.resolve("dmav-to-dm01/1.1").resolve(topic + ".yaml");
+    }
+
+    public static Path fullRunBundleDir(String datasetSlug) {
+        return FULL_RUN_ROOT.resolve(datasetSlug);
     }
 }
