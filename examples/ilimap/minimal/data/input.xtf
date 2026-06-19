@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS"
+  xmlns:ExampleModel="http://www.interlis.ch/xtf/2.4/ExampleModel">
+  <ili:headersection>
+    <ili:models>
+      <ili:model>ExampleModel</ili:model>
+    </ili:models>
+    <ili:sender>example</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <ili:ExampleModel.ExampleTopic bid="1">
+      <ili:ExampleModel.ExampleTopic.SourceClass tid="1">
+        <ili:Name>Alice</ili:Name>
+        <ili:Count>42</ili:Count>
+        <ili:Active>true</ili:Active>
+      </ili:ExampleModel.ExampleTopic.SourceClass>
+      <ili:ExampleModel.ExampleTopic.SourceClass tid="2">
+        <ili:Name>Bob</ili:Name>
+        <ili:Count>7</ili:Count>
+        <ili:Active>false</ili:Active>
+      </ili:ExampleModel.ExampleTopic.SourceClass>
+    </ili:ExampleModel.ExampleTopic>
+  </ili:datasection>
+</ili:transfer>

@@ -128,8 +128,7 @@ class RohrleitungenMinimalFixtureRoundtripTest {
         Path mappingPath = tempDir.resolve("dm01-to-dmav-" + outputPath.getFileName() + ".yaml");
         String yaml = Files.readString(DM01_TO_DMAV_PROFILE, StandardCharsets.UTF_8)
                 .replace("path: \"input/dm01.itf\"", "path: \"" + inputPath.toAbsolutePath() + "\"")
-                .replace("path: \"build/out/dmav-rohrleitungen.xtf\"",
-                        "path: \"" + outputPath.toAbsolutePath() + "\"");
+                .replace("path: \"build/out/dmav-rohrleitungen.xtf\"", "path: \"" + outputPath.toAbsolutePath() + "\"");
         Files.writeString(mappingPath, yaml, StandardCharsets.UTF_8);
         return mappingPath;
     }
@@ -138,8 +137,7 @@ class RohrleitungenMinimalFixtureRoundtripTest {
         Path mappingPath = tempDir.resolve("dmav-to-dm01-" + outputPath.getFileName() + ".yaml");
         String yaml = Files.readString(DMAV_TO_DM01_PROFILE, StandardCharsets.UTF_8)
                 .replace("path: \"input/dmav.xtf\"", "path: \"" + inputPath.toAbsolutePath() + "\"")
-                .replace("path: \"build/out/dm01-rohrleitungen.itf\"",
-                        "path: \"" + outputPath.toAbsolutePath() + "\"");
+                .replace("path: \"build/out/dm01-rohrleitungen.itf\"", "path: \"" + outputPath.toAbsolutePath() + "\"");
         Files.writeString(mappingPath, yaml, StandardCharsets.UTF_8);
         return mappingPath;
     }

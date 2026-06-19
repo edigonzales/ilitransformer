@@ -122,4 +122,36 @@ public final class DiagnosticCode {
     // Commit – Phase 25
     public static final String COMMIT_FAILED = "ILITRF-COMMIT-FAILED";
     public static final String COMMIT_ROLLED_BACK = "ILITRF-COMMIT-ROLLED-BACK";
+
+    // ilimap v2 – Semantic validation (Phase P3)
+    public static final String ILIMAP_MISSING_INPUT = "ILITRF-ILIMAP-MISSING-INPUT";
+    public static final String ILIMAP_MISSING_OUTPUT = "ILITRF-ILIMAP-MISSING-OUTPUT";
+    public static final String ILIMAP_MISSING_RULE = "ILITRF-ILIMAP-MISSING-RULE";
+    public static final String ILIMAP_DUPLICATE_ID = "ILITRF-ILIMAP-DUPLICATE-ID";
+    public static final String ILIMAP_UNKNOWN_OUTPUT = "ILITRF-ILIMAP-UNKNOWN-OUTPUT";
+    public static final String ILIMAP_UNKNOWN_INPUT = "ILITRF-ILIMAP-UNKNOWN-INPUT";
+    public static final String ILIMAP_UNKNOWN_ENUM_MAP = "ILITRF-ILIMAP-UNKNOWN-ENUM-MAP";
+    public static final String ILIMAP_INVALID_SYMBOL_ID = "ILITRF-ILIMAP-INVALID-SYMBOL-ID";
+    public static final String ILIMAP_INVALID_ALIAS_ID = "ILITRF-ILIMAP-INVALID-ALIAS-ID";
+    public static final String ILIMAP_RESERVED_WORD = "ILITRF-ILIMAP-RESERVED-WORD";
+    public static final String ILIMAP_INVALID_STRATEGY = "ILITRF-ILIMAP-INVALID-STRATEGY";
+    public static final String ILIMAP_RESERVED_STRATEGY = "ILITRF-ILIMAP-RESERVED-STRATEGY";
+    public static final String ILIMAP_DUPLICATE_ELEMENT = "ILITRF-ILIMAP-DUPLICATE-ELEMENT";
+    public static final String ILIMAP_MISSING_TARGET = "ILITRF-ILIMAP-MISSING-TARGET";
+    public static final String ILIMAP_MISSING_SOURCE = "ILITRF-ILIMAP-MISSING-SOURCE";
+    public static final String ILIMAP_DUPLICATE_ALIAS = "ILITRF-ILIMAP-DUPLICATE-ALIAS";
+    public static final String ILIMAP_DUPLICATE_ASSIGNMENT = "ILITRF-ILIMAP-DUPLICATE-ASSIGNMENT";
+    public static final String ILIMAP_ENUM_MAP_STRING_REF = "ILITRF-ILIMAP-ENUM-MAP-STRING-REF";
+    public static final String ILIMAP_UNSUPPORTED_FEATURE = "ILITRF-ILIMAP-UNSUPPORTED-FEATURE";
+
+    // ilimap v2 – Full rule structure (Phase P5)
+    public static final String ILIMAP_UNKNOWN_RULE = "ILITRF-ILIMAP-UNKNOWN-RULE";
+    public static final String ILIMAP_INVALID_MAX_ITEMS = "ILITRF-ILIMAP-INVALID-MAX-ITEMS";
+    public static final String ILIMAP_INVALID_BAG_MODE = "ILITRF-ILIMAP-INVALID-BAG-MODE";
+    public static final String ILIMAP_UNKNOWN_PARENT_ALIAS = "ILITRF-ILIMAP-UNKNOWN-PARENT-ALIAS";
+    public static final String ILIMAP_MISSING_BAG_FROM = "ILITRF-ILIMAP-MISSING-BAG-FROM";
+
+    // ilimap v2 – Syntax / Load (Phase P8)
+    public static final String ILIMAP_SYNTAX_ERROR = "ILITRF-ILIMAP-SYNTAX-ERROR";
+    public static final String ILIMAP_LOAD_FAILED = "ILITRF-ILIMAP-LOAD-FAILED";
 }

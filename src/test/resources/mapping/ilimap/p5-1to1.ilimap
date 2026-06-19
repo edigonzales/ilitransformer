@@ -1,0 +1,30 @@
+mapping v2 "scalar-identity-test" {
+  job {
+    description "Copy SourceClass -> TargetClass with scalar attributes";
+    failPolicy strict;
+    modeldir "src/test/data/models/";
+  }
+
+  input source-input {
+    path "src/test/resources/transfers/scalar-identity/input.xtf";
+    model "P5Model";
+    format xtf;
+  }
+
+  output target-output {
+    path "build/tmp/p5-ilimap-test-output.xtf";
+    model "P5Model";
+    format xtf;
+  }
+
+  rule copy-rule {
+    target target-output class "P5Model.P5Topic.TargetClass";
+    source src from source-input class "P5Model.P5Topic.SourceClass";
+
+    assign {
+      Label = src.Name;
+      Size = src.Anzahl;
+      Enabled = src.Aktiv;
+    }
+  }
+}

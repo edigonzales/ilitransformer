@@ -1,0 +1,27 @@
+mapping v2 "minimal-example" {
+  job {
+    description "Copy SourceClass to TargetClass with scalar attributes";
+    modeldir "models/";
+  }
+
+  input src-input {
+    path "data/input.xtf";
+    model "ExampleModel";
+  }
+
+  output tgt-output {
+    path "output.xtf";
+    model "ExampleModel";
+  }
+
+  rule copy-rule {
+    target tgt-output class "ExampleModel.ExampleTopic.TargetClass";
+    source src from src-input class "ExampleModel.ExampleTopic.SourceClass";
+
+    assign {
+      Label = src.Name;
+      Size = src.Count;
+      Enabled = src.Active;
+    }
+  }
+}

@@ -90,11 +90,10 @@ public final class Dm01DmavFixtures {
             List.of("PLZOrtschaft.Ortschaft", "PLZOrtschaft.OrtschaftsName", "PLZOrtschaft.PLZ6");
     private static final List<String> PLZORTSCHAFT_DMAV_TARGET_CLASSES =
             List.of("PLZ_Ortschaft.Ortschaft", "PLZ_Ortschaft.PLZ");
-    private static final List<String> DBV_DM01_TARGET_CLASSES = List.of(
-            "Rutschgebiete.Rutschung", "Rutschgebiete.RutschungPos");
+    private static final List<String> DBV_DM01_TARGET_CLASSES =
+            List.of("Rutschgebiete.Rutschung", "Rutschgebiete.RutschungPos");
     private static final List<String> DBV_DMAV_TARGET_CLASSES = List.of(
-            "DauerndeBodenverschiebungen.DBVNachfuehrung",
-            "DauerndeBodenverschiebungen.DauerndeBodenverschiebung");
+            "DauerndeBodenverschiebungen.DBVNachfuehrung", "DauerndeBodenverschiebungen.DauerndeBodenverschiebung");
     private static final List<String> ROHRLEITUNGEN_DM01_TARGET_CLASSES = List.of(
             "Rohrleitungen.RLNachfuehrung",
             "Rohrleitungen.Leitungsobjekt",
