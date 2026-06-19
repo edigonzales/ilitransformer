@@ -1,0 +1,98 @@
+mapping v2 "dm01-to-dmav-lfp3" {
+  job {
+    description "Pilot-Transformation DM01 FixpunkteKategorie3.LFP3 nach DMAV FixpunkteAVKategorie3.LFP3";
+    direction dm01-to-dmav;
+    failPolicy strict;
+    compileMode strict;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "models/";
+  }
+
+  input dm01 {
+    path "input/dm01.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  output dmav {
+    path "build/out/dmav-lfp3.xtf";
+    model "DMAV_FixpunkteAVKategorie3_V1_1";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "dm01-to-dmav-lfp3";
+  }
+
+  basket byTopic;
+
+  enum Zuverlaessigkeit_DM01_DMAV {
+    "ja" => true;
+    "nein" => false;
+  }
+
+  enum Versicherungsart_DM01_DMAV {
+    "Stein" => "Stein";
+    "Kunststoffzeichen" => "Kunststoffzeichen";
+    "Bolzen" => "Bolzen";
+    "Rohr" => "Rohr";
+    "Pfahl" => "Pfahl";
+    "Kreuz" => "Kreuz";
+    "unversichert" => "unversichert";
+    "weitere" => "weitere";
+  }
+
+  rule lfp3-nachfuehrung {
+    target dmav class "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3Nachfuehrung";
+    source nf from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Nachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 60);
+      Perimeter = nf.Perimeter;
+      GueltigerEintrag = toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1));
+    }
+  }
+
+  rule lfp3 {
+    target dmav class "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3";
+    source p from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3";
+    identity p.NBIdent, p.Nummer;
+
+    assign {
+      NBIdent = p.NBIdent;
+      Nummer = p.Nummer;
+      LFPArt = #LFP3;
+      Geometrie = p.Geometrie;
+      Hoehengeometrie = p.HoeheGeom;
+      Lagegenauigkeit = div(p.LageGen, 100.0);
+      IstLagezuverlaessig = enumMap(p.LageZuv, Zuverlaessigkeit_DM01_DMAV);
+      Hoehengenauigkeit = div(p.HoeheGen, 100.0);
+      IstHoehenzuverlaessig = enumMap(p.HoeheZuv, Zuverlaessigkeit_DM01_DMAV);
+      Punktzeichen = enumMap(p.Punktzeichen, Versicherungsart_DM01_DMAV);
+      SymbolOri = lookup('DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Symbol', 'LFP3Symbol_von', oid(p), 'Ori');
+      Grenzpunktfunktion = #keine;
+      AktiverUnterhalt = true;
+    }
+
+    bag Textposition {
+      from pos in dm01 class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Pos" where refEquals(pos.LFP3Pos_von, p);
+      assign {
+        Position = pos.Pos;
+        Orientierung = coalesce(pos.Ori, 100.0);
+        HReferenzpunkt = coalesce(pos.HAli, 'Left');
+        VReferenzpunkt = coalesce(pos.VAli, 'Bottom');
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_LFP3";
+      role "Entstehung";
+      required;
+      target rule lfp3-nachfuehrung sourceRef p.Entstehung;
+    }
+  }
+}

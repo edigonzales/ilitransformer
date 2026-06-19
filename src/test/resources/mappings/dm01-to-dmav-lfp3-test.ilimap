@@ -1,0 +1,110 @@
+mapping v2 "dm01-to-dmav-lfp3-test" {
+  job {
+    description "Test transformation for enumMap + div + refs";
+    direction dm01-to-dmav;
+    failPolicy strict;
+    compileMode strict;
+  }
+
+  input dm01 {
+    path "input/test.itf";
+    model "Dm01TestModel";
+    format itf;
+  }
+
+  output dmav {
+    path "build/out/dmav-test.xtf";
+    model "DmavTestModel";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "test-lfp3";
+  }
+
+  basket byTopic;
+
+  enum Zuverlaessigkeit_DM01_DMAV {
+    "ja" => true;
+    "nein" => false;
+  }
+
+  enum Versicherungsart_DM01_DMAV {
+    "Stein" => "Stein";
+    "Kunststoffzeichen" => "Kunststoffzeichen";
+    "Bolzen" => "Bolzen";
+    "Rohr" => "Rohr";
+    "Pfahl" => "Pfahl";
+    "Kreuz" => "Kreuz";
+    "unversichert" => "unversichert";
+    "weitere" => "weitere";
+  }
+
+  enum HAlignment_DM01_DMAV {
+    "Left" => "Left";
+    "Center" => "Center";
+    "Right" => "Right";
+  }
+
+  enum VAlignment_DM01_DMAV {
+    "Top" => "Top";
+    "Cap" => "Cap";
+    "Half" => "Half";
+    "Baseline" => "Baseline";
+    "Bottom" => "Bottom";
+  }
+
+  rule lfp3-nachfuehrung {
+    target dmav class "DmavTestModel.Fixpunkte.LFP3Nachfuehrung";
+    source nf from dm01 class "Dm01TestModel.Fixpunkte.LFP3Nachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 60);
+      GueltigerEintrag = toXmlDateTime(nf.GueltigerEintrag);
+    }
+  }
+
+  rule lfp3 {
+    target dmav class "DmavTestModel.Fixpunkte.LFP3";
+    source p from dm01 class "Dm01TestModel.Fixpunkte.LFP3";
+    identity p.NBIdent, p.Nummer;
+
+    assign {
+      NBIdent = p.NBIdent;
+      Nummer = p.Nummer;
+      LFPArt = #LFP3;
+      Geometrie = p.Geometrie;
+      Hoehengeometrie = p.HoeheGeom;
+      Lagegenauigkeit = div(p.Lagegenauigkeit, 100.0);
+      IstLagezuverlaessig = enumMap(p.IstLagezuverlaessig, Zuverlaessigkeit_DM01_DMAV);
+      Hoehengenauigkeit = div(p.Hoehengenauigkeit, 100.0);
+      IstHoehenzuverlaessig = enumMap(p.IstHoehenzuverlaessig, Zuverlaessigkeit_DM01_DMAV);
+      Punktzeichen = enumMap(p.Punktzeichen, Versicherungsart_DM01_DMAV);
+      SymbolOri = lookup('Dm01TestModel.Fixpunkte.LFP3Symbol', 'LFP3Symbol_von', oid(p), 'Ori');
+      Grenzpunktfunktion = #keine;
+      AktiverUnterhalt = true;
+    }
+
+    bag Textposition {
+      from pos in dm01 class "Dm01TestModel.Fixpunkte.LFP3Pos" where refEquals(pos.LFP3Pos_von, p);
+      structure "DmavTestModel.Fixpunkte.Textposition";
+      assign {
+        Position = pos.Pos;
+        Orientierung = coalesce(pos.Ori, 100.0);
+        HReferenzpunkt = enumMap(coalesce(pos.HAli, 'Left'), HAlignment_DM01_DMAV);
+        VReferenzpunkt = enumMap(coalesce(pos.VAli, 'Baseline'), VAlignment_DM01_DMAV);
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_LFP3";
+      role "Entstehung";
+      required;
+      target rule lfp3-nachfuehrung sourceRef p.Entstehung;
+    }
+  }
+}
