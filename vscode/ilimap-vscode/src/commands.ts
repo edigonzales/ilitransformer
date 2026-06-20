@@ -17,6 +17,12 @@ export function registerCommands(context: vscode.ExtensionContext, outputChannel
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('ilimap.format', async () => {
+      await vscode.commands.executeCommand('editor.action.formatDocument');
+    })
+  );
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('ilimap.validate', async () => {
       await vscode.commands.executeCommand('workbench.action.problems.focus');
     })

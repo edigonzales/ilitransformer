@@ -15,6 +15,7 @@
     "onLanguage:ilimap",
     "onCommand:ilimap.restartLanguageServer",
     "onCommand:ilimap.showLanguageServerLogs",
+    "onCommand:ilimap.format",
     "onCommand:ilimap.validate"
   ],
   "main": "./dist/extension.js",
@@ -47,6 +48,10 @@
       {
         "command": "ilimap.showLanguageServerLogs",
         "title": "ILIMAP: Show Language Server Logs"
+      },
+      {
+        "command": "ilimap.format",
+        "title": "ILIMAP: Format Mapping"
       },
       {
         "command": "ilimap.validate",

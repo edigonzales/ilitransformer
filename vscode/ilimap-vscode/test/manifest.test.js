@@ -29,6 +29,7 @@ test('registers public commands', () => {
 
   assert.ok(commands.includes('ilimap.restartLanguageServer'));
   assert.ok(commands.includes('ilimap.showLanguageServerLogs'));
+  assert.ok(commands.includes('ilimap.format'));
   assert.ok(commands.includes('ilimap.validate'));
 });
 

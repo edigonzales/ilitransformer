@@ -33,7 +33,7 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
         capabilities.setHoverProvider(false);
         capabilities.setDefinitionProvider(false);
-        capabilities.setDocumentFormattingProvider(false);
+        capabilities.setDocumentFormattingProvider(true);
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }
 

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapFormattingService;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -28,7 +29,11 @@ class IlimapTextDocumentServiceTest {
 
     private final CapturingLanguageClient client = new CapturingLanguageClient();
     private final IlimapTextDocumentService service = new IlimapTextDocumentService(
-            new IlimapDocumentStore(), new IlimapLspDiagnosticMapper(), IlimapAnalysisOptions.defaults(Path.of(".")));
+            new IlimapDocumentStore(),
+            new IlimapLspDiagnosticMapper(),
+            new IlimapFormattingService(),
+            new IlimapLspRangeMapper(),
+            IlimapAnalysisOptions.defaults(Path.of(".")));
 
     @Test
     void didOpenPublishesDiagnostics() {
