@@ -79,7 +79,7 @@ public final class TargetObjectFactory {
 
         assignmentExecutionService.execute(rule.assignments(), evalCtx, target, targetTs);
 
-        deferReferences(rule, matchedSource, driverRecord, target, targetTs, plan, ctx);
+        deferReferences(rule, matchedSource, driverRecord, evalCtx.sources(), target, targetTs, plan, ctx);
 
         processBags(rule, matchedSource, driverRecord, target, plan, ctx);
 
@@ -144,6 +144,7 @@ public final class TargetObjectFactory {
             RulePlan rule,
             SourcePlan matchedSource,
             SourceRecord driverRecord,
+            Map<String, IomObject> boundSources,
             Iom_jObject target,
             TypeSystemFacade targetTs,
             TransformPlan plan,
@@ -152,7 +153,7 @@ public final class TargetObjectFactory {
 
         for (var ref : rule.refs()) {
             if (ref.sourceRef() == null) continue;
-            String sourceRefOid = resolveSourceReferenceOid(ref.sourceRef(), matchedSource, driverRecord);
+            String sourceRefOid = resolveSourceReferenceOid(ref.sourceRef(), matchedSource, driverRecord, boundSources);
             if (sourceRefOid == null || sourceRefOid.isBlank()) {
                 if (ref.required()) {
                     ctx.diagnostics()
@@ -418,11 +419,20 @@ public final class TargetObjectFactory {
     }
 
     private static String resolveSourceReferenceOid(
-            String sourceRef, SourcePlan matchedSource, SourceRecord driverRecord) {
+            String sourceRef,
+            SourcePlan matchedSource,
+            SourceRecord driverRecord,
+            Map<String, IomObject> boundSources) {
         if (sourceRef == null || sourceRef.isBlank()) return null;
         String trimmed = sourceRef.trim();
         if (trimmed.startsWith("#")) {
             return trimmed;
+        }
+        if (boundSources != null) {
+            IomObject source = boundSources.get(trimmed);
+            if (source != null) {
+                return source.getobjectoid();
+            }
         }
         if (matchedSource != null && trimmed.equals(matchedSource.alias())) {
             return driverRecord.sourceObject().getobjectoid();
@@ -431,6 +441,12 @@ public final class TargetObjectFactory {
         int dotIdx = attrName.indexOf('.');
         if (dotIdx >= 0) {
             String alias = attrName.substring(0, dotIdx);
+            if (boundSources != null) {
+                IomObject source = boundSources.get(alias);
+                if (source != null) {
+                    return readSourceReferenceOid(source, attrName.substring(dotIdx + 1));
+                }
+            }
             if (matchedSource != null && !alias.equals(matchedSource.alias())) {
                 return null;
             }

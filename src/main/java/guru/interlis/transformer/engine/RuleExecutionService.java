@@ -237,140 +237,249 @@ public final class RuleExecutionService {
                 parentChildIndex,
                 metrics,
                 geometryAdapter,
-                sourceAttrTypes);
+                        sourceAttrTypes);
 
-        JoinPlan join = rule.joins().get(0);
-        SourcePlan leftPlan = join.left();
-        SourcePlan rightPlan = join.right();
+        List<JoinPlan> joins = rule.joins();
+        SourcePlan driverPlan = joins.get(0).left();
+        for (SourceRecord driverRecord : stateStore.sourceRecords()) {
+            if (!sourceMatchesPlan(driverRecord, driverPlan)) continue;
 
-        FunctionCallExpr call = (FunctionCallExpr) join.condition().ast();
-        PathExpr leftPath = (PathExpr) call.arguments().get(0);
-        PathExpr rightPath = (PathExpr) call.arguments().get(1);
+            Map<String, SourceRecord> boundRecords = new LinkedHashMap<>();
+            boundRecords.put(driverPlan.alias(), driverRecord);
 
-        boolean leftMatchesLeftPlan = leftPath.alias().equals(leftPlan.alias());
-        PathExpr leftSidePath = leftMatchesLeftPlan ? leftPath : rightPath;
-        PathExpr rightSidePath = leftMatchesLeftPlan ? rightPath : leftPath;
-        String leftAttr = leftSidePath.attributeName();
-        String rightAttr = rightSidePath.attributeName();
+            processJoinChain(
+                    rule,
+                    plan,
+                    joins,
+                    0,
+                    driverPlan,
+                    driverRecord,
+                    boundRecords,
+                    stateStore,
+                    sourceLookupIndex,
+                    sourceAttrTypes,
+                    diagnostics,
+                    metrics,
+                    ctx);
+        }
+    }
 
-        boolean rightIsObject = rightAttr == null || rightAttr.isBlank();
-
-        Map<String, SourceRecord> rightByOid = null;
-        if (rightIsObject) {
-            rightByOid = new LinkedHashMap<>();
-            for (SourceRecord r : stateStore.sourceRecords()) {
-                if (!sourceMatchesPlan(r, rightPlan)) continue;
-                String oid = r.sourceObject().getobjectoid();
-                if (oid != null && !oid.isBlank()) {
-                    rightByOid.put(oid, r);
-                }
+    private void processJoinChain(
+            RulePlan rule,
+            TransformPlan plan,
+            List<JoinPlan> joins,
+            int joinIndex,
+            SourcePlan driverPlan,
+            SourceRecord driverRecord,
+            Map<String, SourceRecord> boundRecords,
+            StateStore stateStore,
+            SourceLookupIndex sourceLookupIndex,
+            Map<String, Map<String, TypeInfo>> sourceAttrTypes,
+            DiagnosticCollector diagnostics,
+            ExecutionMetrics metrics,
+            TargetObjectFactory.ObjectCreationContext ctx) {
+        if (joinIndex >= joins.size()) {
+            EvalContext evalCtx = new EvalContext(
+                            toSourceObjects(boundRecords),
+                            diagnostics,
+                            rule.ruleId(),
+                            plan.enumMaps(),
+                            geometryAdapter,
+                            sourceAttrTypes)
+                    .withLookupIndex(sourceLookupIndex);
+            if (!evaluateWhereAndPredicate(driverPlan, rule, evalCtx, expressionEngine, metrics)) {
+                return;
             }
+
+            metrics.recordRuleMatch(rule.ruleId());
+            recordLosses(rule, driverRecord, evalCtx);
+            targetObjectFactory.createTarget(rule, driverPlan, driverRecord, evalCtx, plan, ctx);
+            metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
+            return;
         }
 
-        for (SourceRecord leftRecord : stateStore.sourceRecords()) {
-            if (!sourceMatchesPlan(leftRecord, leftPlan)) continue;
+        JoinPlan join = joins.get(joinIndex);
+        JoinConditionParts joinParts = resolveJoinConditionParts(join);
+        SourceRecord leftRecord = boundRecords.get(join.left().alias());
+        if (leftRecord == null) {
+            metrics.recordFiltered();
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.RUN_JOIN_MISSING,
+                    Severity.WARNING,
+                    "Join source alias '" + join.left().alias() + "' is not bound in join chain. Rule: "
+                            + rule.ruleId(),
+                    rule.ruleId(),
+                    "Order joins so that each left alias is bound by an earlier join"));
+            return;
+        }
 
-            Map<String, IomObject> sources = new LinkedHashMap<>();
-            sources.put(leftPlan.alias(), leftRecord.sourceObject());
+        String leftAttrValue = readAttributeOrRefOid(leftRecord.sourceObject(), joinParts.leftAttr());
+        if (leftAttrValue == null) {
+            if (join.type() == JoinType.INNER) {
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.RUN_JOIN_MISSING,
+                        Severity.WARNING,
+                        "Join key attribute '" + joinParts.leftAttr() + "' is null in left source. Rule: "
+                                + rule.ruleId(),
+                        rule.ruleId(),
+                        "Left join or provide non-null join keys"));
+                metrics.recordFiltered();
+                return;
+            }
+            processJoinChain(
+                    rule,
+                    plan,
+                    joins,
+                    joinIndex + 1,
+                    driverPlan,
+                    driverRecord,
+                    boundRecords,
+                    stateStore,
+                    sourceLookupIndex,
+                    sourceAttrTypes,
+                    diagnostics,
+                    metrics,
+                    ctx);
+            return;
+        }
 
-            String leftAttrValue = readAttributeOrRefOid(leftRecord.sourceObject(), leftAttr);
-            if (leftAttrValue == null) {
-                if (join.type() == JoinType.INNER) {
-                    diagnostics.add(new Diagnostic(
-                            DiagnosticCode.RUN_JOIN_MISSING,
-                            Severity.WARNING,
-                            "Join key attribute '" + leftAttr + "' is null in left source. Rule: " + rule.ruleId(),
+        List<SourceRecord> rightMatches =
+                findRightMatches(join, joinParts, leftAttrValue, boundRecords, stateStore, sourceLookupIndex, metrics);
+
+        if (rightMatches.isEmpty()) {
+            if (join.type() == JoinType.INNER) {
+                metrics.recordFiltered();
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.RUN_JOIN_MISSING,
+                        Severity.WARNING,
+                        "No matching right source record for join key " + joinParts.leftAttr() + " = "
+                                + leftAttrValue + ". Rule: " + rule.ruleId(),
+                        rule.ruleId(),
+                        "Ensure matching records exist or use LEFT join"));
+                return;
+            }
+            processJoinChain(
+                    rule,
+                    plan,
+                    joins,
+                    joinIndex + 1,
+                    driverPlan,
+                    driverRecord,
+                    boundRecords,
+                    stateStore,
+                    sourceLookupIndex,
+                    sourceAttrTypes,
+                    diagnostics,
+                    metrics,
+                    ctx);
+            return;
+        }
+
+        if (rightMatches.size() > 1
+                && (join.expectedCardinality() == JoinCardinality.ONE_TO_ONE
+                        || join.expectedCardinality() == JoinCardinality.MANY_TO_ONE)) {
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.RUN_JOIN_AMBIGUOUS,
+                    Severity.WARNING,
+                    "Expected " + join.expectedCardinality() + " but found " + rightMatches.size()
+                            + " matching right records for join key. Rule: " + rule.ruleId(),
+                    rule.ruleId(),
+                    "Use MANY_TO_MANY or ONE_TO_MANY cardinality"));
+        }
+
+        for (SourceRecord rightRecord : rightMatches) {
+            Map<String, SourceRecord> joinedRecords = new LinkedHashMap<>(boundRecords);
+            joinedRecords.put(join.right().alias(), rightRecord);
+
+            EvalContext joinCtx = new EvalContext(
+                            toSourceObjects(joinedRecords),
+                            diagnostics,
                             rule.ruleId(),
-                            "Left join or provide non-null join keys"));
-                }
+                            plan.enumMaps(),
+                            geometryAdapter,
+                            sourceAttrTypes)
+                    .withLookupIndex(sourceLookupIndex);
+
+            Value joinResult = expressionEngine.evaluate(join.condition(), joinCtx);
+            if (!isFilterTruthy(joinResult)) {
                 metrics.recordFiltered();
                 continue;
             }
 
-            metrics.recordJoinLookup();
-            List<SourceRecord> rightMatches;
-            if (rightIsObject) {
-                SourceRecord match = rightByOid.get(leftAttrValue);
-                rightMatches = match != null ? List.of(match) : List.of();
-            } else {
-                LookupKey lookupKey = new LookupKey(
-                        null,
-                        TargetObjectFactory.getScopedName(rightPlan.sourceClass()),
-                        rightAttr,
-                        new CanonicalValue("text", leftAttrValue, true));
-                rightMatches = sourceLookupIndex.lookup(lookupKey);
-            }
-
-            rightMatches = rightMatches.stream()
-                    .filter(r -> rightPlan.inputIds().isEmpty()
-                            || rightPlan.inputIds().contains(r.sourceFileId()))
-                    .toList();
-
-            if (rightMatches.isEmpty()) {
-                if (join.type() == JoinType.INNER) {
-                    metrics.recordFiltered();
-                    diagnostics.add(new Diagnostic(
-                            DiagnosticCode.RUN_JOIN_MISSING,
-                            Severity.WARNING,
-                            "No matching right source record for join key " + leftAttr + " = " + leftAttrValue
-                                    + ". Rule: " + rule.ruleId(),
-                            rule.ruleId(),
-                            "Ensure matching records exist or use LEFT join"));
-                    continue;
-                }
-                EvalContext evalCtx = new EvalContext(
-                                sources, diagnostics, rule.ruleId(), plan.enumMaps(), geometryAdapter, sourceAttrTypes)
-                        .withLookupIndex(sourceLookupIndex);
-                if (evaluateWhereAndPredicate(leftPlan, rule, evalCtx, expressionEngine, metrics)) {
-                    metrics.recordRuleMatch(rule.ruleId());
-                    recordLosses(rule, leftRecord, evalCtx);
-                    targetObjectFactory.createTarget(rule, leftPlan, leftRecord, evalCtx, plan, ctx);
-                    metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
-                }
-                continue;
-            }
-
-            if (rightMatches.size() > 1
-                    && (join.expectedCardinality() == JoinCardinality.ONE_TO_ONE
-                            || join.expectedCardinality() == JoinCardinality.MANY_TO_ONE)) {
-                diagnostics.add(new Diagnostic(
-                        DiagnosticCode.RUN_JOIN_AMBIGUOUS,
-                        Severity.WARNING,
-                        "Expected " + join.expectedCardinality() + " but found " + rightMatches.size()
-                                + " matching right records for join key. Rule: " + rule.ruleId(),
-                        rule.ruleId(),
-                        "Use MANY_TO_MANY or ONE_TO_MANY cardinality"));
-            }
-
-            for (SourceRecord rightRecord : rightMatches) {
-                Map<String, IomObject> joinedSources = new LinkedHashMap<>();
-                joinedSources.put(leftPlan.alias(), leftRecord.sourceObject());
-                joinedSources.put(rightPlan.alias(), rightRecord.sourceObject());
-
-                EvalContext joinCtx = new EvalContext(
-                                joinedSources,
-                                diagnostics,
-                                rule.ruleId(),
-                                plan.enumMaps(),
-                                geometryAdapter,
-                                sourceAttrTypes)
-                        .withLookupIndex(sourceLookupIndex);
-
-                Value joinResult = expressionEngine.evaluate(join.condition(), joinCtx);
-                if (!isFilterTruthy(joinResult)) {
-                    metrics.recordFiltered();
-                    continue;
-                }
-
-                if (!evaluateWhereAndPredicate(leftPlan, rule, joinCtx, expressionEngine, metrics)) continue;
-
-                metrics.recordRuleMatch(rule.ruleId());
-                recordLosses(rule, leftRecord, joinCtx);
-                targetObjectFactory.createTarget(rule, leftPlan, leftRecord, joinCtx, plan, ctx);
-                metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
-            }
+            processJoinChain(
+                    rule,
+                    plan,
+                    joins,
+                    joinIndex + 1,
+                    driverPlan,
+                    driverRecord,
+                    joinedRecords,
+                    stateStore,
+                    sourceLookupIndex,
+                    sourceAttrTypes,
+                    diagnostics,
+                    metrics,
+                    ctx);
         }
     }
+
+    private List<SourceRecord> findRightMatches(
+            JoinPlan join,
+            JoinConditionParts joinParts,
+            String leftAttrValue,
+            Map<String, SourceRecord> boundRecords,
+            StateStore stateStore,
+            SourceLookupIndex sourceLookupIndex,
+            ExecutionMetrics metrics) {
+        SourceRecord alreadyBound = boundRecords.get(join.right().alias());
+        if (alreadyBound != null) {
+            return List.of(alreadyBound);
+        }
+
+        metrics.recordJoinLookup();
+        if (joinParts.rightIsObject()) {
+            List<SourceRecord> matches = new java.util.ArrayList<>();
+            for (SourceRecord candidate : stateStore.sourceRecords()) {
+                if (!sourceMatchesPlan(candidate, join.right())) continue;
+                String oid = candidate.sourceObject().getobjectoid();
+                if (oid != null && oid.equals(leftAttrValue)) {
+                    matches.add(candidate);
+                }
+            }
+            return matches;
+        }
+
+        LookupKey lookupKey = new LookupKey(
+                null,
+                TargetObjectFactory.getScopedName(join.right().sourceClass()),
+                joinParts.rightAttr(),
+                new CanonicalValue("text", leftAttrValue, true));
+        return sourceLookupIndex.lookup(lookupKey).stream()
+                .filter(candidate -> join.right().inputIds().isEmpty()
+                        || join.right().inputIds().contains(candidate.sourceFileId()))
+                .toList();
+    }
+
+    private static JoinConditionParts resolveJoinConditionParts(JoinPlan join) {
+        FunctionCallExpr call = (FunctionCallExpr) join.condition().ast();
+        PathExpr first = (PathExpr) call.arguments().get(0);
+        PathExpr second = (PathExpr) call.arguments().get(1);
+
+        PathExpr leftPath = join.left().alias().equals(first.alias()) ? first : second;
+        PathExpr rightPath = join.right().alias().equals(first.alias()) ? first : second;
+        return new JoinConditionParts(
+                leftPath.attributeName(), rightPath.attributeName(), rightPath.attributeName() == null);
+    }
+
+    private static Map<String, IomObject> toSourceObjects(Map<String, SourceRecord> boundRecords) {
+        Map<String, IomObject> sources = new LinkedHashMap<>();
+        for (Map.Entry<String, SourceRecord> entry : boundRecords.entrySet()) {
+            sources.put(entry.getKey(), entry.getValue().sourceObject());
+        }
+        return sources;
+    }
+
+    private record JoinConditionParts(String leftAttr, String rightAttr, boolean rightIsObject) {}
 
     private static String readAttributeOrRefOid(IomObject obj, String attrName) {
         if (attrName == null || attrName.isBlank()) return obj.getobjectoid();

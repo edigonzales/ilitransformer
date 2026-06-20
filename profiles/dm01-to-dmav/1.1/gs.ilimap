@@ -1,0 +1,451 @@
+mapping v2 "dm01-to-dmav-gs" {
+  job {
+    description "Pilot-Transformation DM01 Liegenschaften nach DMAV Grundstuecke";
+    direction dm01-to-dmav;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "models/";
+  }
+
+  input dm01 {
+    path "input/dm01.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  output dmav {
+    path "build/out/dmav-gs.xtf";
+    model "DMAV_Grundstuecke_V1_1";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "dm01-to-dmav-gs";
+  }
+
+  basket byTopic;
+
+  enum Zuverlaessigkeit_DM01_DMAV {
+    "ja" => true;
+    "nein" => false;
+  }
+
+  enum JaNein_DM01_DMAV {
+    "Ja" => true;
+    "Nein" => false;
+  }
+
+  enum ja_nein_DM01_DMAV {
+    "ja" => true;
+    "nein" => false;
+  }
+
+  enum Versicherungsart_DM01_DMAV {
+    "Stein" => "Stein";
+    "Kunststoffzeichen" => "Kunststoffzeichen";
+    "Bolzen" => "Bolzen";
+    "Rohr" => "Rohr";
+    "Pfahl" => "Pfahl";
+    "Kreuz" => "Kreuz";
+    "unversichert" => "unversichert";
+    "weitere" => "weitere";
+  }
+
+  enum Schriftgroesse_DM01_DMAV {
+    "klein" => "Klein";
+    "mittel" => "Mittel";
+    "gross" => "Gross";
+  }
+
+  enum Status_Mutationsart {
+    "gueltig" => "Normal";
+    "projektiert" => "Projektmutation";
+  }
+
+  rule gs-nachfuehrung-gueltig {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung";
+    source nf from dm01 class "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung" where if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert);
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 60);
+      Perimeter = nf.Perimeter;
+      Mutationsart = enumMap(coalesce(nf.Gueltigkeit, #gueltig), Status_Mutationsart);
+      GueltigerEintrag = toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1));
+    }
+  }
+
+  rule gs-nachfuehrung-projektiert {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung";
+    source nf from dm01 class "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung" where nf.Gueltigkeit == #projektiert;
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 60);
+      Perimeter = nf.Perimeter;
+      Mutationsart = #Projektmutation;
+      GueltigerEintrag = toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1));
+    }
+  }
+
+  rule gs-nachfuehrung-gem-gueltig {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung";
+    source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung" where if(notDefined(gem.Gueltigkeit), true, gem.Gueltigkeit != #projektiert) and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent;
+    identity gem.NBIdent, gem.Identifikator;
+
+    assign {
+      NBIdent = gem.NBIdent;
+      Identifikator = gem.Identifikator;
+      Beschreibung = truncate(gem.Beschreibung, 60);
+      Perimeter = gem.Perimeter;
+      Mutationsart = enumMap(coalesce(gem.Gueltigkeit, #gueltig), Status_Mutationsart);
+      GueltigerEintrag = toXmlDateTime(coalesce(gem.GueltigerEintrag, gem.Datum1));
+    }
+  }
+
+  rule gs-nachfuehrung-gem-projektiert {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung";
+    source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung" where gem.Gueltigkeit == #projektiert and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent;
+    identity gem.NBIdent, gem.Identifikator;
+
+    assign {
+      NBIdent = gem.NBIdent;
+      Identifikator = gem.Identifikator;
+      Beschreibung = truncate(gem.Beschreibung, 60);
+      Perimeter = gem.Perimeter;
+      Mutationsart = #Projektmutation;
+      GueltigerEintrag = toXmlDateTime(coalesce(gem.GueltigerEintrag, gem.Datum1));
+    }
+  }
+
+  rule grenzpunkt-gueltig {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt";
+    source gp from dm01 class "DM01AVCH24LV95D.Liegenschaften.Grenzpunkt";
+    source nf from dm01 class "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung";
+    where if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert);
+    join inner gp to nf on eq(gp.Entstehung, nf);
+    identity gp.Identifikator;
+
+    assign {
+      Nummer = gp.Identifikator;
+      Geometrie = gp.Geometrie;
+      Lagegenauigkeit = div(gp.LageGen, 100.0);
+      IstLagezuverlaessig = enumMap(gp.LageZuv, Zuverlaessigkeit_DM01_DMAV);
+      Punktzeichen = enumMap(gp.Punktzeichen, Versicherungsart_DM01_DMAV);
+      IstExaktDefiniert = enumMap(gp.ExaktDefiniert, JaNein_DM01_DMAV);
+      IstHoheitsgrenzpunkt = false;
+      IstHoheitsgrenzsteinAlt = enumMap(gp.HoheitsgrenzsteinAlt, ja_nein_DM01_DMAV);
+      SymbolOri = lookup('DM01AVCH24LV95D.Liegenschaften.GrenzpunktSymbol', 'GrenzpunktSymbol_von', oid(gp), 'Ori');
+    }
+
+    ref Entstehung {
+      association "Entstehung_Grenzpunkt";
+      role "Entstehung";
+      required;
+      target rule gs-nachfuehrung-gueltig sourceRef gp.Entstehung;
+    }
+  }
+
+  rule grenzpunkt-projektiert {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt";
+    source gp from dm01 class "DM01AVCH24LV95D.Liegenschaften.Grenzpunkt";
+    source nf from dm01 class "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung";
+    where nf.Gueltigkeit == #projektiert;
+    join inner gp to nf on eq(gp.Entstehung, nf);
+    identity gp.Identifikator;
+
+    assign {
+      Nummer = gp.Identifikator;
+      Geometrie = gp.Geometrie;
+      Lagegenauigkeit = div(gp.LageGen, 100.0);
+      IstLagezuverlaessig = enumMap(gp.LageZuv, Zuverlaessigkeit_DM01_DMAV);
+      Punktzeichen = enumMap(gp.Punktzeichen, Versicherungsart_DM01_DMAV);
+      IstExaktDefiniert = enumMap(gp.ExaktDefiniert, JaNein_DM01_DMAV);
+      IstHoheitsgrenzpunkt = false;
+      IstHoheitsgrenzsteinAlt = enumMap(gp.HoheitsgrenzsteinAlt, ja_nein_DM01_DMAV);
+      SymbolOri = lookup('DM01AVCH24LV95D.Liegenschaften.GrenzpunktSymbol', 'GrenzpunktSymbol_von', oid(gp), 'Ori');
+    }
+
+    ref Entstehung {
+      association "Entstehung_Grenzpunkt";
+      role "Entstehung";
+      required;
+      target rule gs-nachfuehrung-projektiert sourceRef gp.Entstehung;
+    }
+  }
+
+  rule hoheitsgrenzpunkt-ls-gueltig {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt";
+    source hgp from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt";
+    source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung";
+    source ls from dm01 class "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung";
+    where ls.NBIdent == gem.NBIdent and if(notDefined(ls.Gueltigkeit), true, ls.Gueltigkeit != #projektiert);
+    join inner hgp to gem on eq(hgp.Entstehung, gem);
+    join left gem to ls on eq(gem.Identifikator, ls.Identifikator);
+    identity hgp.Identifikator;
+
+    assign {
+      Nummer = hgp.Identifikator;
+      Geometrie = hgp.Geometrie;
+      Lagegenauigkeit = div(hgp.LageGen, 100.0);
+      IstLagezuverlaessig = enumMap(hgp.LageZuv, Zuverlaessigkeit_DM01_DMAV);
+      Punktzeichen = enumMap(hgp.Punktzeichen, Versicherungsart_DM01_DMAV);
+      IstExaktDefiniert = if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, JaNein_DM01_DMAV), false);
+      IstHoheitsgrenzpunkt = true;
+      IstHoheitsgrenzsteinAlt = enumMap(hgp.Hoheitsgrenzstein, ja_nein_DM01_DMAV);
+      SymbolOri = lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
+    }
+
+    ref Entstehung {
+      association "Entstehung_Grenzpunkt";
+      role "Entstehung";
+      required;
+      target rule gs-nachfuehrung-gueltig sourceRef ls;
+    }
+  }
+
+  rule hoheitsgrenzpunkt-ls-projektiert {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt";
+    source hgp from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt";
+    source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung";
+    source ls from dm01 class "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung";
+    where ls.NBIdent == gem.NBIdent and ls.Gueltigkeit == #projektiert;
+    join inner hgp to gem on eq(hgp.Entstehung, gem);
+    join left gem to ls on eq(gem.Identifikator, ls.Identifikator);
+    identity hgp.Identifikator;
+
+    assign {
+      Nummer = hgp.Identifikator;
+      Geometrie = hgp.Geometrie;
+      Lagegenauigkeit = div(hgp.LageGen, 100.0);
+      IstLagezuverlaessig = enumMap(hgp.LageZuv, Zuverlaessigkeit_DM01_DMAV);
+      Punktzeichen = enumMap(hgp.Punktzeichen, Versicherungsart_DM01_DMAV);
+      IstExaktDefiniert = if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, JaNein_DM01_DMAV), false);
+      IstHoheitsgrenzpunkt = true;
+      IstHoheitsgrenzsteinAlt = enumMap(hgp.Hoheitsgrenzstein, ja_nein_DM01_DMAV);
+      SymbolOri = lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
+    }
+
+    ref Entstehung {
+      association "Entstehung_Grenzpunkt";
+      role "Entstehung";
+      required;
+      target rule gs-nachfuehrung-projektiert sourceRef ls;
+    }
+  }
+
+  rule hoheitsgrenzpunkt-gem-gueltig {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt";
+    source hgp from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt";
+    source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung";
+    where if(notDefined(gem.Gueltigkeit), true, gem.Gueltigkeit != #projektiert) and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent;
+    join inner hgp to gem on eq(hgp.Entstehung, gem);
+    identity hgp.Identifikator;
+
+    assign {
+      Nummer = hgp.Identifikator;
+      Geometrie = hgp.Geometrie;
+      Lagegenauigkeit = div(hgp.LageGen, 100.0);
+      IstLagezuverlaessig = enumMap(hgp.LageZuv, Zuverlaessigkeit_DM01_DMAV);
+      Punktzeichen = enumMap(hgp.Punktzeichen, Versicherungsart_DM01_DMAV);
+      IstExaktDefiniert = if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, JaNein_DM01_DMAV), false);
+      IstHoheitsgrenzpunkt = true;
+      IstHoheitsgrenzsteinAlt = enumMap(hgp.Hoheitsgrenzstein, ja_nein_DM01_DMAV);
+      SymbolOri = lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
+    }
+
+    ref Entstehung {
+      association "Entstehung_Grenzpunkt";
+      role "Entstehung";
+      required;
+      target rule gs-nachfuehrung-gem-gueltig sourceRef gem;
+    }
+  }
+
+  rule hoheitsgrenzpunkt-gem-projektiert {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt";
+    source hgp from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt";
+    source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung";
+    where gem.Gueltigkeit == #projektiert and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent;
+    join inner hgp to gem on eq(hgp.Entstehung, gem);
+    identity hgp.Identifikator;
+
+    assign {
+      Nummer = hgp.Identifikator;
+      Geometrie = hgp.Geometrie;
+      Lagegenauigkeit = div(hgp.LageGen, 100.0);
+      IstLagezuverlaessig = enumMap(hgp.LageZuv, Zuverlaessigkeit_DM01_DMAV);
+      Punktzeichen = enumMap(hgp.Punktzeichen, Versicherungsart_DM01_DMAV);
+      IstExaktDefiniert = if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, JaNein_DM01_DMAV), false);
+      IstHoheitsgrenzpunkt = true;
+      IstHoheitsgrenzsteinAlt = enumMap(hgp.Hoheitsgrenzstein, ja_nein_DM01_DMAV);
+      SymbolOri = lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
+    }
+
+    ref Entstehung {
+      association "Entstehung_Grenzpunkt";
+      role "Entstehung";
+      required;
+      target rule gs-nachfuehrung-gem-projektiert sourceRef gem;
+    }
+  }
+
+  rule proj-grundstueck {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck";
+    source gs from dm01 class "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck" where gs.Art == #Liegenschaft;
+    identity gs.NBIdent, gs.Nummer;
+
+    assign {
+      NBIdent = gs.NBIdent;
+      Nummer = gs.Nummer;
+      EGRID = gs.EGRIS_EGRID;
+      Grundstuecksart = #Liegenschaft;
+      IstStreitig = (coalesce(gs.Gueltigkeit, #rechtskraeftig) == #streitig);
+      IstVollstaendig = (coalesce(gs.Vollstaendigkeit, #Vollstaendig) == #Vollstaendig);
+      Fiktiv = true;
+      Gesamtflaechenmass = gs.GesamteFlaechenmass;
+    }
+
+    bag Textposition {
+      from pos in dm01 class "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueckPos" where refEquals(pos.ProjGrundstueckPos_von, gs);
+      assign {
+        Position = pos.Pos;
+        Orientierung = coalesce(pos.Ori, 100.0);
+        HReferenzpunkt = coalesce(pos.HAli, 'Center');
+        VReferenzpunkt = coalesce(pos.VAli, 'Half');
+        Textgroesse = enumMap(coalesce(pos.Groesse, 'mittel'), Schriftgroesse_DM01_DMAV);
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_Grundstueck";
+      role "Entstehung";
+      required;
+      target rule gs-nachfuehrung-projektiert sourceRef gs.Entstehung;
+    }
+  }
+
+  rule proj-liegenschaft {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft";
+    source ls from dm01 class "DM01AVCH24LV95D.Liegenschaften.ProjLiegenschaft";
+
+    assign {
+      NummerTeilgrundstueck = ls.NummerTeilGrundstueck;
+      Geometrie = ls.Geometrie;
+      Flaechenmass = ls.Flaechenmass;
+      Fiktiv = true;
+      Qualitaetsstandard = #AV93;
+    }
+
+    ref Grundstueck {
+      association "GrundstueckLiegenschaft";
+      role "Grundstueck";
+      required;
+      target rule proj-grundstueck sourceRef ls.ProjLiegenschaft_von;
+    }
+  }
+
+  rule grundstueck-gueltig {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck";
+    source gs from dm01 class "DM01AVCH24LV95D.Liegenschaften.Grundstueck" where gs.Art == #Liegenschaft;
+    identity gs.NBIdent, gs.Nummer;
+
+    assign {
+      NBIdent = gs.NBIdent;
+      Nummer = gs.Nummer;
+      EGRID = gs.EGRIS_EGRID;
+      Grundstuecksart = #Liegenschaft;
+      IstStreitig = (coalesce(gs.Gueltigkeit, #rechtskraeftig) == #streitig);
+      IstVollstaendig = (coalesce(gs.Vollstaendigkeit, #Vollstaendig) == #Vollstaendig);
+      Fiktiv = false;
+      Gesamtflaechenmass = gs.GesamteFlaechenmass;
+    }
+
+    bag Textposition {
+      from pos in dm01 class "DM01AVCH24LV95D.Liegenschaften.GrundstueckPos" where refEquals(pos.GrundstueckPos_von, gs);
+      assign {
+        Position = pos.Pos;
+        Orientierung = coalesce(pos.Ori, 100.0);
+        HReferenzpunkt = coalesce(pos.HAli, 'Center');
+        VReferenzpunkt = coalesce(pos.VAli, 'Half');
+        Textgroesse = enumMap(coalesce(pos.Groesse, 'mittel'), Schriftgroesse_DM01_DMAV);
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_Grundstueck";
+      role "Entstehung";
+      required;
+      target rule gs-nachfuehrung-gueltig sourceRef gs.Entstehung;
+    }
+  }
+
+  rule liegenschaft {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft";
+    source ls from dm01 class "DM01AVCH24LV95D.Liegenschaften.Liegenschaft";
+
+    assign {
+      NummerTeilgrundstueck = ls.NummerTeilGrundstueck;
+      Geometrie = ls.Geometrie;
+      Flaechenmass = ls.Flaechenmass;
+      Fiktiv = false;
+      Qualitaetsstandard = #AV93;
+    }
+
+    ref Grundstueck {
+      association "GrundstueckLiegenschaft";
+      role "Grundstueck";
+      required;
+      target rule grundstueck-gueltig sourceRef ls.Liegenschaft_von;
+    }
+  }
+
+  rule selbstrecht-grundstueck {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck";
+    source gs from dm01 class "DM01AVCH24LV95D.Liegenschaften.Grundstueck" where gs.Art != #Liegenschaft;
+    identity gs.NBIdent, gs.Nummer;
+
+    assign {
+      NBIdent = gs.NBIdent;
+      Nummer = gs.Nummer;
+      EGRID = gs.EGRIS_EGRID;
+      Grundstuecksart = #SelbstaendigesDauerndesRecht;
+      IstStreitig = (coalesce(gs.Gueltigkeit, #rechtskraeftig) == #streitig);
+      IstVollstaendig = (coalesce(gs.Vollstaendigkeit, #Vollstaendig) == #Vollstaendig);
+      Fiktiv = false;
+      Gesamtflaechenmass = gs.GesamteFlaechenmass;
+    }
+
+    ref Entstehung {
+      association "Entstehung_Grundstueck";
+      role "Entstehung";
+      required;
+      target rule gs-nachfuehrung-gueltig sourceRef gs.Entstehung;
+    }
+  }
+
+  rule selbstrecht {
+    target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.SelbstaendigesDauerndesRecht";
+    source sr from dm01 class "DM01AVCH24LV95D.Liegenschaften.SelbstRecht";
+
+    assign {
+      NummerTeilgrundstueck = sr.NummerTeilGrundstueck;
+      Geometrie = sr.Geometrie;
+      Flaechenmass = sr.Flaechenmass;
+      IstBaurecht = true;
+    }
+
+    ref Grundstueck {
+      association "GrundstueckSelbstaendigesDauerndesRecht";
+      role "Grundstueck";
+      required;
+      target rule selbstrecht-grundstueck sourceRef sr.SelbstRecht_von;
+    }
+  }
+}

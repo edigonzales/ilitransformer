@@ -93,7 +93,45 @@ mapping:
         Mutationsart: "#Projektmutation"
         GueltigerEintrag: "toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1))"
 
-    - id: grenzpunkt
+    - id: gs-nachfuehrung-gem-gueltig
+      target:
+        output: dmav
+        class: "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung"
+      sources:
+        - alias: gem
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
+          where: "if(notDefined(gem.Gueltigkeit), true, gem.Gueltigkeit != #projektiert) and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent"
+      identity:
+        sourceKey: ["gem.NBIdent", "gem.Identifikator"]
+      assign:
+        NBIdent: "gem.NBIdent"
+        Identifikator: "gem.Identifikator"
+        Beschreibung: "truncate(gem.Beschreibung, 60)"
+        Perimeter: "gem.Perimeter"
+        Mutationsart: "enumMap(coalesce(gem.Gueltigkeit, #gueltig), 'Status_Mutationsart')"
+        GueltigerEintrag: "toXmlDateTime(coalesce(gem.GueltigerEintrag, gem.Datum1))"
+
+    - id: gs-nachfuehrung-gem-projektiert
+      target:
+        output: dmav
+        class: "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung"
+      sources:
+        - alias: gem
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
+          where: "gem.Gueltigkeit == #projektiert and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent"
+      identity:
+        sourceKey: ["gem.NBIdent", "gem.Identifikator"]
+      assign:
+        NBIdent: "gem.NBIdent"
+        Identifikator: "gem.Identifikator"
+        Beschreibung: "truncate(gem.Beschreibung, 60)"
+        Perimeter: "gem.Perimeter"
+        Mutationsart: "#Projektmutation"
+        GueltigerEintrag: "toXmlDateTime(coalesce(gem.GueltigerEintrag, gem.Datum1))"
+
+    - id: grenzpunkt-gueltig
       target:
         output: dmav
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
@@ -101,6 +139,15 @@ mapping:
         - alias: gp
           input: dm01
           class: "DM01AVCH24LV95D.Liegenschaften.Grenzpunkt"
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
+      joins:
+        - left: gp
+          right: nf
+          on: "eq(gp.Entstehung, nf)"
+          type: "inner"
+      where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       identity:
         sourceKey: ["gp.Identifikator"]
       assign:
@@ -121,7 +168,44 @@ mapping:
             rule: gs-nachfuehrung-gueltig
             sourceRef: "gp.Entstehung"
 
-    - id: hoheitsgrenzpunkt
+    - id: grenzpunkt-projektiert
+      target:
+        output: dmav
+        class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
+      sources:
+        - alias: gp
+          input: dm01
+          class: "DM01AVCH24LV95D.Liegenschaften.Grenzpunkt"
+        - alias: nf
+          input: dm01
+          class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
+      joins:
+        - left: gp
+          right: nf
+          on: "eq(gp.Entstehung, nf)"
+          type: "inner"
+      where: "nf.Gueltigkeit == #projektiert"
+      identity:
+        sourceKey: ["gp.Identifikator"]
+      assign:
+        Nummer: "gp.Identifikator"
+        Geometrie: "gp.Geometrie"
+        Lagegenauigkeit: "div(gp.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(gp.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        Punktzeichen: "enumMap(gp.Punktzeichen, 'Versicherungsart_DM01_DMAV')"
+        IstExaktDefiniert: "enumMap(gp.ExaktDefiniert, 'JaNein_DM01_DMAV')"
+        IstHoheitsgrenzpunkt: "false"
+        IstHoheitsgrenzsteinAlt: "enumMap(gp.HoheitsgrenzsteinAlt, 'ja_nein_DM01_DMAV')"
+        SymbolOri: "lookup('DM01AVCH24LV95D.Liegenschaften.GrenzpunktSymbol', 'GrenzpunktSymbol_von', oid(gp), 'Ori')"
+      refs:
+        - association: "Entstehung_Grenzpunkt"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-projektiert
+            sourceRef: "gp.Entstehung"
+
+    - id: hoheitsgrenzpunkt-ls-gueltig
       target:
         output: dmav
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
@@ -129,6 +213,22 @@ mapping:
         - alias: hgp
           input: dm01
           class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
+        - alias: gem
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
+        - alias: ls
+          input: dm01
+          class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
+      joins:
+        - left: hgp
+          right: gem
+          on: "eq(hgp.Entstehung, gem)"
+          type: "inner"
+        - left: gem
+          right: ls
+          on: "eq(gem.Identifikator, ls.Identifikator)"
+          type: "left"
+      where: "ls.NBIdent == gem.NBIdent and if(notDefined(ls.Gueltigkeit), true, ls.Gueltigkeit != #projektiert)"
       identity:
         sourceKey: ["hgp.Identifikator"]
       assign:
@@ -141,6 +241,131 @@ mapping:
         IstHoheitsgrenzpunkt: "true"
         IstHoheitsgrenzsteinAlt: "enumMap(hgp.Hoheitsgrenzstein, 'ja_nein_DM01_DMAV')"
         SymbolOri: "lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori')"
+      refs:
+        - association: "Entstehung_Grenzpunkt"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-gueltig
+            sourceRef: "ls"
+
+    - id: hoheitsgrenzpunkt-ls-projektiert
+      target:
+        output: dmav
+        class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
+      sources:
+        - alias: hgp
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
+        - alias: gem
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
+        - alias: ls
+          input: dm01
+          class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
+      joins:
+        - left: hgp
+          right: gem
+          on: "eq(hgp.Entstehung, gem)"
+          type: "inner"
+        - left: gem
+          right: ls
+          on: "eq(gem.Identifikator, ls.Identifikator)"
+          type: "left"
+      where: "ls.NBIdent == gem.NBIdent and ls.Gueltigkeit == #projektiert"
+      identity:
+        sourceKey: ["hgp.Identifikator"]
+      assign:
+        Nummer: "hgp.Identifikator"
+        Geometrie: "hgp.Geometrie"
+        Lagegenauigkeit: "div(hgp.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(hgp.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        Punktzeichen: "enumMap(hgp.Punktzeichen, 'Versicherungsart_DM01_DMAV')"
+        IstExaktDefiniert: "if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, 'JaNein_DM01_DMAV'), false)"
+        IstHoheitsgrenzpunkt: "true"
+        IstHoheitsgrenzsteinAlt: "enumMap(hgp.Hoheitsgrenzstein, 'ja_nein_DM01_DMAV')"
+        SymbolOri: "lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori')"
+      refs:
+        - association: "Entstehung_Grenzpunkt"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-projektiert
+            sourceRef: "ls"
+
+    - id: hoheitsgrenzpunkt-gem-gueltig
+      target:
+        output: dmav
+        class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
+      sources:
+        - alias: hgp
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
+        - alias: gem
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
+      joins:
+        - left: hgp
+          right: gem
+          on: "eq(hgp.Entstehung, gem)"
+          type: "inner"
+      where: "if(notDefined(gem.Gueltigkeit), true, gem.Gueltigkeit != #projektiert) and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent"
+      identity:
+        sourceKey: ["hgp.Identifikator"]
+      assign:
+        Nummer: "hgp.Identifikator"
+        Geometrie: "hgp.Geometrie"
+        Lagegenauigkeit: "div(hgp.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(hgp.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        Punktzeichen: "enumMap(hgp.Punktzeichen, 'Versicherungsart_DM01_DMAV')"
+        IstExaktDefiniert: "if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, 'JaNein_DM01_DMAV'), false)"
+        IstHoheitsgrenzpunkt: "true"
+        IstHoheitsgrenzsteinAlt: "enumMap(hgp.Hoheitsgrenzstein, 'ja_nein_DM01_DMAV')"
+        SymbolOri: "lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori')"
+      refs:
+        - association: "Entstehung_Grenzpunkt"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-gem-gueltig
+            sourceRef: "gem"
+
+    - id: hoheitsgrenzpunkt-gem-projektiert
+      target:
+        output: dmav
+        class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
+      sources:
+        - alias: hgp
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
+        - alias: gem
+          input: dm01
+          class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
+      joins:
+        - left: hgp
+          right: gem
+          on: "eq(hgp.Entstehung, gem)"
+          type: "inner"
+      where: "gem.Gueltigkeit == #projektiert and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent"
+      identity:
+        sourceKey: ["hgp.Identifikator"]
+      assign:
+        Nummer: "hgp.Identifikator"
+        Geometrie: "hgp.Geometrie"
+        Lagegenauigkeit: "div(hgp.LageGen, 100.0)"
+        IstLagezuverlaessig: "enumMap(hgp.LageZuv, 'Zuverlaessigkeit_DM01_DMAV')"
+        Punktzeichen: "enumMap(hgp.Punktzeichen, 'Versicherungsart_DM01_DMAV')"
+        IstExaktDefiniert: "if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, 'JaNein_DM01_DMAV'), false)"
+        IstHoheitsgrenzpunkt: "true"
+        IstHoheitsgrenzsteinAlt: "enumMap(hgp.Hoheitsgrenzstein, 'ja_nein_DM01_DMAV')"
+        SymbolOri: "lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori')"
+      refs:
+        - association: "Entstehung_Grenzpunkt"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-gem-projektiert
+            sourceRef: "gem"
 
     - id: proj-grundstueck
       target:

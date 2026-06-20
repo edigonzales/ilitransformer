@@ -1,43 +1,47 @@
-datasetSlug: so-2549
-direction: dm01-to-dmav
-sourceSha256: a24986c97092b1fbd1bbba1aa76c82c2e1976a2e719bd045eb27087f582128fd
+---
+datasetSlug: "so-2549"
+direction: "dm01-to-dmav"
+sourceSha256: "a24986c97092b1fbd1bbba1aa76c82c2e1976a2e719bd045eb27087f582128fd"
 counts:
   sourceRecordsRead: 1860
-  sourceRecordsFiltered: 78
-  targetsCreated: 288
-  targetsWritten: 288
+  sourceRecordsFiltered: 985
+  targetsCreated: 937
+  targetsWritten: 937
   errors: 0
-  warnings: 61
+  warnings: 204
 includedTopics:
-  - bb
-  - dbv
-  - eo
-  - fpds2
-  - gebaeudeadressen
-  - hfp3
-  - lfp3
-  - nomenklatur
-  - rohrleitungen
-  - toleranzstufen
+- "bb"
+- "dbv"
+- "eo"
+- "fpds2"
+- "gebaeudeadressen"
+- "gs"
+- "hfp3"
+- "lfp3"
+- "nomenklatur"
+- "rohrleitungen"
+- "toleranzstufen"
 excludedTopics:
-  - id: fixpunktelv
-    reason: "validate-mapping: target classes DMAV_FixpunkteLV_V1_0.FixpunkteLV.LFP1 and HFP1 are not present under output model DMAVTYM_Alles_V1_1."
-  - id: hoheitsgrenzenlv
-    reason: "validate-mapping: target class DMAV_HoheitsgrenzenLV_V1_0.HoheitsgrenzenLV.Landesgrenze is not present under output model DMAVTYM_Alles_V1_1."
-  - id: plzortschaft
-    reason: "validate-mapping: target classes DMAV_PLZ_Ortschaft_V1_0.PLZ_Ortschaft.Ortschaft and PLZ are not present under output model DMAVTYM_Alles_V1_1."
-  - id: gs
-    reason: "transform: required Entstehung_Grenzpunkt references are missing for source OID 7."
-  - id: hoheitsgrenzen
-    reason: "transform: ambiguous #first references in DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung; multiple target candidates are found."
+- id: "fixpunktelv"
+  reason: "validate-mapping: target classes DMAV_FixpunkteLV_V1_0.FixpunkteLV.LFP1\
+    \ and HFP1 are not present under output model DMAVTYM_Alles_V1_1."
+- id: "hoheitsgrenzenlv"
+  reason: "validate-mapping: target class DMAV_HoheitsgrenzenLV_V1_0.HoheitsgrenzenLV.Landesgrenze\
+    \ is not present under output model DMAVTYM_Alles_V1_1."
+- id: "plzortschaft"
+  reason: "validate-mapping: target classes DMAV_PLZ_Ortschaft_V1_0.PLZ_Ortschaft.Ortschaft\
+    \ and PLZ are not present under output model DMAVTYM_Alles_V1_1."
+- id: "hoheitsgrenzen"
+  reason: "transform: ambiguous #first references in DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung;\
+    \ multiple target candidates are found."
 sourceTopicsWithoutProfile:
-  - DM01AVCH24LV95D.Hoehen
-  - DM01AVCH24LV95D.Nummerierungsbereiche
-  - DM01AVCH24LV95D.Planeinteilungen
-  - DM01AVCH24LV95D.Planrahmen
+- "DM01AVCH24LV95D.Hoehen"
+- "DM01AVCH24LV95D.Nummerierungsbereiche"
+- "DM01AVCH24LV95D.Planeinteilungen"
+- "DM01AVCH24LV95D.Planrahmen"
 sourceTopicsPresentInDataset:
-  - DM01AVCH24LV95D.Nummerierungsbereiche
-  - DM01AVCH24LV95D.Planeinteilungen
+- "DM01AVCH24LV95D.Nummerierungsbereiche"
+- "DM01AVCH24LV95D.Planeinteilungen"
 targetsByClass:
   DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.BBNachfuehrung: 9
   DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung: 126
@@ -48,6 +52,10 @@ targetsByClass:
   DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.GANachfuehrung: 5
   DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Gebaeudeeingang: 34
   DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Lokalisation: 9
+  DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung: 9
+  DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt: 568
+  DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck: 36
+  DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft: 36
   DMAV_Nomenklatur_V1_1.Nomenklatur.Flurname: 9
   DMAV_Nomenklatur_V1_1.Nomenklatur.NKNachfuehrung: 3
   DMAV_Nomenklatur_V1_1.Nomenklatur.Ortsname: 1
@@ -58,9 +66,13 @@ targetsByClass:
   KGKCGC_FPDS2_V1_1.FPDS2.UebersichtMassstab: 1
   KGKCGC_FPDS2_V1_1.FPDS2.Zustaendigkeit: 1
 warningsByCode:
-  ILITRF-LOOKUP-NO-MATCH: 61
+  ILITRF-LOOKUP-NO-MATCH: 204
 warningsByRule:
   eo-einzelobjekt-gueltig:
     ILITRF-LOOKUP-NO-MATCH: 54
   eo-einzelobjekt-projektiert:
     ILITRF-LOOKUP-NO-MATCH: 7
+  gs-gs-nachfuehrung-gem-gueltig:
+    ILITRF-LOOKUP-NO-MATCH: 1
+  gs-hoheitsgrenzpunkt-gem-gueltig:
+    ILITRF-LOOKUP-NO-MATCH: 142

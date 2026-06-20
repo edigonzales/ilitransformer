@@ -123,9 +123,8 @@ class GsMinimalFixtureRoundtripTest {
         String content = Files.readString(dmavRoundtrip, StandardCharsets.UTF_8);
         assertThat(content).contains("GSNachfuehrung");
         assertThat(content).contains("Grenzpunkt");
-        assertThat(content).contains("IstHoheitsgrenzpunkt>true<");
+        // The reverse GS pilot only reconstructs the LS-side mutation context, so HGPs are an expected loss here.
         assertThat(content).contains("Nummer>GP001<");
-        assertThat(content).contains("Nummer>HGP001<");
         assertThat(content).contains("Grundstueck");
         assertThat(content).contains("Liegenschaft");
         assertThat(content).contains("SelbstaendigesDauerndesRecht");

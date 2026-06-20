@@ -15,7 +15,7 @@ Der Datensatz selbst wird nicht eingecheckt. Entweder:
 
 ## Inhalt
 
-- `.ilimap`-first über das Manifest: `lfp3` läuft über `profiles/dm01-to-dmav/1.1/lfp3.ilimap`
+- `.ilimap`-first über das Manifest: `gs` und `lfp3` laufen über ihre eingecheckten `.ilimap`-Profile
 - übrige Topics bleiben bis zur Migration explizit als YAML-Fallback referenziert
 - ausgeschlossene Topics und Gründe sind im Manifest dokumentiert
 

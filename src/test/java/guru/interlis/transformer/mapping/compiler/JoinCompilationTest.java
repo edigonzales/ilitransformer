@@ -155,7 +155,7 @@ class JoinCompilationTest {
     }
 
     @Test
-    void rejectsMultipleJoinsForNow() {
+    void compilesMultipleJoinsInOrder() {
         JobConfig config = minimalConfigWithTwoSources();
 
         JobConfig.JoinSpec join1 = new JobConfig.JoinSpec();
@@ -175,11 +175,10 @@ class JoinCompilationTest {
         Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
 
-        assertThat(plan.diagnostics().all())
-                .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE)
-                        && d.severity() == Severity.ERROR
-                        && d.message().contains("Only one join"));
-        assertThat(plan.rules().get(0).joins()).isEmpty();
+        assertThat(plan.diagnostics().all()).noneMatch(d -> d.code().equals(DiagnosticCode.MAP_UNSUPPORTED_FEATURE));
+        assertThat(plan.rules().get(0).joins()).hasSize(2);
+        assertThat(plan.rules().get(0).joins().get(0).left().alias()).isEqualTo("s");
+        assertThat(plan.rules().get(0).joins().get(1).right().alias()).isEqualTo("s2");
     }
 
     private static JobConfig minimalConfig() {

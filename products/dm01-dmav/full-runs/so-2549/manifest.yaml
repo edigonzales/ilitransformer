@@ -43,6 +43,8 @@ topics:
       fallbackYaml: profiles/dm01-to-dmav/1.1/fpds2.yaml
     - id: gebaeudeadressen
       fallbackYaml: profiles/dm01-to-dmav/1.1/gebaeudeadressen.yaml
+    - id: gs
+      preferredIlimap: profiles/dm01-to-dmav/1.1/gs.ilimap
     - id: hfp3
       fallbackYaml: profiles/dm01-to-dmav/1.1/hfp3.yaml
     - id: lfp3
@@ -60,8 +62,6 @@ topics:
       reason: "validate-mapping: target class DMAV_HoheitsgrenzenLV_V1_0.HoheitsgrenzenLV.Landesgrenze is not present under output model DMAVTYM_Alles_V1_1."
     - id: plzortschaft
       reason: "validate-mapping: target classes DMAV_PLZ_Ortschaft_V1_0.PLZ_Ortschaft.Ortschaft and PLZ are not present under output model DMAVTYM_Alles_V1_1."
-    - id: gs
-      reason: "transform: required Entstehung_Grenzpunkt references are missing for source OID 7."
     - id: hoheitsgrenzen
       reason: "transform: ambiguous #first references in DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung; multiple target candidates are found."
 

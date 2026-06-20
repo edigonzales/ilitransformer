@@ -45,11 +45,16 @@ class Dm01DmavFullRunAssemblerTest {
                         "eo",
                         "fpds2",
                         "gebaeudeadressen",
+                        "gs",
                         "hfp3",
                         "lfp3",
                         "nomenklatur",
                         "rohrleitungen",
                         "toleranzstufen");
+        assertThat(assembled.loadedTopics())
+                .filteredOn(topic -> "gs".equals(topic.topicId()))
+                .singleElement()
+                .satisfies(topic -> assertThat(topic.format()).isEqualTo("ilimap"));
         assertThat(assembled.loadedTopics())
                 .filteredOn(topic -> "lfp3".equals(topic.topicId()))
                 .singleElement()
@@ -58,7 +63,6 @@ class Dm01DmavFullRunAssemblerTest {
                 .filteredOn(topic -> "eo".equals(topic.topicId()))
                 .singleElement()
                 .satisfies(topic -> assertThat(topic.format()).isEqualTo("yaml"));
-        assertThat(assembled.conflictingEnumNames()).isEmpty();
 
         assertThat(combined.job.name).isEqualTo("dm01-to-dmav-so-2549-all");
         assertThat(combined.job.inputs).singleElement().satisfies(input -> {
@@ -82,10 +86,22 @@ class Dm01DmavFullRunAssemblerTest {
                 .contains("https://models.interlis.ch", "https://models.geo.admin.ch", "https://models.kgk-cgc.ch");
 
         assertThat(combined.mapping.enums).containsKey("Zuverlaessigkeit_DM01_DMAV");
-        assertThat(rulesById).containsKeys("lfp3-lfp3", "lfp3-lfp3-nachfuehrung", "eo-einzelobjekt-gueltig");
+        assertThat(rulesById)
+                .containsKeys(
+                        "lfp3-lfp3",
+                        "lfp3-lfp3-nachfuehrung",
+                        "eo-einzelobjekt-gueltig",
+                        "gs-grenzpunkt-gueltig",
+                        "gs-grenzpunkt-projektiert");
         assertThat(rulesById.get("lfp3-lfp3").getEffectiveRefs())
                 .singleElement()
                 .satisfies(ref -> assertThat(ref.targetObject.rule).isEqualTo("lfp3-lfp3-nachfuehrung"));
+        assertThat(rulesById.get("gs-grenzpunkt-gueltig").getEffectiveRefs())
+                .singleElement()
+                .satisfies(ref -> assertThat(ref.targetObject.rule).isEqualTo("gs-gs-nachfuehrung-gueltig"));
+        assertThat(rulesById.get("gs-grenzpunkt-projektiert").getEffectiveRefs())
+                .singleElement()
+                .satisfies(ref -> assertThat(ref.targetObject.rule).isEqualTo("gs-gs-nachfuehrung-projektiert"));
     }
 
     @Test

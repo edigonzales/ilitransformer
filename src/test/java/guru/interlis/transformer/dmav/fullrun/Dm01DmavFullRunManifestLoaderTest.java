@@ -30,12 +30,19 @@ class Dm01DmavFullRunManifestLoaderTest {
         assertThat(manifest.datasetSlug).isEqualTo("so-2549");
         assertThat(manifest.source.pathHint).isEqualTo("./source/2549.ch.so.agi.av.dm01_ch.itf");
         assertThat(manifest.report.expectedSummary).isEqualTo("./expected-summary.yaml");
-        assertThat(manifest.topics.include).hasSize(10);
+        assertThat(manifest.topics.include).hasSize(11);
         assertThat(manifest.topics.include)
                 .filteredOn(topic -> "lfp3".equals(topic.id))
                 .singleElement()
                 .satisfies(topic -> {
                     assertThat(topic.preferredIlimap).isEqualTo("profiles/dm01-to-dmav/1.1/lfp3.ilimap");
+                    assertThat(topic.fallbackYaml).isNull();
+                });
+        assertThat(manifest.topics.include)
+                .filteredOn(topic -> "gs".equals(topic.id))
+                .singleElement()
+                .satisfies(topic -> {
+                    assertThat(topic.preferredIlimap).isEqualTo("profiles/dm01-to-dmav/1.1/gs.ilimap");
                     assertThat(topic.fallbackYaml).isNull();
                 });
     }
