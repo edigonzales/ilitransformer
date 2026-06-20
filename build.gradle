@@ -36,6 +36,7 @@ dependencies {
     implementation 'ch.interlis:ili2c-core:5.6.6'
     implementation 'ch.interlis:ili2c-tool:5.6.6'
     implementation 'info.picocli:picocli:4.7.6'
+    implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j:1.0.0'
     implementation 'org.slf4j:slf4j-api:2.0.17'
     runtimeOnly 'org.slf4j:slf4j-simple:2.0.17'
 
@@ -137,6 +138,13 @@ tasks.register('realDataTest', Test) {
     testClassesDirs = sourceSets.realDataTest.output.classesDirs
     classpath = sourceSets.realDataTest.runtimeClasspath
     useJUnitPlatform()
+}
+
+tasks.register('runIlimapLanguageServer', JavaExec) {
+    group = 'application'
+    description = 'Runs the ILIMAP language server over stdio'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'guru.interlis.transformer.mapping.ilimap.lsp.IlimapLanguageServerMain'
 }
 
 tasks.register('generateFeatureMatrix', JavaExec) {
