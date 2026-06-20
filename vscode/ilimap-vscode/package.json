@@ -1,0 +1,80 @@
+{
+  "name": "ilimap-vscode",
+  "displayName": "ILIMAP",
+  "description": "Language support for ILIMAP mapping profiles",
+  "version": "0.0.1",
+  "publisher": "ilinexus",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:ilimap",
+    "onCommand:ilimap.restartLanguageServer",
+    "onCommand:ilimap.validate"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "ilimap",
+        "aliases": [
+          "ILIMAP",
+          "ilimap"
+        ],
+        "extensions": [
+          ".ilimap"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ilimap",
+        "scopeName": "source.ilimap",
+        "path": "./syntaxes/ilimap.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "ilimap.restartLanguageServer",
+        "title": "ILIMAP: Restart Language Server"
+      },
+      {
+        "command": "ilimap.validate",
+        "title": "ILIMAP: Validate Mapping"
+      }
+    ],
+    "configuration": {
+      "title": "ILIMAP",
+      "properties": {
+        "ilimap.java.path": {
+          "type": "string",
+          "default": "java",
+          "description": "Path to the Java executable used to start the ILIMAP language server."
+        },
+        "ilimap.server.jar": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the ILIMAP language server JAR. If empty, the extension tries to use the bundled server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "vscode-languageclient": "9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "@types/vscode": "1.90.0",
+    "typescript": "6.0.3"
+  }
+}
