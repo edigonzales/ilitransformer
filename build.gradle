@@ -1,6 +1,7 @@
 plugins {
     id 'application'
     id 'java'
+    id 'com.gradleup.shadow' version '9.4.2'
     id 'com.diffplug.spotless' version '8.7.0'
 }
 
@@ -145,6 +146,22 @@ tasks.register('runIlimapLanguageServer', JavaExec) {
     description = 'Runs the ILIMAP language server over stdio'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'guru.interlis.transformer.mapping.ilimap.lsp.IlimapLanguageServerMain'
+}
+
+tasks.named('shadowJar') {
+    archiveClassifier.set('all')
+    manifest {
+        attributes 'Main-Class': 'guru.interlis.transformer.mapping.ilimap.lsp.IlimapLanguageServerMain'
+    }
+}
+
+tasks.register('copyDevIlimapServerJar', Copy) {
+    group = 'vscode'
+    description = 'Copies the current ILIMAP language server fat JAR into the VS Code extension dev server folder.'
+    dependsOn tasks.named('shadowJar')
+    from(tasks.named('shadowJar').flatMap { it.archiveFile })
+    into layout.projectDirectory.dir('vscode/ilimap-vscode/server')
+    rename { 'ilimap-lsp-all.jar' }
 }
 
 tasks.register('generateFeatureMatrix', JavaExec) {

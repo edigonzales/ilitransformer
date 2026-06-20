@@ -28,6 +28,7 @@ test('registers public commands', () => {
   const commands = manifest.contributes.commands.map((command) => command.command);
 
   assert.ok(commands.includes('ilimap.restartLanguageServer'));
+  assert.ok(commands.includes('ilimap.showLanguageServerLogs'));
   assert.ok(commands.includes('ilimap.validate'));
 });
 
@@ -35,11 +36,23 @@ test('declares required settings', () => {
   const properties = manifest.contributes.configuration.properties;
 
   assert.equal(properties['ilimap.java.path'].default, 'java');
-  assert.equal(properties['ilimap.server.jar'].default, '');
+  assert.equal(properties['ilimap.server.jarPath'].default, '');
+  assert.deepEqual(properties['ilimap.server.jvmArgs'].default, []);
+  assert.equal(properties['ilimap.server.restartOnJarChange'], undefined);
+});
+
+test('declares development build scripts', () => {
+  assert.equal(manifest.scripts.compile, 'npm run build');
+  assert.equal(manifest.scripts.build, 'tsc -p ./');
+  assert.equal(manifest.scripts.watch, 'tsc -watch -p ./');
 });
 
 test('does not declare client-side ilimap semantics settings', () => {
   const propertyNames = Object.keys(manifest.contributes.configuration.properties);
 
-  assert.deepEqual(propertyNames.sort(), ['ilimap.java.path', 'ilimap.server.jar']);
+  assert.deepEqual(propertyNames.sort(), [
+    'ilimap.java.path',
+    'ilimap.server.jarPath',
+    'ilimap.server.jvmArgs'
+  ]);
 });

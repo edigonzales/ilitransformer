@@ -11,6 +11,12 @@ export function registerCommands(context: vscode.ExtensionContext, outputChannel
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('ilimap.showLanguageServerLogs', async () => {
+      outputChannel.show(true);
+    })
+  );
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('ilimap.validate', async () => {
       await vscode.commands.executeCommand('workbench.action.problems.focus');
     })

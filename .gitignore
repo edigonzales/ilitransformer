@@ -10,6 +10,9 @@ build/
 .idea/
 *.iml
 .vscode/
+!vscode/ilimap-vscode/.vscode/
+!vscode/ilimap-vscode/.vscode/launch.json
+!vscode/ilimap-vscode/.vscode/tasks.json
 .project
 .classpath
 .settings/
