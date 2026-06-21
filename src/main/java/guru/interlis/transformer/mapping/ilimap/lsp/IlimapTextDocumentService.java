@@ -16,6 +16,9 @@ import guru.interlis.transformer.mapping.ilimap.ide.IlimapHover;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapHoverService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapIdePosition;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapIdeRange;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummary;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapSymbolDisplayKind;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
 
@@ -71,6 +74,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     private final IlimapLspCompletionMapper completionMapper;
     private final IlimapDefinitionService definitionService;
     private final IlimapHoverService hoverService;
+    private final IlimapMappingSummaryService mappingSummaryService;
     private final IlimapLspRangeMapper rangeMapper;
     private final IlimapCodeActionService codeActionService;
     private IlimapAnalysisOptions analysisOptions;
@@ -87,6 +91,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 new IlimapLspCompletionMapper(),
                 new IlimapDefinitionService(),
                 new IlimapHoverService(),
+                new IlimapMappingSummaryService(),
                 new IlimapLspRangeMapper(),
                 IlimapAnalysisOptions.modelAware(Path.of(".")));
     }
@@ -107,6 +112,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 new IlimapLspCompletionMapper(),
                 new IlimapDefinitionService(),
                 new IlimapHoverService(),
+                new IlimapMappingSummaryService(),
                 rangeMapper,
                 analysisOptions);
     }
@@ -129,6 +135,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 new IlimapLspCompletionMapper(),
                 new IlimapDefinitionService(),
                 new IlimapHoverService(),
+                new IlimapMappingSummaryService(),
                 rangeMapper,
                 analysisOptions);
     }
@@ -143,6 +150,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
             IlimapLspCompletionMapper completionMapper,
             IlimapDefinitionService definitionService,
             IlimapHoverService hoverService,
+            IlimapMappingSummaryService mappingSummaryService,
             IlimapLspRangeMapper rangeMapper,
             IlimapAnalysisOptions analysisOptions) {
         this.documentStore = Objects.requireNonNull(documentStore, "documentStore");
@@ -154,6 +162,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         this.completionMapper = Objects.requireNonNull(completionMapper, "completionMapper");
         this.definitionService = Objects.requireNonNull(definitionService, "definitionService");
         this.hoverService = Objects.requireNonNull(hoverService, "hoverService");
+        this.mappingSummaryService = Objects.requireNonNull(mappingSummaryService, "mappingSummaryService");
         this.rangeMapper = Objects.requireNonNull(rangeMapper, "rangeMapper");
         this.codeActionService = new IlimapCodeActionService(this.formattingService);
         this.analysisOptions = Objects.requireNonNull(analysisOptions, "analysisOptions");
@@ -292,6 +301,20 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(hoverService.hoverAt(analysis, position)
                 .map(this::toLspHover)
                 .orElse(null));
+    }
+
+    public CompletableFuture<IlimapMappingSummary> mappingSummary(IlimapMappingSummaryParams params) {
+        if (params == null || params.uri() == null || params.uri().isBlank()) {
+            return CompletableFuture.completedFuture(IlimapMappingSummary.unavailable("No ILIMAP document URI provided."));
+        }
+        String uri = params.uri();
+        if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(
+                    IlimapMappingSummary.unavailable("No open ILIMAP document for URI: " + uri));
+        }
+
+        IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
+        return CompletableFuture.completedFuture(mappingSummaryService.summarize(analysis));
     }
 
     private void analyzeAndPublish(String uri) {

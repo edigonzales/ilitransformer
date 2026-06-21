@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 import { restartLanguageClient } from './client';
+import { openMappingOverview } from './webview/mappingOverviewPanel';
 
 export function registerCommands(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): void {
   context.subscriptions.push(
@@ -25,6 +26,12 @@ export function registerCommands(context: vscode.ExtensionContext, outputChannel
   context.subscriptions.push(
     vscode.commands.registerCommand('ilimap.validate', async () => {
       await vscode.commands.executeCommand('workbench.action.problems.focus');
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('ilimap.openMappingOverview', async () => {
+      await openMappingOverview(context, outputChannel);
     })
   );
 }

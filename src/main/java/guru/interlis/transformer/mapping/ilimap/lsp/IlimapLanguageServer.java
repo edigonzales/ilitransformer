@@ -1,6 +1,8 @@
 package guru.interlis.transformer.mapping.ilimap.lsp;
 
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummary;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -15,6 +17,7 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageClientAware;
 import org.eclipse.lsp4j.services.LanguageServer;
@@ -104,6 +107,11 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
     @Override
     public WorkspaceService getWorkspaceService() {
         return workspaceService;
+    }
+
+    @JsonRequest(value = "ilimap/mappingSummary", useSegment = false)
+    public CompletableFuture<IlimapMappingSummary> mappingSummary(IlimapMappingSummaryParams params) {
+        return textDocumentService.mappingSummary(params);
     }
 
     @Override

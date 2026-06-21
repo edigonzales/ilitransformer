@@ -16,7 +16,8 @@
     "onCommand:ilimap.restartLanguageServer",
     "onCommand:ilimap.showLanguageServerLogs",
     "onCommand:ilimap.format",
-    "onCommand:ilimap.validate"
+    "onCommand:ilimap.validate",
+    "onCommand:ilimap.openMappingOverview"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -56,6 +57,10 @@
       {
         "command": "ilimap.validate",
         "title": "ILIMAP: Validate Mapping"
+      },
+      {
+        "command": "ilimap.openMappingOverview",
+        "title": "ILIMAP: Open Mapping Overview"
       }
     ],
     "configuration": {

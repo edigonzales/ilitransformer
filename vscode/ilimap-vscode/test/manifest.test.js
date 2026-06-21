@@ -31,6 +31,11 @@ test('registers public commands', () => {
   assert.ok(commands.includes('ilimap.showLanguageServerLogs'));
   assert.ok(commands.includes('ilimap.format'));
   assert.ok(commands.includes('ilimap.validate'));
+  assert.ok(commands.includes('ilimap.openMappingOverview'));
+});
+
+test('activates mapping overview command', () => {
+  assert.ok(manifest.activationEvents.includes('onCommand:ilimap.openMappingOverview'));
 });
 
 test('declares required settings', () => {
