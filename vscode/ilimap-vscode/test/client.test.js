@@ -108,6 +108,6 @@ test('restartLanguageClient stops the current client and starts a new one', asyn
   assert.equal(clients[0].stopped, true);
   assert.equal(clients[1].started, true);
   assert.equal(clientModule.getLanguageClient(), clients[1]);
-  assert.ok(outputLines.includes('Restarting ILIMAP language server.'));
-  assert.ok(outputLines.includes('ILIMAP language server restart complete.'));
+  assert.ok(outputLines.includes('Restarting ilimap language server.'));
+  assert.ok(outputLines.includes('ilimap language server restart complete.'));
 });

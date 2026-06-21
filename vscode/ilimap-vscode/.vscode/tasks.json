@@ -2,13 +2,13 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build ILIMAP Client",
+      "label": "Build ilimap Client",
       "type": "npm",
       "script": "build",
       "problemMatcher": []
     },
     {
-      "label": "Copy ILIMAP Server JAR",
+      "label": "Copy ilimap Server JAR",
       "type": "shell",
       "command": "./gradlew",
       "windows": {
@@ -23,11 +23,11 @@
       "problemMatcher": []
     },
     {
-      "label": "Prepare ILIMAP Dev Host",
+      "label": "Prepare ilimap Dev Host",
       "dependsOrder": "sequence",
       "dependsOn": [
-        "Build ILIMAP Client",
-        "Copy ILIMAP Server JAR"
+        "Build ilimap Client",
+        "Copy ilimap Server JAR"
       ],
       "problemMatcher": []
     }

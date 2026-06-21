@@ -1,4 +1,4 @@
-# ILIMAP VS Code Extension: Packaging und Publishing
+# ilimap VS Code Extension: Packaging und Publishing
 
 Diese Notiz beschreibt, wie die VS-Code-Extension unter `vscode/ilimap-vscode/` gebaut, verpackt und veröffentlicht wird.
 
@@ -14,13 +14,13 @@ Diese Notiz beschreibt, wie die VS-Code-Extension unter `vscode/ilimap-vscode/` 
 
 ### Visual Studio Marketplace
 
-1. Publisher `ilinexus` anlegen oder übernehmen.
+1. Publisher `edigonzales` anlegen oder übernehmen.
 2. Ein Publishing-Token erzeugen und als Repository-Secret `VS_MARKETPLACE_TOKEN` hinterlegen.
 3. Im Hinterkopf behalten: Laut offizieller VS-Code-Dokumentation laufen Azure-DevOps-PAT-basierte Veröffentlichungen ab **1. Dezember 2026** aus. Diese Pipeline bleibt kurzfristig PAT-basiert, sollte danach aber auf Microsoft Entra / OIDC umgestellt werden.
 
 ### Open VSX
 
-1. Namespace `ilinexus` anlegen und claimen.
+1. Namespace `edigonzales` anlegen und claimen.
 2. Publisher Agreement auf [open-vsx.org](https://open-vsx.org/) akzeptieren.
 3. Token erzeugen und als Repository-Secret `OPEN_VSIX_MARKETPLACE_TOKEN` hinterlegen.
 

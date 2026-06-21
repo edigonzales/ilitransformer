@@ -58,13 +58,13 @@
 | Persistent StateStore | - | ❌ UNSUPPORTED | Disk-backed or database-backed state store |  |
 | AREA topology repair | - | ❌ UNSUPPORTED | Topological repair of AREA geometries |  |
 | LINEATTR support | - | ❌ UNSUPPORTED | Line attribute geometry processing |  |
-| ILIMAP parser + lexer | P1/P2 | ✅ SUPPORTED | Lexer, expression reader and recursive descent parser for .ilimap v2 DSL | IlimapLexerTest, IlimapExpressionReaderTest, IlimapParserMinimalTest, IlimapParserFullRuleTest |
-| ILIMAP semantic validation | P3 | ✅ SUPPORTED | Symbol table, scope analysis, identifier rules, seven hardening points | IlimapSemanticValidatorTest, IlimapIdentifierRulesTest, IlimapSymbolTableTest |
-| ILIMAP loader to JobConfig | P4 | ✅ SUPPORTED | Map parsed .ilimap AST to JobConfig via IlimapToJobConfigMapper | IlimapToJobConfigMapperTest, IlimapLoaderTest, IlimapYamlEquivalenceTest |
-| ILIMAP formatter | P6 | ✅ SUPPORTED | Stable formatter with parse-format-parse idempotency | IlimapFormatterTest, IlimapFormatterRoundtripTest |
-| YAML to ILIMAP converter | P7 | ✅ SUPPORTED | Convert existing YAML mappings to .ilimap format via convert-mapping CLI | YamlToIlimapConverterTest, ConvertMappingCliTest |
-| ILIMAP CLI transform | P8 | ✅ SUPPORTED | transform --mapping accepts .ilimap files for end-to-end transformation | IlimapEndToEndTransformationTest |
-| ILIMAP CLI validate-mapping | P8 | ✅ SUPPORTED | validate-mapping --mapping accepts .ilimap files with file:line:column diagnostics | IlimapValidateMappingCliTest, IlimapDiagnosticsCliTest |
-| ILIMAP ref short form | - | ❌ UNSUPPORTED | Ref short form (-> / using) is reserved for a later version | IlimapRefSemanticTest |
-| ILIMAP includes/macros | - | ❌ UNSUPPORTED | Macro and include system — not planned for v2 |  |
-| ILIMAP qualified INTERLIS names as tokens | - | ❌ UNSUPPORTED | INTERLIS model/class paths are strings, not qualified tokens |  |
+| ilimap parser + lexer | P1/P2 | ✅ SUPPORTED | Lexer, expression reader and recursive descent parser for .ilimap v2 DSL | IlimapLexerTest, IlimapExpressionReaderTest, IlimapParserMinimalTest, IlimapParserFullRuleTest |
+| ilimap semantic validation | P3 | ✅ SUPPORTED | Symbol table, scope analysis, identifier rules, seven hardening points | IlimapSemanticValidatorTest, IlimapIdentifierRulesTest, IlimapSymbolTableTest |
+| ilimap loader to JobConfig | P4 | ✅ SUPPORTED | Map parsed .ilimap AST to JobConfig via IlimapToJobConfigMapper | IlimapToJobConfigMapperTest, IlimapLoaderTest, IlimapYamlEquivalenceTest |
+| ilimap formatter | P6 | ✅ SUPPORTED | Stable formatter with parse-format-parse idempotency | IlimapFormatterTest, IlimapFormatterRoundtripTest |
+| YAML to ilimap converter | P7 | ✅ SUPPORTED | Convert existing YAML mappings to .ilimap format via convert-mapping CLI | YamlToIlimapConverterTest, ConvertMappingCliTest |
+| ilimap CLI transform | P8 | ✅ SUPPORTED | transform --mapping accepts .ilimap files for end-to-end transformation | IlimapEndToEndTransformationTest |
+| ilimap CLI validate-mapping | P8 | ✅ SUPPORTED | validate-mapping --mapping accepts .ilimap files with file:line:column diagnostics | IlimapValidateMappingCliTest, IlimapDiagnosticsCliTest |
+| ilimap ref short form | - | ❌ UNSUPPORTED | Ref short form (-> / using) is reserved for a later version | IlimapRefSemanticTest |
+| ilimap includes/macros | - | ❌ UNSUPPORTED | Macro and include system — not planned for v2 |  |
+| ilimap qualified INTERLIS names as tokens | - | ❌ UNSUPPORTED | INTERLIS model/class paths are strings, not qualified tokens |  |

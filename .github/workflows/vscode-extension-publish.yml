@@ -83,14 +83,14 @@ jobs:
       - name: Run tests and build fat JAR
         run: ./gradlew test shadowJar
 
-      - name: Stage ILIMAP LSP JAR
+      - name: Stage ilimap LSP JAR
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p build/publish
           cp build/libs/*-all.jar build/publish/ilimap-lsp-all.jar
 
-      - name: Upload ILIMAP LSP JAR
+      - name: Upload ilimap LSP JAR
         uses: actions/upload-artifact@v4
         with:
           name: ilimap-lsp-jar
@@ -126,7 +126,7 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Download ILIMAP LSP JAR
+      - name: Download ilimap LSP JAR
         uses: actions/download-artifact@v4
         with:
           name: ilimap-lsp-jar
@@ -178,7 +178,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EXTENSION_NAME: ilimap-vscode
-      PUBLISHER: ilinexus
+      PUBLISHER: edigonzales
       SOURCE_RUN_NUMBER: ${{ needs.gate.outputs.source_run_number }}
       VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
       OPEN_VSIX_MARKETPLACE_TOKEN: ${{ secrets.OPEN_VSIX_MARKETPLACE_TOKEN }}
@@ -192,7 +192,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Download ILIMAP LSP JAR
+      - name: Download ilimap LSP JAR
         uses: actions/download-artifact@v4
         with:
           name: ilimap-lsp-jar

@@ -16,7 +16,7 @@ export function renderMappingOverviewHtml(summary: IlimapMappingSummary, nonce: 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${escapeAttribute(nonce)}';">
-  <title>ILIMAP Mapping Overview</title>
+  <title>ilimap Mapping Overview</title>
   <style nonce="${escapeAttribute(nonce)}">
     :root {
       color-scheme: light dark;
@@ -169,7 +169,7 @@ export function renderMappingOverviewHtml(summary: IlimapMappingSummary, nonce: 
   <main>
     <div class="header">
       <div>
-        <h1>ILIMAP Mapping Overview</h1>
+        <h1>ilimap Mapping Overview</h1>
         <div class="subtitle">${escapeHtml(title)}</div>
       </div>
       <div class="muted">${escapeHtml(diagnosticText)}</div>

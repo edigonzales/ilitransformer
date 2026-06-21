@@ -349,7 +349,7 @@ entries:
     status: UNSUPPORTED
     description: "Line attribute geometry processing"
     testReferences: []
-  - feature: "ILIMAP parser + lexer"
+  - feature: "ilimap parser + lexer"
     phase: "P1/P2"
     status: SUPPORTED
     description: "Lexer, expression reader and recursive descent parser for .ilimap v2 DSL"
@@ -358,7 +358,7 @@ entries:
       - "IlimapExpressionReaderTest"
       - "IlimapParserMinimalTest"
       - "IlimapParserFullRuleTest"
-  - feature: "ILIMAP semantic validation"
+  - feature: "ilimap semantic validation"
     phase: "P3"
     status: SUPPORTED
     description: "Symbol table, scope analysis, identifier rules, seven hardening points"
@@ -366,7 +366,7 @@ entries:
       - "IlimapSemanticValidatorTest"
       - "IlimapIdentifierRulesTest"
       - "IlimapSymbolTableTest"
-  - feature: "ILIMAP loader to JobConfig"
+  - feature: "ilimap loader to JobConfig"
     phase: "P4"
     status: SUPPORTED
     description: "Map parsed .ilimap AST to JobConfig via IlimapToJobConfigMapper"
@@ -374,45 +374,45 @@ entries:
       - "IlimapToJobConfigMapperTest"
       - "IlimapLoaderTest"
       - "IlimapYamlEquivalenceTest"
-  - feature: "ILIMAP formatter"
+  - feature: "ilimap formatter"
     phase: "P6"
     status: SUPPORTED
     description: "Stable formatter with parse-format-parse idempotency"
     testReferences:
       - "IlimapFormatterTest"
       - "IlimapFormatterRoundtripTest"
-  - feature: "YAML to ILIMAP converter"
+  - feature: "YAML to ilimap converter"
     phase: "P7"
     status: SUPPORTED
     description: "Convert existing YAML mappings to .ilimap format via convert-mapping CLI"
     testReferences:
       - "YamlToIlimapConverterTest"
       - "ConvertMappingCliTest"
-  - feature: "ILIMAP CLI transform"
+  - feature: "ilimap CLI transform"
     phase: "P8"
     status: SUPPORTED
     description: "transform --mapping accepts .ilimap files for end-to-end transformation"
     testReferences:
       - "IlimapEndToEndTransformationTest"
-  - feature: "ILIMAP CLI validate-mapping"
+  - feature: "ilimap CLI validate-mapping"
     phase: "P8"
     status: SUPPORTED
     description: "validate-mapping --mapping accepts .ilimap files with file:line:column diagnostics"
     testReferences:
       - "IlimapValidateMappingCliTest"
       - "IlimapDiagnosticsCliTest"
-  - feature: "ILIMAP ref short form"
+  - feature: "ilimap ref short form"
     phase: "-"
     status: UNSUPPORTED
     description: "Ref short form (-> / using) is reserved for a later version"
     testReferences:
       - "IlimapRefSemanticTest"
-  - feature: "ILIMAP includes/macros"
+  - feature: "ilimap includes/macros"
     phase: "-"
     status: UNSUPPORTED
     description: "Macro and include system — not planned for v2"
     testReferences: []
-  - feature: "ILIMAP qualified INTERLIS names as tokens"
+  - feature: "ilimap qualified INTERLIS names as tokens"
     phase: "-"
     status: UNSUPPORTED
     description: "INTERLIS model/class paths are strings, not qualified tokens"

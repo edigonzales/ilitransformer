@@ -1,6 +1,6 @@
-# ILIMAP for VS Code
+# ilimap for VS Code
 
-ILIMAP adds editor support for `.ilimap` mapping profiles in Visual Studio Code. The extension keeps the client intentionally thin and delegates parsing, validation, formatting, and semantic analysis to the Java ILIMAP language server that ships with this repository.
+ilimap adds editor support for `.ilimap` mapping profiles in Visual Studio Code. The extension keeps the client intentionally thin and delegates parsing, validation, formatting, and semantic analysis to the Java ilimap language server that ships with this repository.
 
 ## Features
 
@@ -10,9 +10,9 @@ ILIMAP adds editor support for `.ilimap` mapping profiles in Visual Studio Code.
 - Document formatting
 - Document symbols for the Outline view
 - Folding ranges for mappings, enum blocks, rules, bags, refs, and assignment blocks
-- Context-aware completions for common ILIMAP keywords and model-backed symbols
+- Context-aware completions for common ilimap keywords and model-backed symbols
 - Hover information for inputs, outputs, rules, and enum maps
-- Go to Definition for ILIMAP symbol references
+- Go to Definition for ilimap symbol references
 - Quick fixes for selected enum map diagnostics
 - Read-only mapping overview webview
 - Language server log output and restart command
@@ -31,17 +31,17 @@ The extension starts the server with:
 <java> -jar <server-jar>
 ```
 
-By default the extension uses the bundled ILIMAP language-server JAR at `server/ilimap-lsp-all.jar`. You can override it with `ilimap.server.jarPath`.
+By default the extension uses the bundled ilimap language-server JAR at `server/ilimap-lsp-all.jar`. You can override it with `ilimap.server.jarPath`.
 
 ## Commands
 
-- `ILIMAP: Restart Language Server`
-- `ILIMAP: Show Language Server Logs`
-- `ILIMAP: Format Mapping`
-- `ILIMAP: Validate Mapping`
-- `ILIMAP: Open Mapping Overview`
+- `ilimap: Restart Language Server`
+- `ilimap: Show Language Server Logs`
+- `ilimap: Format Mapping`
+- `ilimap: Validate Mapping`
+- `ilimap: Open Mapping Overview`
 
-`ILIMAP: Validate Mapping` currently opens the Problems view. It does not trigger a separate server-side validation pass beyond the diagnostics that are already kept up to date while you edit.
+`ilimap: Validate Mapping` currently opens the Problems view. It does not trigger a separate server-side validation pass beyond the diagnostics that are already kept up to date while you edit.
 
 ## Settings
 
@@ -71,7 +71,7 @@ This keeps local development simple while allowing published builds to work with
 
 ## Mapping Overview
 
-Run `ILIMAP: Open Mapping Overview` while an `.ilimap` editor is active to open a read-only summary beside the editor. The webview shows counts and lists for:
+Run `ilimap: Open Mapping Overview` while an `.ilimap` editor is active to open a read-only summary beside the editor. The webview shows counts and lists for:
 
 - inputs
 - outputs
@@ -105,13 +105,13 @@ Use this workflow when working on the extension from this repository:
    npm run watch
    ```
 
-5. Run the VS Code task `Prepare ILIMAP Dev Host`.
-6. Start the launch configuration `Run ILIMAP Client`.
-7. After Java server changes, run `./gradlew copyDevIlimapServerJar` again and use `ILIMAP: Restart Language Server`.
+5. Run the VS Code task `Prepare ilimap Dev Host`.
+6. Start the launch configuration `Run ilimap Client`.
+7. After Java server changes, run `./gradlew copyDevIlimapServerJar` again and use `ilimap: Restart Language Server`.
 
 ## Current Scope
 
-The current extension focuses on editing and understanding ILIMAP mappings. It does not currently provide:
+The current extension focuses on editing and understanding ilimap mappings. It does not currently provide:
 
 - rename refactorings
 - semantic tokens
@@ -121,4 +121,4 @@ The current extension focuses on editing and understanding ILIMAP mappings. It d
 
 ## Packaging and Publishing
 
-The repository contains scripts and CI automation for packaging the extension as a `.vsix` and publishing the same artifact to Visual Studio Marketplace and Open VSX. Maintainer details live in [the repository publishing note](https://github.com/edigonzales/ilinexus/blob/main/docs/ilimap-vscode-publishing.md).
+The repository contains scripts and CI automation for packaging the extension as a `.vsix` and publishing the same artifact to Visual Studio Marketplace and Open VSX. Maintainer details live in [the repository publishing note](https://github.com/edigonzales/ilitransformer/blob/main/docs/ilimap-vscode-publishing.md).

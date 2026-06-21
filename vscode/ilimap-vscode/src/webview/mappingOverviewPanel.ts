@@ -17,13 +17,13 @@ export async function openMappingOverview(
 ): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor || !isIlimapDocument(editor.document)) {
-    vscode.window.showInformationMessage('Open an .ilimap document before opening the ILIMAP mapping overview.');
+    vscode.window.showInformationMessage('Open an .ilimap document before opening the ilimap mapping overview.');
     return;
   }
 
   const client = getLanguageClient();
   if (!client) {
-    vscode.window.showErrorMessage('ILIMAP language server is not running.');
+    vscode.window.showErrorMessage('ilimap language server is not running.');
     return;
   }
 
@@ -35,8 +35,8 @@ export async function openMappingOverview(
       { uri } satisfies IlimapMappingSummaryParams
     );
   } catch (error) {
-    outputChannel.appendLine(`Failed to load ILIMAP mapping overview: ${errorMessage(error)}`);
-    vscode.window.showErrorMessage('Failed to load ILIMAP mapping overview.');
+    outputChannel.appendLine(`Failed to load ilimap mapping overview: ${errorMessage(error)}`);
+    vscode.window.showErrorMessage('Failed to load ilimap mapping overview.');
     return;
   }
 
@@ -52,7 +52,7 @@ function createOrRevealPanel(context: vscode.ExtensionContext): vscode.WebviewPa
 
   currentPanel = vscode.window.createWebviewPanel(
     'ilimapMappingOverview',
-    'ILIMAP Mapping Overview',
+    'ilimap Mapping Overview',
     vscode.ViewColumn.Beside,
     {
       enableScripts: false,

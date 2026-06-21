@@ -6,7 +6,7 @@ import { startLanguageClient, stopLanguageClient } from './client';
 let outputChannel: vscode.OutputChannel | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-  outputChannel = vscode.window.createOutputChannel('ILIMAP Language Server');
+  outputChannel = vscode.window.createOutputChannel('ilimap Language Server');
   context.subscriptions.push(outputChannel);
 
   registerCommands(context, outputChannel);

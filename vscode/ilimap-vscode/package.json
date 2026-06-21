@@ -1,17 +1,17 @@
 {
   "name": "ilimap-vscode",
-  "displayName": "ILIMAP",
-  "description": "Language support for ILIMAP mapping profiles",
+  "displayName": "ilimap",
+  "description": "Language support for ilimap mapping profiles",
   "version": "0.1.0",
-  "publisher": "ilinexus",
+  "publisher": "edigonzales",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/edigonzales/ilinexus.git"
+    "url": "https://github.com/edigonzales/ilitransformer.git"
   },
-  "homepage": "https://github.com/edigonzales/ilinexus/tree/main/vscode/ilimap-vscode#readme",
+  "homepage": "https://github.com/edigonzales/ilitransformer/tree/main/vscode/ilimap-vscode#readme",
   "bugs": {
-    "url": "https://github.com/edigonzales/ilinexus/issues"
+    "url": "https://github.com/edigonzales/ilitransformer/issues"
   },
   "icon": "images/icon.png",
   "galleryBanner": {
@@ -47,7 +47,6 @@
       {
         "id": "ilimap",
         "aliases": [
-          "ILIMAP",
           "ilimap"
         ],
         "extensions": [
@@ -66,37 +65,37 @@
     "commands": [
       {
         "command": "ilimap.restartLanguageServer",
-        "title": "ILIMAP: Restart Language Server"
+        "title": "ilimap: Restart Language Server"
       },
       {
         "command": "ilimap.showLanguageServerLogs",
-        "title": "ILIMAP: Show Language Server Logs"
+        "title": "ilimap: Show Language Server Logs"
       },
       {
         "command": "ilimap.format",
-        "title": "ILIMAP: Format Mapping"
+        "title": "ilimap: Format Mapping"
       },
       {
         "command": "ilimap.validate",
-        "title": "ILIMAP: Validate Mapping"
+        "title": "ilimap: Validate Mapping"
       },
       {
         "command": "ilimap.openMappingOverview",
-        "title": "ILIMAP: Open Mapping Overview"
+        "title": "ilimap: Open Mapping Overview"
       }
     ],
     "configuration": {
-      "title": "ILIMAP",
+      "title": "ilimap",
       "properties": {
         "ilimap.java.path": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the Java executable used to start the ILIMAP language server. Leave empty to prefer a bundled runtime and otherwise fall back to java from PATH."
+          "markdownDescription": "Path to the Java executable used to start the ilimap language server. Leave empty to prefer a bundled runtime and otherwise fall back to java from PATH."
         },
         "ilimap.server.jarPath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the ILIMAP language server fat JAR. Leave empty to use the JAR bundled with the extension."
+          "markdownDescription": "Path to the ilimap language server fat JAR. Leave empty to use the JAR bundled with the extension."
         },
         "ilimap.server.jvmArgs": {
           "type": "array",
@@ -104,7 +103,7 @@
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "Additional JVM arguments passed to the ILIMAP language server."
+          "markdownDescription": "Additional JVM arguments passed to the ilimap language server."
         }
       }
     }

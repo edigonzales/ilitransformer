@@ -11,11 +11,11 @@ export async function startLanguageClient(
   outputChannel: vscode.OutputChannel
 ): Promise<void> {
   if (starting) {
-    outputChannel.appendLine('ILIMAP language server start is already in progress.');
+    outputChannel.appendLine('ilimap language server start is already in progress.');
     return starting;
   }
   if (client) {
-    outputChannel.appendLine('ILIMAP language server is already running.');
+    outputChannel.appendLine('ilimap language server is already running.');
     return;
   }
 
@@ -36,7 +36,7 @@ async function doStartLanguageClient(
   const javaRuntime = resolveJavaRuntime(context, config.get<string>('java.path'));
   const jvmArgs = resolveJvmArgs(config.get<readonly string[]>('server.jvmArgs'));
 
-  outputChannel.appendLine('Starting ILIMAP language server.');
+  outputChannel.appendLine('Starting ilimap language server.');
   outputChannel.appendLine(`Java runtime: ${describeJavaRuntime(javaRuntime)}`);
   outputChannel.appendLine(`Java path: ${javaRuntime.command}`);
   outputChannel.appendLine(`Server JAR: ${serverJar}`);
@@ -60,47 +60,47 @@ async function doStartLanguageClient(
     }
   };
 
-  const nextClient = new LanguageClient('ilimapLanguageServer', 'ILIMAP Language Server', serverOptions, clientOptions);
+  const nextClient = new LanguageClient('ilimapLanguageServer', 'ilimap Language Server', serverOptions, clientOptions);
   client = nextClient;
 
   try {
     await nextClient.start();
-    outputChannel.appendLine('ILIMAP language server started.');
+    outputChannel.appendLine('ilimap language server started.');
   } catch (error) {
     if (client === nextClient) {
       client = undefined;
     }
-    outputChannel.appendLine(`ILIMAP language server failed to start: ${errorMessage(error)}`);
+    outputChannel.appendLine(`ilimap language server failed to start: ${errorMessage(error)}`);
     throw error;
   }
 }
 
 export async function stopLanguageClient(outputChannel?: vscode.OutputChannel): Promise<void> {
   if (starting) {
-    outputChannel?.appendLine('Waiting for ILIMAP language server start before stopping.');
+    outputChannel?.appendLine('Waiting for ilimap language server start before stopping.');
     await starting.catch(() => undefined);
   }
 
   if (!client) {
-    outputChannel?.appendLine('ILIMAP language server is not running.');
+    outputChannel?.appendLine('ilimap language server is not running.');
     return;
   }
 
   const runningClient = client;
   client = undefined;
-  outputChannel?.appendLine('Stopping ILIMAP language server.');
+  outputChannel?.appendLine('Stopping ilimap language server.');
   await runningClient.stop();
-  outputChannel?.appendLine('ILIMAP language server stopped.');
+  outputChannel?.appendLine('ilimap language server stopped.');
 }
 
 export async function restartLanguageClient(
   context: vscode.ExtensionContext,
   outputChannel: vscode.OutputChannel
 ): Promise<void> {
-  outputChannel.appendLine('Restarting ILIMAP language server.');
+  outputChannel.appendLine('Restarting ilimap language server.');
   await stopLanguageClient(outputChannel);
   await startLanguageClient(context, outputChannel);
-  outputChannel.appendLine('ILIMAP language server restart complete.');
+  outputChannel.appendLine('ilimap language server restart complete.');
 }
 
 export function getLanguageClient(): LanguageClient | undefined {

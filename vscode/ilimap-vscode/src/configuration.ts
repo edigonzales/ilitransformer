@@ -23,7 +23,7 @@ export function resolveServerJarPath(context: vscode.ExtensionContext, configure
   }
 
   const message =
-    'ILIMAP language server JAR not found. Configure ilimap.server.jarPath or run ./gradlew copyDevIlimapServerJar.';
+    'ilimap language server JAR not found. Configure ilimap.server.jarPath or run ./gradlew copyDevIlimapServerJar.';
   vscode.window.showErrorMessage(message);
   throw new Error(message);
 }

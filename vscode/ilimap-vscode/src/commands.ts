@@ -7,7 +7,7 @@ export function registerCommands(context: vscode.ExtensionContext, outputChannel
   context.subscriptions.push(
     vscode.commands.registerCommand('ilimap.restartLanguageServer', async () => {
       await restartLanguageClient(context, outputChannel);
-      vscode.window.showInformationMessage('ILIMAP language server restarted.');
+      vscode.window.showInformationMessage('ilimap language server restarted.');
     })
   );
 

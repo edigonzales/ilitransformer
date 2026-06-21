@@ -77,8 +77,8 @@ test('declares marketplace metadata', () => {
     color: '#f4efe7',
     theme: 'light'
   });
-  assert.equal(manifest.repository.url, 'https://github.com/edigonzales/ilinexus.git');
-  assert.equal(manifest.bugs.url, 'https://github.com/edigonzales/ilinexus/issues');
+  assert.equal(manifest.repository.url, 'https://github.com/edigonzales/ilitransformer.git');
+  assert.equal(manifest.bugs.url, 'https://github.com/edigonzales/ilitransformer/issues');
   assert.ok(manifest.keywords.includes('ilimap'));
   assert.ok(manifest.keywords.includes('lsp'));
 });

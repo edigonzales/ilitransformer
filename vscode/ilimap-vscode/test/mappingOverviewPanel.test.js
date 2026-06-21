@@ -136,6 +136,6 @@ test('openMappingOverview requests active document summary and renders webview',
   assert.equal(outputLines.length, 0);
   assert.equal(panels.length, 1);
   assert.equal(panels[0].options.enableScripts, false);
-  assert.match(panels[0].webview.html, /ILIMAP Mapping Overview/);
+  assert.match(panels[0].webview.html, /ilimap Mapping Overview/);
   assert.match(panels[0].webview.html, /Profile/);
 });

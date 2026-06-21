@@ -4,7 +4,7 @@
     {
       "type": "extensionHost",
       "request": "launch",
-      "name": "Run ILIMAP Client",
+      "name": "Run ilimap Client",
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}"
@@ -12,7 +12,7 @@
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
       ],
-      "preLaunchTask": "Prepare ILIMAP Dev Host"
+      "preLaunchTask": "Prepare ilimap Dev Host"
     }
   ]
 }
