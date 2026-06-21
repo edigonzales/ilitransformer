@@ -210,8 +210,18 @@ jobs:
         run: |
           set -euo pipefail
           for platform in darwin-arm64 linux-arm64 linux-x64 win32-x64; do
-            src="tmp/runtimes/jre-runtime-${platform}/runtime"
+            src="tmp/runtimes/jre-runtime-${platform}"
             dest="vscode/ilimap-vscode/server/jre/${platform}"
+            if [[ ! -d "$src" || ! -d "$src/bin" ]]; then
+              echo "Expected runtime artifact for ${platform} at ${src} with a bin/ directory." >&2
+              echo "Discovered tmp/runtimes tree:" >&2
+              if [[ -d tmp/runtimes ]]; then
+                find tmp/runtimes -maxdepth 3 -mindepth 1 | sort >&2
+              else
+                echo "tmp/runtimes does not exist" >&2
+              fi
+              exit 1
+            fi
             mkdir -p "$dest"
             cp -a "$src"/. "$dest"/
             if [[ "$platform" != win32-* ]]; then
