@@ -3,11 +3,13 @@ package guru.interlis.transformer.mapping.ilimap.lsp;
 import guru.interlis.transformer.mapping.ilimap.format.IlimapFormatOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysis;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapCompletionService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapDocumentSymbol;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapDocumentSymbolService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapFoldingRange;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapFoldingService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapFormattingService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapIdePosition;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapSymbolDisplayKind;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
 
@@ -16,6 +18,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
@@ -41,6 +46,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     private final IlimapFormattingService formattingService;
     private final IlimapDocumentSymbolService documentSymbolService;
     private final IlimapFoldingService foldingService;
+    private final IlimapCompletionService completionService;
+    private final IlimapLspCompletionMapper completionMapper;
     private final IlimapLspRangeMapper rangeMapper;
     private final IlimapAnalysisOptions analysisOptions;
     private LanguageClient client;
@@ -52,6 +59,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 new IlimapFormattingService(),
                 new IlimapDocumentSymbolService(),
                 new IlimapFoldingService(),
+                new IlimapCompletionService(),
+                new IlimapLspCompletionMapper(),
                 new IlimapLspRangeMapper(),
                 IlimapAnalysisOptions.defaults(Path.of(".")));
     }
@@ -68,6 +77,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 formattingService,
                 new IlimapDocumentSymbolService(),
                 new IlimapFoldingService(),
+                new IlimapCompletionService(),
+                new IlimapLspCompletionMapper(),
                 rangeMapper,
                 analysisOptions);
     }
@@ -80,11 +91,35 @@ public final class IlimapTextDocumentService implements TextDocumentService {
             IlimapFoldingService foldingService,
             IlimapLspRangeMapper rangeMapper,
             IlimapAnalysisOptions analysisOptions) {
+        this(
+                documentStore,
+                diagnosticMapper,
+                formattingService,
+                documentSymbolService,
+                foldingService,
+                new IlimapCompletionService(),
+                new IlimapLspCompletionMapper(),
+                rangeMapper,
+                analysisOptions);
+    }
+
+    IlimapTextDocumentService(
+            IlimapDocumentStore documentStore,
+            IlimapLspDiagnosticMapper diagnosticMapper,
+            IlimapFormattingService formattingService,
+            IlimapDocumentSymbolService documentSymbolService,
+            IlimapFoldingService foldingService,
+            IlimapCompletionService completionService,
+            IlimapLspCompletionMapper completionMapper,
+            IlimapLspRangeMapper rangeMapper,
+            IlimapAnalysisOptions analysisOptions) {
         this.documentStore = Objects.requireNonNull(documentStore, "documentStore");
         this.diagnosticMapper = Objects.requireNonNull(diagnosticMapper, "diagnosticMapper");
         this.formattingService = Objects.requireNonNull(formattingService, "formattingService");
         this.documentSymbolService = Objects.requireNonNull(documentSymbolService, "documentSymbolService");
         this.foldingService = Objects.requireNonNull(foldingService, "foldingService");
+        this.completionService = Objects.requireNonNull(completionService, "completionService");
+        this.completionMapper = Objects.requireNonNull(completionMapper, "completionMapper");
         this.rangeMapper = Objects.requireNonNull(rangeMapper, "rangeMapper");
         this.analysisOptions = Objects.requireNonNull(analysisOptions, "analysisOptions");
     }
@@ -153,6 +188,22 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 .map(foldingService::foldingRanges)
                 .map(ranges -> ranges.stream().map(this::toLspFoldingRange).toList())
                 .orElseGet(List::of));
+    }
+
+    @Override
+    public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams params) {
+        String uri = params.getTextDocument().getUri();
+        if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+        }
+
+        IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
+        IlimapIdePosition position =
+                new IlimapIdePosition(params.getPosition().getLine(), params.getPosition().getCharacter());
+        List<CompletionItem> items = completionService.complete(analysis, position).stream()
+                .map(completionMapper::map)
+                .toList();
+        return CompletableFuture.completedFuture(Either.forLeft(items));
     }
 
     private void analyzeAndPublish(String uri) {
