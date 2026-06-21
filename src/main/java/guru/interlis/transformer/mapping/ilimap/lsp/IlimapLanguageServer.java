@@ -32,8 +32,8 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
         ServerCapabilities capabilities = new ServerCapabilities();
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
-        capabilities.setHoverProvider(false);
-        capabilities.setDefinitionProvider(false);
+        capabilities.setHoverProvider(true);
+        capabilities.setDefinitionProvider(true);
         capabilities.setDocumentFormattingProvider(true);
         capabilities.setDocumentSymbolProvider(true);
         capabilities.setFoldingRangeProvider(true);

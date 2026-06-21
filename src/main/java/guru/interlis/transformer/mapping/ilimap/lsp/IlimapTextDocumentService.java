@@ -4,11 +4,15 @@ import guru.interlis.transformer.mapping.ilimap.format.IlimapFormatOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysis;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapCompletionService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapDefinition;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapDefinitionService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapDocumentSymbol;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapDocumentSymbolService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapFoldingRange;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapFoldingService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapFormattingService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapHover;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapHoverService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapIdePosition;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapSymbolDisplayKind;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
@@ -21,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
+import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
@@ -30,6 +35,12 @@ import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.FoldingRangeRequestParams;
+import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.HoverParams;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.LocationLink;
+import org.eclipse.lsp4j.MarkupContent;
+import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
@@ -48,6 +59,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     private final IlimapFoldingService foldingService;
     private final IlimapCompletionService completionService;
     private final IlimapLspCompletionMapper completionMapper;
+    private final IlimapDefinitionService definitionService;
+    private final IlimapHoverService hoverService;
     private final IlimapLspRangeMapper rangeMapper;
     private final IlimapAnalysisOptions analysisOptions;
     private LanguageClient client;
@@ -61,6 +74,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 new IlimapFoldingService(),
                 new IlimapCompletionService(),
                 new IlimapLspCompletionMapper(),
+                new IlimapDefinitionService(),
+                new IlimapHoverService(),
                 new IlimapLspRangeMapper(),
                 IlimapAnalysisOptions.defaults(Path.of(".")));
     }
@@ -79,6 +94,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 new IlimapFoldingService(),
                 new IlimapCompletionService(),
                 new IlimapLspCompletionMapper(),
+                new IlimapDefinitionService(),
+                new IlimapHoverService(),
                 rangeMapper,
                 analysisOptions);
     }
@@ -99,6 +116,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 foldingService,
                 new IlimapCompletionService(),
                 new IlimapLspCompletionMapper(),
+                new IlimapDefinitionService(),
+                new IlimapHoverService(),
                 rangeMapper,
                 analysisOptions);
     }
@@ -111,6 +130,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
             IlimapFoldingService foldingService,
             IlimapCompletionService completionService,
             IlimapLspCompletionMapper completionMapper,
+            IlimapDefinitionService definitionService,
+            IlimapHoverService hoverService,
             IlimapLspRangeMapper rangeMapper,
             IlimapAnalysisOptions analysisOptions) {
         this.documentStore = Objects.requireNonNull(documentStore, "documentStore");
@@ -120,6 +141,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         this.foldingService = Objects.requireNonNull(foldingService, "foldingService");
         this.completionService = Objects.requireNonNull(completionService, "completionService");
         this.completionMapper = Objects.requireNonNull(completionMapper, "completionMapper");
+        this.definitionService = Objects.requireNonNull(definitionService, "definitionService");
+        this.hoverService = Objects.requireNonNull(hoverService, "hoverService");
         this.rangeMapper = Objects.requireNonNull(rangeMapper, "rangeMapper");
         this.analysisOptions = Objects.requireNonNull(analysisOptions, "analysisOptions");
     }
@@ -206,6 +229,38 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(Either.forLeft(items));
     }
 
+    @Override
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(
+            DefinitionParams params) {
+        String uri = params.getTextDocument().getUri();
+        if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+        }
+
+        IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
+        IlimapIdePosition position =
+                new IlimapIdePosition(params.getPosition().getLine(), params.getPosition().getCharacter());
+        List<Location> locations = definitionService.definitionAt(analysis, position).stream()
+                .map(this::toLspLocation)
+                .toList();
+        return CompletableFuture.completedFuture(Either.forLeft(locations));
+    }
+
+    @Override
+    public CompletableFuture<Hover> hover(HoverParams params) {
+        String uri = params.getTextDocument().getUri();
+        if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
+        IlimapIdePosition position =
+                new IlimapIdePosition(params.getPosition().getLine(), params.getPosition().getCharacter());
+        return CompletableFuture.completedFuture(hoverService.hoverAt(analysis, position)
+                .map(this::toLspHover)
+                .orElse(null));
+    }
+
     private void analyzeAndPublish(String uri) {
         IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
         Integer version =
@@ -215,6 +270,15 @@ public final class IlimapTextDocumentService implements TextDocumentService {
 
     private TextEdit toLspTextEdit(IlimapTextEdit edit) {
         return new TextEdit(rangeMapper.toLspRange(edit.range()), edit.newText());
+    }
+
+    private Location toLspLocation(IlimapDefinition definition) {
+        return new Location(definition.uri(), rangeMapper.toLspRange(definition.range()));
+    }
+
+    private Hover toLspHover(IlimapHover hover) {
+        return new Hover(
+                new MarkupContent(MarkupKind.MARKDOWN, hover.markdown()), rangeMapper.toLspRange(hover.range()));
     }
 
     private Either<SymbolInformation, DocumentSymbol> toLspDocumentSymbolEither(IlimapDocumentSymbol symbol) {
