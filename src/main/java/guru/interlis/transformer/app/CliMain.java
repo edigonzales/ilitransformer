@@ -1,6 +1,5 @@
 package guru.interlis.transformer.app;
 
-import guru.interlis.transformer.cli.Dm01DmavCommand;
 import guru.interlis.transformer.cli.InspectModelCommand;
 import guru.interlis.transformer.cli.RunBundleCommand;
 import guru.interlis.transformer.diag.Diagnostic;
@@ -34,8 +33,7 @@ import picocli.CommandLine.Option;
             CliMain.ValidateTransferCommand.class,
             CliMain.ConvertMappingCommand.class,
             RunBundleCommand.class,
-            InspectModelCommand.class,
-            Dm01DmavCommand.class
+            InspectModelCommand.class
         })
 public final class CliMain implements Callable<Integer> {
 
