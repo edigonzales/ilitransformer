@@ -12,7 +12,18 @@ public record IlimapAnalysis(
         IlimapDocument document,
         IlimapSymbolTable symbols,
         List<IlimapIdeDiagnostic> diagnostics,
-        IlimapLineMap lineMap) {
+        IlimapLineMap lineMap,
+        IlimapModelIndex modelIndex) {
+
+    public IlimapAnalysis(
+            String uri,
+            String text,
+            IlimapDocument document,
+            IlimapSymbolTable symbols,
+            List<IlimapIdeDiagnostic> diagnostics,
+            IlimapLineMap lineMap) {
+        this(uri, text, document, symbols, diagnostics, lineMap, IlimapModelIndex.empty());
+    }
 
     public IlimapAnalysis {
         Objects.requireNonNull(uri, "uri");
@@ -20,6 +31,7 @@ public record IlimapAnalysis(
         Objects.requireNonNull(symbols, "symbols");
         Objects.requireNonNull(diagnostics, "diagnostics");
         Objects.requireNonNull(lineMap, "lineMap");
+        Objects.requireNonNull(modelIndex, "modelIndex");
         diagnostics = List.copyOf(diagnostics);
     }
 

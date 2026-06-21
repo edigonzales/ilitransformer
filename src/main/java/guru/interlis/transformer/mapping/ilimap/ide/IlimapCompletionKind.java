@@ -7,6 +7,7 @@ public enum IlimapCompletionKind {
     RULE,
     ENUM_MAP,
     SOURCE_ALIAS,
+    CLASS,
     FUNCTION,
     ATTRIBUTE,
     VALUE

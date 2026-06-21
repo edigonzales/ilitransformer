@@ -73,7 +73,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     private final IlimapHoverService hoverService;
     private final IlimapLspRangeMapper rangeMapper;
     private final IlimapCodeActionService codeActionService;
-    private final IlimapAnalysisOptions analysisOptions;
+    private IlimapAnalysisOptions analysisOptions;
     private LanguageClient client;
 
     public IlimapTextDocumentService() {
@@ -88,7 +88,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 new IlimapDefinitionService(),
                 new IlimapHoverService(),
                 new IlimapLspRangeMapper(),
-                IlimapAnalysisOptions.defaults(Path.of(".")));
+                IlimapAnalysisOptions.modelAware(Path.of(".")));
     }
 
     IlimapTextDocumentService(
@@ -161,6 +161,10 @@ public final class IlimapTextDocumentService implements TextDocumentService {
 
     public void connect(LanguageClient client) {
         this.client = Objects.requireNonNull(client, "client");
+    }
+
+    public void setAnalysisOptions(IlimapAnalysisOptions analysisOptions) {
+        this.analysisOptions = Objects.requireNonNull(analysisOptions, "analysisOptions");
     }
 
     @Override

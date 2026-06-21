@@ -16,4 +16,8 @@ public record IlimapAnalysisOptions(
     public static IlimapAnalysisOptions defaults(Path baseDirectory) {
         return new IlimapAnalysisOptions(baseDirectory, true, false, false);
     }
+
+    public static IlimapAnalysisOptions modelAware(Path baseDirectory) {
+        return new IlimapAnalysisOptions(baseDirectory, true, false, true);
+    }
 }

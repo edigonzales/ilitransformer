@@ -25,6 +25,32 @@ public final class IlimapCompletionContextResolver {
             return new IlimapCompletionContext(
                     IlimapCompletionContextKind.ENUM_MAP_ARGUMENT, prefix, currentRule, currentNode);
         }
+        if (currentNode instanceof IlimapTargetStmt target) {
+            Optional<StringContext> classString = stringAfterKeyword(target, analysis, offset, "class");
+            if (classString.isPresent()) {
+                StringContext stringContext = classString.get();
+                return new IlimapCompletionContext(
+                        IlimapCompletionContextKind.TARGET_CLASS,
+                        stringContext.prefix(),
+                        currentRule,
+                        currentNode,
+                        target.outputId(),
+                        stringContext.replacementRange());
+            }
+        }
+        if (currentNode instanceof IlimapSourceStmt source) {
+            Optional<StringContext> classString = stringAfterKeyword(source, analysis, offset, "class");
+            if (classString.isPresent()) {
+                StringContext stringContext = classString.get();
+                return new IlimapCompletionContext(
+                        IlimapCompletionContextKind.SOURCE_CLASS,
+                        stringContext.prefix(),
+                        currentRule,
+                        currentNode,
+                        source.inputIds().isEmpty() ? null : String.join(",", source.inputIds()),
+                        stringContext.replacementRange());
+            }
+        }
         if (currentNode instanceof IlimapRefBlock ref && isBetweenRefTargetRuleAndSourceRef(ref, analysis.text(), offset)) {
             return new IlimapCompletionContext(
                     IlimapCompletionContextKind.REF_TARGET_RULE, prefix, currentRule, currentNode);
@@ -36,6 +62,20 @@ public final class IlimapCompletionContextResolver {
         if (currentNode instanceof IlimapSourceStmt source && isBetweenSourceFromAndClass(source, analysis.text(), offset)) {
             return new IlimapCompletionContext(
                     IlimapCompletionContextKind.SOURCE_INPUT, prefix, currentRule, currentNode);
+        }
+        if (currentNode instanceof IlimapAssignment assignment && isAssignmentTargetPosition(assignment, analysis.text(), offset)) {
+            return new IlimapCompletionContext(
+                    IlimapCompletionContextKind.ASSIGN_TARGET_ATTRIBUTE,
+                    prefix,
+                    currentRule,
+                    currentNode,
+                    null,
+                    identifierRangeAt(analysis, offset));
+        }
+        Optional<IlimapCompletionContext> aliasAttributeContext =
+                sourceAliasAttributeContext(analysis, offset, prefix, currentRule, currentNode);
+        if (aliasAttributeContext.isPresent()) {
+            return aliasAttributeContext.get();
         }
         if (isExpressionPosition(analysis.document(), offset)) {
             return new IlimapCompletionContext(IlimapCompletionContextKind.EXPRESSION, prefix, currentRule, currentNode);
@@ -159,6 +199,107 @@ public final class IlimapCompletionContextResolver {
         int classStart = findWholeWord(segment, "class", fromStart + "from".length());
         int relativeOffset = offset - start;
         return fromStart >= 0 && classStart >= 0 && relativeOffset >= fromStart + "from".length() && relativeOffset < classStart;
+    }
+
+    private static Optional<StringContext> stringAfterKeyword(
+            IlimapAstNode node, IlimapAnalysis analysis, int offset, String keyword) {
+        int start = node.range().start().offset();
+        int end = node.range().end().offset();
+        String segment = analysis.text().substring(start, end);
+        int keywordStart = findWholeWord(segment, keyword, 0);
+        if (keywordStart < 0) {
+            return Optional.empty();
+        }
+        int quoteStart = segment.indexOf('"', keywordStart + keyword.length());
+        if (quoteStart < 0) {
+            return Optional.empty();
+        }
+        int quoteEnd = segment.indexOf('"', quoteStart + 1);
+        if (quoteEnd < 0) {
+            return Optional.empty();
+        }
+
+        int contentStart = start + quoteStart + 1;
+        int contentEnd = start + quoteEnd;
+        if (offset < contentStart || offset > contentEnd) {
+            return Optional.empty();
+        }
+
+        String prefix = analysis.text().substring(contentStart, offset);
+        return Optional.of(new StringContext(
+                prefix,
+                new IlimapIdeRange(
+                        analysis.lineMap().toIdePosition(contentStart),
+                        analysis.lineMap().toIdePosition(contentEnd))));
+    }
+
+    private static boolean isAssignmentTargetPosition(IlimapAssignment assignment, String text, int offset) {
+        int start = assignment.range().start().offset();
+        int end = assignment.range().end().offset();
+        String segment = text.substring(start, end);
+        int equals = segment.indexOf('=');
+        return equals >= 0 && offset >= start && offset <= start + equals;
+    }
+
+    private static Optional<IlimapCompletionContext> sourceAliasAttributeContext(
+            IlimapAnalysis analysis,
+            int offset,
+            String prefix,
+            IlimapRuleBlock currentRule,
+            IlimapAstNode currentNode) {
+        Optional<IlimapExpressionText> expression = expressionAt(analysis.document(), offset);
+        if (expression.isEmpty()) {
+            return Optional.empty();
+        }
+
+        int expressionStart = expression.get().range().start().offset();
+        int localOffset = offset - expressionStart;
+        String text = expression.get().text();
+        int prefixStart = localOffset;
+        while (prefixStart > 0 && isIdentifierPart(text.charAt(prefixStart - 1))) {
+            prefixStart--;
+        }
+        int dotOffset = prefixStart - 1;
+        if (dotOffset < 1 || dotOffset >= text.length() || text.charAt(dotOffset) != '.') {
+            return Optional.empty();
+        }
+
+        int aliasEnd = dotOffset;
+        int aliasStart = aliasEnd;
+        while (aliasStart > 0 && isIdentifierPart(text.charAt(aliasStart - 1))) {
+            aliasStart--;
+        }
+        if (aliasStart == aliasEnd || (aliasStart > 0 && text.charAt(aliasStart - 1) == '.')) {
+            return Optional.empty();
+        }
+
+        int attributeEnd = localOffset;
+        while (attributeEnd < text.length() && isIdentifierPart(text.charAt(attributeEnd))) {
+            attributeEnd++;
+        }
+        return Optional.of(new IlimapCompletionContext(
+                IlimapCompletionContextKind.SOURCE_ALIAS_ATTRIBUTE,
+                prefix,
+                currentRule,
+                currentNode,
+                text.substring(aliasStart, aliasEnd),
+                new IlimapIdeRange(
+                        analysis.lineMap().toIdePosition(expressionStart + prefixStart),
+                        analysis.lineMap().toIdePosition(expressionStart + attributeEnd))));
+    }
+
+    private static IlimapIdeRange identifierRangeAt(IlimapAnalysis analysis, int offset) {
+        String text = analysis.text();
+        int clamped = Math.max(0, Math.min(offset, text.length()));
+        int start = clamped;
+        while (start > 0 && isIdentifierPart(text.charAt(start - 1))) {
+            start--;
+        }
+        int end = clamped;
+        while (end < text.length() && isIdentifierPart(text.charAt(end))) {
+            end++;
+        }
+        return new IlimapIdeRange(analysis.lineMap().toIdePosition(start), analysis.lineMap().toIdePosition(end));
     }
 
     private static boolean isBetweenRefTargetRuleAndSourceRef(IlimapRefBlock ref, String text, int offset) {
@@ -390,4 +531,6 @@ public final class IlimapCompletionContextResolver {
     private static boolean isIdentifierPart(char c) {
         return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
     }
+
+    private record StringContext(String prefix, IlimapIdeRange replacementRange) {}
 }

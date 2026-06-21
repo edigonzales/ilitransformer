@@ -1,6 +1,11 @@
 package guru.interlis.transformer.mapping.ilimap.lsp;
 
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
+
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4j.CodeActionKind;
@@ -33,6 +38,7 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
 
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
+        textDocumentService.setAnalysisOptions(IlimapAnalysisOptions.modelAware(workspaceRoot(params)));
         ServerCapabilities capabilities = new ServerCapabilities();
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
         capabilities.setHoverProvider(true);
@@ -45,6 +51,35 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
         completionOptions.setResolveProvider(false);
         capabilities.setCompletionProvider(completionOptions);
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
+    }
+
+    private static Path workspaceRoot(InitializeParams params) {
+        return workspaceRootUri(params)
+                .map(IlimapLanguageServer::pathFromFileUri)
+                .flatMap(path -> path)
+                .orElseGet(() -> Path.of(".").toAbsolutePath().normalize());
+    }
+
+    private static Optional<String> workspaceRootUri(InitializeParams params) {
+        if (params != null && params.getWorkspaceFolders() != null && !params.getWorkspaceFolders().isEmpty()) {
+            return Optional.ofNullable(params.getWorkspaceFolders().get(0).getUri());
+        }
+        if (params != null && params.getRootUri() != null && !params.getRootUri().isBlank()) {
+            return Optional.of(params.getRootUri());
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<Path> pathFromFileUri(String uri) {
+        try {
+            URI parsed = URI.create(uri);
+            if (!"file".equals(parsed.getScheme())) {
+                return Optional.empty();
+            }
+            return Optional.of(Path.of(parsed).toAbsolutePath().normalize());
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
     }
 
     @Override

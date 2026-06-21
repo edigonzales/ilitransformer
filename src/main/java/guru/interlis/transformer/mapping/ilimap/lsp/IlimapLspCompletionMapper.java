@@ -7,6 +7,8 @@ import java.util.Objects;
 
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
+import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public final class IlimapLspCompletionMapper {
 
@@ -18,6 +20,10 @@ public final class IlimapLspCompletionMapper {
         completionItem.setDetail(item.detail());
         completionItem.setDocumentation(item.documentation());
         completionItem.setInsertText(item.insertText());
+        if (item.replacementRange() != null) {
+            completionItem.setTextEdit(Either.forLeft(new TextEdit(
+                    new IlimapLspRangeMapper().toLspRange(item.replacementRange()), item.insertText())));
+        }
         return completionItem;
     }
 
@@ -28,6 +34,7 @@ public final class IlimapLspCompletionMapper {
             case RULE -> CompletionItemKind.Method;
             case ENUM_MAP -> CompletionItemKind.Enum;
             case SOURCE_ALIAS -> CompletionItemKind.Variable;
+            case CLASS -> CompletionItemKind.Class;
             case FUNCTION -> CompletionItemKind.Function;
             case ATTRIBUTE -> CompletionItemKind.Field;
             case VALUE -> CompletionItemKind.Value;

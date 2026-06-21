@@ -63,6 +63,36 @@ class IlimapCompletionLspTest {
                 .containsExactly(tuple("Quality", CompletionItemKind.Enum, "enum map", "Quality"));
     }
 
+    @Test
+    void lspMapsModelAwareCompletionTextEditUsingWorkspaceRoot() {
+        IlimapTextDocumentService modelAwareService = new IlimapTextDocumentService(
+                new IlimapDocumentStore(),
+                new IlimapLspDiagnosticMapper(),
+                new IlimapFormattingService(),
+                new IlimapLspRangeMapper(),
+                IlimapAnalysisOptions.defaults(Path.of("/tmp")));
+        InitializeParams params = new InitializeParams();
+        params.setRootUri(Path.of(".").toAbsolutePath().normalize().toUri().toString());
+        new IlimapLanguageServer(modelAwareService, new IlimapWorkspaceService()).initialize(params).join();
+
+        String source = modelAwareMapping();
+        modelAwareService.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));
+
+        CompletionItem item = modelAwareService
+                .completion(completionParams(source, "TestModel.Test", "TestModel.Test".length()))
+                .join()
+                .getLeft()
+                .stream()
+                .filter(candidate -> candidate.getLabel().equals("TestModel.TestTopic.TestClass"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(item.getKind()).isEqualTo(CompletionItemKind.Class);
+        assertThat(item.getTextEdit().getLeft().getNewText()).isEqualTo("TestModel.TestTopic.TestClass");
+        assertThat(item.getTextEdit().getLeft().getRange())
+                .isEqualTo(rangeFor(source, "TestModel.Test", 0, "TestModel.Test".length()));
+    }
+
     private void open(String source) {
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));
     }
@@ -73,6 +103,16 @@ class IlimapCompletionLspTest {
         IlimapIdePosition position = new IlimapLineMap(source).toIdePosition(offset + cursorDelta);
         return new CompletionParams(
                 new TextDocumentIdentifier(URI), new Position(position.line(), position.character()));
+    }
+
+    private static org.eclipse.lsp4j.Range rangeFor(String source, String needle, int startDelta, int endDelta) {
+        int offset = source.indexOf(needle);
+        assertThat(offset).as("needle offset for %s", needle).isGreaterThanOrEqualTo(0);
+        IlimapLineMap lineMap = new IlimapLineMap(source);
+        IlimapIdePosition start = lineMap.toIdePosition(offset + startDelta);
+        IlimapIdePosition end = lineMap.toIdePosition(offset + endDelta);
+        return new org.eclipse.lsp4j.Range(
+                new Position(start.line(), start.character()), new Position(end.line(), end.character()));
     }
 
     private static String validMapping() {
@@ -88,6 +128,25 @@ class IlimapCompletionLspTest {
                     source s from src class "M.A";
                     assign {
                       X = enumMap(s.X, Quality);
+                    }
+                  }
+                }
+                """;
+    }
+
+    private static String modelAwareMapping() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "TestModel"; }
+                  output out { path "out.xtf"; model "TestModel"; }
+                  rule r1 {
+                    target out class "TestModel.Test";
+                    source s from src class "TestModel.TestTopic.TestClass";
+                    assign {
+                      Name = s.Name;
                     }
                   }
                 }
