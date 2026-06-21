@@ -1,7 +1,10 @@
 package guru.interlis.transformer.mapping.ilimap.lsp;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.lsp4j.CodeActionOptions;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
@@ -37,6 +40,7 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
         capabilities.setDocumentFormattingProvider(true);
         capabilities.setDocumentSymbolProvider(true);
         capabilities.setFoldingRangeProvider(true);
+        capabilities.setCodeActionProvider(new CodeActionOptions(List.of(CodeActionKind.QuickFix, CodeActionKind.Source)));
         CompletionOptions completionOptions = new CompletionOptions();
         completionOptions.setResolveProvider(false);
         capabilities.setCompletionProvider(completionOptions);

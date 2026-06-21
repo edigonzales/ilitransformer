@@ -3,6 +3,7 @@ package guru.interlis.transformer.mapping.ilimap.lsp;
 import guru.interlis.transformer.mapping.ilimap.format.IlimapFormatOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysis;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapCodeActionService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapCompletionService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapDefinition;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapDefinitionService;
@@ -14,18 +15,24 @@ import guru.interlis.transformer.mapping.ilimap.ide.IlimapFormattingService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapHover;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapHoverService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapIdePosition;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapIdeRange;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapSymbolDisplayKind;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.lsp4j.CodeAction;
+import org.eclipse.lsp4j.CodeActionContext;
+import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DefinitionParams;
+import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
@@ -41,11 +48,14 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
+import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
@@ -62,6 +72,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     private final IlimapDefinitionService definitionService;
     private final IlimapHoverService hoverService;
     private final IlimapLspRangeMapper rangeMapper;
+    private final IlimapCodeActionService codeActionService;
     private final IlimapAnalysisOptions analysisOptions;
     private LanguageClient client;
 
@@ -144,6 +155,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         this.definitionService = Objects.requireNonNull(definitionService, "definitionService");
         this.hoverService = Objects.requireNonNull(hoverService, "hoverService");
         this.rangeMapper = Objects.requireNonNull(rangeMapper, "rangeMapper");
+        this.codeActionService = new IlimapCodeActionService(this.formattingService);
         this.analysisOptions = Objects.requireNonNull(analysisOptions, "analysisOptions");
     }
 
@@ -187,6 +199,23 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 .map(this::toLspTextEdit)
                 .map(List::of)
                 .orElseGet(List::of));
+    }
+
+    @Override
+    public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
+        String uri = params.getTextDocument().getUri();
+        if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(List.of());
+        }
+
+        IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
+        CodeActionContext context = params.getContext();
+        IlimapIdeRange requestedRange = toIdeRange(params.getRange());
+        List<Either<Command, CodeAction>> actions = codeActionService.codeActions(analysis, requestedRange).stream()
+                .filter(action -> matchesOnly(action.kind(), context))
+                .map(action -> Either.<Command, CodeAction>forRight(toLspCodeAction(uri, action, context)))
+                .toList();
+        return CompletableFuture.completedFuture(actions);
     }
 
     @Override
@@ -270,6 +299,56 @@ public final class IlimapTextDocumentService implements TextDocumentService {
 
     private TextEdit toLspTextEdit(IlimapTextEdit edit) {
         return new TextEdit(rangeMapper.toLspRange(edit.range()), edit.newText());
+    }
+
+    private CodeAction toLspCodeAction(
+            String uri, guru.interlis.transformer.mapping.ilimap.ide.IlimapCodeAction action, CodeActionContext context) {
+        CodeAction codeAction = new CodeAction(action.title());
+        codeAction.setKind(action.kind());
+        List<TextEdit> edits = action.edits().stream().map(this::toLspTextEdit).toList();
+        codeAction.setEdit(new WorkspaceEdit(Map.of(uri, edits)));
+        List<Diagnostic> diagnostics = matchingDiagnostics(action.diagnosticCode(), context);
+        if (!diagnostics.isEmpty()) {
+            codeAction.setDiagnostics(diagnostics);
+        }
+        return codeAction;
+    }
+
+    private IlimapIdeRange toIdeRange(Range range) {
+        if (range == null) {
+            IlimapIdePosition start = new IlimapIdePosition(0, 0);
+            return new IlimapIdeRange(start, start);
+        }
+        return new IlimapIdeRange(
+                new IlimapIdePosition(range.getStart().getLine(), range.getStart().getCharacter()),
+                new IlimapIdePosition(range.getEnd().getLine(), range.getEnd().getCharacter()));
+    }
+
+    private boolean matchesOnly(String actionKind, CodeActionContext context) {
+        if (context == null || context.getOnly() == null || context.getOnly().isEmpty()) {
+            return true;
+        }
+        return context.getOnly().stream()
+                .anyMatch(onlyKind -> actionKind.equals(onlyKind) || actionKind.startsWith(onlyKind + "."));
+    }
+
+    private List<Diagnostic> matchingDiagnostics(String diagnosticCode, CodeActionContext context) {
+        if (diagnosticCode == null || context == null || context.getDiagnostics() == null) {
+            return List.of();
+        }
+        return context.getDiagnostics().stream()
+                .filter(diagnostic -> diagnosticCode.equals(diagnosticCode(diagnostic)))
+                .toList();
+    }
+
+    private String diagnosticCode(Diagnostic diagnostic) {
+        if (diagnostic.getCode() == null) {
+            return null;
+        }
+        if (diagnostic.getCode().isLeft()) {
+            return diagnostic.getCode().getLeft();
+        }
+        return String.valueOf(diagnostic.getCode().getRight());
     }
 
     private Location toLspLocation(IlimapDefinition definition) {
