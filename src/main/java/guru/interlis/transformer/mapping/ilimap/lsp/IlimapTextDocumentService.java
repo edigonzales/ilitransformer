@@ -3,7 +3,12 @@ package guru.interlis.transformer.mapping.ilimap.lsp;
 import guru.interlis.transformer.mapping.ilimap.format.IlimapFormatOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysis;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapDocumentSymbol;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapDocumentSymbolService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapFoldingRange;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapFoldingService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapFormattingService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapSymbolDisplayKind;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
 
 import java.nio.file.Path;
@@ -16,9 +21,16 @@ import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.DocumentFormattingParams;
+import org.eclipse.lsp4j.DocumentSymbol;
+import org.eclipse.lsp4j.DocumentSymbolParams;
+import org.eclipse.lsp4j.FoldingRange;
+import org.eclipse.lsp4j.FoldingRangeRequestParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 
@@ -27,6 +39,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     private final IlimapDocumentStore documentStore;
     private final IlimapLspDiagnosticMapper diagnosticMapper;
     private final IlimapFormattingService formattingService;
+    private final IlimapDocumentSymbolService documentSymbolService;
+    private final IlimapFoldingService foldingService;
     private final IlimapLspRangeMapper rangeMapper;
     private final IlimapAnalysisOptions analysisOptions;
     private LanguageClient client;
@@ -36,6 +50,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 new IlimapDocumentStore(),
                 new IlimapLspDiagnosticMapper(),
                 new IlimapFormattingService(),
+                new IlimapDocumentSymbolService(),
+                new IlimapFoldingService(),
                 new IlimapLspRangeMapper(),
                 IlimapAnalysisOptions.defaults(Path.of(".")));
     }
@@ -46,9 +62,29 @@ public final class IlimapTextDocumentService implements TextDocumentService {
             IlimapFormattingService formattingService,
             IlimapLspRangeMapper rangeMapper,
             IlimapAnalysisOptions analysisOptions) {
+        this(
+                documentStore,
+                diagnosticMapper,
+                formattingService,
+                new IlimapDocumentSymbolService(),
+                new IlimapFoldingService(),
+                rangeMapper,
+                analysisOptions);
+    }
+
+    IlimapTextDocumentService(
+            IlimapDocumentStore documentStore,
+            IlimapLspDiagnosticMapper diagnosticMapper,
+            IlimapFormattingService formattingService,
+            IlimapDocumentSymbolService documentSymbolService,
+            IlimapFoldingService foldingService,
+            IlimapLspRangeMapper rangeMapper,
+            IlimapAnalysisOptions analysisOptions) {
         this.documentStore = Objects.requireNonNull(documentStore, "documentStore");
         this.diagnosticMapper = Objects.requireNonNull(diagnosticMapper, "diagnosticMapper");
         this.formattingService = Objects.requireNonNull(formattingService, "formattingService");
+        this.documentSymbolService = Objects.requireNonNull(documentSymbolService, "documentSymbolService");
+        this.foldingService = Objects.requireNonNull(foldingService, "foldingService");
         this.rangeMapper = Objects.requireNonNull(rangeMapper, "rangeMapper");
         this.analysisOptions = Objects.requireNonNull(analysisOptions, "analysisOptions");
     }
@@ -95,6 +131,30 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 .orElseGet(List::of));
     }
 
+    @Override
+    public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(
+            DocumentSymbolParams params) {
+        String uri = params.getTextDocument().getUri();
+        return CompletableFuture.completedFuture(documentStore
+                .get(uri)
+                .map(snapshot -> documentStore.analyze(uri, analysisOptions))
+                .map(documentSymbolService::symbols)
+                .map(symbols ->
+                        symbols.stream().map(this::toLspDocumentSymbolEither).toList())
+                .orElseGet(List::of));
+    }
+
+    @Override
+    public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
+        String uri = params.getTextDocument().getUri();
+        return CompletableFuture.completedFuture(documentStore
+                .get(uri)
+                .map(snapshot -> documentStore.analyze(uri, analysisOptions))
+                .map(foldingService::foldingRanges)
+                .map(ranges -> ranges.stream().map(this::toLspFoldingRange).toList())
+                .orElseGet(List::of));
+    }
+
     private void analyzeAndPublish(String uri) {
         IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
         Integer version =
@@ -104,6 +164,41 @@ public final class IlimapTextDocumentService implements TextDocumentService {
 
     private TextEdit toLspTextEdit(IlimapTextEdit edit) {
         return new TextEdit(rangeMapper.toLspRange(edit.range()), edit.newText());
+    }
+
+    private Either<SymbolInformation, DocumentSymbol> toLspDocumentSymbolEither(IlimapDocumentSymbol symbol) {
+        return Either.forRight(toLspDocumentSymbol(symbol));
+    }
+
+    private DocumentSymbol toLspDocumentSymbol(IlimapDocumentSymbol symbol) {
+        List<DocumentSymbol> children =
+                symbol.children().stream().map(this::toLspDocumentSymbol).toList();
+        return new DocumentSymbol(
+                symbol.name(),
+                toLspSymbolKind(symbol.kind()),
+                rangeMapper.toLspRange(symbol.range()),
+                rangeMapper.toLspRange(symbol.selectionRange()),
+                null,
+                children);
+    }
+
+    private FoldingRange toLspFoldingRange(IlimapFoldingRange range) {
+        FoldingRange foldingRange = new FoldingRange(range.startLine(), range.endLine());
+        foldingRange.setKind(range.kind());
+        return foldingRange;
+    }
+
+    private static SymbolKind toLspSymbolKind(IlimapSymbolDisplayKind kind) {
+        return switch (kind) {
+            case FILE -> SymbolKind.File;
+            case MODULE -> SymbolKind.Module;
+            case CLASS -> SymbolKind.Class;
+            case METHOD -> SymbolKind.Method;
+            case PROPERTY -> SymbolKind.Property;
+            case ENUM -> SymbolKind.Enum;
+            case FIELD -> SymbolKind.Field;
+            case OBJECT -> SymbolKind.Object;
+        };
     }
 
     private void publish(String uri, Integer version, List<org.eclipse.lsp4j.Diagnostic> diagnostics) {

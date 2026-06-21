@@ -34,6 +34,8 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
         capabilities.setHoverProvider(false);
         capabilities.setDefinitionProvider(false);
         capabilities.setDocumentFormattingProvider(true);
+        capabilities.setDocumentSymbolProvider(true);
+        capabilities.setFoldingRangeProvider(true);
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }
 

@@ -407,7 +407,7 @@ docs/decisions/adr-ilimap-vscode-lsp.md
 ## Copy/Paste-Prompt für den Coding-Agenten
 
 ```text
-Lies zuerst AGENTS.md, docs/agent/DEFINITION_OF_DONE.md, docs/agent/COMMIT_POLICY.md und docs/agent/DECISIONS.md.
+Lies zuerst docs/ilimap-vscode-lsp4j-implementation-plan.md, AGENTS.md, docs/agent/DEFINITION_OF_DONE.md, docs/agent/COMMIT_POLICY.md und docs/agent/DECISIONS.md.
 
 Verwende zusätzlich:
 - .skills/java-test-gap/SKILL.md
@@ -2282,6 +2282,73 @@ Implementiere Document Symbols und Folding für .ilimap. Die Implementierung mus
 
 ---
 
+## Manuelle VSCodium-Verifikation ab VSC-6
+
+Ab VSC-6 betreffen die Phasen sichtbare Editorfunktionen. Zusätzlich zu Unit-,
+LSP- und Compile-Tests soll deshalb eine manuelle VSCodium-Smoke-Prüfung
+durchgeführt werden, wenn VSCodium lokal verfügbar ist. Diese Prüfung ersetzt
+`./gradlew test` nicht.
+
+Vorgehen:
+
+```bash
+VSCODIUM="/Applications/VSCodium.app/Contents/MacOS/VSCodium"
+
+if [ -x "$VSCODIUM" ]; then
+  ./gradlew shadowJar
+
+  TMP_USER=$(mktemp -d /tmp/ilimap-vscodium-user.XXXXXX)
+  TMP_EXT=$(mktemp -d /tmp/ilimap-vscodium-ext.XXXXXX)
+  mkdir -p "$TMP_USER/User"
+  printf '{ "ilimap.server.jarPath": "/Users/stefan/sources/ilinexus/build/libs/ilitransformer-0.1.0-all.jar" }\n' > "$TMP_USER/User/settings.json"
+
+  "$VSCODIUM" \
+    --new-window \
+    --user-data-dir "$TMP_USER" \
+    --extensions-dir "$TMP_EXT" \
+    --extensionDevelopmentPath /Users/stefan/sources/ilinexus/vscode/ilimap-vscode \
+    /Users/stefan/sources/ilinexus/profiles/dm01-to-dmav/1.1/lfp3.ilimap
+fi
+```
+
+Allgemeine Checks:
+
+```text
+- Output-Panel "ILIMAP Language Server" zeigt den Start des Java-LSP.
+- Der verwendete Server-JAR ist build/libs/ilitransformer-0.1.0-all.jar.
+- Positive Smoke-Datei: profiles/dm01-to-dmav/1.1/lfp3.ilimap.
+- Negative Smoke-Datei: src/test/resources/mapping/ilimap/syntax-error.ilimap.
+- Bei Features mit Edits zuerst eine temporäre Kopie der .ilimap-Datei öffnen.
+- Ergebnis im Abschlussbericht dokumentieren; wenn VSCodium fehlt, das Fehlen dokumentieren.
+```
+
+Phase-spezifische Checks:
+
+```text
+VSC-6 Completion:
+- Completion in lfp3.ilimap für Top-Level, Rule-Block, target, source ... from,
+  target rule und enumMap(..., <cursor>) prüfen.
+
+VSC-7 Hover/Definition:
+- Hover auf input dm01, output dmav, rule lfp3 und Enum-Map prüfen.
+- Go-to-definition für dm01, dmav, lfp3-nachfuehrung und Enum-Map-Referenzen prüfen.
+
+VSC-8 Code Actions:
+- Temporäre Kopie einer .ilimap-Datei öffnen.
+- Quick Fixes im Problems-/Lightbulb-Menü prüfen und minimale lokale Edits verifizieren.
+
+VSC-9 Model-aware Features:
+- Model-aware Completion/Diagnostics mit validierten Testmodellen prüfen.
+- Dokumentieren, ob Modeldir-Auflösung lokal, HTTP oder bewusst nur testlokal geprüft wurde.
+
+VSC-10 Webview:
+- Command "ILIMAP: Open Mapping Overview" prüfen.
+- Prüfen, dass die Webview read-only ist, echte Counts zeigt, theme-kompatibel wirkt
+  und keine ungeprüften Inhalte sichtbar als HTML rendert.
+```
+
+---
+
 # Phase VSC-6 — Completion MVP
 
 ## Ziel
@@ -2488,6 +2555,9 @@ Testfälle:
 cd vscode/ilimap-vscode && npm run compile
 ```
 
+Manuelle VSCodium-Verifikation gemäss Abschnitt "Manuelle VSCodium-Verifikation ab VSC-6"
+durchführen und Ergebnis dokumentieren.
+
 ## Funktionsfähiges Artefakt
 
 VS Code bietet kontextuelle Completion für Keywords und `.ilimap`-Symbole.
@@ -2504,7 +2574,7 @@ VS Code bietet kontextuelle Completion für Keywords und `.ilimap`-Symbole.
 
 ```text
 Aufgabe Phase VSC-6:
-Implementiere Completion MVP. Baue IlimapCompletionService, IlimapCompletionContextResolver und LSP-Mapping. Unterstütze Top-Level-Keywords, Rule-Keywords, Output-IDs nach target, Input-IDs nach source ... from, Rule-IDs in target rule und Enum-Map-IDs im zweiten enumMap-Argument. Verwende AST und SymbolTable; implementiere keine .ilimap-Semantik im VS-Code-Client. Ergänze Tests und führe fokussierte Tests sowie ./gradlew test aus.
+Implementiere Completion MVP. Baue IlimapCompletionService, IlimapCompletionContextResolver und LSP-Mapping. Unterstütze Top-Level-Keywords, Rule-Keywords, Output-IDs nach target, Input-IDs nach source ... from, Rule-IDs in target rule und Enum-Map-IDs im zweiten enumMap-Argument. Verwende AST und SymbolTable; implementiere keine .ilimap-Semantik im VS-Code-Client. Ergänze Tests und führe fokussierte Tests sowie ./gradlew test aus. Wenn VSCodium unter /Applications/VSCodium.app/Contents/MacOS/VSCodium verfügbar ist, führe zusätzlich die manuelle VSCodium-Verifikation aus und dokumentiere das Ergebnis.
 ```
 
 ---
@@ -2682,6 +2752,9 @@ Testfälle:
 cd vscode/ilimap-vscode && npm run compile
 ```
 
+Manuelle VSCodium-Verifikation gemäss Abschnitt "Manuelle VSCodium-Verifikation ab VSC-6"
+durchführen und Ergebnis dokumentieren.
+
 ## Funktionsfähiges Artefakt
 
 Go-to-definition und Hover für zentrale `.ilimap`-Symbole funktionieren.
@@ -2697,7 +2770,7 @@ Go-to-definition und Hover für zentrale `.ilimap`-Symbole funktionieren.
 
 ```text
 Aufgabe Phase VSC-7:
-Implementiere Hover und Go-to-definition für input, output, rule und enum-map Symbole. Baue IlimapDefinitionService, IlimapHoverService und die nötigen Position-/Token-Resolver. Der LSP soll definitionProvider und hoverProvider aktivieren. Hover-Inhalte sollen kurz, markdown-formatiert und aus AST/SymbolTable abgeleitet sein. Ergänze Tests und führe fokussierte Tests sowie ./gradlew test aus.
+Implementiere Hover und Go-to-definition für input, output, rule und enum-map Symbole. Baue IlimapDefinitionService, IlimapHoverService und die nötigen Position-/Token-Resolver. Der LSP soll definitionProvider und hoverProvider aktivieren. Hover-Inhalte sollen kurz, markdown-formatiert und aus AST/SymbolTable abgeleitet sein. Ergänze Tests und führe fokussierte Tests sowie ./gradlew test aus. Wenn VSCodium unter /Applications/VSCodium.app/Contents/MacOS/VSCodium verfügbar ist, führe zusätzlich die manuelle VSCodium-Verifikation aus und dokumentiere das Ergebnis.
 ```
 
 ---
@@ -2827,6 +2900,9 @@ Testfälle:
 cd vscode/ilimap-vscode && npm run compile
 ```
 
+Manuelle VSCodium-Verifikation gemäss Abschnitt "Manuelle VSCodium-Verifikation ab VSC-6"
+durchführen und Ergebnis dokumentieren.
+
 ## Funktionsfähiges Artefakt
 
 VS Code bietet erste Quick Fixes für `.ilimap` an.
@@ -2842,7 +2918,7 @@ VS Code bietet erste Quick Fixes für `.ilimap` an.
 
 ```text
 Aufgabe Phase VSC-8:
-Implementiere erste Code Actions. Unterstütze enumMap String-Referenz zu Symbolreferenz, Erzeugen eines fehlenden Enum-Blocks und Format Document. Edits müssen minimal und range-basiert sein. Kein globales Regex-Rewrite. Ergänze Tests und führe fokussierte Tests sowie ./gradlew test aus.
+Implementiere erste Code Actions. Unterstütze enumMap String-Referenz zu Symbolreferenz, Erzeugen eines fehlenden Enum-Blocks und Format Document. Edits müssen minimal und range-basiert sein. Kein globales Regex-Rewrite. Ergänze Tests und führe fokussierte Tests sowie ./gradlew test aus. Wenn VSCodium unter /Applications/VSCodium.app/Contents/MacOS/VSCodium verfügbar ist, führe zusätzlich die manuelle VSCodium-Verifikation aus und dokumentiere das Ergebnis.
 ```
 
 ---
@@ -3015,6 +3091,9 @@ ili2c <model.ili>
 
 oder vorhandener Gradle-/CLI-Weg gemäss Repo verwenden.
 
+Manuelle VSCodium-Verifikation gemäss Abschnitt "Manuelle VSCodium-Verifikation ab VSC-6"
+durchführen und Ergebnis dokumentieren.
+
 ## Funktionsfähiges Artefakt
 
 Model-aware Completion und erste Model-Diagnostics.
@@ -3031,7 +3110,7 @@ Model-aware Completion und erste Model-Diagnostics.
 
 ```text
 Aufgabe Phase VSC-9:
-Implementiere INTERLIS-Modellintegration für den ILIMAP-LSP. Baue einen model-aware Index-Service, der modeldir/input/output-Kontext aus dem IlimapAnalysis ableitet und INTERLIS-Klassen/Attribute für Completion und Diagnostics bereitstellt. Unterstütze Completion für source/target class Strings, Zielattribute in assign und Source-Alias-Attribute in einfachen Expressions. Fehlende oder ungültige Modelle müssen Diagnostics erzeugen, nicht Server-Abstürze. Falls .ili-Testmodelle geändert oder erzeugt werden, validiere sie gemäss Repo-Regeln. Ergänze Tests und führe fokussierte Tests sowie ./gradlew test aus.
+Implementiere INTERLIS-Modellintegration für den ILIMAP-LSP. Baue einen model-aware Index-Service, der modeldir/input/output-Kontext aus dem IlimapAnalysis ableitet und INTERLIS-Klassen/Attribute für Completion und Diagnostics bereitstellt. Unterstütze Completion für source/target class Strings, Zielattribute in assign und Source-Alias-Attribute in einfachen Expressions. Fehlende oder ungültige Modelle müssen Diagnostics erzeugen, nicht Server-Abstürze. Falls .ili-Testmodelle geändert oder erzeugt werden, validiere sie gemäss Repo-Regeln. Ergänze Tests und führe fokussierte Tests sowie ./gradlew test aus. Wenn VSCodium unter /Applications/VSCodium.app/Contents/MacOS/VSCodium verfügbar ist, führe zusätzlich die manuelle VSCodium-Verifikation aus und dokumentiere das Ergebnis.
 ```
 
 ---
@@ -3198,6 +3277,9 @@ Optional:
 npm test
 ```
 
+Manuelle VSCodium-Verifikation gemäss Abschnitt "Manuelle VSCodium-Verifikation ab VSC-6"
+durchführen und Ergebnis dokumentieren.
+
 ## Funktionsfähiges Artefakt
 
 Read-only Mapping Overview in VS Code.
@@ -3214,7 +3296,7 @@ Read-only Mapping Overview in VS Code.
 
 ```text
 Aufgabe Phase VSC-10:
-Implementiere eine read-only VS-Code-Webview 'ILIMAP: Open Mapping Overview'. Die Webview soll eine Zusammenfassung des aktiven .ilimap-Dokuments anzeigen: Inputs, Outputs, Rules, Enum Maps, Bags, Refs und Diagnostics. Verwende, falls nötig, einen kleinen Java-Service für IlimapMappingSummary, aber implementiere keine Parserlogik in TypeScript. Die Webview muss CSP verwenden, Werte escapen und themenkompatibel sein. Keine editierbare Webview und keine erfundenen Coverage-Werte. Ergänze Tests/Compile-Verifikation.
+Implementiere eine read-only VS-Code-Webview 'ILIMAP: Open Mapping Overview'. Die Webview soll eine Zusammenfassung des aktiven .ilimap-Dokuments anzeigen: Inputs, Outputs, Rules, Enum Maps, Bags, Refs und Diagnostics. Verwende, falls nötig, einen kleinen Java-Service für IlimapMappingSummary, aber implementiere keine Parserlogik in TypeScript. Die Webview muss CSP verwenden, Werte escapen und themenkompatibel sein. Keine editierbare Webview und keine erfundenen Coverage-Werte. Ergänze Tests/Compile-Verifikation. Wenn VSCodium unter /Applications/VSCodium.app/Contents/MacOS/VSCodium verfügbar ist, führe zusätzlich die manuelle VSCodium-Verifikation aus und dokumentiere das Ergebnis.
 ```
 
 ---
