@@ -1,0 +1,9 @@
+scripts/**
+src/**
+test/**
+.vscode/**
+images/icon-source.png
+tsconfig.json
+package-lock.json
+.gitignore
+**/*.map

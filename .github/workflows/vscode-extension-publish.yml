@@ -1,0 +1,273 @@
+name: VS Code extension publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Optional source commit SHA to package
+        required: false
+        type: string
+      source_run_number:
+        description: Optional CI run number used as the publish patch version
+        required: false
+        type: string
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.gate.outputs.should_run }}
+      source_sha: ${{ steps.gate.outputs.source_sha }}
+      source_run_number: ${{ steps.gate.outputs.source_run_number }}
+    steps:
+      - id: gate
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            if [[ "${{ github.event.workflow_run.conclusion }}" != "success" ]]; then
+              echo "should_run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if [[ "${{ github.event.workflow_run.event }}" != "push" ]]; then
+              echo "should_run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if [[ "${{ github.event.workflow_run.head_branch }}" != "main" ]]; then
+              echo "should_run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "source_sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+            echo "source_run_number=${{ github.event.workflow_run.run_number }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          source_sha="${{ inputs.source_sha }}"
+          if [[ -z "$source_sha" ]]; then
+            source_sha="${{ github.sha }}"
+          fi
+
+          source_run_number="${{ inputs.source_run_number }}"
+          if [[ -z "$source_run_number" ]]; then
+            source_run_number="${{ github.run_number }}"
+          fi
+
+          echo "should_run=true" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "source_run_number=$source_run_number" >> "$GITHUB_OUTPUT"
+
+  build-fat-jar:
+    needs: gate
+    if: needs.gate.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.source_sha }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run tests and build fat JAR
+        run: ./gradlew test shadowJar
+
+      - name: Stage ILIMAP LSP JAR
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/publish
+          cp build/libs/*-all.jar build/publish/ilimap-lsp-all.jar
+
+      - name: Upload ILIMAP LSP JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: ilimap-lsp-jar
+          path: build/publish/ilimap-lsp-all.jar
+          if-no-files-found: error
+
+  build-runtimes:
+    needs:
+      - gate
+      - build-fat-jar
+    if: needs.gate.outputs.should_run == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            platform_id: linux-x64
+            shell: bash
+          - runner: ubuntu-24.04-arm
+            platform_id: linux-arm64
+            shell: bash
+          - runner: macos-15
+            platform_id: darwin-arm64
+            shell: bash
+          - runner: windows-2022
+            platform_id: win32-x64
+            shell: pwsh
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download ILIMAP LSP JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: ilimap-lsp-jar
+          path: dist
+
+      - name: Build runtime bundle (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          JAR=$(ls dist/*.jar | head -n1)
+          MODS=$(jdeps --print-module-deps --ignore-missing-deps --multi-release 21 "$JAR")
+          jlink \
+            --add-modules "$MODS" \
+            --no-header-files \
+            --no-man-pages \
+            --strip-debug \
+            --compress=2 \
+            --output runtime
+
+      - name: Build runtime bundle (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $jar = Get-ChildItem -Path dist -Filter *.jar | Select-Object -First 1
+          if (-not $jar) { throw "No JAR found in dist" }
+          $mods = & jdeps --print-module-deps --ignore-missing-deps --multi-release 21 $jar.FullName
+          & jlink `
+            --add-modules $mods `
+            --no-header-files `
+            --no-man-pages `
+            --strip-debug `
+            --compress=2 `
+            --output runtime
+
+      - name: Upload runtime bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: jre-runtime-${{ matrix.platform_id }}
+          path: runtime
+          if-no-files-found: error
+
+  package-and-publish:
+    needs:
+      - gate
+      - build-fat-jar
+      - build-runtimes
+    if: needs.gate.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    env:
+      EXTENSION_NAME: ilimap-vscode
+      PUBLISHER: ilinexus
+      SOURCE_RUN_NUMBER: ${{ needs.gate.outputs.source_run_number }}
+      VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+      OPEN_VSIX_MARKETPLACE_TOKEN: ${{ secrets.OPEN_VSIX_MARKETPLACE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.source_sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download ILIMAP LSP JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: ilimap-lsp-jar
+          path: vscode/ilimap-vscode/server
+
+      - name: Download runtime bundles
+        uses: actions/download-artifact@v4
+        with:
+          pattern: jre-runtime-*
+          path: tmp/runtimes
+          merge-multiple: false
+
+      - name: Stage runtime bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          for platform in darwin-arm64 linux-arm64 linux-x64 win32-x64; do
+            src="tmp/runtimes/jre-runtime-${platform}/runtime"
+            dest="vscode/ilimap-vscode/server/jre/${platform}"
+            mkdir -p "$dest"
+            cp -a "$src"/. "$dest"/
+            if [[ "$platform" != win32-* ]]; then
+              find "$dest/bin" -type f -exec chmod +x {} +
+            fi
+          done
+
+      - name: Install extension dependencies
+        working-directory: vscode/ilimap-vscode
+        run: npm ci
+
+      - name: Set CI publish version
+        id: set_version
+        working-directory: vscode/ilimap-vscode
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node ./scripts/set-ci-version.js "$SOURCE_RUN_NUMBER")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build and package VSIX
+        working-directory: vscode/ilimap-vscode
+        run: |
+          npm run package:vsix
+          npm run check:vsix
+
+      - name: Detect published versions
+        id: registry_state
+        working-directory: vscode/ilimap-vscode
+        shell: bash
+        run: |
+          set -euo pipefail
+          state=$(node ./scripts/registry-state.js "$PUBLISHER" "$EXTENSION_NAME" "${{ steps.set_version.outputs.version }}")
+          echo "$state"
+          marketplace=$(node -e 'process.stdout.write(String(JSON.parse(process.argv[1]).marketplace))' "$state")
+          openvsx=$(node -e 'process.stdout.write(String(JSON.parse(process.argv[1]).openvsx))' "$state")
+          echo "marketplace=$marketplace" >> "$GITHUB_OUTPUT"
+          echo "openvsx=$openvsx" >> "$GITHUB_OUTPUT"
+
+      - name: Upload packaged VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: ilimap-vscode-${{ steps.set_version.outputs.version }}
+          path: vscode/ilimap-vscode/ilimap-vscode.vsix
+          if-no-files-found: error
+
+      - name: Publish to Visual Studio Marketplace
+        if: env.VS_MARKETPLACE_TOKEN != '' && steps.registry_state.outputs.marketplace != 'true'
+        working-directory: vscode/ilimap-vscode
+        env:
+          VSCE_PAT: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+        run: npm run publish:vsmarketplace
+
+      - name: Publish to Open VSX
+        if: env.OPEN_VSIX_MARKETPLACE_TOKEN != '' && steps.registry_state.outputs.openvsx != 'true'
+        working-directory: vscode/ilimap-vscode
+        env:
+          OVSX_TOKEN: ${{ secrets.OPEN_VSIX_MARKETPLACE_TOKEN }}
+        run: npm run publish:openvsx -- -p "$OVSX_TOKEN"

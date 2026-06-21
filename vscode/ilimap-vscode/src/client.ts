@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { LanguageClient, type LanguageClientOptions, type ServerOptions } from 'vscode-languageclient/node';
 
-import { resolveJavaPath, resolveJvmArgs, resolveServerJarPath } from './configuration';
+import { resolveJavaRuntime, resolveJvmArgs, resolveServerJarPath } from './configuration';
 
 let client: LanguageClient | undefined;
 let starting: Promise<void> | undefined;
@@ -33,16 +33,17 @@ async function doStartLanguageClient(
 ): Promise<void> {
   const config = vscode.workspace.getConfiguration('ilimap');
   const serverJar = resolveServerJarPath(context, config.get<string>('server.jarPath'));
-  const javaPath = resolveJavaPath(config.get<string>('java.path'));
+  const javaRuntime = resolveJavaRuntime(context, config.get<string>('java.path'));
   const jvmArgs = resolveJvmArgs(config.get<readonly string[]>('server.jvmArgs'));
 
   outputChannel.appendLine('Starting ILIMAP language server.');
-  outputChannel.appendLine(`Java path: ${javaPath}`);
+  outputChannel.appendLine(`Java runtime: ${describeJavaRuntime(javaRuntime)}`);
+  outputChannel.appendLine(`Java path: ${javaRuntime.command}`);
   outputChannel.appendLine(`Server JAR: ${serverJar}`);
   outputChannel.appendLine(`JVM args: ${jvmArgs.length === 0 ? '(none)' : jvmArgs.join(' ')}`);
 
   const serverOptions: ServerOptions = {
-    command: javaPath,
+    command: javaRuntime.command,
     args: [...jvmArgs, '-jar', serverJar],
     options: {}
   };
@@ -108,4 +109,14 @@ export function getLanguageClient(): LanguageClient | undefined {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function describeJavaRuntime(javaRuntime: { source: string; platformId?: string }): string {
+  if (javaRuntime.source === 'configured') {
+    return 'configured executable';
+  }
+  if (javaRuntime.source === 'bundled') {
+    return `bundled runtime${javaRuntime.platformId ? ` (${javaRuntime.platformId})` : ''}`;
+  }
+  return 'system executable from PATH';
 }

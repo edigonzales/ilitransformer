@@ -41,16 +41,22 @@ test('activates mapping overview command', () => {
 test('declares required settings', () => {
   const properties = manifest.contributes.configuration.properties;
 
-  assert.equal(properties['ilimap.java.path'].default, 'java');
+  assert.equal(properties['ilimap.java.path'].default, '');
   assert.equal(properties['ilimap.server.jarPath'].default, '');
   assert.deepEqual(properties['ilimap.server.jvmArgs'].default, []);
   assert.equal(properties['ilimap.server.restartOnJarChange'], undefined);
 });
 
-test('declares development build scripts', () => {
+test('declares build, packaging, and publishing scripts', () => {
+  assert.equal(manifest.scripts['vscode:prepublish'], 'npm run build');
   assert.equal(manifest.scripts.compile, 'npm run build');
   assert.equal(manifest.scripts.build, 'tsc -p ./');
   assert.equal(manifest.scripts.watch, 'tsc -watch -p ./');
+  assert.equal(manifest.scripts['version:ci'], 'node ./scripts/set-ci-version.js');
+  assert.equal(manifest.scripts['package:vsix'], 'vsce package --out ilimap-vscode.vsix');
+  assert.equal(manifest.scripts['check:vsix'], 'node ./scripts/assert-vsix-contents.js ilimap-vscode.vsix');
+  assert.equal(manifest.scripts['publish:vsmarketplace'], 'vsce publish --packagePath ilimap-vscode.vsix');
+  assert.equal(manifest.scripts['publish:openvsx'], 'ovsx publish ilimap-vscode.vsix');
 });
 
 test('does not declare client-side ilimap semantics settings', () => {
@@ -61,4 +67,18 @@ test('does not declare client-side ilimap semantics settings', () => {
     'ilimap.server.jarPath',
     'ilimap.server.jvmArgs'
   ]);
+});
+
+test('declares marketplace metadata', () => {
+  assert.equal(manifest.version, '0.1.0');
+  assert.equal(manifest.license, 'MIT');
+  assert.equal(manifest.icon, 'images/icon.png');
+  assert.deepEqual(manifest.galleryBanner, {
+    color: '#f4efe7',
+    theme: 'light'
+  });
+  assert.equal(manifest.repository.url, 'https://github.com/edigonzales/ilinexus.git');
+  assert.equal(manifest.bugs.url, 'https://github.com/edigonzales/ilinexus/issues');
+  assert.ok(manifest.keywords.includes('ilimap'));
+  assert.ok(manifest.keywords.includes('lsp'));
 });

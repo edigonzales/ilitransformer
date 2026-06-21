@@ -2,8 +2,30 @@
   "name": "ilimap-vscode",
   "displayName": "ILIMAP",
   "description": "Language support for ILIMAP mapping profiles",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "ilinexus",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edigonzales/ilinexus.git"
+  },
+  "homepage": "https://github.com/edigonzales/ilinexus/tree/main/vscode/ilimap-vscode#readme",
+  "bugs": {
+    "url": "https://github.com/edigonzales/ilinexus/issues"
+  },
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#f4efe7",
+    "theme": "light"
+  },
+  "keywords": [
+    "interlis",
+    "ilimap",
+    "mapping",
+    "lsp",
+    "vscode",
+    "validation"
+  ],
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -68,8 +90,8 @@
       "properties": {
         "ilimap.java.path": {
           "type": "string",
-          "default": "java",
-          "markdownDescription": "Path to the Java executable used to start the ILIMAP language server."
+          "default": "",
+          "markdownDescription": "Path to the Java executable used to start the ILIMAP language server. Leave empty to prefer a bundled runtime and otherwise fall back to java from PATH."
         },
         "ilimap.server.jarPath": {
           "type": "string",
@@ -88,10 +110,16 @@
     }
   },
   "scripts": {
+    "vscode:prepublish": "npm run build",
     "compile": "npm run build",
     "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "npm run build && node --test test/*.test.js"
+    "test": "npm run build && node --test test/*.test.js",
+    "version:ci": "node ./scripts/set-ci-version.js",
+    "package:vsix": "vsce package --out ilimap-vscode.vsix",
+    "check:vsix": "node ./scripts/assert-vsix-contents.js ilimap-vscode.vsix",
+    "publish:vsmarketplace": "vsce publish --packagePath ilimap-vscode.vsix",
+    "publish:openvsx": "ovsx publish ilimap-vscode.vsix"
   },
   "dependencies": {
     "vscode-languageclient": "9.0.1"
@@ -99,6 +127,8 @@
   "devDependencies": {
     "@types/node": "20.19.43",
     "@types/vscode": "1.90.0",
+    "@vscode/vsce": "^3.9.2",
+    "ovsx": "^1.0.1",
     "typescript": "6.0.3"
   }
 }
