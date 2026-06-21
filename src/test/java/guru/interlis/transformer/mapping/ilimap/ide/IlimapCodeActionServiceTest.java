@@ -23,7 +23,8 @@ class IlimapCodeActionServiceTest {
     void offersEnumMapStringToSymbolQuickFix() {
         IlimapAnalysis analysis = analyze(mappingWithExpression("enumMap(s.X, \"Quality\")", true));
 
-        IlimapCodeAction action = actionByTitle(actionsAt(analysis, "\"Quality\"", 1, "Quality".length() + 1), "Use symbolic enum map reference");
+        IlimapCodeAction action = actionByTitle(
+                actionsAt(analysis, "\"Quality\"", 1, "Quality".length() + 1), "Use symbolic enum map reference");
 
         assertThat(action.kind()).isEqualTo(IlimapCodeActionService.QUICK_FIX);
         assertThat(action.diagnosticCode()).isEqualTo(DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF);
@@ -89,14 +90,15 @@ class IlimapCodeActionServiceTest {
         String source = compactMapping();
         IlimapAnalysis analysis = analyze(source);
 
-        IlimapCodeAction action = actionByTitle(
-                codeActionService.codeActions(analysis, range(analysis, 0, 0)), "Format ILIMAP document");
+        IlimapCodeAction action =
+                actionByTitle(codeActionService.codeActions(analysis, range(analysis, 0, 0)), "Format ILIMAP document");
 
         assertThat(action.kind()).isEqualTo(IlimapCodeActionService.SOURCE);
         assertThat(action.diagnosticCode()).isNull();
         assertThat(action.edits()).singleElement().satisfies(edit -> {
             assertThat(edit.range())
-                    .isEqualTo(new IlimapIdeRange(new IlimapIdePosition(0, 0), analysis.lineMap().toIdePosition(source.length())));
+                    .isEqualTo(new IlimapIdeRange(
+                            new IlimapIdePosition(0, 0), analysis.lineMap().toIdePosition(source.length())));
             assertThat(edit.newText()).contains("input src {");
             assertThat(edit.newText()).endsWith("\n");
         });
@@ -113,7 +115,9 @@ class IlimapCodeActionServiceTest {
     }
 
     private IlimapIdeRange range(IlimapAnalysis analysis, int startOffset, int endOffset) {
-        return new IlimapIdeRange(analysis.lineMap().toIdePosition(startOffset), analysis.lineMap().toIdePosition(endOffset));
+        return new IlimapIdeRange(
+                analysis.lineMap().toIdePosition(startOffset),
+                analysis.lineMap().toIdePosition(endOffset));
     }
 
     private IlimapCodeAction actionByTitle(List<IlimapCodeAction> actions, String title) {
@@ -124,15 +128,18 @@ class IlimapCodeActionServiceTest {
     }
 
     private static String textAt(IlimapAnalysis analysis, IlimapIdeRange range) {
-        int start = analysis.lineMap().positionToOffset(range.start().line(), range.start().character());
-        int end = analysis.lineMap().positionToOffset(range.end().line(), range.end().character());
+        int start = analysis.lineMap()
+                .positionToOffset(range.start().line(), range.start().character());
+        int end = analysis.lineMap()
+                .positionToOffset(range.end().line(), range.end().character());
         return analysis.text().substring(start, end);
     }
 
     private static String applyEdits(IlimapAnalysis analysis, List<IlimapTextEdit> edits) {
         StringBuilder result = new StringBuilder(analysis.text());
         List<IlimapTextEdit> sorted = new ArrayList<>(edits);
-        sorted.sort(Comparator.comparingInt((IlimapTextEdit edit) -> startOffset(analysis, edit)).reversed());
+        sorted.sort(Comparator.comparingInt((IlimapTextEdit edit) -> startOffset(analysis, edit))
+                .reversed());
         for (IlimapTextEdit edit : sorted) {
             result.replace(startOffset(analysis, edit), endOffset(analysis, edit), edit.newText());
         }
@@ -140,29 +147,28 @@ class IlimapCodeActionServiceTest {
     }
 
     private static int startOffset(IlimapAnalysis analysis, IlimapTextEdit edit) {
-        return analysis.lineMap().positionToOffset(edit.range().start().line(), edit.range().start().character());
+        return analysis.lineMap()
+                .positionToOffset(
+                        edit.range().start().line(), edit.range().start().character());
     }
 
     private static int endOffset(IlimapAnalysis analysis, IlimapTextEdit edit) {
-        return analysis.lineMap().positionToOffset(edit.range().end().line(), edit.range().end().character());
+        return analysis.lineMap()
+                .positionToOffset(edit.range().end().line(), edit.range().end().character());
     }
 
     private static String mappingWithExpression(String expression, boolean includeEnum) {
-        String enumBlock = includeEnum
-                ? """
+        String enumBlock = includeEnum ? """
                   enum Quality {
                     "old" => "new";
                   }
 
-                """
-                : "";
+                """ : "";
         return """
                 mapping v2 {
                   input src { path "in.xtf"; model "M"; }
                   output out { path "out.xtf"; model "M"; }
-                """
-                + enumBlock
-                + """
+                """ + enumBlock + """
                   rule r1 {
                     target out class "M.A";
                     source s from src class "M.A";
@@ -171,8 +177,7 @@ class IlimapCodeActionServiceTest {
                     }
                   }
                 }
-                """
-                        .formatted(expression);
+                """.formatted(expression);
     }
 
     private static String compactMapping() {

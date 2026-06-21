@@ -35,8 +35,7 @@ class IlimapHoverLspTest {
         var result =
                 new IlimapLanguageServer().initialize(new InitializeParams()).join();
 
-        assertThat(result.getCapabilities().getHoverProvider().getLeft())
-                .isTrue();
+        assertThat(result.getCapabilities().getHoverProvider().getLeft()).isTrue();
     }
 
     @Test
@@ -44,8 +43,8 @@ class IlimapHoverLspTest {
         String source = validMapping();
         open(source);
 
-        Hover hover =
-                service.hover(hoverParams(source, "target out class", "target ou".length())).join();
+        Hover hover = service.hover(hoverParams(source, "target out class", "target ou".length()))
+                .join();
 
         assertThat(hover).isNotNull();
         assertThat(hover.getContents().isRight()).isTrue();
@@ -59,8 +58,8 @@ class IlimapHoverLspTest {
         String source = validMapping().replace("enumMap(s.X, Quality)", "coalesce(s.X, Quality)");
         open(source);
 
-        Hover hover =
-                service.hover(hoverParams(source, "coalesce(s.X, Quality)", "coalesce(s.X, Qual".length())).join();
+        Hover hover = service.hover(hoverParams(source, "coalesce(s.X, Quality)", "coalesce(s.X, Qual".length()))
+                .join();
 
         assertThat(hover).isNull();
     }
@@ -79,7 +78,8 @@ class IlimapHoverLspTest {
     private static String textAt(String source, Hover hover) {
         IlimapLineMap lineMap = new IlimapLineMap(source);
         int start = lineMap.positionToOffset(
-                hover.getRange().getStart().getLine(), hover.getRange().getStart().getCharacter());
+                hover.getRange().getStart().getLine(),
+                hover.getRange().getStart().getCharacter());
         int end = lineMap.positionToOffset(
                 hover.getRange().getEnd().getLine(), hover.getRange().getEnd().getCharacter());
         return source.substring(start, end);

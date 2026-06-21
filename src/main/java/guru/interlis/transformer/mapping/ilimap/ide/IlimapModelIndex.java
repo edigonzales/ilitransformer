@@ -9,8 +9,8 @@ import java.util.Optional;
 
 public final class IlimapModelIndex {
 
-    private static final IlimapModelIndex EMPTY = new IlimapModelIndex(
-            List.of(), Map.of(), Map.of(), Map.of(), List.of());
+    private static final IlimapModelIndex EMPTY =
+            new IlimapModelIndex(List.of(), Map.of(), Map.of(), Map.of(), List.of());
 
     private final List<IlimapModelInfo> models;
     private final Map<String, String> inputModelsById;

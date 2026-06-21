@@ -49,9 +49,9 @@ class IlimapCompletionLspTest {
         String source = validMapping();
         open(source);
 
-        Either<List<CompletionItem>, CompletionList> result =
-                service.completion(completionParams(source, "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length()))
-                        .join();
+        Either<List<CompletionItem>, CompletionList> result = service.completion(
+                        completionParams(source, "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length()))
+                .join();
 
         assertThat(result.isLeft()).isTrue();
         assertThat(result.getLeft())
@@ -73,7 +73,9 @@ class IlimapCompletionLspTest {
                 IlimapAnalysisOptions.defaults(Path.of("/tmp")));
         InitializeParams params = new InitializeParams();
         params.setRootUri(Path.of(".").toAbsolutePath().normalize().toUri().toString());
-        new IlimapLanguageServer(modelAwareService, new IlimapWorkspaceService()).initialize(params).join();
+        new IlimapLanguageServer(modelAwareService, new IlimapWorkspaceService())
+                .initialize(params)
+                .join();
 
         String source = modelAwareMapping();
         modelAwareService.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));

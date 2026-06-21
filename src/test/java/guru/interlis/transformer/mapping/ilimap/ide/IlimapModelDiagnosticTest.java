@@ -16,42 +16,40 @@ class IlimapModelDiagnosticTest {
 
     @Test
     void reportsUnknownTargetClass() {
-        IlimapAnalysis analysis = analyze(validMapping().replace(
-                "target out class \"TestModel.TestTopic.TestClass\"",
-                "target out class \"TestModel.TestTopic.MissingClass\""));
+        IlimapAnalysis analysis = analyze(validMapping()
+                .replace(
+                        "target out class \"TestModel.TestTopic.TestClass\"",
+                        "target out class \"TestModel.TestTopic.MissingClass\""));
 
-        assertThat(analysis.diagnostics())
-                .anySatisfy(diagnostic -> assertThat(diagnostic.code())
-                        .isEqualTo(DiagnosticCode.MAP_UNKNOWN_TARGET_CLASS));
+        assertThat(analysis.diagnostics()).anySatisfy(diagnostic -> assertThat(diagnostic.code())
+                .isEqualTo(DiagnosticCode.MAP_UNKNOWN_TARGET_CLASS));
     }
 
     @Test
     void reportsUnknownSourceClass() {
-        IlimapAnalysis analysis = analyze(validMapping().replace(
-                "source s from src class \"TestModel.TestTopic.TestClass\"",
-                "source s from src class \"TestModel.TestTopic.MissingClass\""));
+        IlimapAnalysis analysis = analyze(validMapping()
+                .replace(
+                        "source s from src class \"TestModel.TestTopic.TestClass\"",
+                        "source s from src class \"TestModel.TestTopic.MissingClass\""));
 
-        assertThat(analysis.diagnostics())
-                .anySatisfy(diagnostic -> assertThat(diagnostic.code())
-                        .isEqualTo(DiagnosticCode.MAP_UNKNOWN_SOURCE_CLASS));
+        assertThat(analysis.diagnostics()).anySatisfy(diagnostic -> assertThat(diagnostic.code())
+                .isEqualTo(DiagnosticCode.MAP_UNKNOWN_SOURCE_CLASS));
     }
 
     @Test
     void reportsUnknownTargetAttribute() {
         IlimapAnalysis analysis = analyze(validMapping().replace("Name = s.Name;", "MissingAttr = s.Name;"));
 
-        assertThat(analysis.diagnostics())
-                .anySatisfy(diagnostic -> assertThat(diagnostic.code())
-                        .isEqualTo(DiagnosticCode.MAP_UNKNOWN_TARGET_ATTRIBUTE));
+        assertThat(analysis.diagnostics()).anySatisfy(diagnostic -> assertThat(diagnostic.code())
+                .isEqualTo(DiagnosticCode.MAP_UNKNOWN_TARGET_ATTRIBUTE));
     }
 
     @Test
     void reportsUnknownSourceAttribute() {
         IlimapAnalysis analysis = analyze(validMapping().replace("Name = s.Name;", "Name = s.MissingAttr;"));
 
-        assertThat(analysis.diagnostics())
-                .anySatisfy(diagnostic -> assertThat(diagnostic.code())
-                        .isEqualTo(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE));
+        assertThat(analysis.diagnostics()).anySatisfy(diagnostic -> assertThat(diagnostic.code())
+                .isEqualTo(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE));
     }
 
     @Test
@@ -59,8 +57,7 @@ class IlimapModelDiagnosticTest {
         IlimapAnalysis analysis = analyze(validMapping().replace("model \"TestModel\"", "model \"MissingModel\""));
 
         assertThat(analysis.diagnostics())
-                .anySatisfy(diagnostic -> assertThat(diagnostic.code())
-                        .isEqualTo(DiagnosticCode.MODEL_COMPILE_FAILED));
+                .anySatisfy(diagnostic -> assertThat(diagnostic.code()).isEqualTo(DiagnosticCode.MODEL_COMPILE_FAILED));
     }
 
     private IlimapAnalysis analyze(String source) {

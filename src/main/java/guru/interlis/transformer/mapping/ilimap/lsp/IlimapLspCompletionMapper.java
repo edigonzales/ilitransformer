@@ -21,8 +21,8 @@ public final class IlimapLspCompletionMapper {
         completionItem.setDocumentation(item.documentation());
         completionItem.setInsertText(item.insertText());
         if (item.replacementRange() != null) {
-            completionItem.setTextEdit(Either.forLeft(new TextEdit(
-                    new IlimapLspRangeMapper().toLspRange(item.replacementRange()), item.insertText())));
+            completionItem.setTextEdit(Either.forLeft(
+                    new TextEdit(new IlimapLspRangeMapper().toLspRange(item.replacementRange()), item.insertText())));
         }
         return completionItem;
     }

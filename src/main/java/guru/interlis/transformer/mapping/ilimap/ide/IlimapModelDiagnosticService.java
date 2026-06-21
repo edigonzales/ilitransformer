@@ -36,7 +36,8 @@ public final class IlimapModelDiagnosticService {
         List<IlimapIdeDiagnostic> diagnostics = new ArrayList<>();
         for (IlimapRuleBlock rule : analysis.document().rules()) {
             Optional<IlimapTargetStmt> target = target(rule);
-            Optional<IlimapClassInfo> targetClass = target.flatMap(targetStmt -> checkTargetClass(analysis, targetStmt, diagnostics));
+            Optional<IlimapClassInfo> targetClass =
+                    target.flatMap(targetStmt -> checkTargetClass(analysis, targetStmt, diagnostics));
             checkSourceClassesAndAttributes(analysis, rule, diagnostics);
             targetClass.ifPresent(classInfo -> checkTargetAttributes(analysis, rule, classInfo, diagnostics));
         }
@@ -186,8 +187,10 @@ public final class IlimapModelDiagnosticService {
 
     private static void collectExpressions(IlimapRuleElement element, List<IlimapExpressionText> result) {
         switch (element) {
-            case IlimapAssignmentBlock block -> block.assignments().forEach(assignment -> result.add(assignment.expression()));
-            case IlimapDefaultsBlock block -> block.assignments().forEach(assignment -> result.add(assignment.expression()));
+            case IlimapAssignmentBlock block ->
+                block.assignments().forEach(assignment -> result.add(assignment.expression()));
+            case IlimapDefaultsBlock block ->
+                block.assignments().forEach(assignment -> result.add(assignment.expression()));
             case IlimapWhereStmt where -> result.add(where.expression());
             case IlimapIdentityStmt identity -> result.addAll(identity.expressions());
             case IlimapSourceStmt source -> {
@@ -280,7 +283,8 @@ public final class IlimapModelDiagnosticService {
     private static IlimapIdeRange rangeOfValue(IlimapAnalysis analysis, IlimapSourceRange sourceRange, String value) {
         int start = sourceRange.start().offset();
         int end = sourceRange.end().offset();
-        String segment = analysis.text().substring(start, Math.min(end, analysis.text().length()));
+        String segment =
+                analysis.text().substring(start, Math.min(end, analysis.text().length()));
         int relative = value != null ? segment.indexOf(value) : -1;
         if (relative < 0) {
             return analysis.lineMap().toIdeRange(sourceRange);

@@ -15,7 +15,6 @@ import guru.interlis.transformer.mapping.ilimap.ast.IlimapRefBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleElement;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapSourceStmt;
-import guru.interlis.transformer.mapping.ilimap.ast.IlimapTargetStmt;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapWhereStmt;
 import guru.interlis.transformer.mapping.ilimap.lexer.IlimapSourceRange;
 
@@ -33,8 +32,11 @@ public final class IlimapPositionResolver {
         }
 
         int offset = analysis.lineMap().positionToOffset(position.line(), position.character());
-        return identifierAt(analysis, offset).map(identifier -> new IlimapTokenAtPosition(
-                identifier.text(), identifier.range(), smallestNodeAt(analysis, position).orElse(null)));
+        return identifierAt(analysis, offset)
+                .map(identifier -> new IlimapTokenAtPosition(
+                        identifier.text(),
+                        identifier.range(),
+                        smallestNodeAt(analysis, position).orElse(null)));
     }
 
     public Optional<IlimapAstNode> smallestNodeAt(IlimapAnalysis analysis, IlimapIdePosition position) {
@@ -81,16 +83,19 @@ public final class IlimapPositionResolver {
         if (!analysis.hasDocument()) {
             return Optional.empty();
         }
-        int offset = analysis.lineMap().positionToOffset(range.start().line(), range.start().character());
+        int offset = analysis.lineMap()
+                .positionToOffset(range.start().line(), range.start().character());
         return expressionAt(analysis.document(), offset);
     }
 
     int rangeStartOffset(IlimapAnalysis analysis, IlimapIdeRange range) {
-        return analysis.lineMap().positionToOffset(range.start().line(), range.start().character());
+        return analysis.lineMap()
+                .positionToOffset(range.start().line(), range.start().character());
     }
 
     int rangeEndOffset(IlimapAnalysis analysis, IlimapIdeRange range) {
-        return analysis.lineMap().positionToOffset(range.end().line(), range.end().character());
+        return analysis.lineMap()
+                .positionToOffset(range.end().line(), range.end().character());
     }
 
     private Optional<IdentifierSpan> identifierAt(IlimapAnalysis analysis, int offset) {
@@ -119,7 +124,12 @@ public final class IlimapPositionResolver {
         }
         String identifier = text.substring(start, end);
         return Optional.of(new IdentifierSpan(
-                identifier, start, end, new IlimapIdeRange(analysis.lineMap().toIdePosition(start), analysis.lineMap().toIdePosition(end))));
+                identifier,
+                start,
+                end,
+                new IlimapIdeRange(
+                        analysis.lineMap().toIdePosition(start),
+                        analysis.lineMap().toIdePosition(end))));
     }
 
     private Optional<IlimapAstNode> smallestNodeAt(IlimapDocument document, int offset) {
@@ -177,7 +187,9 @@ public final class IlimapPositionResolver {
         if (element instanceof IlimapBagBlock bag) {
             return smallestNodeInBag(bag, offset);
         }
-        if (element instanceof IlimapCreateBlock create && create.assign() != null && contains(create.assign().range(), offset)) {
+        if (element instanceof IlimapCreateBlock create
+                && create.assign() != null
+                && contains(create.assign().range(), offset)) {
             return smallestAssignmentNode(create.assign(), offset);
         }
         return element;
@@ -245,14 +257,19 @@ public final class IlimapPositionResolver {
         if (element instanceof IlimapDefaultsBlock defaults) {
             return expressionAt(defaults, offset);
         }
-        if (element instanceof IlimapSourceStmt source && source.where() != null && contains(source.where().range(), offset)) {
+        if (element instanceof IlimapSourceStmt source
+                && source.where() != null
+                && contains(source.where().range(), offset)) {
             return Optional.of(source.where());
         }
-        if (element instanceof IlimapWhereStmt where && contains(where.expression().range(), offset)) {
+        if (element instanceof IlimapWhereStmt where
+                && contains(where.expression().range(), offset)) {
             return Optional.of(where.expression());
         }
         if (element instanceof IlimapIdentityStmt identity) {
-            return identity.expressions().stream().filter(expression -> contains(expression.range(), offset)).findFirst();
+            return identity.expressions().stream()
+                    .filter(expression -> contains(expression.range(), offset))
+                    .findFirst();
         }
         if (element instanceof IlimapJoinStmt join && contains(join.on().range(), offset)) {
             return Optional.of(join.on());
@@ -260,7 +277,9 @@ public final class IlimapPositionResolver {
         if (element instanceof IlimapBagBlock bag) {
             return expressionAt(bag, offset);
         }
-        if (element instanceof IlimapRefBlock ref && ref.sourceRef() != null && contains(ref.sourceRef().range(), offset)) {
+        if (element instanceof IlimapRefBlock ref
+                && ref.sourceRef() != null
+                && contains(ref.sourceRef().range(), offset)) {
             return Optional.of(ref.sourceRef());
         }
         if (element instanceof IlimapCreateBlock create && create.assign() != null) {
@@ -278,7 +297,9 @@ public final class IlimapPositionResolver {
     }
 
     private Optional<IlimapExpressionText> expressionAt(IlimapBagBlock bag, int offset) {
-        if (bag.from() != null && bag.from().where() != null && contains(bag.from().where().range(), offset)) {
+        if (bag.from() != null
+                && bag.from().where() != null
+                && contains(bag.from().where().range(), offset)) {
             return Optional.of(bag.from().where());
         }
         if (bag.assign() != null) {

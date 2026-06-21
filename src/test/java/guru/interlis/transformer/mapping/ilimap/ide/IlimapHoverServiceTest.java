@@ -18,7 +18,8 @@ class IlimapHoverServiceTest {
     void hoverShowsRuleSummary() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapHover> hover = hoverService.hoverAt(analysis, positionAt(analysis, "rule r1", "rule r".length()));
+        Optional<IlimapHover> hover =
+                hoverService.hoverAt(analysis, positionAt(analysis, "rule r1", "rule r".length()));
 
         assertThat(hover).isPresent();
         assertThat(hover.get().markdown())
@@ -65,8 +66,8 @@ class IlimapHoverServiceTest {
     void hoverShowsEnumMapSummary() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapHover> hover =
-                hoverService.hoverAt(analysis, positionAt(analysis, "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length()));
+        Optional<IlimapHover> hover = hoverService.hoverAt(
+                analysis, positionAt(analysis, "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length()));
 
         assertThat(hover).isPresent();
         assertThat(hover.get().markdown())
@@ -81,8 +82,8 @@ class IlimapHoverServiceTest {
         String source = validMapping().replace("enumMap(s.X, Quality)", "coalesce(s.X, Quality)");
         IlimapAnalysis analysis = analyze(source);
 
-        Optional<IlimapHover> hover =
-                hoverService.hoverAt(analysis, positionAt(analysis, "coalesce(s.X, Quality)", "coalesce(s.X, Qual".length()));
+        Optional<IlimapHover> hover = hoverService.hoverAt(
+                analysis, positionAt(analysis, "coalesce(s.X, Quality)", "coalesce(s.X, Qual".length()));
 
         assertThat(hover).isEmpty();
     }

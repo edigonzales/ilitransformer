@@ -20,7 +20,8 @@ class IlimapDiagnosticMapperTest {
         var mapped = mapper.map(diagnostic, lineMap, fallbackRange);
 
         assertThat(mapped.severity()).isEqualTo(IlimapIdeSeverity.ERROR);
-        assertThat(mapped.range()).isEqualTo(new IlimapIdeRange(new IlimapIdePosition(1, 1), new IlimapIdePosition(1, 2)));
+        assertThat(mapped.range())
+                .isEqualTo(new IlimapIdeRange(new IlimapIdePosition(1, 1), new IlimapIdePosition(1, 2)));
     }
 
     @Test
@@ -32,7 +33,8 @@ class IlimapDiagnosticMapperTest {
         var mapped = mapper.map(diagnostic, lineMap, fallbackRange);
 
         assertThat(mapped.severity()).isEqualTo(IlimapIdeSeverity.WARNING);
-        assertThat(mapped.range()).isEqualTo(new IlimapIdeRange(new IlimapIdePosition(1, 0), new IlimapIdePosition(1, 1)));
+        assertThat(mapped.range())
+                .isEqualTo(new IlimapIdeRange(new IlimapIdePosition(1, 0), new IlimapIdePosition(1, 1)));
     }
 
     @Test

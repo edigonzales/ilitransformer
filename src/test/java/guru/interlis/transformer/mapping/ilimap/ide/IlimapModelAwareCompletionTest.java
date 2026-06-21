@@ -47,9 +47,7 @@ class IlimapModelAwareCompletionTest {
     void completesSourceAliasAttributes() {
         List<IlimapCompletionItem> items = complete(mappingWithExpression("Beschreibung = s.;"), "s.", "s.".length());
 
-        assertThat(items)
-                .extracting(IlimapCompletionItem::label)
-                .contains("Name", "Beschreibung", "Anzahl", "Aktiv");
+        assertThat(items).extracting(IlimapCompletionItem::label).contains("Name", "Beschreibung", "Anzahl", "Aktiv");
         assertThat(items).allSatisfy(item -> assertThat(item.replacementRange()).isNotNull());
     }
 
@@ -84,15 +82,20 @@ class IlimapModelAwareCompletionTest {
                     }
                   }
                 }
-                """
-                .formatted(expressionLine);
+                """.formatted(expressionLine);
     }
 
     private static String mappingWithTargetClass(String targetClass) {
-        return validMapping().replace("target out class \"TestModel.TestTopic.TestClass\"", "target out class \"" + targetClass + "\"");
+        return validMapping()
+                .replace(
+                        "target out class \"TestModel.TestTopic.TestClass\"",
+                        "target out class \"" + targetClass + "\"");
     }
 
     private static String mappingWithSourceClass(String sourceClass) {
-        return validMapping().replace("source s from src class \"TestModel.TestTopic.TestClass\"", "source s from src class \"" + sourceClass + "\"");
+        return validMapping()
+                .replace(
+                        "source s from src class \"TestModel.TestTopic.TestClass\"",
+                        "source s from src class \"" + sourceClass + "\"");
     }
 }

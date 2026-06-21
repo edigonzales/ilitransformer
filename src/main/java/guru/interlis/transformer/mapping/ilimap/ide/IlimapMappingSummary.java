@@ -40,6 +40,7 @@ public record IlimapMappingSummary(
 
     public static IlimapMappingSummary unavailable(String message) {
         return new IlimapMappingSummary(
-                false, message, "mapping", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), List.of(), List.of(), List.of(), List.of());
+                false, message, "mapping", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), List.of(), List.of(), List.of(),
+                List.of());
     }
 }

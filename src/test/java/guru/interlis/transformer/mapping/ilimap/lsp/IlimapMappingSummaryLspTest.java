@@ -29,7 +29,8 @@ class IlimapMappingSummaryLspTest {
     void returnsSummaryForOpenDocument() {
         IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
         IlimapLanguageServer server = new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
-        textDocumentService.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, validMapping())));
+        textDocumentService.didOpen(
+                new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, validMapping())));
 
         var summary = server.mappingSummary(new IlimapMappingSummaryParams(URI)).join();
 
@@ -46,7 +47,8 @@ class IlimapMappingSummaryLspTest {
 
     @Test
     void returnsUnavailableSummaryForUnopenedDocument() {
-        IlimapLanguageServer server = new IlimapLanguageServer(new IlimapTextDocumentService(), new IlimapWorkspaceService());
+        IlimapLanguageServer server =
+                new IlimapLanguageServer(new IlimapTextDocumentService(), new IlimapWorkspaceService());
 
         var summary = server.mappingSummary(new IlimapMappingSummaryParams(URI)).join();
 

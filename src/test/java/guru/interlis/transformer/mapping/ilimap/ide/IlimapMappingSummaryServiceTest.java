@@ -30,24 +30,20 @@ class IlimapMappingSummaryServiceTest {
         assertThat(summary.warningCount()).isZero();
         assertThat(summary.inputs()).extracting(IlimapMappingInputSummary::id).containsExactly("src");
         assertThat(summary.outputs()).extracting(IlimapMappingOutputSummary::id).containsExactly("out");
-        assertThat(summary.enumMaps())
-                .singleElement()
-                .satisfies(enumMap -> {
-                    assertThat(enumMap.id()).isEqualTo("Quality");
-                    assertThat(enumMap.entryCount()).isEqualTo(1);
-                });
-        assertThat(summary.rules())
-                .singleElement()
-                .satisfies(rule -> {
-                    assertThat(rule.id()).isEqualTo("r1");
-                    assertThat(rule.targetOutput()).isEqualTo("out");
-                    assertThat(rule.targetClass()).isEqualTo("M.A");
-                    assertThat(rule.sourceCount()).isEqualTo(1);
-                    assertThat(rule.assignmentCount()).isEqualTo(3);
-                    assertThat(rule.bagCount()).isEqualTo(2);
-                    assertThat(rule.refCount()).isEqualTo(1);
-                    assertThat(rule.status()).isEqualTo("ok");
-                });
+        assertThat(summary.enumMaps()).singleElement().satisfies(enumMap -> {
+            assertThat(enumMap.id()).isEqualTo("Quality");
+            assertThat(enumMap.entryCount()).isEqualTo(1);
+        });
+        assertThat(summary.rules()).singleElement().satisfies(rule -> {
+            assertThat(rule.id()).isEqualTo("r1");
+            assertThat(rule.targetOutput()).isEqualTo("out");
+            assertThat(rule.targetClass()).isEqualTo("M.A");
+            assertThat(rule.sourceCount()).isEqualTo(1);
+            assertThat(rule.assignmentCount()).isEqualTo(3);
+            assertThat(rule.bagCount()).isEqualTo(2);
+            assertThat(rule.refCount()).isEqualTo(1);
+            assertThat(rule.status()).isEqualTo("ok");
+        });
     }
 
     @Test
@@ -62,12 +58,10 @@ class IlimapMappingSummaryServiceTest {
         assertThat(summary.bagCount()).isZero();
         assertThat(summary.refCount()).isZero();
         assertThat(summary.errorCount()).isEqualTo(1);
-        assertThat(summary.diagnostics())
-                .singleElement()
-                .satisfies(diagnostic -> {
-                    assertThat(diagnostic.severity()).isEqualTo("error");
-                    assertThat(diagnostic.message()).contains("SEMICOLON");
-                });
+        assertThat(summary.diagnostics()).singleElement().satisfies(diagnostic -> {
+            assertThat(diagnostic.severity()).isEqualTo("error");
+            assertThat(diagnostic.message()).contains("SEMICOLON");
+        });
     }
 
     @Test
@@ -76,16 +70,23 @@ class IlimapMappingSummaryServiceTest {
         IlimapIdeRange warningRange = rangeAt(analysis, "X = s.X;");
         IlimapAnalysis warningAnalysis = withDiagnostics(
                 analysis,
-                List.of(new IlimapIdeDiagnostic("TEST_WARNING", IlimapIdeSeverity.WARNING, "warning", warningRange, null)));
+                List.of(new IlimapIdeDiagnostic(
+                        "TEST_WARNING", IlimapIdeSeverity.WARNING, "warning", warningRange, null)));
 
         IlimapMappingSummary warningSummary = summaryService.summarize(warningAnalysis);
 
-        assertThat(warningSummary.rules()).singleElement().extracting(IlimapRuleSummary::status).isEqualTo("warning");
+        assertThat(warningSummary.rules())
+                .singleElement()
+                .extracting(IlimapRuleSummary::status)
+                .isEqualTo("warning");
 
         IlimapMappingSummary errorSummary = summaryService.summarize(analyze(unknownInputMapping()));
 
         assertThat(errorSummary.errorCount()).isGreaterThan(0);
-        assertThat(errorSummary.rules()).singleElement().extracting(IlimapRuleSummary::status).isEqualTo("error");
+        assertThat(errorSummary.rules())
+                .singleElement()
+                .extracting(IlimapRuleSummary::status)
+                .isEqualTo("error");
     }
 
     private IlimapAnalysis analyze(String source) {

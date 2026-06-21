@@ -10,8 +10,8 @@ import guru.interlis.transformer.mapping.ilimap.semantic.IlimapSemanticResult;
 import guru.interlis.transformer.mapping.ilimap.semantic.IlimapSemanticValidator;
 import guru.interlis.transformer.mapping.ilimap.semantic.IlimapSymbolTable;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public final class IlimapAnalysisService {
@@ -27,8 +27,7 @@ public final class IlimapAnalysisService {
         Objects.requireNonNull(options, "options");
 
         IlimapLineMap lineMap = new IlimapLineMap(text);
-        IlimapIdeRange fallbackRange =
-                new IlimapIdeRange(new IlimapIdePosition(0, 0), new IlimapIdePosition(0, 0));
+        IlimapIdeRange fallbackRange = new IlimapIdeRange(new IlimapIdePosition(0, 0), new IlimapIdePosition(0, 0));
 
         IlimapDocument document;
         try {

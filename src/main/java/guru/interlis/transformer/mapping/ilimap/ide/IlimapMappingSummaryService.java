@@ -40,8 +40,9 @@ public final class IlimapMappingSummaryService {
         }
 
         IlimapDocument document = analysis.document();
-        List<IlimapRuleSummary> rules =
-                document.rules().stream().map(rule -> ruleSummary(analysis, rule)).toList();
+        List<IlimapRuleSummary> rules = document.rules().stream()
+                .map(rule -> ruleSummary(analysis, rule))
+                .toList();
 
         return new IlimapMappingSummary(
                 true,
@@ -58,15 +59,16 @@ public final class IlimapMappingSummaryService {
                 diagnosticCount(analysis, IlimapIdeSeverity.INFORMATION),
                 diagnosticCount(analysis, IlimapIdeSeverity.HINT),
                 document.inputs().stream()
-                        .map(input -> new IlimapMappingInputSummary(
-                                input.id(), input.path(), input.model(), input.format()))
+                        .map(input ->
+                                new IlimapMappingInputSummary(input.id(), input.path(), input.model(), input.format()))
                         .toList(),
                 document.outputs().stream()
                         .map(output -> new IlimapMappingOutputSummary(
                                 output.id(), output.path(), output.model(), output.format()))
                         .toList(),
                 document.enums().stream()
-                        .map(enumBlock -> new IlimapEnumMapSummary(enumBlock.id(), enumBlock.entries().size()))
+                        .map(enumBlock -> new IlimapEnumMapSummary(
+                                enumBlock.id(), enumBlock.entries().size()))
                         .toList(),
                 rules,
                 diagnostics(analysis));
@@ -94,11 +96,15 @@ public final class IlimapMappingSummaryService {
     }
 
     private static int sourceCount(IlimapRuleBlock rule) {
-        return (int) rule.elements().stream().filter(IlimapSourceStmt.class::isInstance).count();
+        return (int) rule.elements().stream()
+                .filter(IlimapSourceStmt.class::isInstance)
+                .count();
     }
 
     private static int assignmentCount(IlimapRuleBlock rule) {
-        return rule.elements().stream().mapToInt(IlimapMappingSummaryService::assignmentCount).sum();
+        return rule.elements().stream()
+                .mapToInt(IlimapMappingSummaryService::assignmentCount)
+                .sum();
     }
 
     private static int assignmentCount(IlimapRuleElement element) {
@@ -113,7 +119,10 @@ public final class IlimapMappingSummaryService {
 
     private static int assignmentCount(IlimapBagBlock bag) {
         int count = bag.assign() != null ? bag.assign().assignments().size() : 0;
-        return count + bag.nestedBags().stream().mapToInt(IlimapMappingSummaryService::assignmentCount).sum();
+        return count
+                + bag.nestedBags().stream()
+                        .mapToInt(IlimapMappingSummaryService::assignmentCount)
+                        .sum();
     }
 
     private static int bagCount(IlimapRuleBlock rule) {
@@ -125,11 +134,16 @@ public final class IlimapMappingSummaryService {
     }
 
     private static int bagCount(IlimapBagBlock bag) {
-        return 1 + bag.nestedBags().stream().mapToInt(IlimapMappingSummaryService::bagCount).sum();
+        return 1
+                + bag.nestedBags().stream()
+                        .mapToInt(IlimapMappingSummaryService::bagCount)
+                        .sum();
     }
 
     private static int refCount(IlimapRuleBlock rule) {
-        return (int) rule.elements().stream().filter(IlimapRefBlock.class::isInstance).count();
+        return (int) rule.elements().stream()
+                .filter(IlimapRefBlock.class::isInstance)
+                .count();
     }
 
     private static String status(IlimapAnalysis analysis, IlimapRuleBlock rule) {
@@ -147,10 +161,13 @@ public final class IlimapMappingSummaryService {
         return hasWarning ? "warning" : "ok";
     }
 
-    private static boolean inside(IlimapAnalysis analysis, IlimapIdeRange diagnosticRange, IlimapSourceRange sourceRange) {
+    private static boolean inside(
+            IlimapAnalysis analysis, IlimapIdeRange diagnosticRange, IlimapSourceRange sourceRange) {
         int diagnosticStart = analysis.lineMap()
-                .positionToOffset(diagnosticRange.start().line(), diagnosticRange.start().character());
-        return sourceRange.start().offset() <= diagnosticStart && diagnosticStart <= sourceRange.end().offset();
+                .positionToOffset(
+                        diagnosticRange.start().line(), diagnosticRange.start().character());
+        return sourceRange.start().offset() <= diagnosticStart
+                && diagnosticStart <= sourceRange.end().offset();
     }
 
     private static int diagnosticCount(IlimapAnalysis analysis, IlimapIdeSeverity severity) {

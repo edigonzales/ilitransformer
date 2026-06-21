@@ -49,7 +49,8 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
         capabilities.setDocumentFormattingProvider(true);
         capabilities.setDocumentSymbolProvider(true);
         capabilities.setFoldingRangeProvider(true);
-        capabilities.setCodeActionProvider(new CodeActionOptions(List.of(CodeActionKind.QuickFix, CodeActionKind.Source)));
+        capabilities.setCodeActionProvider(
+                new CodeActionOptions(List.of(CodeActionKind.QuickFix, CodeActionKind.Source)));
         CompletionOptions completionOptions = new CompletionOptions();
         completionOptions.setResolveProvider(false);
         capabilities.setCompletionProvider(completionOptions);
@@ -64,10 +65,14 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
     }
 
     private static Optional<String> workspaceRootUri(InitializeParams params) {
-        if (params != null && params.getWorkspaceFolders() != null && !params.getWorkspaceFolders().isEmpty()) {
+        if (params != null
+                && params.getWorkspaceFolders() != null
+                && !params.getWorkspaceFolders().isEmpty()) {
             return Optional.ofNullable(params.getWorkspaceFolders().get(0).getUri());
         }
-        if (params != null && params.getRootUri() != null && !params.getRootUri().isBlank()) {
+        if (params != null
+                && params.getRootUri() != null
+                && !params.getRootUri().isBlank()) {
             return Optional.of(params.getRootUri());
         }
         return Optional.empty();

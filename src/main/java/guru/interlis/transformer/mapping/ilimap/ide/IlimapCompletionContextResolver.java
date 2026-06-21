@@ -51,19 +51,23 @@ public final class IlimapCompletionContextResolver {
                         stringContext.replacementRange());
             }
         }
-        if (currentNode instanceof IlimapRefBlock ref && isBetweenRefTargetRuleAndSourceRef(ref, analysis.text(), offset)) {
+        if (currentNode instanceof IlimapRefBlock ref
+                && isBetweenRefTargetRuleAndSourceRef(ref, analysis.text(), offset)) {
             return new IlimapCompletionContext(
                     IlimapCompletionContextKind.REF_TARGET_RULE, prefix, currentRule, currentNode);
         }
-        if (currentNode instanceof IlimapTargetStmt target && isBetweenKeywords(target, analysis.text(), offset, "target", "class")) {
+        if (currentNode instanceof IlimapTargetStmt target
+                && isBetweenKeywords(target, analysis.text(), offset, "target", "class")) {
             return new IlimapCompletionContext(
                     IlimapCompletionContextKind.TARGET_OUTPUT, prefix, currentRule, currentNode);
         }
-        if (currentNode instanceof IlimapSourceStmt source && isBetweenSourceFromAndClass(source, analysis.text(), offset)) {
+        if (currentNode instanceof IlimapSourceStmt source
+                && isBetweenSourceFromAndClass(source, analysis.text(), offset)) {
             return new IlimapCompletionContext(
                     IlimapCompletionContextKind.SOURCE_INPUT, prefix, currentRule, currentNode);
         }
-        if (currentNode instanceof IlimapAssignment assignment && isAssignmentTargetPosition(assignment, analysis.text(), offset)) {
+        if (currentNode instanceof IlimapAssignment assignment
+                && isAssignmentTargetPosition(assignment, analysis.text(), offset)) {
             return new IlimapCompletionContext(
                     IlimapCompletionContextKind.ASSIGN_TARGET_ATTRIBUTE,
                     prefix,
@@ -78,10 +82,12 @@ public final class IlimapCompletionContextResolver {
             return aliasAttributeContext.get();
         }
         if (isExpressionPosition(analysis.document(), offset)) {
-            return new IlimapCompletionContext(IlimapCompletionContextKind.EXPRESSION, prefix, currentRule, currentNode);
+            return new IlimapCompletionContext(
+                    IlimapCompletionContextKind.EXPRESSION, prefix, currentRule, currentNode);
         }
         if (currentRule != null) {
-            return new IlimapCompletionContext(IlimapCompletionContextKind.RULE_BLOCK, prefix, currentRule, currentNode);
+            return new IlimapCompletionContext(
+                    IlimapCompletionContextKind.RULE_BLOCK, prefix, currentRule, currentNode);
         }
         if (contains(analysis.document().range(), offset)) {
             return new IlimapCompletionContext(IlimapCompletionContextKind.TOP_LEVEL, prefix, null, currentNode);
@@ -90,7 +96,9 @@ public final class IlimapCompletionContextResolver {
     }
 
     private static Optional<IlimapRuleBlock> currentRuleAt(IlimapDocument document, int offset) {
-        return document.rules().stream().filter(rule -> contains(rule.range(), offset)).findFirst();
+        return document.rules().stream()
+                .filter(rule -> contains(rule.range(), offset))
+                .findFirst();
     }
 
     private static Optional<IlimapAstNode> smallestNodeAt(IlimapDocument document, int offset) {
@@ -148,7 +156,9 @@ public final class IlimapCompletionContextResolver {
         if (element instanceof IlimapBagBlock bag) {
             return smallestNodeInBag(bag, offset);
         }
-        if (element instanceof IlimapCreateBlock create && create.assign() != null && contains(create.assign().range(), offset)) {
+        if (element instanceof IlimapCreateBlock create
+                && create.assign() != null
+                && contains(create.assign().range(), offset)) {
             return smallestAssignmentNode(create.assign(), offset);
         }
         return element;
@@ -198,7 +208,10 @@ public final class IlimapCompletionContextResolver {
         int fromStart = findWholeWord(segment, "from", 0);
         int classStart = findWholeWord(segment, "class", fromStart + "from".length());
         int relativeOffset = offset - start;
-        return fromStart >= 0 && classStart >= 0 && relativeOffset >= fromStart + "from".length() && relativeOffset < classStart;
+        return fromStart >= 0
+                && classStart >= 0
+                && relativeOffset >= fromStart + "from".length()
+                && relativeOffset < classStart;
     }
 
     private static Optional<StringContext> stringAfterKeyword(
@@ -299,7 +312,8 @@ public final class IlimapCompletionContextResolver {
         while (end < text.length() && isIdentifierPart(text.charAt(end))) {
             end++;
         }
-        return new IlimapIdeRange(analysis.lineMap().toIdePosition(start), analysis.lineMap().toIdePosition(end));
+        return new IlimapIdeRange(
+                analysis.lineMap().toIdePosition(start), analysis.lineMap().toIdePosition(end));
     }
 
     private static boolean isBetweenRefTargetRuleAndSourceRef(IlimapRefBlock ref, String text, int offset) {
@@ -337,7 +351,8 @@ public final class IlimapCompletionContextResolver {
 
     private static boolean isEnumMapSecondArgument(IlimapDocument document, String text, int offset) {
         return expressionAt(document, offset)
-                .map(expression -> isEnumMapSecondArgument(text, expression.range().start().offset(), offset))
+                .map(expression ->
+                        isEnumMapSecondArgument(text, expression.range().start().offset(), offset))
                 .orElse(false);
     }
 
@@ -366,14 +381,19 @@ public final class IlimapCompletionContextResolver {
         if (element instanceof IlimapDefaultsBlock defaults) {
             return expressionAt(defaults, offset);
         }
-        if (element instanceof IlimapSourceStmt source && source.where() != null && contains(source.where().range(), offset)) {
+        if (element instanceof IlimapSourceStmt source
+                && source.where() != null
+                && contains(source.where().range(), offset)) {
             return Optional.of(source.where());
         }
-        if (element instanceof IlimapWhereStmt where && contains(where.expression().range(), offset)) {
+        if (element instanceof IlimapWhereStmt where
+                && contains(where.expression().range(), offset)) {
             return Optional.of(where.expression());
         }
         if (element instanceof IlimapIdentityStmt identity) {
-            return identity.expressions().stream().filter(expression -> contains(expression.range(), offset)).findFirst();
+            return identity.expressions().stream()
+                    .filter(expression -> contains(expression.range(), offset))
+                    .findFirst();
         }
         if (element instanceof IlimapJoinStmt join && contains(join.on().range(), offset)) {
             return Optional.of(join.on());
@@ -381,7 +401,9 @@ public final class IlimapCompletionContextResolver {
         if (element instanceof IlimapBagBlock bag) {
             return expressionAt(bag, offset);
         }
-        if (element instanceof IlimapRefBlock ref && ref.sourceRef() != null && contains(ref.sourceRef().range(), offset)) {
+        if (element instanceof IlimapRefBlock ref
+                && ref.sourceRef() != null
+                && contains(ref.sourceRef().range(), offset)) {
             return Optional.of(ref.sourceRef());
         }
         if (element instanceof IlimapCreateBlock create && create.assign() != null) {
@@ -399,7 +421,9 @@ public final class IlimapCompletionContextResolver {
     }
 
     private static Optional<IlimapExpressionText> expressionAt(IlimapBagBlock bag, int offset) {
-        if (bag.from() != null && bag.from().where() != null && contains(bag.from().where().range(), offset)) {
+        if (bag.from() != null
+                && bag.from().where() != null
+                && contains(bag.from().where().range(), offset)) {
             return Optional.of(bag.from().where());
         }
         if (bag.assign() != null) {

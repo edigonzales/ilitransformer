@@ -35,20 +35,25 @@ public final class IlimapHoverService {
         Objects.requireNonNull(analysis, "analysis");
         Objects.requireNonNull(position, "position");
 
-        return symbolResolver.resolve(analysis, position).flatMap(resolved -> markdown(resolved).map(markdown -> new IlimapHover(resolved.range(), markdown)));
+        return symbolResolver.resolve(analysis, position).flatMap(resolved -> markdown(resolved)
+                .map(markdown -> new IlimapHover(resolved.range(), markdown)));
     }
 
     private Optional<String> markdown(IlimapResolvedSymbol resolved) {
-        if (resolved.symbol().kind() == IlimapSymbolKind.INPUT && resolved.symbol().node() instanceof IlimapInputBlock input) {
+        if (resolved.symbol().kind() == IlimapSymbolKind.INPUT
+                && resolved.symbol().node() instanceof IlimapInputBlock input) {
             return Optional.of(inputMarkdown(input));
         }
-        if (resolved.symbol().kind() == IlimapSymbolKind.OUTPUT && resolved.symbol().node() instanceof IlimapOutputBlock output) {
+        if (resolved.symbol().kind() == IlimapSymbolKind.OUTPUT
+                && resolved.symbol().node() instanceof IlimapOutputBlock output) {
             return Optional.of(outputMarkdown(output));
         }
-        if (resolved.symbol().kind() == IlimapSymbolKind.RULE && resolved.symbol().node() instanceof IlimapRuleBlock rule) {
+        if (resolved.symbol().kind() == IlimapSymbolKind.RULE
+                && resolved.symbol().node() instanceof IlimapRuleBlock rule) {
             return Optional.of(ruleMarkdown(rule));
         }
-        if (resolved.symbol().kind() == IlimapSymbolKind.ENUM_MAP && resolved.symbol().node() instanceof IlimapEnumBlock enumBlock) {
+        if (resolved.symbol().kind() == IlimapSymbolKind.ENUM_MAP
+                && resolved.symbol().node() instanceof IlimapEnumBlock enumBlock) {
             return Optional.of(enumMarkdown(enumBlock));
         }
         return Optional.empty();
@@ -104,13 +109,11 @@ public final class IlimapHoverService {
         StringBuilder markdown = new StringBuilder();
         markdown.append("**enum `").append(enumBlock.id()).append("`**\n\n");
         markdown.append("Entries: ").append(enumBlock.entries().size()).append("\n");
-        enumBlock.entries().stream()
-                .limit(5)
-                .forEach(entry -> markdown.append("\n- `")
-                        .append(literal(entry.source()))
-                        .append("` => `")
-                        .append(literal(entry.target()))
-                        .append("`"));
+        enumBlock.entries().stream().limit(5).forEach(entry -> markdown.append("\n- `")
+                .append(literal(entry.source()))
+                .append("` => `")
+                .append(literal(entry.target()))
+                .append("`"));
         if (enumBlock.entries().size() > 5) {
             markdown.append("\n- ...");
         }
@@ -172,7 +175,9 @@ public final class IlimapHoverService {
     }
 
     private int refCount(IlimapRuleBlock rule) {
-        return (int) rule.elements().stream().filter(IlimapRefBlock.class::isInstance).count();
+        return (int) rule.elements().stream()
+                .filter(IlimapRefBlock.class::isInstance)
+                .count();
     }
 
     private static void appendOptional(StringBuilder markdown, String label, String value) {

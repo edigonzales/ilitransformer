@@ -20,7 +20,6 @@ import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.state.InMemoryStateStore;
 import guru.interlis.transformer.support.TestGeometries;
 
-import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxReader;
@@ -36,7 +35,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -112,9 +110,7 @@ class MultiJoinReferenceIntegrationTest {
         assertThat(directChildText(nachfuehrung, "Identifikator")).isEqualTo("JOIN-ID");
         assertThat(directChildText(grenzpunkt, "Nummer")).isEqualTo("HGP-JOIN");
         assertThat(directChildren(grenzpunkt, "Entstehung")).hasSize(1);
-        assertThat(directChildren(grenzpunkt, "Entstehung")
-                        .get(0)
-                        .getAttributeNS(ILI_NS, "ref"))
+        assertThat(directChildren(grenzpunkt, "Entstehung").get(0).getAttributeNS(ILI_NS, "ref"))
                 .isEqualTo(nachfuehrung.getAttributeNS(ILI_NS, "tid"));
     }
 

@@ -237,7 +237,7 @@ public final class RuleExecutionService {
                 parentChildIndex,
                 metrics,
                 geometryAdapter,
-                        sourceAttrTypes);
+                sourceAttrTypes);
 
         List<JoinPlan> joins = rule.joins();
         SourcePlan driverPlan = joins.get(0).left();
@@ -352,8 +352,8 @@ public final class RuleExecutionService {
                 diagnostics.add(new Diagnostic(
                         DiagnosticCode.RUN_JOIN_MISSING,
                         Severity.WARNING,
-                        "No matching right source record for join key " + joinParts.leftAttr() + " = "
-                                + leftAttrValue + ". Rule: " + rule.ruleId(),
+                        "No matching right source record for join key " + joinParts.leftAttr() + " = " + leftAttrValue
+                                + ". Rule: " + rule.ruleId(),
                         rule.ruleId(),
                         "Ensure matching records exist or use LEFT join"));
                 return;

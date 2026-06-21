@@ -43,42 +43,64 @@ final class IlimapSymbolReferenceResolver {
     }
 
     private Optional<IlimapResolvedSymbol> resolve(IlimapAnalysis analysis, IlimapTokenAtPosition token) {
-        if (token.surroundingNode() instanceof IlimapInputBlock input && isDefinitionToken(analysis, token, input.id(), input.range())) {
-            return analysis.symbols().resolveInput(token.text()).map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
+        if (token.surroundingNode() instanceof IlimapInputBlock input
+                && isDefinitionToken(analysis, token, input.id(), input.range())) {
+            return analysis.symbols()
+                    .resolveInput(token.text())
+                    .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
         }
-        if (token.surroundingNode() instanceof IlimapOutputBlock output && isDefinitionToken(analysis, token, output.id(), output.range())) {
-            return analysis.symbols().resolveOutput(token.text()).map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
+        if (token.surroundingNode() instanceof IlimapOutputBlock output
+                && isDefinitionToken(analysis, token, output.id(), output.range())) {
+            return analysis.symbols()
+                    .resolveOutput(token.text())
+                    .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
         }
-        if (token.surroundingNode() instanceof IlimapRuleBlock rule && isDefinitionToken(analysis, token, rule.id(), rule.range())) {
-            return analysis.symbols().resolveRule(token.text()).map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
+        if (token.surroundingNode() instanceof IlimapRuleBlock rule
+                && isDefinitionToken(analysis, token, rule.id(), rule.range())) {
+            return analysis.symbols()
+                    .resolveRule(token.text())
+                    .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
         }
         if (token.surroundingNode() instanceof IlimapEnumBlock enumBlock
                 && isDefinitionToken(analysis, token, enumBlock.id(), enumBlock.range())) {
-            return analysis.symbols().resolveEnumMap(token.text()).map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
+            return analysis.symbols()
+                    .resolveEnumMap(token.text())
+                    .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
         }
         if (token.surroundingNode() instanceof IlimapTargetStmt target
                 && target.outputId().equals(token.text())
                 && tokenBeforeKeyword(analysis, token, target.range().start().offset(), "class")) {
-            return analysis.symbols().resolveOutput(token.text()).map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
+            return analysis.symbols()
+                    .resolveOutput(token.text())
+                    .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
         }
         if (token.surroundingNode() instanceof IlimapSourceStmt source
                 && source.inputIds().contains(token.text())
                 && tokenBetweenKeywords(analysis, token, source.range().start().offset(), "from", "class")) {
-            return analysis.symbols().resolveInput(token.text()).map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
+            return analysis.symbols()
+                    .resolveInput(token.text())
+                    .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
         }
         if (token.surroundingNode() instanceof IlimapRefBlock ref
                 && token.text().equals(ref.targetRuleId())
                 && tokenBetweenKeywords(analysis, token, ref.range().start().offset(), "rule", "sourceRef")) {
-            return analysis.symbols().resolveRule(token.text()).map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
+            return analysis.symbols()
+                    .resolveRule(token.text())
+                    .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
         }
         if (isEnumMapSecondArgument(analysis, token)) {
-            return analysis.symbols().resolveEnumMap(token.text()).map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
+            return analysis.symbols()
+                    .resolveEnumMap(token.text())
+                    .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
         }
         return Optional.empty();
     }
 
     private boolean isDefinitionToken(
-            IlimapAnalysis analysis, IlimapTokenAtPosition token, String id, guru.interlis.transformer.mapping.ilimap.lexer.IlimapSourceRange range) {
+            IlimapAnalysis analysis,
+            IlimapTokenAtPosition token,
+            String id,
+            guru.interlis.transformer.mapping.ilimap.lexer.IlimapSourceRange range) {
         if (!token.text().equals(id)) {
             return false;
         }
@@ -121,7 +143,9 @@ final class IlimapSymbolReferenceResolver {
 
             EnumMapCall call = enumMapCall(expression, openParen).orElse(null);
             if (call != null && tokenStart >= call.secondArgStart() && tokenEnd <= call.secondArgEnd()) {
-                String secondArg = expression.substring(call.secondArgStart(), call.secondArgEnd()).strip();
+                String secondArg = expression
+                        .substring(call.secondArgStart(), call.secondArgEnd())
+                        .strip();
                 return secondArg.equals(tokenText);
             }
             searchFrom = afterName;
@@ -168,7 +192,9 @@ final class IlimapSymbolReferenceResolver {
             String secondKeyword) {
         int tokenStart = positionResolver.rangeStartOffset(analysis, token.range());
         int firstOffset = findWholeWord(analysis.text(), firstKeyword, rangeStartOffset);
-        int secondOffset = firstOffset >= 0 ? findWholeWord(analysis.text(), secondKeyword, firstOffset + firstKeyword.length()) : -1;
+        int secondOffset = firstOffset >= 0
+                ? findWholeWord(analysis.text(), secondKeyword, firstOffset + firstKeyword.length())
+                : -1;
         return firstOffset >= 0 && secondOffset >= 0 && tokenStart > firstOffset && tokenStart < secondOffset;
     }
 

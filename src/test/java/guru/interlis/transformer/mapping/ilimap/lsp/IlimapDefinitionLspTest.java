@@ -37,8 +37,7 @@ class IlimapDefinitionLspTest {
         var result =
                 new IlimapLanguageServer().initialize(new InitializeParams()).join();
 
-        assertThat(result.getCapabilities().getDefinitionProvider().getLeft())
-                .isTrue();
+        assertThat(result.getCapabilities().getDefinitionProvider().getLeft()).isTrue();
     }
 
     @Test
@@ -46,9 +45,9 @@ class IlimapDefinitionLspTest {
         String source = validMapping();
         open(source);
 
-        Either<List<? extends Location>, List<? extends LocationLink>> result =
-                service.definition(definitionParams(source, "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length()))
-                        .join();
+        Either<List<? extends Location>, List<? extends LocationLink>> result = service.definition(
+                        definitionParams(source, "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length()))
+                .join();
 
         assertThat(result.isLeft()).isTrue();
         assertThat(result.getLeft()).singleElement().satisfies(location -> {
@@ -62,9 +61,9 @@ class IlimapDefinitionLspTest {
         String source = validMapping().replace("enumMap(s.X, Quality)", "coalesce(s.X, Quality)");
         open(source);
 
-        Either<List<? extends Location>, List<? extends LocationLink>> result =
-                service.definition(definitionParams(source, "coalesce(s.X, Quality)", "coalesce(s.X, Qual".length()))
-                        .join();
+        Either<List<? extends Location>, List<? extends LocationLink>> result = service.definition(
+                        definitionParams(source, "coalesce(s.X, Quality)", "coalesce(s.X, Qual".length()))
+                .join();
 
         assertThat(result.isLeft()).isTrue();
         assertThat(result.getLeft()).isEmpty();
@@ -85,9 +84,11 @@ class IlimapDefinitionLspTest {
     private static String textAt(String source, Location location) {
         IlimapLineMap lineMap = new IlimapLineMap(source);
         int start = lineMap.positionToOffset(
-                location.getRange().getStart().getLine(), location.getRange().getStart().getCharacter());
+                location.getRange().getStart().getLine(),
+                location.getRange().getStart().getCharacter());
         int end = lineMap.positionToOffset(
-                location.getRange().getEnd().getLine(), location.getRange().getEnd().getCharacter());
+                location.getRange().getEnd().getLine(),
+                location.getRange().getEnd().getCharacter());
         return source.substring(start, end);
     }
 

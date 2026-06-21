@@ -32,8 +32,8 @@ class IlimapDefinitionServiceTest {
     void findsDefinitionOfOutputId() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapDefinition> definition =
-                definitionService.definitionAt(analysis, positionAt(analysis, "target out class", "target ou".length()));
+        Optional<IlimapDefinition> definition = definitionService.definitionAt(
+                analysis, positionAt(analysis, "target out class", "target ou".length()));
 
         assertThat(definition).isPresent();
         assertThat(definition.get().label()).isEqualTo("output out");
@@ -44,8 +44,8 @@ class IlimapDefinitionServiceTest {
     void findsDefinitionOfTargetRule() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapDefinition> definition =
-                definitionService.definitionAt(analysis, positionAt(analysis, "target rule r1", "target rule r".length()));
+        Optional<IlimapDefinition> definition = definitionService.definitionAt(
+                analysis, positionAt(analysis, "target rule r1", "target rule r".length()));
 
         assertThat(definition).isPresent();
         assertThat(definition.get().label()).isEqualTo("rule r1");
@@ -56,8 +56,8 @@ class IlimapDefinitionServiceTest {
     void findsDefinitionOfEnumMapSymbol() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapDefinition> definition =
-                definitionService.definitionAt(analysis, positionAt(analysis, "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length()));
+        Optional<IlimapDefinition> definition = definitionService.definitionAt(
+                analysis, positionAt(analysis, "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length()));
 
         assertThat(definition).isPresent();
         assertThat(definition.get().label()).isEqualTo("enum Quality");
@@ -81,8 +81,8 @@ class IlimapDefinitionServiceTest {
         String source = validMapping().replace("enumMap(s.X, Quality)", "coalesce(s.X, Quality)");
         IlimapAnalysis analysis = analyze(source);
 
-        Optional<IlimapDefinition> definition =
-                definitionService.definitionAt(analysis, positionAt(analysis, "coalesce(s.X, Quality)", "coalesce(s.X, Qual".length()));
+        Optional<IlimapDefinition> definition = definitionService.definitionAt(
+                analysis, positionAt(analysis, "coalesce(s.X, Quality)", "coalesce(s.X, Qual".length()));
 
         assertThat(definition).isEmpty();
     }
@@ -98,8 +98,10 @@ class IlimapDefinitionServiceTest {
     }
 
     private static String textAt(IlimapAnalysis analysis, IlimapIdeRange range) {
-        int start = analysis.lineMap().positionToOffset(range.start().line(), range.start().character());
-        int end = analysis.lineMap().positionToOffset(range.end().line(), range.end().character());
+        int start = analysis.lineMap()
+                .positionToOffset(range.start().line(), range.start().character());
+        int end = analysis.lineMap()
+                .positionToOffset(range.end().line(), range.end().character());
         return analysis.text().substring(start, end);
     }
 

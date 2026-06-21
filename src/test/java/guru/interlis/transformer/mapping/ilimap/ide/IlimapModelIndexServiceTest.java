@@ -21,7 +21,8 @@ class IlimapModelIndexServiceTest {
         assertThat(analysis.diagnostics()).isEmpty();
         assertThat(analysis.modelIndex().models()).singleElement().satisfies(model -> {
             assertThat(model.name()).isEqualTo("TestModel");
-            assertThat(model.classes()).extracting(IlimapClassInfo::qualifiedName)
+            assertThat(model.classes())
+                    .extracting(IlimapClassInfo::qualifiedName)
                     .contains("TestModel.TestTopic.TestClass");
         });
         assertThat(analysis.modelIndex().findClass("TestModel.TestTopic.TestClass"))
@@ -36,11 +37,10 @@ class IlimapModelIndexServiceTest {
         IlimapAnalysis analysis =
                 analysisService.analyze("file:///test.ilimap", missingModeldirMapping(), MODEL_AWARE_OPTIONS);
 
-        assertThat(analysis.diagnostics())
-                .anySatisfy(diagnostic -> {
-                    assertThat(diagnostic.code()).isEqualTo(DiagnosticCode.MODEL_COMPILE_FAILED);
-                    assertThat(diagnostic.message()).contains("Model directory does not exist");
-                });
+        assertThat(analysis.diagnostics()).anySatisfy(diagnostic -> {
+            assertThat(diagnostic.code()).isEqualTo(DiagnosticCode.MODEL_COMPILE_FAILED);
+            assertThat(diagnostic.message()).contains("Model directory does not exist");
+        });
     }
 
     private static String validMapping() {

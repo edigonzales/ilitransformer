@@ -31,8 +31,18 @@ class IlimapCompletionServiceTest {
         assertThat(items)
                 .extracting(IlimapCompletionItem::label)
                 .containsExactly(
-                        "target", "source", "where", "join", "identity", "assign", "defaults", "bag", "ref",
-                        "create", "loss", "metadata");
+                        "target",
+                        "source",
+                        "where",
+                        "join",
+                        "identity",
+                        "assign",
+                        "defaults",
+                        "bag",
+                        "ref",
+                        "create",
+                        "loss",
+                        "metadata");
         assertThat(items).allSatisfy(item -> assertThat(item.kind()).isEqualTo(IlimapCompletionKind.KEYWORD));
     }
 
@@ -50,7 +60,8 @@ class IlimapCompletionServiceTest {
 
     @Test
     void completesInputIdsAfterSourceFrom() {
-        List<IlimapCompletionItem> items = complete(validMapping(), "source s from src class", "source s from sr".length());
+        List<IlimapCompletionItem> items =
+                complete(validMapping(), "source s from src class", "source s from sr".length());
 
         assertThat(items).singleElement().satisfies(item -> {
             assertThat(item.label()).isEqualTo("src");
@@ -61,7 +72,8 @@ class IlimapCompletionServiceTest {
 
     @Test
     void completesRuleIdsInRefTargetRule() {
-        List<IlimapCompletionItem> items = complete(validMapping(), "target rule r1 sourceRef", "target rule r".length());
+        List<IlimapCompletionItem> items =
+                complete(validMapping(), "target rule r1 sourceRef", "target rule r".length());
 
         assertThat(items).singleElement().satisfies(item -> {
             assertThat(item.label()).isEqualTo("r1");
@@ -72,7 +84,8 @@ class IlimapCompletionServiceTest {
 
     @Test
     void completesEnumMapsInEnumMapSecondArgument() {
-        List<IlimapCompletionItem> items = complete(validMapping(), "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length());
+        List<IlimapCompletionItem> items =
+                complete(validMapping(), "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length());
 
         assertThat(items).singleElement().satisfies(item -> {
             assertThat(item.label()).isEqualTo("Quality");
@@ -83,7 +96,8 @@ class IlimapCompletionServiceTest {
 
     @Test
     void doesNotSuggestEnumMapsOutsideEnumMapContext() {
-        List<IlimapCompletionItem> items = complete(validMapping(), "coalesce(s.Y, Quality)", "coalesce(s.Y, Qual".length());
+        List<IlimapCompletionItem> items =
+                complete(validMapping(), "coalesce(s.Y, Quality)", "coalesce(s.Y, Qual".length());
 
         assertThat(items).isEmpty();
     }

@@ -35,9 +35,8 @@ class IlimapFormattingLspTest {
 
     @Test
     void serverAdvertisesDocumentFormattingCapability() {
-        var result = new IlimapLanguageServer()
-                .initialize(new InitializeParams())
-                .join();
+        var result =
+                new IlimapLanguageServer().initialize(new InitializeParams()).join();
 
         assertThat(result.getCapabilities().getDocumentFormattingProvider().getLeft())
                 .isTrue();
@@ -59,13 +58,14 @@ class IlimapFormattingLspTest {
     @Test
     void formattingUsesIlimapFormatterOutput() {
         String source = validCompactMappingWithAssignment();
-        String expected = new IlimapFormatter()
-                .format(new IlimapParser(source).parseDocument(), IlimapFormatOptions.defaults());
+        String expected =
+                new IlimapFormatter().format(new IlimapParser(source).parseDocument(), IlimapFormatOptions.defaults());
         open(source);
 
         List<? extends TextEdit> edits = format();
 
-        assertThat(edits).singleElement().satisfies(edit -> assertThat(edit.getNewText()).isEqualTo(expected));
+        assertThat(edits).singleElement().satisfies(edit -> assertThat(edit.getNewText())
+                .isEqualTo(expected));
     }
 
     @Test
@@ -80,8 +80,8 @@ class IlimapFormattingLspTest {
     }
 
     private List<? extends TextEdit> format() {
-        return service.formatting(new DocumentFormattingParams(
-                        new TextDocumentIdentifier(URI), new FormattingOptions(2, true)))
+        return service.formatting(
+                        new DocumentFormattingParams(new TextDocumentIdentifier(URI), new FormattingOptions(2, true)))
                 .join();
     }
 

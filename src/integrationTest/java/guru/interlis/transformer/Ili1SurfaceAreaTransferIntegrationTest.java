@@ -2,11 +2,11 @@ package guru.interlis.transformer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.dmav.Dm01DmavPaths;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
@@ -44,8 +44,8 @@ class Ili1SurfaceAreaTransferIntegrationTest {
     private static final Path INVALID_INPUT =
             Path.of("src/test/resources/transfers/ili1-surface-area/input-missing-area-geom.itf");
     private static final Path MAPPING_FILE = Path.of("src/test/resources/mappings/ili1-to-ili2-surface-area-test.yaml");
-    private static final Path REAL_DM01_INPUT = Path.of("src/test/data/av/so_2549.itf");
-    private static final String REAL_DM01_MODELDIR = "https://geo.so.ch/models/;https://models.interlis.ch";
+    private static final Path REAL_DM01_INPUT =
+            Dm01DmavPaths.fullRunBundleDir("so-2549").resolve("source/2549.ch.so.agi.av.dm01_ch.itf");
 
     private static ch.interlis.ili2c.metamodel.TransferDescription ili1Td;
     private static ch.interlis.ili2c.metamodel.TransferDescription ili2Td;
@@ -108,9 +108,13 @@ class Ili1SurfaceAreaTransferIntegrationTest {
 
     @Test
     void realDm01ItfReaderMergesAreaAndSurfaceGeometry() throws Exception {
-        assumeTrue(Files.exists(REAL_DM01_INPUT), "real DM01 fixture not present: " + REAL_DM01_INPUT);
+        assertThat(REAL_DM01_INPUT)
+                .as("Expected checked-in real DM01 fixture for so-2549 full run")
+                .exists()
+                .isRegularFile();
         IliModelService service = new IliModelService();
-        IliModelCompileResult dm01Result = service.compileModel("DM01AVSO24LV95", REAL_DM01_MODELDIR);
+        IliModelCompileResult dm01Result =
+                service.compileModel(Dm01DmavPaths.DM01_MODEL, Dm01DmavPaths.LOCAL_AND_REMOTE_MODEL_DIRS);
         if (dm01Result.hasErrors()) {
             fail("DM01 model compilation errors:\n  " + formatDiagnostics(dm01Result));
         }

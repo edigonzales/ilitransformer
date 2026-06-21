@@ -21,8 +21,7 @@ class IlimapLineMapTest {
     @Test
     void mapsInternalOneBasedSourceRangeToZeroBasedIdeRange() {
         var lineMap = new IlimapLineMap("ab\ncd");
-        var sourceRange = new IlimapSourceRange(
-                new IlimapSourcePosition(3, 2, 1), new IlimapSourcePosition(5, 2, 3));
+        var sourceRange = new IlimapSourceRange(new IlimapSourcePosition(3, 2, 1), new IlimapSourcePosition(5, 2, 3));
 
         assertThat(lineMap.toIdeRange(sourceRange))
                 .isEqualTo(new IlimapIdeRange(new IlimapIdePosition(1, 0), new IlimapIdePosition(1, 2)));

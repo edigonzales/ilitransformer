@@ -21,7 +21,8 @@ class IlimapFormattingServiceTest {
 
         assertThat(edit).isPresent();
         assertThat(edit.orElseThrow().range())
-                .isEqualTo(new IlimapIdeRange(new IlimapIdePosition(0, 0), new IlimapLineMap(source).toIdePosition(source.length())));
+                .isEqualTo(new IlimapIdeRange(
+                        new IlimapIdePosition(0, 0), new IlimapLineMap(source).toIdePosition(source.length())));
         assertThat(edit.orElseThrow().newText()).contains("input src {");
         assertThat(edit.orElseThrow().newText()).endsWith("\n");
     }
@@ -36,7 +37,8 @@ class IlimapFormattingServiceTest {
                 }
                 """;
 
-        assertThat(service.format("file:///test.ilimap", source, IlimapFormatOptions.defaults())).isEmpty();
+        assertThat(service.format("file:///test.ilimap", source, IlimapFormatOptions.defaults()))
+                .isEmpty();
     }
 
     @Test

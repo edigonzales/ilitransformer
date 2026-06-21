@@ -44,9 +44,7 @@ public final class IlimapDiagnosticMapper {
         Matcher lineColumn = LINE_COLUMN_PATTERN.matcher(sourcePath);
         if (lineColumn.matches()) {
             return Optional.of(toOneCharacterRange(
-                    Integer.parseInt(lineColumn.group(1)) - 1,
-                    Integer.parseInt(lineColumn.group(2)) - 1,
-                    lineMap));
+                    Integer.parseInt(lineColumn.group(1)) - 1, Integer.parseInt(lineColumn.group(2)) - 1, lineMap));
         }
 
         Matcher trailingLineColumn = TRAILING_LINE_COLUMN_PATTERN.matcher(sourcePath);

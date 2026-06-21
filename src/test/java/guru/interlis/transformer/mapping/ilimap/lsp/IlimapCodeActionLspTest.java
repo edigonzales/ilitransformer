@@ -47,7 +47,8 @@ class IlimapCodeActionLspTest {
                 new IlimapLanguageServer().initialize(new InitializeParams()).join();
 
         assertThat(result.getCapabilities().getCodeActionProvider().isRight()).isTrue();
-        CodeActionOptions options = result.getCapabilities().getCodeActionProvider().getRight();
+        CodeActionOptions options =
+                result.getCapabilities().getCodeActionProvider().getRight();
         assertThat(options.getCodeActionKinds()).containsExactly(CodeActionKind.QuickFix, CodeActionKind.Source);
     }
 
@@ -63,12 +64,12 @@ class IlimapCodeActionLspTest {
                 DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF);
         open(source);
 
-        CodeAction action = codeAction(source, "\"Quality\"", 1, "Quality".length() + 1, List.of(), List.of(diagnostic))
-                .stream()
-                .filter(item -> item.getRight().getTitle().equals("Use symbolic enum map reference"))
-                .findFirst()
-                .orElseThrow()
-                .getRight();
+        CodeAction action =
+                codeAction(source, "\"Quality\"", 1, "Quality".length() + 1, List.of(), List.of(diagnostic)).stream()
+                        .filter(item -> item.getRight().getTitle().equals("Use symbolic enum map reference"))
+                        .findFirst()
+                        .orElseThrow()
+                        .getRight();
 
         assertThat(action.getKind()).isEqualTo(CodeActionKind.QuickFix);
         assertThat(action.getDiagnostics()).containsExactly(diagnostic);
@@ -83,21 +84,25 @@ class IlimapCodeActionLspTest {
         String source = validMapping();
         open(source);
 
-        List<CodeAction> sourceActions = codeAction(
-                        source, "\"Quality\"", 1, "Quality".length() + 1, List.of(CodeActionKind.Source), List.of())
-                .stream()
-                .map(Either::getRight)
-                .toList();
+        List<CodeAction> sourceActions =
+                codeAction(source, "\"Quality\"", 1, "Quality".length() + 1, List.of(CodeActionKind.Source), List.of())
+                        .stream()
+                        .map(Either::getRight)
+                        .toList();
         assertThat(sourceActions).extracting(CodeAction::getTitle).containsExactly("Format ILIMAP document");
 
-        List<CodeAction> quickFixActions = codeAction(
-                        source, "\"Quality\"", 1, "Quality".length() + 1, List.of(CodeActionKind.QuickFix), List.of())
-                .stream()
-                .map(Either::getRight)
-                .toList();
-        assertThat(quickFixActions)
-                .extracting(CodeAction::getTitle)
-                .containsExactly("Use symbolic enum map reference");
+        List<CodeAction> quickFixActions =
+                codeAction(
+                                source,
+                                "\"Quality\"",
+                                1,
+                                "Quality".length() + 1,
+                                List.of(CodeActionKind.QuickFix),
+                                List.of())
+                        .stream()
+                        .map(Either::getRight)
+                        .toList();
+        assertThat(quickFixActions).extracting(CodeAction::getTitle).containsExactly("Use symbolic enum map reference");
     }
 
     private void open(String source) {
@@ -105,7 +110,12 @@ class IlimapCodeActionLspTest {
     }
 
     private List<Either<Command, CodeAction>> codeAction(
-            String source, String needle, int startDelta, int endDelta, List<String> only, List<Diagnostic> diagnostics) {
+            String source,
+            String needle,
+            int startDelta,
+            int endDelta,
+            List<String> only,
+            List<Diagnostic> diagnostics) {
         Range range = rangeFor(source, needle, startDelta, endDelta);
         return service.codeAction(new CodeActionParams(
                         new TextDocumentIdentifier(URI), range, new CodeActionContext(diagnostics, only)))
@@ -123,8 +133,10 @@ class IlimapCodeActionLspTest {
 
     private static String textAt(String source, Range range) {
         IlimapLineMap lineMap = new IlimapLineMap(source);
-        int start = lineMap.positionToOffset(range.getStart().getLine(), range.getStart().getCharacter());
-        int end = lineMap.positionToOffset(range.getEnd().getLine(), range.getEnd().getCharacter());
+        int start = lineMap.positionToOffset(
+                range.getStart().getLine(), range.getStart().getCharacter());
+        int end = lineMap.positionToOffset(
+                range.getEnd().getLine(), range.getEnd().getCharacter());
         return source.substring(start, end);
     }
 

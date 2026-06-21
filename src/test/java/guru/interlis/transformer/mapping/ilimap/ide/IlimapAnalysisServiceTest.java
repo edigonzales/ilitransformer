@@ -41,11 +41,10 @@ class IlimapAnalysisServiceTest {
 
         assertThat(analysis.hasDocument()).isTrue();
         assertThat(analysis.hasErrors()).isTrue();
-        assertThat(analysis.diagnostics())
-                .anySatisfy(diagnostic -> {
-                    assertThat(diagnostic.code()).isEqualTo(DiagnosticCode.ILIMAP_UNKNOWN_INPUT);
-                    assertThat(diagnostic.range().start().line()).isGreaterThanOrEqualTo(0);
-                });
+        assertThat(analysis.diagnostics()).anySatisfy(diagnostic -> {
+            assertThat(diagnostic.code()).isEqualTo(DiagnosticCode.ILIMAP_UNKNOWN_INPUT);
+            assertThat(diagnostic.range().start().line()).isGreaterThanOrEqualTo(0);
+        });
     }
 
     @Test

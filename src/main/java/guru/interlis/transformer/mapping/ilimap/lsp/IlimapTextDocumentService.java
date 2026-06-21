@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
@@ -51,7 +52,6 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
-import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
@@ -263,8 +263,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         }
 
         IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
-        IlimapIdePosition position =
-                new IlimapIdePosition(params.getPosition().getLine(), params.getPosition().getCharacter());
+        IlimapIdePosition position = new IlimapIdePosition(
+                params.getPosition().getLine(), params.getPosition().getCharacter());
         List<CompletionItem> items = completionService.complete(analysis, position).stream()
                 .map(completionMapper::map)
                 .toList();
@@ -280,8 +280,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         }
 
         IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
-        IlimapIdePosition position =
-                new IlimapIdePosition(params.getPosition().getLine(), params.getPosition().getCharacter());
+        IlimapIdePosition position = new IlimapIdePosition(
+                params.getPosition().getLine(), params.getPosition().getCharacter());
         List<Location> locations = definitionService.definitionAt(analysis, position).stream()
                 .map(this::toLspLocation)
                 .toList();
@@ -296,16 +296,16 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         }
 
         IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
-        IlimapIdePosition position =
-                new IlimapIdePosition(params.getPosition().getLine(), params.getPosition().getCharacter());
-        return CompletableFuture.completedFuture(hoverService.hoverAt(analysis, position)
-                .map(this::toLspHover)
-                .orElse(null));
+        IlimapIdePosition position = new IlimapIdePosition(
+                params.getPosition().getLine(), params.getPosition().getCharacter());
+        return CompletableFuture.completedFuture(
+                hoverService.hoverAt(analysis, position).map(this::toLspHover).orElse(null));
     }
 
     public CompletableFuture<IlimapMappingSummary> mappingSummary(IlimapMappingSummaryParams params) {
         if (params == null || params.uri() == null || params.uri().isBlank()) {
-            return CompletableFuture.completedFuture(IlimapMappingSummary.unavailable("No ILIMAP document URI provided."));
+            return CompletableFuture.completedFuture(
+                    IlimapMappingSummary.unavailable("No ILIMAP document URI provided."));
         }
         String uri = params.uri();
         if (documentStore.get(uri).isEmpty()) {
@@ -329,7 +329,9 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     }
 
     private CodeAction toLspCodeAction(
-            String uri, guru.interlis.transformer.mapping.ilimap.ide.IlimapCodeAction action, CodeActionContext context) {
+            String uri,
+            guru.interlis.transformer.mapping.ilimap.ide.IlimapCodeAction action,
+            CodeActionContext context) {
         CodeAction codeAction = new CodeAction(action.title());
         codeAction.setKind(action.kind());
         List<TextEdit> edits = action.edits().stream().map(this::toLspTextEdit).toList();
@@ -347,7 +349,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
             return new IlimapIdeRange(start, start);
         }
         return new IlimapIdeRange(
-                new IlimapIdePosition(range.getStart().getLine(), range.getStart().getCharacter()),
+                new IlimapIdePosition(
+                        range.getStart().getLine(), range.getStart().getCharacter()),
                 new IlimapIdePosition(range.getEnd().getLine(), range.getEnd().getCharacter()));
     }
 

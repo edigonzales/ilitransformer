@@ -19,7 +19,17 @@ public final class IlimapCompletionService {
     private static final List<String> TOP_LEVEL_KEYWORDS =
             List.of("job", "input", "output", "oid", "basket", "enum", "defaults", "rule");
     private static final List<String> RULE_KEYWORDS = List.of(
-            "target", "source", "where", "join", "identity", "assign", "defaults", "bag", "ref", "create", "loss",
+            "target",
+            "source",
+            "where",
+            "join",
+            "identity",
+            "assign",
+            "defaults",
+            "bag",
+            "ref",
+            "create",
+            "loss",
             "metadata");
 
     private final IlimapCompletionContextResolver contextResolver;
@@ -40,15 +50,23 @@ public final class IlimapCompletionService {
         return switch (context.kind()) {
             case TOP_LEVEL -> keywordItems(TOP_LEVEL_KEYWORDS, context.prefix());
             case RULE_BLOCK -> keywordItems(RULE_KEYWORDS, context.prefix());
-            case TARGET_OUTPUT -> symbolItems(analysis, IlimapSymbolKind.OUTPUT, IlimapCompletionKind.OUTPUT, "output", context.prefix());
+            case TARGET_OUTPUT ->
+                symbolItems(analysis, IlimapSymbolKind.OUTPUT, IlimapCompletionKind.OUTPUT, "output", context.prefix());
             case TARGET_CLASS -> targetClassItems(analysis, context);
-            case SOURCE_INPUT -> symbolItems(analysis, IlimapSymbolKind.INPUT, IlimapCompletionKind.INPUT, "input", context.prefix());
+            case SOURCE_INPUT ->
+                symbolItems(analysis, IlimapSymbolKind.INPUT, IlimapCompletionKind.INPUT, "input", context.prefix());
             case SOURCE_CLASS -> sourceClassItems(analysis, context);
             case ASSIGN_TARGET_ATTRIBUTE -> targetAttributeItems(analysis, context);
             case SOURCE_ALIAS_ATTRIBUTE -> sourceAliasAttributeItems(analysis, context);
-            case REF_TARGET_RULE -> symbolItems(analysis, IlimapSymbolKind.RULE, IlimapCompletionKind.RULE, "rule", context.prefix());
+            case REF_TARGET_RULE ->
+                symbolItems(analysis, IlimapSymbolKind.RULE, IlimapCompletionKind.RULE, "rule", context.prefix());
             case ENUM_MAP_ARGUMENT ->
-                symbolItems(analysis, IlimapSymbolKind.ENUM_MAP, IlimapCompletionKind.ENUM_MAP, "enum map", context.prefix());
+                symbolItems(
+                        analysis,
+                        IlimapSymbolKind.ENUM_MAP,
+                        IlimapCompletionKind.ENUM_MAP,
+                        "enum map",
+                        context.prefix());
             case JOB_BLOCK, INPUT_BLOCK, OUTPUT_BLOCK, EXPRESSION, UNKNOWN -> List.of();
         };
     }
@@ -83,14 +101,16 @@ public final class IlimapCompletionService {
         return new IlimapCompletionItem(symbol.name(), completionKind, detail, null, symbol.name());
     }
 
-    private static List<IlimapCompletionItem> targetClassItems(IlimapAnalysis analysis, IlimapCompletionContext context) {
+    private static List<IlimapCompletionItem> targetClassItems(
+            IlimapAnalysis analysis, IlimapCompletionContext context) {
         if (context.qualifier() == null) {
             return List.of();
         }
         return classItems(analysis.modelIndex().classesForOutput(context.qualifier()), context);
     }
 
-    private static List<IlimapCompletionItem> sourceClassItems(IlimapAnalysis analysis, IlimapCompletionContext context) {
+    private static List<IlimapCompletionItem> sourceClassItems(
+            IlimapAnalysis analysis, IlimapCompletionContext context) {
         if (context.qualifier() == null) {
             return List.of();
         }
@@ -173,7 +193,8 @@ public final class IlimapCompletionService {
                     Optional<IlimapClassInfo> classInfo = analysis.modelIndex()
                             .modelNameForInput(inputId)
                             .flatMap(modelName -> analysis.modelIndex().classesForModel(modelName).stream()
-                                    .filter(candidate -> candidate.qualifiedName().equals(source.sourceClass()))
+                                    .filter(candidate ->
+                                            candidate.qualifiedName().equals(source.sourceClass()))
                                     .findFirst());
                     if (classInfo.isPresent()) {
                         return classInfo;

@@ -42,7 +42,8 @@ class IlimapCompletionContextResolverTest {
 
     @Test
     void resolvesSourceInputContext() {
-        IlimapCompletionContext context = resolve(validMapping(), "source s from src class", "source s from sr".length());
+        IlimapCompletionContext context =
+                resolve(validMapping(), "source s from src class", "source s from sr".length());
 
         assertThat(context.kind()).isEqualTo(IlimapCompletionContextKind.SOURCE_INPUT);
         assertThat(context.prefix()).isEqualTo("sr");
@@ -60,7 +61,8 @@ class IlimapCompletionContextResolverTest {
 
     @Test
     void resolvesEnumMapSecondArgumentContext() {
-        IlimapCompletionContext context = resolve(validMapping(), "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length());
+        IlimapCompletionContext context =
+                resolve(validMapping(), "enumMap(s.X, Quality)", "enumMap(s.X, Qual".length());
 
         assertThat(context.kind()).isEqualTo(IlimapCompletionContextKind.ENUM_MAP_ARGUMENT);
         assertThat(context.prefix()).isEqualTo("Qual");
@@ -69,7 +71,8 @@ class IlimapCompletionContextResolverTest {
 
     @Test
     void resolvesNonEnumMapExpressionContext() {
-        IlimapCompletionContext context = resolve(validMapping(), "coalesce(s.Y, Quality)", "coalesce(s.Y, Qual".length());
+        IlimapCompletionContext context =
+                resolve(validMapping(), "coalesce(s.Y, Quality)", "coalesce(s.Y, Qual".length());
 
         assertThat(context.kind()).isEqualTo(IlimapCompletionContextKind.EXPRESSION);
         assertThat(context.prefix()).isEqualTo("Qual");

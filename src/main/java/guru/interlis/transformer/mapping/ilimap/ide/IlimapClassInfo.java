@@ -14,6 +14,8 @@ public record IlimapClassInfo(String qualifiedName, String kind, List<IlimapAttr
     }
 
     public Optional<IlimapAttributeInfo> findAttribute(String name) {
-        return attributes.stream().filter(attribute -> attribute.name().equals(name)).findFirst();
+        return attributes.stream()
+                .filter(attribute -> attribute.name().equals(name))
+                .findFirst();
     }
 }

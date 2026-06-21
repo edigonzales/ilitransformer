@@ -41,14 +41,14 @@ public final class IlimapLineMap {
 
     public IlimapIdePosition toIdePosition(int offset) {
         int clampedOffset = clampOffset(offset);
-        return new IlimapIdePosition(
-                offsetToZeroBasedLine(clampedOffset), offsetToZeroBasedCharacter(clampedOffset));
+        return new IlimapIdePosition(offsetToZeroBasedLine(clampedOffset), offsetToZeroBasedCharacter(clampedOffset));
     }
 
     public IlimapIdeRange toIdeRange(IlimapSourceRange sourceRange) {
         Objects.requireNonNull(sourceRange, "sourceRange");
         return new IlimapIdeRange(
-                toIdePosition(sourceRange.start().offset()), toIdePosition(sourceRange.end().offset()));
+                toIdePosition(sourceRange.start().offset()),
+                toIdePosition(sourceRange.end().offset()));
     }
 
     private int clampOffset(int offset) {

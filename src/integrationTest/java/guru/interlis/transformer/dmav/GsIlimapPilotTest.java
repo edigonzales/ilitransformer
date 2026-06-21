@@ -127,8 +127,9 @@ class GsIlimapPilotTest {
             }
 
             for (String key : yamlRule.assign.keySet()) {
-                assertThat(normalizeQuotes(ilimapRule.assign.get(key))).as("assign[%s]", key).isEqualTo(
-                        normalizeQuotes(yamlRule.assign.get(key)));
+                assertThat(normalizeQuotes(ilimapRule.assign.get(key)))
+                        .as("assign[%s]", key)
+                        .isEqualTo(normalizeQuotes(yamlRule.assign.get(key)));
             }
 
             List<JobConfig.RefMapping> yamlRefs = JobConfigNormalizer.getEffectiveRefs(yamlRule);
@@ -223,8 +224,10 @@ class GsIlimapPilotTest {
         Map<String, Element> nachfuehrungenByIdentifikator = indexByChildText(nachfuehrungen, "Identifikator");
         Map<String, Element> grenzpunkteByNummer = indexByChildText(grenzpunkte, "Nummer");
 
-        assertThat(directChildren(grenzpunkteByNummer.get("GP-G"), "Entstehung")).hasSize(1);
-        assertThat(directChildren(grenzpunkteByNummer.get("GP-P"), "Entstehung")).hasSize(1);
+        assertThat(directChildren(grenzpunkteByNummer.get("GP-G"), "Entstehung"))
+                .hasSize(1);
+        assertThat(directChildren(grenzpunkteByNummer.get("GP-P"), "Entstehung"))
+                .hasSize(1);
         assertThat(directChildren(grenzpunkteByNummer.get("GP-G"), "Entstehung")
                         .get(0)
                         .getAttributeNS(ILI_NS, "ref"))
@@ -252,7 +255,8 @@ class GsIlimapPilotTest {
         try {
             TransformationEngine engine =
                     new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), runtimeDiagnostics);
-            result = engine.runTyped(plan, onceReaderFactory(sourceObjectsWithHoheitsgrenzpunkte()), Map.of("dmav", writer));
+            result = engine.runTyped(
+                    plan, onceReaderFactory(sourceObjectsWithHoheitsgrenzpunkte()), Map.of("dmav", writer));
         } finally {
             try {
                 writer.close();
@@ -282,32 +286,36 @@ class GsIlimapPilotTest {
         Map<String, Element> grenzpunkteByNummer = indexByChildText(grenzpunkte, "Nummer");
 
         assertThat(nachfuehrungenByIdentifikator).containsKeys("LS-G", "LS-P", "GEM-G", "GEM-P");
-        assertThat(directChildText(nachfuehrungenByIdentifikator.get("LS-G"), "Mutationsart")).isEqualTo("Normal");
+        assertThat(directChildText(nachfuehrungenByIdentifikator.get("LS-G"), "Mutationsart"))
+                .isEqualTo("Normal");
         assertThat(directChildText(nachfuehrungenByIdentifikator.get("LS-P"), "Mutationsart"))
                 .isEqualTo("Projektmutation");
-        assertThat(directChildText(nachfuehrungenByIdentifikator.get("GEM-G"), "Mutationsart")).isEqualTo("Normal");
+        assertThat(directChildText(nachfuehrungenByIdentifikator.get("GEM-G"), "Mutationsart"))
+                .isEqualTo("Normal");
         assertThat(directChildText(nachfuehrungenByIdentifikator.get("GEM-P"), "Mutationsart"))
                 .isEqualTo("Projektmutation");
 
         assertEntstehungRef(
-                grenzpunkteByNummer.get("HGP-LS-G"), nachfuehrungenByIdentifikator.get("LS-G").getAttributeNS(ILI_NS, "tid"));
+                grenzpunkteByNummer.get("HGP-LS-G"),
+                nachfuehrungenByIdentifikator.get("LS-G").getAttributeNS(ILI_NS, "tid"));
         assertEntstehungRef(
-                grenzpunkteByNummer.get("HGP-LS-P"), nachfuehrungenByIdentifikator.get("LS-P").getAttributeNS(ILI_NS, "tid"));
+                grenzpunkteByNummer.get("HGP-LS-P"),
+                nachfuehrungenByIdentifikator.get("LS-P").getAttributeNS(ILI_NS, "tid"));
         assertEntstehungRef(
-                grenzpunkteByNummer.get("HGP-GEM-G"), nachfuehrungenByIdentifikator.get("GEM-G").getAttributeNS(ILI_NS, "tid"));
+                grenzpunkteByNummer.get("HGP-GEM-G"),
+                nachfuehrungenByIdentifikator.get("GEM-G").getAttributeNS(ILI_NS, "tid"));
         assertEntstehungRef(
-                grenzpunkteByNummer.get("HGP-GEM-P"), nachfuehrungenByIdentifikator.get("GEM-P").getAttributeNS(ILI_NS, "tid"));
+                grenzpunkteByNummer.get("HGP-GEM-P"),
+                nachfuehrungenByIdentifikator.get("GEM-P").getAttributeNS(ILI_NS, "tid"));
     }
 
     private Path materializeYaml() throws Exception {
         Path materialized = tempDir.resolve("gs-pilot.yaml");
-        String yaml = Files.readString(PRODUCTION_YAML, StandardCharsets.UTF_8).replace(
-                """
+        String yaml = Files.readString(PRODUCTION_YAML, StandardCharsets.UTF_8).replace("""
                   modeldir:
                     - "https://models.geo.admin.ch/"
                     - "models/"
-                """,
-                """
+                """, """
                   modeldir:
                     - "src/test/data/av/models"
                     - "https://models.interlis.ch"
@@ -319,12 +327,11 @@ class GsIlimapPilotTest {
 
     private Path materializeIlimap() throws Exception {
         Path materialized = tempDir.resolve("gs-pilot.ilimap");
-        String ilimap = Files.readString(PRODUCTION_ILIMAP, StandardCharsets.UTF_8).replace(
-                """
+        String ilimap =
+                Files.readString(PRODUCTION_ILIMAP, StandardCharsets.UTF_8).replace("""
                     modeldir "https://models.geo.admin.ch/";
                     modeldir "models/";
-                """,
-                """
+                """, """
                     modeldir "src/test/data/av/models";
                     modeldir "https://models.interlis.ch";
                     modeldir "https://models.geo.admin.ch";
@@ -347,7 +354,8 @@ class GsIlimapPilotTest {
 
     private Iom_jObject[] sourceObjectsWithHoheitsgrenzpunkte() {
         Iom_jObject lsGueltig = nachfuehrung("ls-g", "NB-LS-G", "LS-G", "LS gueltig", "gueltig", "2025-03-15");
-        Iom_jObject lsProjektiert = nachfuehrung("ls-p", "NB-LS-P", "LS-P", "LS projektiert", "projektiert", "2025-03-16");
+        Iom_jObject lsProjektiert =
+                nachfuehrung("ls-p", "NB-LS-P", "LS-P", "LS projektiert", "projektiert", "2025-03-16");
 
         Iom_jObject gemMatchingGueltig =
                 gemNachfuehrung("gem-ls-g", "NB-LS-G", "LS-G", "GEM passend gueltig", "gueltig", "2025-03-15");
@@ -360,12 +368,12 @@ class GsIlimapPilotTest {
 
         Iom_jObject hgpLsGueltig =
                 hoheitsgrenzpunkt("hgp-ls-g", "gem-ls-g", "HGP-LS-G", 2600000.0, 1200000.0, "ja", "Bolzen", "Ja", "ja");
-        Iom_jObject hgpLsProjektiert =
-                hoheitsgrenzpunkt("hgp-ls-p", "gem-ls-p", "HGP-LS-P", 2600100.0, 1200100.0, "nein", "Stein", "Nein", "nein");
+        Iom_jObject hgpLsProjektiert = hoheitsgrenzpunkt(
+                "hgp-ls-p", "gem-ls-p", "HGP-LS-P", 2600100.0, 1200100.0, "nein", "Stein", "Nein", "nein");
         Iom_jObject hgpGemGueltig =
                 hoheitsgrenzpunkt("hgp-gem-g", "gem-g", "HGP-GEM-G", 2600200.0, 1200200.0, "ja", "Kreuz", "Ja", "ja");
-        Iom_jObject hgpGemProjektiert =
-                hoheitsgrenzpunkt("hgp-gem-p", "gem-p", "HGP-GEM-P", 2600300.0, 1200300.0, "nein", "Pfahl", "Nein", "nein");
+        Iom_jObject hgpGemProjektiert = hoheitsgrenzpunkt(
+                "hgp-gem-p", "gem-p", "HGP-GEM-P", 2600300.0, 1200300.0, "nein", "Pfahl", "Nein", "nein");
 
         return new Iom_jObject[] {
             lsGueltig,

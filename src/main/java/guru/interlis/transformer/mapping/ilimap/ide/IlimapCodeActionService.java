@@ -81,7 +81,11 @@ public final class IlimapCodeActionService {
                 continue;
             }
             enumMapCall(text, openParen)
-                    .filter(call -> overlaps(analysis, requestedRange, expressionStart + call.argumentStart(), expressionStart + call.argumentEnd()))
+                    .filter(call -> overlaps(
+                            analysis,
+                            requestedRange,
+                            expressionStart + call.argumentStart(),
+                            expressionStart + call.argumentEnd()))
                     .flatMap(call -> toCodeAction(analysis, expressionStart, text, call))
                     .ifPresent(actions::add);
         }
@@ -109,7 +113,9 @@ public final class IlimapCodeActionService {
         return Optional.of(new IlimapCodeAction(
                 USE_SYMBOLIC_ENUM_MAP_TITLE,
                 QUICK_FIX,
-                List.of(emptyEdit(analysis, firstQuote, firstQuote + 1), emptyEdit(analysis, secondQuote, secondQuote + 1)),
+                List.of(
+                        emptyEdit(analysis, firstQuote, firstQuote + 1),
+                        emptyEdit(analysis, secondQuote, secondQuote + 1)),
                 DiagnosticCode.ILIMAP_ENUM_MAP_STRING_REF));
     }
 
@@ -124,13 +130,16 @@ public final class IlimapCodeActionService {
                 "Create enum map '" + enumMapId + "'",
                 QUICK_FIX,
                 List.of(new IlimapTextEdit(
-                        insertionRange(analysis, insertionOffset), enumBlockText(analysis, enumMapId, insertionOffset))),
+                        insertionRange(analysis, insertionOffset),
+                        enumBlockText(analysis, enumMapId, insertionOffset))),
                 DiagnosticCode.ILIMAP_UNKNOWN_ENUM_MAP));
     }
 
     private IlimapTextEdit emptyEdit(IlimapAnalysis analysis, int startOffset, int endOffset) {
         return new IlimapTextEdit(
-                new IlimapIdeRange(analysis.lineMap().toIdePosition(startOffset), analysis.lineMap().toIdePosition(endOffset)),
+                new IlimapIdeRange(
+                        analysis.lineMap().toIdePosition(startOffset),
+                        analysis.lineMap().toIdePosition(endOffset)),
                 "");
     }
 
@@ -244,8 +253,10 @@ public final class IlimapCodeActionService {
     }
 
     private boolean overlaps(IlimapAnalysis analysis, IlimapIdeRange range, int startOffset, int endOffset) {
-        int rangeStart = analysis.lineMap().positionToOffset(range.start().line(), range.start().character());
-        int rangeEnd = analysis.lineMap().positionToOffset(range.end().line(), range.end().character());
+        int rangeStart = analysis.lineMap()
+                .positionToOffset(range.start().line(), range.start().character());
+        int rangeEnd = analysis.lineMap()
+                .positionToOffset(range.end().line(), range.end().character());
         if (rangeStart == rangeEnd) {
             return rangeStart >= startOffset && rangeStart <= endOffset;
         }
@@ -267,8 +278,10 @@ public final class IlimapCodeActionService {
 
     private void collectExpressions(IlimapRuleElement element, List<IlimapExpressionText> result) {
         switch (element) {
-            case IlimapAssignmentBlock assign -> assign.assignments().forEach(assignment -> result.add(assignment.expression()));
-            case IlimapDefaultsBlock defaults -> defaults.assignments().forEach(assignment -> result.add(assignment.expression()));
+            case IlimapAssignmentBlock assign ->
+                assign.assignments().forEach(assignment -> result.add(assignment.expression()));
+            case IlimapDefaultsBlock defaults ->
+                defaults.assignments().forEach(assignment -> result.add(assignment.expression()));
             case IlimapSourceStmt source -> {
                 if (source.where() != null) {
                     result.add(source.where());
