@@ -71,22 +71,12 @@ public final class Dm01DmavFullRunManifestLoader {
             if (!seenTopicIds.add(topic.id)) {
                 throw new IllegalArgumentException("Duplicate included topic id: " + topic.id);
             }
-            if ((topic.preferredIlimap == null || topic.preferredIlimap.isBlank())
-                    && (topic.fallbackYaml == null || topic.fallbackYaml.isBlank())) {
-                throw new IllegalArgumentException(
-                        "Included topic " + topic.id + " must define preferredIlimap or fallbackYaml");
+            if (topic.mapping == null || topic.mapping.isBlank()) {
+                throw new IllegalArgumentException("Included topic " + topic.id + " must define mapping");
             }
-            if (topic.preferredIlimap != null && !topic.preferredIlimap.isBlank()) {
-                Path ilimapPath = resolveManifestPath(manifestPath, repositoryRoot, topic.preferredIlimap);
-                if (!Files.isRegularFile(ilimapPath)) {
-                    throw new IllegalArgumentException("preferredIlimap not found for " + topic.id + ": " + ilimapPath);
-                }
-            }
-            if (topic.fallbackYaml != null && !topic.fallbackYaml.isBlank()) {
-                Path yamlPath = resolveManifestPath(manifestPath, repositoryRoot, topic.fallbackYaml);
-                if (!Files.isRegularFile(yamlPath)) {
-                    throw new IllegalArgumentException("fallbackYaml not found for " + topic.id + ": " + yamlPath);
-                }
+            Path mappingPath = resolveManifestPath(manifestPath, repositoryRoot, topic.mapping);
+            if (!Files.isRegularFile(mappingPath)) {
+                throw new IllegalArgumentException("mapping not found for " + topic.id + ": " + mappingPath);
             }
         }
 

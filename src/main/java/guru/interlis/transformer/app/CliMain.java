@@ -2,6 +2,7 @@ package guru.interlis.transformer.app;
 
 import guru.interlis.transformer.cli.Dm01DmavCommand;
 import guru.interlis.transformer.cli.InspectModelCommand;
+import guru.interlis.transformer.cli.RunBundleCommand;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.mapping.ilimap.convert.ConvertException;
@@ -32,6 +33,7 @@ import picocli.CommandLine.Option;
             CliMain.ValidateMappingCommand.class,
             CliMain.ValidateTransferCommand.class,
             CliMain.ConvertMappingCommand.class,
+            RunBundleCommand.class,
             InspectModelCommand.class,
             Dm01DmavCommand.class
         })

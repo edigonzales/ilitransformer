@@ -34,27 +34,27 @@ modeldirs:
 topics:
   include:
     - id: bb
-      fallbackYaml: profiles/dm01-to-dmav/1.1/bb.yaml
+      mapping: profiles/dm01-to-dmav/1.1/bb.yaml
     - id: dbv
-      fallbackYaml: profiles/dm01-to-dmav/1.1/dbv.yaml
+      mapping: profiles/dm01-to-dmav/1.1/dbv.yaml
     - id: eo
-      fallbackYaml: profiles/dm01-to-dmav/1.1/eo.yaml
+      mapping: profiles/dm01-to-dmav/1.1/eo.yaml
     - id: fpds2
-      fallbackYaml: profiles/dm01-to-dmav/1.1/fpds2.yaml
+      mapping: profiles/dm01-to-dmav/1.1/fpds2.yaml
     - id: gebaeudeadressen
-      fallbackYaml: profiles/dm01-to-dmav/1.1/gebaeudeadressen.yaml
+      mapping: profiles/dm01-to-dmav/1.1/gebaeudeadressen.yaml
     - id: gs
-      preferredIlimap: profiles/dm01-to-dmav/1.1/gs.ilimap
+      mapping: profiles/dm01-to-dmav/1.1/gs.ilimap
     - id: hfp3
-      fallbackYaml: profiles/dm01-to-dmav/1.1/hfp3.yaml
+      mapping: profiles/dm01-to-dmav/1.1/hfp3.yaml
     - id: lfp3
-      preferredIlimap: profiles/dm01-to-dmav/1.1/lfp3.ilimap
+      mapping: profiles/dm01-to-dmav/1.1/lfp3.ilimap
     - id: nomenklatur
-      fallbackYaml: profiles/dm01-to-dmav/1.1/nomenklatur.yaml
+      mapping: profiles/dm01-to-dmav/1.1/nomenklatur.yaml
     - id: rohrleitungen
-      fallbackYaml: profiles/dm01-to-dmav/1.1/rohrleitungen.yaml
+      mapping: profiles/dm01-to-dmav/1.1/rohrleitungen.yaml
     - id: toleranzstufen
-      fallbackYaml: profiles/dm01-to-dmav/1.1/toleranzstufen.yaml
+      mapping: profiles/dm01-to-dmav/1.1/toleranzstufen.yaml
   exclude:
     - id: fixpunktelv
       reason: "validate-mapping: target classes DMAV_FixpunkteLV_V1_0.FixpunkteLV.LFP1 and HFP1 are not present under output model DMAVTYM_Alles_V1_1."

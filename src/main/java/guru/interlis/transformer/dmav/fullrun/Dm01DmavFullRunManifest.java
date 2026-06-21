@@ -53,22 +53,7 @@ public final class Dm01DmavFullRunManifest {
 
     public static final class TopicMappingSpec {
         public String id;
-        public String preferredIlimap;
-        public String fallbackYaml;
-
-        public String effectiveMappingReference() {
-            if (preferredIlimap != null && !preferredIlimap.isBlank()) {
-                return preferredIlimap;
-            }
-            return fallbackYaml;
-        }
-
-        public String effectiveFormat() {
-            if (preferredIlimap != null && !preferredIlimap.isBlank()) {
-                return "ilimap";
-            }
-            return "yaml";
-        }
+        public String mapping;
     }
 
     public static final class ExcludedTopicSpec {

@@ -225,9 +225,9 @@ class Dm01DmavFullRunAssemblerTest {
                 topics:
                   include:
                     - id: yamltopic
-                      fallbackYaml: ./yaml-topic.yaml
+                      mapping: ./yaml-topic.yaml
                     - id: ilimaptopic
-                      preferredIlimap: ./ilimap-topic.ilimap
+                      mapping: ./ilimap-topic.ilimap
                 """, StandardCharsets.UTF_8);
 
         Dm01DmavFullRunManifest manifest = manifestLoader.load(manifestPath, REPOSITORY_ROOT);

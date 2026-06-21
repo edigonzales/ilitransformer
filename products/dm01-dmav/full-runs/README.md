@@ -23,7 +23,7 @@ Jeder Datensatz lebt unter `products/dm01-dmav/full-runs/<dataset-slug>/` und en
 - `expected-summary.yaml`: normalisierte Counts-, Targets- und Warning-Signatur
 - `README.md`: Datensatz-spezifische Herkunft und Laufhinweise
 
-Topic-Mappings sind `.ilimap`-first. Bereits migrierte Topics referenzieren bevorzugt `.ilimap`; nicht migrierte Topics dokumentieren den YAML-Fallback explizit im Manifest.
+Topic-Mappings sind `.ilimap`-first. Jeder Topic referenziert seine Mapping-Datei über das einzelne Feld `mapping:`; das Format (`.ilimap` oder `.yaml`) wird an der Dateiendung erkannt. Bereits migrierte Topics zeigen auf `.ilimap`, noch nicht migrierte auf die `.yaml`-Variante.
 
 ## Ausführung
 

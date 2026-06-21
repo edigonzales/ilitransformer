@@ -74,6 +74,16 @@ oder direkt über Gradle:
 
 Der Lauf validiert Fingerprint, Transformation, `ilivalidator` und die normalisierte Summary gegen das eingecheckte `expected-summary.yaml`.
 
+## Generische Bundle-Läufe (`run-bundle`)
+
+Die manifestgesteuerte Komposition mehrerer Mapping-Module zu einem Lauf ist als generischer, dataset-agnostischer CLI-Befehl verfügbar:
+
+```bash
+ilitransformer run-bundle --manifest <bundle.yaml> [--source <file>] [--report-dir <dir>] [--output <file>] [--repo-root <dir>] [--no-validate]
+```
+
+Ein Bundle-Manifest beschreibt `name`, `source` (optional mit `sha256`), `output`, Mapping-Strategie, `modeldirs`, eine Liste `modules: [{ id, mapping }]` (Format per Endung erkannt) und optional `expectedSummary`. `run-bundle` lädt und validiert das Manifest, mergt die Module zu einer kombinierten `combined.generated.yaml`, führt sie über die Engine aus und vergleicht – falls `expectedSummary` gesetzt ist – die normalisierte Summary. Der DM01/DMAV-Full-Run (`runDm01DmavFullRun`) delegiert auf dieselbe Engine und ergänzt nur die DM01/DMAV-spezifischen Summary- und Topic-Inventar-Felder.
+
 ## Wichtige Testklassen
 
 ### `test`

@@ -34,17 +34,11 @@ class Dm01DmavFullRunManifestLoaderTest {
         assertThat(manifest.topics.include)
                 .filteredOn(topic -> "lfp3".equals(topic.id))
                 .singleElement()
-                .satisfies(topic -> {
-                    assertThat(topic.preferredIlimap).isEqualTo("profiles/dm01-to-dmav/1.1/lfp3.ilimap");
-                    assertThat(topic.fallbackYaml).isNull();
-                });
+                .satisfies(topic -> assertThat(topic.mapping).isEqualTo("profiles/dm01-to-dmav/1.1/lfp3.ilimap"));
         assertThat(manifest.topics.include)
                 .filteredOn(topic -> "gs".equals(topic.id))
                 .singleElement()
-                .satisfies(topic -> {
-                    assertThat(topic.preferredIlimap).isEqualTo("profiles/dm01-to-dmav/1.1/gs.ilimap");
-                    assertThat(topic.fallbackYaml).isNull();
-                });
+                .satisfies(topic -> assertThat(topic.mapping).isEqualTo("profiles/dm01-to-dmav/1.1/gs.ilimap"));
     }
 
     @Test
@@ -97,7 +91,7 @@ class Dm01DmavFullRunManifestLoaderTest {
                 topics:
                   include:
                     - id: eo
-                      fallbackYaml: profiles/dm01-to-dmav/1.1/eo.yaml
+                      mapping: profiles/dm01-to-dmav/1.1/eo.yaml
                   exclude:
                     - id: eo
                       reason: duplicate on purpose
