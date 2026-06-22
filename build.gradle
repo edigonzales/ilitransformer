@@ -36,6 +36,7 @@ dependencies {
     implementation 'ch.interlis:iox-ili:1.24.1'
     implementation 'ch.interlis:ili2c-core:5.6.6'
     implementation 'ch.interlis:ili2c-tool:5.6.6'
+    implementation 'ch.interlis:ilivalidator:1.15.0'
     implementation 'info.picocli:picocli:4.7.6'
     implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j:1.0.0'
     implementation 'org.slf4j:slf4j-api:2.0.17'
@@ -45,8 +46,6 @@ dependencies {
     xlsx 'org.apache.poi:poi-ooxml:5.4.0'
 
     validator 'ch.interlis:ilivalidator:1.15.0'
-
-    compileOnly 'ch.interlis:ilivalidator:1.15.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testImplementation 'org.assertj:assertj-core:3.25.3'

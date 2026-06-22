@@ -113,6 +113,11 @@ public final class RuleExecutionService {
             RulePlan rule = rulesById.get(ruleId);
             if (rule == null) continue;
 
+            long ruleStart = System.nanoTime();
+            long filteredBefore = metrics.getSourceRecordsFiltered();
+            long matchesBefore = metrics.getRuleMatches();
+            long targetsBefore = metrics.getTargetsCreated();
+
             if (!rule.joins().isEmpty()) {
                 processJoinedRule(
                         rule,
@@ -153,6 +158,13 @@ public final class RuleExecutionService {
                         parentChildIndex,
                         sourceLookupIndex);
             }
+
+            metrics.recordRuleExecution(
+                    rule.ruleId(),
+                    System.nanoTime() - ruleStart,
+                    metrics.getRuleMatches() - matchesBefore,
+                    metrics.getSourceRecordsFiltered() - filteredBefore,
+                    metrics.getTargetsCreated() - targetsBefore);
         }
 
         for (var entry : expandedTargets.entrySet()) {
@@ -197,6 +209,7 @@ public final class RuleExecutionService {
             String scopedClass = TargetObjectFactory.getScopedName(source.sourceClass());
             for (String inputId : source.inputIds()) {
                 for (SourceRecord record : stateStore.sourceRecords(inputId, scopedClass)) {
+                    metrics.recordRuleSourceRecordVisited(rule.ruleId());
                     Map<String, IomObject> sources = Map.of(source.alias(), record.sourceObject());
                     EvalContext evalCtx = new EvalContext(
                                     sources,
@@ -248,6 +261,7 @@ public final class RuleExecutionService {
         SourcePlan driverPlan = joins.get(0).left();
         for (SourceRecord driverRecord : stateStore.sourceRecords()) {
             if (!sourceMatchesPlan(driverRecord, driverPlan)) continue;
+            metrics.recordRuleSourceRecordVisited(rule.ruleId());
 
             Map<String, SourceRecord> boundRecords = new LinkedHashMap<>();
             boundRecords.put(driverPlan.alias(), driverRecord);
@@ -524,6 +538,7 @@ public final class RuleExecutionService {
         for (SourceRecord record : stateStore.sourceRecords()) {
             SourcePlan sp = findSourcePlan(parentRule, record);
             if (sp == null) continue;
+            metrics.recordRuleSourceRecordVisited(parentRule.ruleId());
 
             Map<String, IomObject> sources = Map.of(sp.alias(), record.sourceObject());
             EvalContext evalCtx = new EvalContext(

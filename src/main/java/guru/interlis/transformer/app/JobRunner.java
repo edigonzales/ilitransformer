@@ -126,7 +126,10 @@ public final class JobRunner {
      * transactional output, optional validation, and report generation.
      */
     public DiagnosticCollector run(Path configPath, RunOptions options) throws Exception {
+        long runStartNanos = System.nanoTime();
+        long prepareStartNanos = System.nanoTime();
         PreparedJob prepared = prepare(configPath, options);
+        long compilePrepareMs = nanosToMillis(System.nanoTime() - prepareStartNanos);
         TransformPlan plan = prepared.plan();
 
         printCompilerDiagnostics(plan);
@@ -139,6 +142,8 @@ public final class JobRunner {
         if (plan.failPolicy() == FailPolicy.REPORT_ONLY) {
             System.out.println("REPORT_ONLY mode: compilation successful. Skipping transformation run.");
             if (options.reportDirectory() != null) {
+                RunProfileSnapshot profile = new RunProfileSnapshot(
+                        compilePrepareMs, 0, 0, nanosToMillis(System.nanoTime() - runStartNanos));
                 writeReports(
                         plan,
                         null,
@@ -147,6 +152,7 @@ public final class JobRunner {
                         Duration.ZERO,
                         Map.of(),
                         null,
+                        profile,
                         options.reportDirectory());
             }
             return plan.diagnostics();
@@ -158,6 +164,7 @@ public final class JobRunner {
         ExecutionMetricsSnapshot metricsSnapshot = null;
         LossinessCollector lossinessCollector = null;
         List<ValidationResult> validationResults = new ArrayList<>();
+        long validationNanos = 0;
         boolean committed = false;
 
         try (TransactionalOutputManager txManager = new TransactionalOutputManager(options.keepTemporaryFiles())) {
@@ -265,6 +272,7 @@ public final class JobRunner {
                     OutputBinding realBinding = plan.outputsById().get(outputId);
                     if (realBinding == null) continue;
 
+                    long validationStart = System.nanoTime();
                     ValidationResult vr = validationService.validate(
                             binding.path(),
                             options.modelDirectories(),
@@ -272,6 +280,7 @@ public final class JobRunner {
                             options.reportDirectory() != null
                                     ? options.reportDirectory().resolve(outputId + "-validation.log")
                                     : null);
+                    validationNanos += System.nanoTime() - validationStart;
                     validationResults.add(vr);
 
                     if (!vr.valid()) {
@@ -343,6 +352,11 @@ public final class JobRunner {
         // Write reports
         if (options.reportDirectory() != null) {
             Map<String, String> modelVersions = collectModelVersions(plan);
+            RunProfileSnapshot profile = new RunProfileSnapshot(
+                    compilePrepareMs,
+                    nanosToMillis(validationNanos),
+                    0,
+                    nanosToMillis(System.nanoTime() - runStartNanos));
             writeReports(
                     plan,
                     result,
@@ -351,6 +365,7 @@ public final class JobRunner {
                     elapsed,
                     modelVersions,
                     metricsSnapshot,
+                    profile,
                     options.reportDirectory());
             writeLossinessReports(lossinessCollector, options.reportDirectory());
         }
@@ -393,11 +408,13 @@ public final class JobRunner {
             Duration elapsed,
             Map<String, String> modelVersions,
             ExecutionMetricsSnapshot metricsSnapshot,
+            RunProfileSnapshot runProfile,
             Path reportDirectory) {
         try {
             TransformationReportWriter reportWriter = new TransformationReportWriter();
             TransformResult safeResult = result != null ? result : new TransformResult(0, 0, 0, 0, 0, 0, "-", "-");
 
+            long reportStart = System.nanoTime();
             reportWriter.writeJson(
                     reportDirectory.resolve("transformation-report.json"),
                     plan,
@@ -406,7 +423,8 @@ public final class JobRunner {
                     validationResults,
                     elapsed,
                     modelVersions,
-                    metricsSnapshot);
+                    metricsSnapshot,
+                    runProfile);
             reportWriter.writeMarkdown(
                     reportDirectory.resolve("transformation-report.md"),
                     plan,
@@ -415,7 +433,30 @@ public final class JobRunner {
                     validationResults,
                     elapsed,
                     modelVersions,
-                    metricsSnapshot);
+                    metricsSnapshot,
+                    runProfile);
+            RunProfileSnapshot finalProfile =
+                    runProfile.withReportWriteMs(nanosToMillis(System.nanoTime() - reportStart));
+            reportWriter.writeJson(
+                    reportDirectory.resolve("transformation-report.json"),
+                    plan,
+                    safeResult,
+                    diagnostics,
+                    validationResults,
+                    elapsed,
+                    modelVersions,
+                    metricsSnapshot,
+                    finalProfile);
+            reportWriter.writeMarkdown(
+                    reportDirectory.resolve("transformation-report.md"),
+                    plan,
+                    safeResult,
+                    diagnostics,
+                    validationResults,
+                    elapsed,
+                    modelVersions,
+                    metricsSnapshot,
+                    finalProfile);
             System.out.println("Reports written to: " + reportDirectory);
         } catch (IOException e) {
             System.err.println("Failed to write reports: " + e.getMessage());
@@ -459,5 +500,9 @@ public final class JobRunner {
             }
         }
         return versions;
+    }
+
+    private static long nanosToMillis(long nanos) {
+        return nanos <= 0 ? 0 : java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(nanos);
     }
 }

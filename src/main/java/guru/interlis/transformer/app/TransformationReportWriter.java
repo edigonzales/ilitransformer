@@ -33,12 +33,14 @@ public final class TransformationReportWriter {
             List<ValidationResult> validations,
             Duration elapsed,
             Map<String, String> modelVersions,
-            ExecutionMetricsSnapshot metricsSnapshot)
+            ExecutionMetricsSnapshot metricsSnapshot,
+            RunProfileSnapshot runProfile)
             throws IOException {
         Files.createDirectories(outputPath.getParent());
         JSON_MAPPER.writeValue(
                 outputPath.toFile(),
-                buildReportMap(plan, result, diagnostics, validations, elapsed, modelVersions, metricsSnapshot));
+                buildReportMap(
+                        plan, result, diagnostics, validations, elapsed, modelVersions, metricsSnapshot, runProfile));
     }
 
     public void writeMarkdown(
@@ -49,12 +51,14 @@ public final class TransformationReportWriter {
             List<ValidationResult> validations,
             Duration elapsed,
             Map<String, String> modelVersions,
-            ExecutionMetricsSnapshot metricsSnapshot)
+            ExecutionMetricsSnapshot metricsSnapshot,
+            RunProfileSnapshot runProfile)
             throws IOException {
         Files.createDirectories(outputPath.getParent());
         Files.writeString(
                 outputPath,
-                buildMarkdown(plan, result, diagnostics, validations, elapsed, modelVersions, metricsSnapshot));
+                buildMarkdown(
+                        plan, result, diagnostics, validations, elapsed, modelVersions, metricsSnapshot, runProfile));
     }
 
     // -- JSON ---------------------------------------------------------------
@@ -66,13 +70,22 @@ public final class TransformationReportWriter {
             List<ValidationResult> validations,
             Duration elapsed,
             Map<String, String> modelVersions,
-            ExecutionMetricsSnapshot metricsSnapshot) {
+            ExecutionMetricsSnapshot metricsSnapshot,
+            RunProfileSnapshot runProfile) {
 
         Map<String, Object> report = new LinkedHashMap<>();
         report.put("name", plan.name());
         report.put("direction", plan.direction());
         report.put("failPolicy", plan.failPolicy().name().toLowerCase());
         report.put("elapsedMs", elapsed.toMillis());
+        if (runProfile != null) {
+            Map<String, Object> run = new LinkedHashMap<>();
+            run.put("compilePrepareMs", runProfile.compilePrepareMs());
+            run.put("validationMs", runProfile.validationMs());
+            run.put("reportWriteMs", runProfile.reportWriteMs());
+            run.put("totalRunMs", runProfile.totalRunMs());
+            report.put("runProfile", run);
+        }
 
         Map<String, Object> counts = new LinkedHashMap<>();
         counts.put("sourceRecordsRead", result.sourceRecordsRead());
@@ -90,10 +103,28 @@ public final class TransformationReportWriter {
         if (metricsSnapshot != null && metricsSnapshot.elapsedMillis() > 0) {
             Map<String, Object> perf = new LinkedHashMap<>();
             perf.put("elapsedMs", metricsSnapshot.elapsedMillis());
+            perf.put("sourceIndexMs", metricsSnapshot.sourceIndexMs());
+            perf.put("ruleExecutionMs", metricsSnapshot.ruleExecutionMs());
+            perf.put("referenceResolutionMs", metricsSnapshot.referenceResolutionMs());
+            perf.put("outputWriteMs", metricsSnapshot.outputWriteMs());
             perf.put("joinLookups", metricsSnapshot.joinLookups());
             perf.put("bagLookups", metricsSnapshot.bagLookups());
             perf.put("ruleMatches", metricsSnapshot.ruleMatches());
             perf.put("targetsByClass", metricsSnapshot.targetsByClass());
+            if (!metricsSnapshot.rules().isEmpty()) {
+                List<Map<String, Object>> ruleMaps = new ArrayList<>();
+                for (var rule : metricsSnapshot.rules()) {
+                    Map<String, Object> rm = new LinkedHashMap<>();
+                    rm.put("ruleId", rule.ruleId());
+                    rm.put("sourceRecordsVisited", rule.sourceRecordsVisited());
+                    rm.put("matches", rule.matches());
+                    rm.put("filtered", rule.filtered());
+                    rm.put("targetsCreated", rule.targetsCreated());
+                    rm.put("elapsedMs", rule.elapsedMillis());
+                    ruleMaps.add(rm);
+                }
+                perf.put("rules", ruleMaps);
+            }
             report.put("performance", perf);
         }
 
@@ -140,7 +171,8 @@ public final class TransformationReportWriter {
             List<ValidationResult> validations,
             Duration elapsed,
             Map<String, String> modelVersions,
-            ExecutionMetricsSnapshot metricsSnapshot) {
+            ExecutionMetricsSnapshot metricsSnapshot,
+            RunProfileSnapshot runProfile) {
 
         StringBuilder sb = new StringBuilder();
         sb.append("# Transformation Report\n\n");
@@ -151,6 +183,20 @@ public final class TransformationReportWriter {
                 .append(plan.failPolicy().name().toLowerCase())
                 .append("\n\n");
         sb.append("**Elapsed:** ").append(formatDuration(elapsed)).append("\n\n");
+
+        if (runProfile != null) {
+            sb.append("## Run Profile\n\n");
+            sb.append("| Metric | Value |\n");
+            sb.append("|--------|-------|\n");
+            sb.append("| Compile/prepare (ms) | ")
+                    .append(runProfile.compilePrepareMs())
+                    .append(" |\n");
+            sb.append("| Validation (ms) | ").append(runProfile.validationMs()).append(" |\n");
+            sb.append("| Report write (ms) | ")
+                    .append(runProfile.reportWriteMs())
+                    .append(" |\n");
+            sb.append("| Total run (ms) | ").append(runProfile.totalRunMs()).append(" |\n\n");
+        }
 
         sb.append("## Counts\n\n");
         sb.append("| Metric | Value |\n");
@@ -174,6 +220,18 @@ public final class TransformationReportWriter {
             sb.append("| Elapsed (ms) | ")
                     .append(metricsSnapshot.elapsedMillis())
                     .append(" |\n");
+            sb.append("| Source index (ms) | ")
+                    .append(metricsSnapshot.sourceIndexMs())
+                    .append(" |\n");
+            sb.append("| Rule execution (ms) | ")
+                    .append(metricsSnapshot.ruleExecutionMs())
+                    .append(" |\n");
+            sb.append("| Reference resolution (ms) | ")
+                    .append(metricsSnapshot.referenceResolutionMs())
+                    .append(" |\n");
+            sb.append("| Output write (ms) | ")
+                    .append(metricsSnapshot.outputWriteMs())
+                    .append(" |\n");
             sb.append("| Join lookups | ").append(metricsSnapshot.joinLookups()).append(" |\n");
             sb.append("| BAG lookups | ").append(metricsSnapshot.bagLookups()).append(" |\n");
             sb.append("| Rule matches | ").append(metricsSnapshot.ruleMatches()).append(" |\n");
@@ -188,6 +246,27 @@ public final class TransformationReportWriter {
                 }
             }
             sb.append("\n");
+            if (!metricsSnapshot.rules().isEmpty()) {
+                sb.append("### Rules\n\n");
+                sb.append("| Rule | Visited | Matches | Filtered | Targets | Elapsed (ms) |\n");
+                sb.append("|------|---------|---------|----------|---------|--------------|\n");
+                for (var rule : metricsSnapshot.rules()) {
+                    sb.append("| ")
+                            .append(escape(rule.ruleId()))
+                            .append(" | ")
+                            .append(rule.sourceRecordsVisited())
+                            .append(" | ")
+                            .append(rule.matches())
+                            .append(" | ")
+                            .append(rule.filtered())
+                            .append(" | ")
+                            .append(rule.targetsCreated())
+                            .append(" | ")
+                            .append(rule.elapsedMillis())
+                            .append(" |\n");
+                }
+                sb.append("\n");
+            }
         }
 
         if (!diagnostics.all().isEmpty()) {

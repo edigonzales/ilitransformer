@@ -46,7 +46,7 @@ public final class RunBundleCommand implements Callable<Integer> {
     private Path repoRoot;
 
     @Option(
-            names = {"--no-validate"},
+            names = {"--validate"},
             negatable = true,
             description = "Run ilivalidator on the output after transformation (default: from manifest)")
     private Boolean validate;

@@ -213,6 +213,7 @@ public final class TransformationEngine {
             throws Exception {
         dispatchIndex = RuleDispatchIndex.build(plan);
 
+        long sourceIndexStart = System.nanoTime();
         sourceIndexingService.indexSources(
                 plan,
                 readerFactoryById,
@@ -222,19 +223,27 @@ public final class TransformationEngine {
                 parentChildIndex,
                 diagnostics,
                 metrics);
+        metrics.recordSourceIndexDuration(System.nanoTime() - sourceIndexStart);
 
         expandedTargets = new LinkedHashMap<>();
+        long ruleExecutionStart = System.nanoTime();
         RuleExecutionService.RuleExecutionResult execResult = ruleExecutionService.executeRules(
                 plan, dispatchIndex, stateStore, sourceLookupIndex, parentChildIndex, diagnostics, metrics);
+        metrics.recordRuleExecutionDuration(System.nanoTime() - ruleExecutionStart);
 
+        long referenceResolutionStart = System.nanoTime();
         if (referenceResolutionService != null && referenceIndex != null) {
             referenceResolutionService.resolveAll(plan, stateStore, referenceIndex, diagnostics);
         } else {
             resolveDeferredRefs(plan);
             checkRequiredRefs(plan);
         }
+        metrics.recordReferenceResolutionDuration(System.nanoTime() - referenceResolutionStart);
 
+        long outputWriteStart = System.nanoTime();
         long written = outputWritingService.writeOutputs(writersByOutputId, execResult.objectsByOutputAndBasket());
+        metrics.recordOutputWriteDuration(System.nanoTime() - outputWriteStart);
+        metrics.recordWritten(written);
 
         ExecutionMetricsSnapshot snapshot = metrics.snapshot();
         return buildResult(plan, written, snapshot);

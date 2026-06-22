@@ -14,6 +14,11 @@ public final class ExecutionMetrics {
     private long bagLookups;
     private long ruleMatches;
     private final Map<String, Long> targetsByClass = new LinkedHashMap<>();
+    private long sourceIndexNanos;
+    private long ruleExecutionNanos;
+    private long referenceResolutionNanos;
+    private long outputWriteNanos;
+    private final Map<String, MutableRuleMetrics> ruleMetrics = new LinkedHashMap<>();
 
     public void recordReadStart() {
         readStartMs = System.currentTimeMillis();
@@ -24,8 +29,39 @@ public final class ExecutionMetrics {
         sourceRecordsRead = recordCount;
     }
 
+    public void recordSourceIndexDuration(long nanos) {
+        sourceIndexNanos += Math.max(0, nanos);
+    }
+
+    public void recordRuleExecutionDuration(long nanos) {
+        ruleExecutionNanos += Math.max(0, nanos);
+    }
+
+    public void recordReferenceResolutionDuration(long nanos) {
+        referenceResolutionNanos += Math.max(0, nanos);
+    }
+
+    public void recordOutputWriteDuration(long nanos) {
+        outputWriteNanos += Math.max(0, nanos);
+    }
+
     public void recordRuleMatch(String ruleId) {
         ruleMatches++;
+    }
+
+    public void recordRuleSourceRecordVisited(String ruleId) {
+        if (ruleId == null || ruleId.isBlank()) return;
+        ruleMetrics(ruleId).sourceRecordsVisited++;
+    }
+
+    public void recordRuleExecution(
+            String ruleId, long elapsedNanos, long matches, long filtered, long targetsCreated) {
+        if (ruleId == null || ruleId.isBlank()) return;
+        MutableRuleMetrics metrics = ruleMetrics(ruleId);
+        metrics.elapsedNanos += Math.max(0, elapsedNanos);
+        metrics.matches += Math.max(0, matches);
+        metrics.filtered += Math.max(0, filtered);
+        metrics.targetsCreated += Math.max(0, targetsCreated);
     }
 
     public void recordJoinLookup() {
@@ -49,8 +85,13 @@ public final class ExecutionMetrics {
         targetsWritten++;
     }
 
+    public void recordWritten(long count) {
+        targetsWritten += Math.max(0, count);
+    }
+
     public ExecutionMetricsSnapshot snapshot() {
-        long elapsed = readEndMs > 0 ? readEndMs - readStartMs : 0;
+        long phaseElapsed = sourceIndexNanos + ruleExecutionNanos + referenceResolutionNanos + outputWriteNanos;
+        long elapsed = phaseElapsed > 0 ? toMillis(phaseElapsed) : readEndMs > 0 ? readEndMs - readStartMs : 0;
         return new ExecutionMetricsSnapshot(
                 sourceRecordsRead,
                 sourceRecordsFiltered,
@@ -60,6 +101,11 @@ public final class ExecutionMetrics {
                 bagLookups,
                 ruleMatches,
                 new LinkedHashMap<>(targetsByClass),
+                toMillis(sourceIndexNanos),
+                toMillis(ruleExecutionNanos),
+                toMillis(referenceResolutionNanos),
+                toMillis(outputWriteNanos),
+                ruleMetrics.values().stream().map(MutableRuleMetrics::snapshot).toList(),
                 elapsed);
     }
 
@@ -93,5 +139,31 @@ public final class ExecutionMetrics {
 
     public Map<String, Long> getTargetsByClass() {
         return new LinkedHashMap<>(targetsByClass);
+    }
+
+    private MutableRuleMetrics ruleMetrics(String ruleId) {
+        return ruleMetrics.computeIfAbsent(ruleId, MutableRuleMetrics::new);
+    }
+
+    private static long toMillis(long nanos) {
+        return nanos <= 0 ? 0 : Math.max(1, java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(nanos));
+    }
+
+    private static final class MutableRuleMetrics {
+        private final String ruleId;
+        private long sourceRecordsVisited;
+        private long matches;
+        private long filtered;
+        private long targetsCreated;
+        private long elapsedNanos;
+
+        private MutableRuleMetrics(String ruleId) {
+            this.ruleId = ruleId;
+        }
+
+        private RuleMetricsSnapshot snapshot() {
+            return new RuleMetricsSnapshot(
+                    ruleId, sourceRecordsVisited, matches, filtered, targetsCreated, toMillis(elapsedNanos));
+        }
     }
 }

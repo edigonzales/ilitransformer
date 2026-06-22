@@ -2,6 +2,7 @@ package guru.interlis.transformer.engine;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public record ExecutionMetricsSnapshot(
@@ -13,9 +14,15 @@ public record ExecutionMetricsSnapshot(
         long bagLookups,
         long ruleMatches,
         Map<String, Long> targetsByClass,
+        long sourceIndexMs,
+        long ruleExecutionMs,
+        long referenceResolutionMs,
+        long outputWriteMs,
+        List<RuleMetricsSnapshot> rules,
         long elapsedMillis) {
     public ExecutionMetricsSnapshot {
         targetsByClass = Collections.unmodifiableMap(new LinkedHashMap<>(targetsByClass));
+        rules = List.copyOf(rules);
     }
 
     public String summary() {
