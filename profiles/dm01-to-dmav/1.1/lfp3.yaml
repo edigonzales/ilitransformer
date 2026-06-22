@@ -82,7 +82,7 @@ mapping:
         Hoehengenauigkeit: "div(p.HoeheGen, 100.0)"
         IstHoehenzuverlaessig: "enumMap(p.HoeheZuv, 'Zuverlaessigkeit_DM01_DMAV')"
         Punktzeichen: "enumMap(p.Punktzeichen, 'Versicherungsart_DM01_DMAV')"
-        SymbolOri: "lookup('DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Symbol', 'LFP3Symbol_von', oid(p), 'Ori')"
+        SymbolOri: "lookupOptional('DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Symbol', 'LFP3Symbol_von', oid(p), 'Ori')"
         Grenzpunktfunktion: "#keine"
         AktiverUnterhalt: "true"
       bags:
