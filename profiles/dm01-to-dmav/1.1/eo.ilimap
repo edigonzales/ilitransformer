@@ -126,7 +126,7 @@ mapping v2 "dm01-to-dmav-eo" {
       Qualitaetsstandard = eo.Qualitaet;
       Einzelobjektart = enumMap(eo.Art, EOArt_DM01_DMAV);
       Objektstatus = #real;
-      EGID = lookup("DM01AVCH24LV95D.Einzelobjekte.Objektnummer", "Objektnummer_von", oid(eo), "GWR_EGID");
+      EGID = lookupOptional("DM01AVCH24LV95D.Einzelobjekte.Objektnummer", "Objektnummer_von", oid(eo), "GWR_EGID");
     }
 
     bag Flaechenelement {
@@ -227,7 +227,7 @@ mapping v2 "dm01-to-dmav-eo" {
       Qualitaetsstandard = eo.Qualitaet;
       Einzelobjektart = enumMap(eo.Art, EOArt_DM01_DMAV);
       Objektstatus = #projektiert;
-      EGID = lookup("DM01AVCH24LV95D.Einzelobjekte.Objektnummer", "Objektnummer_von", oid(eo), "GWR_EGID");
+      EGID = lookupOptional("DM01AVCH24LV95D.Einzelobjekte.Objektnummer", "Objektnummer_von", oid(eo), "GWR_EGID");
     }
 
     bag Flaechenelement {

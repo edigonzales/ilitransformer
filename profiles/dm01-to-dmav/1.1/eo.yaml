@@ -139,7 +139,7 @@ mapping:
         Qualitaetsstandard: "eo.Qualitaet"
         Einzelobjektart: "enumMap(eo.Art, 'EOArt_DM01_DMAV')"
         Objektstatus: "#real"
-        EGID: "lookup('DM01AVCH24LV95D.Einzelobjekte.Objektnummer', 'Objektnummer_von', oid(eo), 'GWR_EGID')"
+        EGID: "lookupOptional('DM01AVCH24LV95D.Einzelobjekte.Objektnummer', 'Objektnummer_von', oid(eo), 'GWR_EGID')"
       bags:
         Flaechenelement:
           from:
@@ -275,7 +275,7 @@ mapping:
         Qualitaetsstandard: "eo.Qualitaet"
         Einzelobjektart: "enumMap(eo.Art, 'EOArt_DM01_DMAV')"
         Objektstatus: "#projektiert"
-        EGID: "lookup('DM01AVCH24LV95D.Einzelobjekte.Objektnummer', 'Objektnummer_von', oid(eo), 'GWR_EGID')"
+        EGID: "lookupOptional('DM01AVCH24LV95D.Einzelobjekte.Objektnummer', 'Objektnummer_von', oid(eo), 'GWR_EGID')"
       bags:
         Flaechenelement:
           from:

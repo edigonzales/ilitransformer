@@ -80,4 +80,5 @@ Gemäss SPEC §6:
 - `status-matrix.md`: Mapping-Status pro Attribut
 - `lfp3-pilot.md`: LFP3-Pilot-Dokumentation
 - `lossiness.md`: Informationsverlust-Dokumentation
+- `improvement-notes.md`: Hergeleitete Verbesserungsvorschlaege aus Full-Run-Beobachtungen
 - `open-questions.md`: Offene fachliche Fragen

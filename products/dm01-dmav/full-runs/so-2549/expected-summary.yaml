@@ -8,7 +8,7 @@ counts:
   targetsCreated: 937
   targetsWritten: 937
   errors: 0
-  warnings: 204
+  warnings: 0
 includedTopics:
 - "bb"
 - "dbv"
@@ -65,14 +65,5 @@ targetsByClass:
   KGKCGC_FPDS2_V1_1.FPDS2.UebersichtGeodienst: 1
   KGKCGC_FPDS2_V1_1.FPDS2.UebersichtMassstab: 1
   KGKCGC_FPDS2_V1_1.FPDS2.Zustaendigkeit: 1
-warningsByCode:
-  ILITRF-LOOKUP-NO-MATCH: 204
-warningsByRule:
-  eo-einzelobjekt-gueltig:
-    ILITRF-LOOKUP-NO-MATCH: 54
-  eo-einzelobjekt-projektiert:
-    ILITRF-LOOKUP-NO-MATCH: 7
-  gs-gs-nachfuehrung-gem-gueltig:
-    ILITRF-LOOKUP-NO-MATCH: 1
-  gs-hoheitsgrenzpunkt-gem-gueltig:
-    ILITRF-LOOKUP-NO-MATCH: 142
+warningsByCode: {}
+warningsByRule: {}

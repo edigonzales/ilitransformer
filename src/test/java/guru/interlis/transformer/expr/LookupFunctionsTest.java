@@ -83,6 +83,82 @@ class LookupFunctionsTest {
     }
 
     @Test
+    void lookupOptionalReturnsValueWithoutWarnings() {
+        InMemorySourceLookupIndex index = new InMemorySourceLookupIndex();
+        index.index(sourceRecord(
+                "dm01", "DM01.BB.Gebaeudenummer", "child-1", "Gebaeudenummer_von", "2618", "GWR_EGID", "1319100"));
+
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "test").withLookupIndex(index);
+
+        Value value = new ExpressionEngine()
+                .evaluate("lookupOptional('DM01.BB.Gebaeudenummer', 'Gebaeudenummer_von', '2618', 'GWR_EGID')", ctx);
+
+        assertThat(value.asText()).isEqualTo("1319100");
+        assertThat(diagnostics.all()).isEmpty();
+    }
+
+    @Test
+    void lookupOptionalReturnsNullWithoutNoMatchWarning() {
+        InMemorySourceLookupIndex index = new InMemorySourceLookupIndex();
+
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "test").withLookupIndex(index);
+
+        Value value = new ExpressionEngine()
+                .evaluate("lookupOptional('DM01.BB.Gebaeudenummer', 'Gebaeudenummer_von', '9999', 'GWR_EGID')", ctx);
+
+        assertThat(value).isEqualTo(NullValue.INSTANCE);
+        assertThat(diagnostics.all()).isEmpty();
+    }
+
+    @Test
+    void lookupOptionalReportsMissingIndex() {
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "test");
+
+        Value value = new ExpressionEngine()
+                .evaluate("lookupOptional('DM01.BB.Gebaeudenummer', 'Gebaeudenummer_von', '2618', 'GWR_EGID')", ctx);
+
+        assertThat(value).isEqualTo(NullValue.INSTANCE);
+        assertThat(diagnostics.errors()).isGreaterThan(0);
+        assertThat(diagnostics.all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.LOOKUP_INDEX_MISSING)
+                        && d.severity() == guru.interlis.transformer.diag.Severity.ERROR);
+    }
+
+    @Test
+    void lookupOptionalReportsWrongArgCount() {
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "test");
+
+        new ExpressionEngine().evaluate("lookupOptional('DM01.BB.Gebaeudenummer')", ctx);
+
+        assertThat(diagnostics.errors()).isGreaterThan(0);
+        assertThat(diagnostics.all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.EXPR_WRONG_ARG_COUNT)
+                        && d.severity() == guru.interlis.transformer.diag.Severity.ERROR);
+    }
+
+    @Test
+    void lookupOptionalStillWarnsOnAmbiguousDifferentValues() {
+        InMemorySourceLookupIndex index = new InMemorySourceLookupIndex();
+        index.index(sourceRecord(
+                "dm01", "DM01.BB.Gebaeudenummer", "child-1", "Gebaeudenummer_von", "2618", "GWR_EGID", "1319100"));
+        index.index(sourceRecord(
+                "dm01", "DM01.BB.Gebaeudenummer", "child-2", "Gebaeudenummer_von", "2618", "GWR_EGID", "1319101"));
+
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "test").withLookupIndex(index);
+
+        Value value = new ExpressionEngine()
+                .evaluate("lookupOptional('DM01.BB.Gebaeudenummer', 'Gebaeudenummer_von', '2618', 'GWR_EGID')", ctx);
+
+        assertThat(value.asText()).isEqualTo("1319100");
+        assertThat(diagnostics.all()).extracting(d -> d.code()).containsExactly(DiagnosticCode.LOOKUP_AMBIGUOUS);
+    }
+
+    @Test
     void lookupInRestrictsLookupToInputId() {
         InMemorySourceLookupIndex index = new InMemorySourceLookupIndex();
         index.index(sourceRecord(

@@ -117,7 +117,7 @@ mapping:
         Bodenbedeckungsart: "enumMap(bb.Art, 'Bodenbedeckungsart_DM01_DMAV')"
         Fiktiv: "false"
         Objektstatus: "#real"
-        EGID: "if(bb.Art == #Gebaeude, lookup('DM01AVCH24LV95D.Bodenbedeckung.Gebaeudenummer', 'Gebaeudenummer_von', oid(bb), 'GWR_EGID'), null)"
+        EGID: "if(bb.Art == #Gebaeude, lookupOptional('DM01AVCH24LV95D.Bodenbedeckung.Gebaeudenummer', 'Gebaeudenummer_von', oid(bb), 'GWR_EGID'), null)"
       bags:
         Objektnummer:
           from:
@@ -202,7 +202,7 @@ mapping:
         Bodenbedeckungsart: "enumMap(bb.Art, 'Bodenbedeckungsart_DM01_DMAV')"
         Fiktiv: "false"
         Objektstatus: "#projektiert"
-        EGID: "if(bb.Art == #Gebaeude, lookup('DM01AVCH24LV95D.Bodenbedeckung.ProjGebaeudenummer', 'ProjGebaeudenummer_von', oid(bb), 'GWR_EGID'), null)"
+        EGID: "if(bb.Art == #Gebaeude, lookupOptional('DM01AVCH24LV95D.Bodenbedeckung.ProjGebaeudenummer', 'ProjGebaeudenummer_von', oid(bb), 'GWR_EGID'), null)"
       bags:
         Objektnummer:
           from:

@@ -53,6 +53,16 @@ public final class LookupFunctions {
                 LookupFunctions::lookup);
 
         registry.register(
+                "lookupOptional",
+                TypeInfo.UNKNOWN,
+                List.of(
+                        new FunctionDef.FunctionParam("classPath", TypeInfo.TEXT),
+                        new FunctionDef.FunctionParam("keyAttr", TypeInfo.TEXT),
+                        new FunctionDef.FunctionParam("keyValue", TypeInfo.TEXT),
+                        new FunctionDef.FunctionParam("returnAttr", TypeInfo.TEXT)),
+                LookupFunctions::lookupOptional);
+
+        registry.register(
                 "lookupIn",
                 TypeInfo.UNKNOWN,
                 List.of(
@@ -147,7 +157,29 @@ public final class LookupFunctions {
         String keyValue = args.get(2).asText();
         String returnAttr = args.get(3).asText();
 
-        return lookupInternal(null, classPath, keyAttr, keyValue, returnAttr, ctx, "lookup");
+        return lookupInternal(null, classPath, keyAttr, keyValue, returnAttr, ctx, "lookup", true);
+    }
+
+    static Value lookupOptional(List<Value> args, EvalContext ctx) {
+        if (args.size() < 4) {
+            if (ctx.diagnostics() != null) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_WRONG_ARG_COUNT,
+                                Severity.ERROR,
+                                "lookupOptional() requires 4 arguments: classPath, keyAttr, keyValue, returnAttr",
+                                ctx.ruleId(),
+                                "Use lookupOptional('Class.Path', 'KeyAttr', oid(alias), 'ReturnAttr')"));
+            }
+            return NullValue.INSTANCE;
+        }
+
+        String classPath = args.get(0).asText();
+        String keyAttr = args.get(1).asText();
+        String keyValue = args.get(2).asText();
+        String returnAttr = args.get(3).asText();
+
+        return lookupInternal(null, classPath, keyAttr, keyValue, returnAttr, ctx, "lookupOptional", false);
     }
 
     static Value lookupIn(List<Value> args, EvalContext ctx) {
@@ -170,7 +202,7 @@ public final class LookupFunctions {
         String keyValue = args.get(3).asText();
         String returnAttr = args.get(4).asText();
 
-        return lookupInternal(inputId, classPath, keyAttr, keyValue, returnAttr, ctx, "lookupIn");
+        return lookupInternal(inputId, classPath, keyAttr, keyValue, returnAttr, ctx, "lookupIn", true);
     }
 
     static Value existsIn(List<Value> args, EvalContext ctx) {
@@ -231,7 +263,8 @@ public final class LookupFunctions {
             String keyValue,
             String returnAttr,
             EvalContext ctx,
-            String functionName) {
+            String functionName,
+            boolean warnOnNoMatch) {
         SourceLookupIndex index = ctx.lookupIndex();
         if (index == null) {
             if (ctx.diagnostics() != null) {
@@ -250,7 +283,7 @@ public final class LookupFunctions {
 
         List<SourceRecord> hits = index.lookup(key);
         if (hits.isEmpty()) {
-            if (ctx.diagnostics() != null) {
+            if (warnOnNoMatch && ctx.diagnostics() != null) {
                 ctx.diagnostics()
                         .add(new Diagnostic(
                                 DiagnosticCode.LOOKUP_NO_MATCH,

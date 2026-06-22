@@ -150,8 +150,11 @@ The authoritative list of built-in functions is generated from `FunctionRegistry
 | `oid` | `(alias) → text` | Returns the OID of the source object identified by the alias |
 | `bagFirst` | `(alias, bagAttr, valueAttr) → text` | Returns the first value from a BAG attribute of a source object |
 | `lookup` | `(classPath, keyAttr, keyValue, returnAttr) → text` | Compatibility function. Searches `SourceLookupIndex` across **all inputs** (unscoped). Returns null + warning on no match. Returns first value + warning on multiple matches with different return values. Return type is `UNKNOWN` at compile time. Prefer structural `joins` for modelled relationships. |
+| `lookupOptional` | `(classPath, keyAttr, keyValue, returnAttr) → text` | Optional variant of `lookup` for expected 0..1 child/helper records. Searches `SourceLookupIndex` across **all inputs** (unscoped). Returns null without `LOOKUP_NO_MATCH` diagnostics on no match. Ambiguous matches with different return values still warn. Return type is `UNKNOWN` at compile time. |
 | `lookupIn` | `(inputId, classPath, keyAttr, keyValue, returnAttr) → text` | Scoped variant of `lookup`. Searches `SourceLookupIndex` filtered to the given `inputId`. Same warning semantics as `lookup`. Return type is `UNKNOWN` at compile time. |
 | `existsIn` | `(inputId, classPath, keyAttr, keyValue[, keyAttr, keyValue...]) → boolean` | Scoped existence check. Searches `SourceLookupIndex` filtered to `inputId`; additional key pairs must all match. Returns `false` without `LOOKUP_NO_MATCH` diagnostics when no record exists. |
+
+Use `lookup()` when a missing match should be visible as a data-quality warning. Use `lookupOptional()` when the source model allows the child/helper record to be absent and a null target value is acceptable. Use `existsIn()` for filters and guards that only need to test whether a matching source record exists.
 
 ### Geometry functions
 

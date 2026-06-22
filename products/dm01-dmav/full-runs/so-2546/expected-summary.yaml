@@ -8,7 +8,7 @@ counts:
   targetsCreated: 61670
   targetsWritten: 61670
   errors: 0
-  warnings: 12908
+  warnings: 0
 includedTopics:
 - "bb"
 - "eo"
@@ -80,24 +80,5 @@ targetsByClass:
   KGKCGC_FPDS2_V1_1.FPDS2.UebersichtGeodienst: 33
   KGKCGC_FPDS2_V1_1.FPDS2.UebersichtMassstab: 33
   KGKCGC_FPDS2_V1_1.FPDS2.Zustaendigkeit: 33
-warningsByCode:
-  ILITRF-LOOKUP-NO-MATCH: 12908
-warningsByRule:
-  bb-boflaeche-gueltig:
-    ILITRF-LOOKUP-NO-MATCH: 3
-  bb-boflaeche-projektiert:
-    ILITRF-LOOKUP-NO-MATCH: 91
-  eo-einzelobjekt-gueltig:
-    ILITRF-LOOKUP-NO-MATCH: 10020
-  gs-grenzpunkt-gueltig:
-    ILITRF-LOOKUP-NO-MATCH: 1517
-  gs-grenzpunkt-projektiert:
-    ILITRF-LOOKUP-NO-MATCH: 18
-  gs-gs-nachfuehrung-gem-gueltig:
-    ILITRF-LOOKUP-NO-MATCH: 3
-  gs-hoheitsgrenzpunkt-gem-gueltig:
-    ILITRF-LOOKUP-NO-MATCH: 19
-  gs-hoheitsgrenzpunkt-ls-gueltig:
-    ILITRF-LOOKUP-NO-MATCH: 588
-  lfp3-lfp3:
-    ILITRF-LOOKUP-NO-MATCH: 649
+warningsByCode: {}
+warningsByRule: {}

@@ -96,7 +96,7 @@ mapping v2 "dm01-to-dmav-gs" {
 
   rule gs-nachfuehrung-gem-gueltig {
     target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung";
-    source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung" where if(notDefined(gem.Gueltigkeit), true, gem.Gueltigkeit != #projektiert) and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent;
+    source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung" where if(notDefined(gem.Gueltigkeit), true, gem.Gueltigkeit != #projektiert) and not(existsIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent', gem.NBIdent));
     identity gem.NBIdent, gem.Identifikator;
 
     assign {
@@ -111,7 +111,7 @@ mapping v2 "dm01-to-dmav-gs" {
 
   rule gs-nachfuehrung-gem-projektiert {
     target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung";
-    source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung" where gem.Gueltigkeit == #projektiert and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent;
+    source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung" where gem.Gueltigkeit == #projektiert and not(existsIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent', gem.NBIdent));
     identity gem.NBIdent, gem.Identifikator;
 
     assign {
@@ -141,7 +141,7 @@ mapping v2 "dm01-to-dmav-gs" {
       IstExaktDefiniert = enumMap(gp.ExaktDefiniert, JaNein_DM01_DMAV);
       IstHoheitsgrenzpunkt = false;
       IstHoheitsgrenzsteinAlt = enumMap(gp.HoheitsgrenzsteinAlt, ja_nein_DM01_DMAV);
-      SymbolOri = lookup('DM01AVCH24LV95D.Liegenschaften.GrenzpunktSymbol', 'GrenzpunktSymbol_von', oid(gp), 'Ori');
+      SymbolOri = lookupOptional('DM01AVCH24LV95D.Liegenschaften.GrenzpunktSymbol', 'GrenzpunktSymbol_von', oid(gp), 'Ori');
     }
 
     ref Entstehung {
@@ -169,7 +169,7 @@ mapping v2 "dm01-to-dmav-gs" {
       IstExaktDefiniert = enumMap(gp.ExaktDefiniert, JaNein_DM01_DMAV);
       IstHoheitsgrenzpunkt = false;
       IstHoheitsgrenzsteinAlt = enumMap(gp.HoheitsgrenzsteinAlt, ja_nein_DM01_DMAV);
-      SymbolOri = lookup('DM01AVCH24LV95D.Liegenschaften.GrenzpunktSymbol', 'GrenzpunktSymbol_von', oid(gp), 'Ori');
+      SymbolOri = lookupOptional('DM01AVCH24LV95D.Liegenschaften.GrenzpunktSymbol', 'GrenzpunktSymbol_von', oid(gp), 'Ori');
     }
 
     ref Entstehung {
@@ -199,7 +199,7 @@ mapping v2 "dm01-to-dmav-gs" {
       IstExaktDefiniert = if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, JaNein_DM01_DMAV), false);
       IstHoheitsgrenzpunkt = true;
       IstHoheitsgrenzsteinAlt = enumMap(hgp.Hoheitsgrenzstein, ja_nein_DM01_DMAV);
-      SymbolOri = lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
+      SymbolOri = lookupOptional('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
     }
 
     ref Entstehung {
@@ -229,7 +229,7 @@ mapping v2 "dm01-to-dmav-gs" {
       IstExaktDefiniert = if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, JaNein_DM01_DMAV), false);
       IstHoheitsgrenzpunkt = true;
       IstHoheitsgrenzsteinAlt = enumMap(hgp.Hoheitsgrenzstein, ja_nein_DM01_DMAV);
-      SymbolOri = lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
+      SymbolOri = lookupOptional('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
     }
 
     ref Entstehung {
@@ -244,7 +244,7 @@ mapping v2 "dm01-to-dmav-gs" {
     target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt";
     source hgp from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt";
     source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung";
-    where if(notDefined(gem.Gueltigkeit), true, gem.Gueltigkeit != #projektiert) and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent;
+    where if(notDefined(gem.Gueltigkeit), true, gem.Gueltigkeit != #projektiert) and not(existsIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent', gem.NBIdent));
     join inner hgp to gem on eq(hgp.Entstehung, gem);
     identity hgp.Identifikator;
 
@@ -257,7 +257,7 @@ mapping v2 "dm01-to-dmav-gs" {
       IstExaktDefiniert = if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, JaNein_DM01_DMAV), false);
       IstHoheitsgrenzpunkt = true;
       IstHoheitsgrenzsteinAlt = enumMap(hgp.Hoheitsgrenzstein, ja_nein_DM01_DMAV);
-      SymbolOri = lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
+      SymbolOri = lookupOptional('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
     }
 
     ref Entstehung {
@@ -272,7 +272,7 @@ mapping v2 "dm01-to-dmav-gs" {
     target dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt";
     source hgp from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt";
     source gem from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung";
-    where gem.Gueltigkeit == #projektiert and coalesce(lookupIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent'), '') != gem.NBIdent;
+    where gem.Gueltigkeit == #projektiert and not(existsIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent', gem.NBIdent));
     join inner hgp to gem on eq(hgp.Entstehung, gem);
     identity hgp.Identifikator;
 
@@ -285,7 +285,7 @@ mapping v2 "dm01-to-dmav-gs" {
       IstExaktDefiniert = if(coordEquals(hgp.Geometrie, hgp.Geometrie, 0.0), enumMap(hgp.ExaktDefiniert, JaNein_DM01_DMAV), false);
       IstHoheitsgrenzpunkt = true;
       IstHoheitsgrenzsteinAlt = enumMap(hgp.Hoheitsgrenzstein, ja_nein_DM01_DMAV);
-      SymbolOri = lookup('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
+      SymbolOri = lookupOptional('DM01AVCH24LV95D.Gemeindegrenzen.HoheitsgrenzpunktSymbol', 'HoheitsgrenzpunktSymbol_von', oid(hgp), 'Ori');
     }
 
     ref Entstehung {
