@@ -54,6 +54,11 @@ public final class BagTransformationService {
 
     public void embed(BagExecutionContext ctx) {
         BagPlan bag = ctx.plan();
+        if (isSyntheticFromParent(bag)) {
+            embedSyntheticFromParent(ctx);
+            return;
+        }
+
         Iom_jObject target = (Iom_jObject) ctx.target();
         TransformPlan plan = ctx.transformPlan();
 
@@ -128,12 +133,13 @@ public final class BagTransformationService {
             allSources.putAll(parentSources);
 
             EvalContext bagCtx = new EvalContext(
-                    allSources,
-                    ctx.diagnostics(),
-                    ctx.rule().ruleId(),
-                    plan.enumMaps(),
-                    ctx.geometryAdapter(),
-                    ctx.sourceAttributeTypes());
+                            allSources,
+                            ctx.diagnostics(),
+                            ctx.rule().ruleId(),
+                            plan.enumMaps(),
+                            ctx.geometryAdapter(),
+                            ctx.sourceAttributeTypes())
+                    .withLookupIndex(ctx.sourceLookupIndex());
 
             if (bag.whereExpression() != null
                     && bag.whereExpression().sourceText() != null
@@ -146,14 +152,15 @@ public final class BagTransformationService {
 
             Iom_jObject struct = new Iom_jObject(bag.structureName(), null);
 
-            Map<String, IomObject> assignSources = Map.of(bag.fromSource().alias(), bagSource);
+            Map<String, IomObject> assignSources = allSources;
             EvalContext assignCtx = new EvalContext(
-                    assignSources,
-                    ctx.diagnostics(),
-                    ctx.rule().ruleId(),
-                    plan.enumMaps(),
-                    ctx.geometryAdapter(),
-                    ctx.sourceAttributeTypes());
+                            assignSources,
+                            ctx.diagnostics(),
+                            ctx.rule().ruleId(),
+                            plan.enumMaps(),
+                            ctx.geometryAdapter(),
+                            ctx.sourceAttributeTypes())
+                    .withLookupIndex(ctx.sourceLookupIndex());
 
             for (AssignmentPlan ap : bag.assignments()) {
                 Value value = expressionEngine.evaluate(ap.expression(), assignCtx);
@@ -179,6 +186,7 @@ public final class BagTransformationService {
                             ctx.expandedTargets(),
                             ctx.geometryAdapter(),
                             ctx.sourceAttributeTypes(),
+                            ctx.sourceLookupIndex(),
                             ctx.referenceIndex());
                     embed(nestedCtx);
                 }
@@ -190,6 +198,51 @@ public final class BagTransformationService {
         for (IomObject struct : structures) {
             target.addattrobj(bag.bagAttrName(), struct);
         }
+    }
+
+    private static boolean isSyntheticFromParent(BagPlan bag) {
+        return bag.fromSource().sourceClass() == null
+                && (bag.fromSource().inputIds() == null
+                        || bag.fromSource().inputIds().isEmpty());
+    }
+
+    private void embedSyntheticFromParent(BagExecutionContext ctx) {
+        BagPlan bag = ctx.plan();
+        TransformPlan plan = ctx.transformPlan();
+        Iom_jObject target = (Iom_jObject) ctx.target();
+        String parentAlias = bag.parentAlias() != null && !bag.parentAlias().isBlank()
+                ? bag.parentAlias()
+                : ctx.parent().sourcePlan().alias();
+        IomObject parentSource = ctx.parent().sourceRecord().sourceObject();
+        Map<String, IomObject> sources = Map.of(parentAlias, parentSource);
+        EvalContext evalCtx = new EvalContext(
+                        sources,
+                        ctx.diagnostics(),
+                        ctx.rule().ruleId(),
+                        plan.enumMaps(),
+                        ctx.geometryAdapter(),
+                        ctx.sourceAttributeTypes())
+                .withLookupIndex(ctx.sourceLookupIndex());
+
+        if (bag.whereExpression() != null
+                && bag.whereExpression().sourceText() != null
+                && !bag.whereExpression().sourceText().isBlank()) {
+            Value whereResult = expressionEngine.evaluate(bag.whereExpression(), evalCtx);
+            if (!isFilterTruthy(whereResult)) {
+                return;
+            }
+        }
+
+        Iom_jObject struct = new Iom_jObject(bag.structureName(), null);
+        for (AssignmentPlan ap : bag.assignments()) {
+            Value value = expressionEngine.evaluate(ap.expression(), evalCtx);
+            if (value.isDefined()) {
+                setBagAttribute(struct, ap, value, ctx);
+            }
+        }
+
+        checkMandatoryAttributes(struct, bag, ctx.diagnostics());
+        target.addattrobj(bag.bagAttrName(), struct);
     }
 
     public void expand(BagExecutionContext ctx) {
@@ -297,12 +350,13 @@ public final class BagTransformationService {
                 assignSources.put(parentAlias, parentObj);
             }
             EvalContext assignCtx = new EvalContext(
-                    assignSources,
-                    ctx.diagnostics(),
-                    ctx.rule().ruleId(),
-                    plan.enumMaps(),
-                    ctx.geometryAdapter(),
-                    ctx.sourceAttributeTypes());
+                            assignSources,
+                            ctx.diagnostics(),
+                            ctx.rule().ruleId(),
+                            plan.enumMaps(),
+                            ctx.geometryAdapter(),
+                            ctx.sourceAttributeTypes())
+                    .withLookupIndex(ctx.sourceLookupIndex());
 
             for (AssignmentPlan ap : bag.assignments()) {
                 Value value = expressionEngine.evaluate(ap.expression(), assignCtx);

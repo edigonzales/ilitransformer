@@ -268,6 +268,9 @@ final class IlimapPrinter {
     private void printBag(IlimapBagBlock bag) {
         line("bag " + bag.id() + " {");
         indent(() -> {
+            if (bag.targetAttribute() != null) {
+                line("target " + identifierOrQuoted(bag.targetAttribute()) + ";");
+            }
             if (bag.from() != null) {
                 printBagFrom(bag.from());
             }
@@ -279,6 +282,9 @@ final class IlimapPrinter {
             }
             if (bag.maxItems() != null) {
                 line("maxItems " + bag.maxItems() + ";");
+            }
+            if (bag.where() != null) {
+                line("where " + bag.where().text().strip() + ";");
             }
             if (bag.parentRef() != null) {
                 printParentRef(bag.parentRef());

@@ -8,6 +8,7 @@ import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.state.ParentChildIndex;
 import guru.interlis.transformer.state.ReferenceIndex;
+import guru.interlis.transformer.state.SourceLookupIndex;
 import guru.interlis.transformer.state.StateStore;
 
 import ch.interlis.iom.IomObject;
@@ -27,4 +28,5 @@ public record BagExecutionContext(
         Map<String, Map<String, List<IomObject>>> expandedTargets,
         GeometryAdapter geometryAdapter,
         Map<String, Map<String, TypeInfo>> sourceAttributeTypes,
+        SourceLookupIndex sourceLookupIndex,
         ReferenceIndex referenceIndex) {}

@@ -151,12 +151,14 @@ The authoritative list of built-in functions is generated from `FunctionRegistry
 | `bagFirst` | `(alias, bagAttr, valueAttr) → text` | Returns the first value from a BAG attribute of a source object |
 | `lookup` | `(classPath, keyAttr, keyValue, returnAttr) → text` | Compatibility function. Searches `SourceLookupIndex` across **all inputs** (unscoped). Returns null + warning on no match. Returns first value + warning on multiple matches with different return values. Return type is `UNKNOWN` at compile time. Prefer structural `joins` for modelled relationships. |
 | `lookupIn` | `(inputId, classPath, keyAttr, keyValue, returnAttr) → text` | Scoped variant of `lookup`. Searches `SourceLookupIndex` filtered to the given `inputId`. Same warning semantics as `lookup`. Return type is `UNKNOWN` at compile time. |
+| `existsIn` | `(inputId, classPath, keyAttr, keyValue[, keyAttr, keyValue...]) → boolean` | Scoped existence check. Searches `SourceLookupIndex` filtered to `inputId`; additional key pairs must all match. Returns `false` without `LOOKUP_NO_MATCH` diagnostics when no record exists. |
 
 ### Geometry functions
 
 | Function | Signature | Description |
 |---|---|---|
 | `coordEquals` | `(coord1, coord2, tolerance) → boolean` | Returns true if two coordinates are within the given tolerance |
+| `pointOnSurface` | `(surface) → coord` | Returns an existing point-on-surface from a geometry value when available; otherwise derives a deterministic interior point from SURFACE/MULTISURFACE geometry. Returns null and reports `GEOM_AREA_POINT_MISSING` when no point can be derived. |
 
 ## Type system
 
@@ -191,4 +193,3 @@ The following are not yet supported in the expression engine:
 - Arithmetic operators (`+`, `-`, `*`, `/`) — use `div(...)` and `mul(...)` as functions. Additional arithmetic functions may be added later.
 - `lookupOne`/`lookupMany` (scoped StateStore lookups) — planned
 - Nested structure paths (`alias.structure.attribute`) — reserved. Use `bags`/`nestedBags` for BAG OF STRUCTURE mappings.
-- Geometry functions beyond `coordEquals` — partially supported via GeometryAdapter

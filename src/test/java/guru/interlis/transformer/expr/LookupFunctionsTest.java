@@ -133,6 +133,76 @@ class LookupFunctionsTest {
                         && d.severity() == guru.interlis.transformer.diag.Severity.ERROR);
     }
 
+    @Test
+    void existsInReturnsTrueWithoutLookupWarning() {
+        InMemorySourceLookupIndex index = new InMemorySourceLookupIndex();
+        index.index(sourceRecord(
+                "dm01", "DM01.BB.BoFlaecheSymbol", "symbol-1", "BoFlaecheSymbol_von", "bb-1", "Ori", "100.0"));
+
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "test").withLookupIndex(index);
+
+        Value value = new ExpressionEngine()
+                .evaluate("existsIn('dm01', 'DM01.BB.BoFlaecheSymbol', 'BoFlaecheSymbol_von', 'bb-1')", ctx);
+
+        assertThat(value).isEqualTo(BooleanValue.TRUE);
+        assertThat(diagnostics.all()).isEmpty();
+    }
+
+    @Test
+    void existsInReturnsFalseWithoutNoMatchWarning() {
+        InMemorySourceLookupIndex index = new InMemorySourceLookupIndex();
+
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "test").withLookupIndex(index);
+
+        Value value = new ExpressionEngine()
+                .evaluate("existsIn('dm01', 'DM01.BB.BoFlaecheSymbol', 'BoFlaecheSymbol_von', 'missing')", ctx);
+
+        assertThat(value).isEqualTo(BooleanValue.FALSE);
+        assertThat(diagnostics.all()).isEmpty();
+    }
+
+    @Test
+    void existsInFiltersAdditionalKeyPairs() {
+        InMemorySourceLookupIndex index = new InMemorySourceLookupIndex();
+        index.index(
+                sourceRecord("dm01", "DM01.FPDS2.LFP2Nachfuehrung", "lfp2-1", null, null, "NBIdent", "SO0100000001"));
+        index.index(
+                sourceRecord("dm01", "DM01.FPDS2.LFP2Nachfuehrung", "lfp2-2", null, null, "NBIdent", "SO0100000001"));
+        index.index(objectRecord(
+                "dm01", "DM01.FPDS2.LFP2Nachfuehrung", "lfp2-1", "NBIdent", "SO0100000001", "Identifikator", "0"));
+
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "test").withLookupIndex(index);
+
+        Value found = new ExpressionEngine().evaluate("""
+                        existsIn('dm01', 'DM01.FPDS2.LFP2Nachfuehrung', \
+                        'NBIdent', 'SO0100000001', 'Identifikator', '0')
+                        """.strip(), ctx);
+        Value notFound = new ExpressionEngine().evaluate("""
+                        existsIn('dm01', 'DM01.FPDS2.LFP2Nachfuehrung', \
+                        'NBIdent', 'SO0100000001', 'Identifikator', '1')
+                        """.strip(), ctx);
+
+        assertThat(found).isEqualTo(BooleanValue.TRUE);
+        assertThat(notFound).isEqualTo(BooleanValue.FALSE);
+        assertThat(diagnostics.all()).isEmpty();
+    }
+
+    @Test
+    void existsInReportsWrongArgCount() {
+        DiagnosticCollector diagnostics = new DiagnosticCollector();
+        EvalContext ctx = new EvalContext(Map.of(), diagnostics, "test");
+
+        Value value = new ExpressionEngine().evaluate("existsIn('dm01', 'Class', 'Attr')", ctx);
+
+        assertThat(value).isEqualTo(BooleanValue.FALSE);
+        assertThat(diagnostics.all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.EXPR_WRONG_ARG_COUNT)
+                        && d.severity() == guru.interlis.transformer.diag.Severity.ERROR);
+    }
+
     private static SourceRecord sourceRecord(
             String sourceFileId,
             String tag,
@@ -142,8 +212,18 @@ class LookupFunctionsTest {
             String valueAttr,
             String value) {
         Iom_jObject object = new Iom_jObject(tag, oid);
-        object.addattrobj(refAttr, Iom_jObject.REF).setobjectrefoid(refOid);
+        if (refAttr != null && refOid != null) {
+            object.addattrobj(refAttr, Iom_jObject.REF).setobjectrefoid(refOid);
+        }
         object.setattrvalue(valueAttr, value);
+        return new SourceRecord(sourceFileId, null, tag, object);
+    }
+
+    private static SourceRecord objectRecord(String sourceFileId, String tag, String oid, String... attrsAndValues) {
+        Iom_jObject object = new Iom_jObject(tag, oid);
+        for (int i = 0; i < attrsAndValues.length; i += 2) {
+            object.setattrvalue(attrsAndValues[i], attrsAndValues[i + 1]);
+        }
         return new SourceRecord(sourceFileId, null, tag, object);
     }
 }

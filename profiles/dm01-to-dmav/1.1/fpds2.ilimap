@@ -1,0 +1,215 @@
+mapping v2 "dm01-to-dmav-fpds2" {
+  job {
+    description "Pilot-Transformation DM01 FixpunkteKategorie2 nach KGKCGC FPDS2";
+    direction dm01-to-dmav;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "https://models.kgk-cgc.ch/";
+    modeldir "models/";
+  }
+
+  input dm01 {
+    path "input/dm01.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  output dmav {
+    path "build/out/dmav-fpds2.xtf";
+    model "KGKCGC_FPDS2_V1_1";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "dm01-to-dmav-fpds2";
+  }
+
+  basket byTopic;
+
+  enum Begehbarkeit_DM01_KGK {
+    "begehbar" => "begehbar";
+    "nicht_begehbar" => "nicht_begehbar";
+  }
+
+  rule fpds2-zustaendigkeit {
+    target dmav class "KGKCGC_FPDS2_V1_1.FPDS2.Zustaendigkeit";
+    source nf from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      Kanton = "BE";
+      Name = "Amtliche Vermessung";
+    }
+  }
+
+  rule fpds2-zustaendigkeit-hfp2 {
+    target dmav class "KGKCGC_FPDS2_V1_1.FPDS2.Zustaendigkeit";
+    source nf from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      Kanton = "BE";
+      Name = "Amtliche Vermessung";
+    }
+  }
+
+  rule fpds2-massstab {
+    target dmav class "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtMassstab";
+    source nf from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      Massstabszahl = 25000.0;
+    }
+  }
+
+  rule fpds2-massstab-hfp2 {
+    target dmav class "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtMassstab";
+    source nf from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      Massstabszahl = 25000.0;
+    }
+  }
+
+  rule fpds2-geodienst {
+    target dmav class "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtGeodienst";
+    source nf from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      Bezeichnung = "FPDS2 Geodienst";
+      URL = "https://www.kgk-cgc.ch";
+    }
+  }
+
+  rule fpds2-geodienst-hfp2 {
+    target dmav class "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtGeodienst";
+    source nf from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      Bezeichnung = "FPDS2 Geodienst";
+      URL = "https://www.kgk-cgc.ch";
+    }
+  }
+
+  rule fpds2-nachfuehrung-lfp2 {
+    target dmav class "KGKCGC_FPDS2_V1_1.FPDS2.FixpunkteNachfuehrung";
+    source nf from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 60);
+      GueltigerEintrag = "2024-01-01";
+      DatumEroeffnung = "2024-01-01";
+      Status = #in_Bearbeitung;
+    }
+
+  }
+
+  rule fpds2-nachfuehrung-hfp2 {
+    target dmav class "KGKCGC_FPDS2_V1_1.FPDS2.FixpunkteNachfuehrung";
+    source nf from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung"
+      where not(existsIn("dm01", "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung", "NBIdent", nf.NBIdent, "Identifikator", nf.Identifikator));
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 60);
+      GueltigerEintrag = "2024-01-01";
+      DatumEroeffnung = "2024-01-01";
+      Status = #in_Bearbeitung;
+    }
+
+    loss {
+      sourcePath nf.Identifikator;
+      reasonCode "DROPPED_DUPLICATE_FPDS2_NACHFUEHRUNG";
+      description "DMAV verlangt FixpunkteNachfuehrung eindeutig nach NBIdent/Identifikator; HFP2-Nachfuehrung mit bereits vorhandener LFP2-Nachfuehrung wird deterministisch verworfen.";
+      when existsIn("dm01", "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung", "NBIdent", nf.NBIdent, "Identifikator", nf.Identifikator);
+    }
+  }
+
+  rule fixpunkt-lfp2 {
+    target dmav class "KGKCGC_FPDS2_V1_1.FPDS2.Fixpunkt";
+    source p from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2";
+    identity p.NBIdent, p.Nummer;
+
+    assign {
+      Art = #LFP2;
+      Begehbarkeit = enumMap(p.Begehbarkeit, Begehbarkeit_DM01_KGK);
+      GNSSSichtbarkeit = #keine_Angabe;
+      NBIdent = p.NBIdent;
+      Nummer = p.Nummer;
+      ProtokollSprache = #deutsch;
+      SymbolOri = 100.0;
+      TSP = true;
+      Unterhaltsstrategie = #aktiv;
+    }
+
+    ref ZS {
+      association "FP_Zustaendigkeit";
+      role "ZS";
+      required;
+      target rule fpds2-zustaendigkeit sourceRef p.Entstehung;
+    }
+
+    ref UM {
+      association "FP_UebersichtMassstab";
+      role "UM";
+      required;
+      target rule fpds2-massstab sourceRef p.Entstehung;
+    }
+
+    ref UG {
+      association "FP_UebersichtGeodienst";
+      role "UG";
+      required;
+      target rule fpds2-geodienst sourceRef p.Entstehung;
+    }
+  }
+
+  rule fixpunkt-hfp2 {
+    target dmav class "KGKCGC_FPDS2_V1_1.FPDS2.Fixpunkt";
+    source p from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2";
+    identity p.NBIdent, p.Nummer;
+
+    assign {
+      Art = #HFP2;
+      Begehbarkeit = #begehbar;
+      GNSSSichtbarkeit = #keine_Angabe;
+      NBIdent = p.NBIdent;
+      Nummer = p.Nummer;
+      ProtokollSprache = #deutsch;
+      TSP = true;
+      Unterhaltsstrategie = #aktiv;
+    }
+
+    ref ZS {
+      association "FP_Zustaendigkeit";
+      role "ZS";
+      required;
+      target rule fpds2-zustaendigkeit-hfp2 sourceRef p.Entstehung;
+    }
+
+    ref UM {
+      association "FP_UebersichtMassstab";
+      role "UM";
+      required;
+      target rule fpds2-massstab-hfp2 sourceRef p.Entstehung;
+    }
+
+    ref UG {
+      association "FP_UebersichtGeodienst";
+      role "UG";
+      required;
+      target rule fpds2-geodienst-hfp2 sourceRef p.Entstehung;
+    }
+  }
+}

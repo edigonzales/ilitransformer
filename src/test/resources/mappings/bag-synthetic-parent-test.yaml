@@ -1,0 +1,46 @@
+version: 1
+
+job:
+  name: bag-synthetic-parent-test
+  direction: flat-to-nested
+  failPolicy: strict
+  inputs:
+    - id: flat
+      path: "input/bag-flat.itf"
+      model: "BagFlatSource"
+      format: "itf"
+  outputs:
+    - id: nested
+      path: "build/out/bag-nested.xtf"
+      model: "BagNestedTarget"
+      format: "xtf"
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "test-bag-synthetic-parent"
+  basketStrategy:
+    default: preserveOrGenerateUuid
+
+  rules:
+    - id: parent-rule
+      target:
+        output: nested
+        class: "BagNestedTarget.NestedTopic.Parent"
+      sources:
+        - alias: p
+          input: flat
+          class: "BagFlatSource.FlatTopic.Parent"
+      identity:
+        sourceKey: ["p.ParentId"]
+      assign:
+        ParentId: "p.ParentId"
+        Description: "p.Description"
+      bags:
+        SyntheticPosition:
+          target: Positions
+          structure: "BagNestedTarget.NestedTopic.Position"
+          where: "p.Description == 'needs-position'"
+          assign:
+            X: "1.500"
+            Y: "2.500"

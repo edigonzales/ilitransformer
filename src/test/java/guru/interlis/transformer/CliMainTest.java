@@ -99,5 +99,4 @@ class CliMainTest {
         String output = outContent.toString();
         assertThat(output).contains("valid");
     }
-
 }

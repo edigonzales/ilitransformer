@@ -431,10 +431,12 @@ public final class IlimapParser {
         String id = expectIdentifier();
         expectToken(IlimapTokenType.LBRACE);
 
+        String targetAttribute = null;
         IlimapBagFromStmt from = null;
         String structure = null;
         String mode = null;
         Integer maxItems = null;
+        IlimapExpressionText where = null;
         IlimapParentRefStmt parentRef = null;
         IlimapAssignmentBlock assign = null;
         List<IlimapBagBlock> nestedBags = new ArrayList<>();
@@ -443,6 +445,11 @@ public final class IlimapParser {
             IlimapToken token = peek();
             if (token.type() == IlimapTokenType.KEYWORD) {
                 switch (token.text()) {
+                    case "target" -> {
+                        advance();
+                        targetAttribute = expectStringOrIdentifier();
+                        expectToken(IlimapTokenType.SEMICOLON);
+                    }
                     case "from" -> {
                         advance();
                         from = parseBagFromStmt();
@@ -475,6 +482,10 @@ public final class IlimapParser {
                         }
                         expectToken(IlimapTokenType.SEMICOLON);
                     }
+                    case "where" -> {
+                        advance();
+                        where = readExpression();
+                    }
                     case "parentRef" -> {
                         advance();
                         parentRef = parseParentRefStmt();
@@ -496,7 +507,8 @@ public final class IlimapParser {
 
         IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
         IlimapSourceRange range = new IlimapSourceRange(bagKeyword.range().start(), end);
-        return new IlimapBagBlock(id, from, structure, mode, maxItems, parentRef, assign, nestedBags, range);
+        return new IlimapBagBlock(
+                id, targetAttribute, from, structure, mode, maxItems, where, parentRef, assign, nestedBags, range);
     }
 
     private IlimapBagFromStmt parseBagFromStmt() {

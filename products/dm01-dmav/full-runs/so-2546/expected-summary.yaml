@@ -1,0 +1,103 @@
+---
+datasetSlug: "so-2546"
+direction: "dm01-to-dmav"
+sourceSha256: "8dd8de7144af48900fa68a8ce30fada3ab0a1340d988302e62deac5abb749471"
+counts:
+  sourceRecordsRead: 132609
+  sourceRecordsFiltered: 34942
+  targetsCreated: 61670
+  targetsWritten: 61670
+  errors: 0
+  warnings: 12908
+includedTopics:
+- "bb"
+- "eo"
+- "fpds2"
+- "gebaeudeadressen"
+- "gs"
+- "hfp3"
+- "lfp3"
+- "nomenklatur"
+- "rohrleitungen"
+- "toleranzstufen"
+excludedTopics:
+- id: "dbv"
+  reason: "dataset: DM01AVCH24LV95D.Rutschgebiete contains no objects in the SO-2546\
+    \ dataset."
+- id: "fixpunktelv"
+  reason: "validate-mapping: target classes DMAV_FixpunkteLV_V1_0.FixpunkteLV.LFP1\
+    \ and HFP1 are not present under output model DMAVTYM_Alles_V1_1."
+- id: "hoheitsgrenzenlv"
+  reason: "validate-mapping: target class DMAV_HoheitsgrenzenLV_V1_0.HoheitsgrenzenLV.Landesgrenze\
+    \ is not present under output model DMAVTYM_Alles_V1_1; dataset also contains\
+    \ no Landesgrenzen objects."
+- id: "plzortschaft"
+  reason: "validate-mapping: target classes DMAV_PLZ_Ortschaft_V1_0.PLZ_Ortschaft.Ortschaft\
+    \ and PLZ are not present under output model DMAVTYM_Alles_V1_1; dataset also\
+    \ contains no PLZOrtschaft objects."
+- id: "hoheitsgrenzen"
+  reason: "transform: ambiguous #first references in DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung;\
+    \ multiple target candidates are found."
+sourceTopicsWithoutProfile:
+- "DM01AVCH24LV95D.Bezirksgrenzen"
+- "DM01AVCH24LV95D.Hoehen"
+- "DM01AVCH24LV95D.Kantonsgrenzen"
+- "DM01AVCH24LV95D.Nummerierungsbereiche"
+- "DM01AVCH24LV95D.Planeinteilungen"
+- "DM01AVCH24LV95D.Planrahmen"
+sourceTopicsPresentInDataset:
+- "DM01AVCH24LV95D.Bezirksgrenzen"
+- "DM01AVCH24LV95D.Kantonsgrenzen"
+- "DM01AVCH24LV95D.Nummerierungsbereiche"
+- "DM01AVCH24LV95D.Planeinteilungen"
+- "DM01AVCH24LV95D.Planrahmen"
+targetsByClass:
+  DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.BBNachfuehrung: 1594
+  DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung: 13601
+  DMAV_Einzelobjekte_V1_1.Einzelobjekte.EONachfuehrung: 1141
+  DMAV_Einzelobjekte_V1_1.Einzelobjekte.Einzelobjekt: 10071
+  DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.HFP3: 330
+  DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.HFP3Nachfuehrung: 65
+  DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3: 1117
+  DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3Nachfuehrung: 243
+  DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.GANachfuehrung: 947
+  DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Gebaeudeeingang: 5043
+  DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Lokalisation: 686
+  DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung: 781
+  DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt: 17353
+  DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck: 4190
+  DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft: 4073
+  DMAV_Grundstuecke_V1_1.Grundstuecke.SelbstaendigesDauerndesRecht: 117
+  DMAV_Nomenklatur_V1_1.Nomenklatur.Flurname: 108
+  DMAV_Nomenklatur_V1_1.Nomenklatur.Gelaendename: 3
+  DMAV_Nomenklatur_V1_1.Nomenklatur.NKNachfuehrung: 40
+  DMAV_Nomenklatur_V1_1.Nomenklatur.Ortsname: 2
+  DMAV_Rohrleitungen_V1_1.Rohrleitungen.RLNachfuehrung: 27
+  DMAV_Toleranzstufen_V1_1.Toleranzstufen.TSNachfuehrung: 3
+  DMAV_Toleranzstufen_V1_1.Toleranzstufen.Toleranzstufe: 3
+  KGKCGC_FPDS2_V1_1.FPDS2.Fixpunkt: 1
+  KGKCGC_FPDS2_V1_1.FPDS2.FixpunkteNachfuehrung: 32
+  KGKCGC_FPDS2_V1_1.FPDS2.UebersichtGeodienst: 33
+  KGKCGC_FPDS2_V1_1.FPDS2.UebersichtMassstab: 33
+  KGKCGC_FPDS2_V1_1.FPDS2.Zustaendigkeit: 33
+warningsByCode:
+  ILITRF-LOOKUP-NO-MATCH: 12908
+warningsByRule:
+  bb-boflaeche-gueltig:
+    ILITRF-LOOKUP-NO-MATCH: 3
+  bb-boflaeche-projektiert:
+    ILITRF-LOOKUP-NO-MATCH: 91
+  eo-einzelobjekt-gueltig:
+    ILITRF-LOOKUP-NO-MATCH: 10020
+  gs-grenzpunkt-gueltig:
+    ILITRF-LOOKUP-NO-MATCH: 1517
+  gs-grenzpunkt-projektiert:
+    ILITRF-LOOKUP-NO-MATCH: 18
+  gs-gs-nachfuehrung-gem-gueltig:
+    ILITRF-LOOKUP-NO-MATCH: 3
+  gs-hoheitsgrenzpunkt-gem-gueltig:
+    ILITRF-LOOKUP-NO-MATCH: 19
+  gs-hoheitsgrenzpunkt-ls-gueltig:
+    ILITRF-LOOKUP-NO-MATCH: 588
+  lfp3-lfp3:
+    ILITRF-LOOKUP-NO-MATCH: 649

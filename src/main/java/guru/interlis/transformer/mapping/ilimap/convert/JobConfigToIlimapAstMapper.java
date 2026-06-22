@@ -3,6 +3,7 @@ package guru.interlis.transformer.mapping.ilimap.convert;
 import guru.interlis.transformer.mapping.ilimap.ast.*;
 import guru.interlis.transformer.mapping.ilimap.lexer.IlimapSourcePosition;
 import guru.interlis.transformer.mapping.ilimap.lexer.IlimapSourceRange;
+import guru.interlis.transformer.mapping.ilimap.semantic.IlimapReservedWords;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 
@@ -113,7 +114,7 @@ public final class JobConfigToIlimapAstMapper {
         if (config.mapping.defaults == null || config.mapping.defaults.isEmpty()) {
             return null;
         }
-        return new IlimapDefaultsBlock(mapAssignments(config.mapping.defaults, enumNames), SYNTHETIC);
+        return new IlimapDefaultsBlock(mapAssignments(config.mapping.defaults, enumNames, Map.of()), SYNTHETIC);
     }
 
     private List<IlimapRuleBlock> mapRules(JobConfig config, Set<String> enumNames) {
@@ -125,6 +126,7 @@ public final class JobConfigToIlimapAstMapper {
     }
 
     private IlimapRuleBlock mapRule(JobConfig.RuleSpec rule, Set<String> enumNames) {
+        Map<String, String> aliasRenames = buildAliasRenames(rule);
         List<IlimapRuleElement> elements = new ArrayList<>();
 
         if (rule.target != null) {
@@ -134,60 +136,64 @@ public final class JobConfigToIlimapAstMapper {
         for (JobConfig.SourceSpec source : rule.sources) {
             List<String> inputIds = JobConfigNormalizer.getInputIds(source);
             elements.add(new IlimapSourceStmt(
-                    source.alias,
+                    applyAlias(source.alias, aliasRenames),
                     inputIds,
                     source.clazz,
-                    source.where != null ? expr(denormalizeEnumMap(source.where, enumNames)) : null,
+                    source.where != null ? exprRewrite(source.where, enumNames, aliasRenames) : null,
                     SYNTHETIC));
         }
 
         if (rule.where != null) {
-            elements.add(new IlimapWhereStmt(expr(denormalizeEnumMap(rule.where, enumNames)), SYNTHETIC));
+            elements.add(new IlimapWhereStmt(exprRewrite(rule.where, enumNames, aliasRenames), SYNTHETIC));
         }
 
         if (rule.joins != null) {
             for (JobConfig.JoinSpec join : rule.joins) {
                 elements.add(new IlimapJoinStmt(
-                        join.type, join.left, join.right, expr(denormalizeEnumMap(join.on, enumNames)), SYNTHETIC));
+                        join.type,
+                        applyAlias(join.left, aliasRenames),
+                        applyAlias(join.right, aliasRenames),
+                        exprRewrite(join.on, enumNames, aliasRenames),
+                        SYNTHETIC));
             }
         }
 
         if (rule.identity != null && rule.identity.sourceKey != null) {
             List<IlimapExpressionText> exprs = rule.identity.sourceKey.stream()
-                    .map(k -> expr(denormalizeEnumMap(k, enumNames)))
+                    .map(k -> exprRewrite(k, enumNames, aliasRenames))
                     .toList();
             elements.add(new IlimapIdentityStmt(exprs, SYNTHETIC));
         }
 
         if (rule.assign != null && !rule.assign.isEmpty()) {
-            elements.add(new IlimapAssignmentBlock(mapAssignments(rule.assign, enumNames), SYNTHETIC));
+            elements.add(new IlimapAssignmentBlock(mapAssignments(rule.assign, enumNames, aliasRenames), SYNTHETIC));
         }
 
         if (rule.defaults != null && !rule.defaults.isEmpty()) {
-            elements.add(new IlimapDefaultsBlock(mapAssignments(rule.defaults, enumNames), SYNTHETIC));
+            elements.add(new IlimapDefaultsBlock(mapAssignments(rule.defaults, enumNames, aliasRenames), SYNTHETIC));
         }
 
         if (rule.bags != null) {
             for (Map.Entry<String, JobConfig.BagSpec> bagEntry : rule.bags.entrySet()) {
-                elements.add(mapBag(bagEntry.getKey(), bagEntry.getValue(), enumNames));
+                elements.add(mapBag(bagEntry.getKey(), bagEntry.getValue(), enumNames, aliasRenames));
             }
         }
 
         if (rule.refs != null) {
             for (JobConfig.RefMapping ref : rule.refs) {
-                elements.add(mapRef(ref, enumNames));
+                elements.add(mapRef(ref, enumNames, aliasRenames));
             }
         }
 
         if (rule.create != null) {
             for (JobConfig.CreateSpec create : rule.create) {
-                elements.add(mapCreate(create, enumNames));
+                elements.add(mapCreate(create, enumNames, aliasRenames));
             }
         }
 
         if (rule.losses != null) {
             for (JobConfig.LossSpec loss : rule.losses) {
-                elements.add(mapLoss(loss, enumNames));
+                elements.add(mapLoss(loss, enumNames, aliasRenames));
             }
         }
 
@@ -199,14 +205,15 @@ public final class JobConfigToIlimapAstMapper {
         return new IlimapRuleBlock(rule.id, elements, SYNTHETIC);
     }
 
-    private IlimapBagBlock mapBag(String name, JobConfig.BagSpec bag, Set<String> enumNames) {
+    private IlimapBagBlock mapBag(
+            String name, JobConfig.BagSpec bag, Set<String> enumNames, Map<String, String> aliasRenames) {
         IlimapBagFromStmt from = null;
         if (bag.from != null) {
             from = new IlimapBagFromStmt(
-                    bag.from.alias,
+                    applyAlias(bag.from.alias, aliasRenames),
                     bag.from.input,
                     bag.from.clazz,
-                    bag.from.where != null ? expr(denormalizeEnumMap(bag.from.where, enumNames)) : null,
+                    bag.from.where != null ? exprRewrite(bag.from.where, enumNames, aliasRenames) : null,
                     SYNTHETIC);
         }
 
@@ -224,38 +231,49 @@ public final class JobConfigToIlimapAstMapper {
                 kind = "attribute";
                 refName = "";
             }
-            parentRef = new IlimapParentRefStmt(kind, refName, bag.parentRef.parentAlias, SYNTHETIC);
+            parentRef = new IlimapParentRefStmt(
+                    kind, refName, applyAlias(bag.parentRef.parentAlias, aliasRenames), SYNTHETIC);
         }
 
         IlimapAssignmentBlock assign = null;
         if (bag.assign != null && !bag.assign.isEmpty()) {
-            assign = new IlimapAssignmentBlock(mapAssignments(bag.assign, enumNames), SYNTHETIC);
+            assign = new IlimapAssignmentBlock(mapAssignments(bag.assign, enumNames, aliasRenames), SYNTHETIC);
         }
 
         List<IlimapBagBlock> nestedBags = new ArrayList<>();
         if (bag.nestedBags != null) {
             for (Map.Entry<String, JobConfig.BagSpec> entry : bag.nestedBags.entrySet()) {
-                nestedBags.add(mapBag(entry.getKey(), entry.getValue(), enumNames));
+                nestedBags.add(mapBag(entry.getKey(), entry.getValue(), enumNames, aliasRenames));
             }
         }
 
         return new IlimapBagBlock(
-                name, from, bag.structure, bag.mode, bag.maxItems, parentRef, assign, nestedBags, SYNTHETIC);
+                name,
+                bag.target,
+                from,
+                bag.structure,
+                bag.mode,
+                bag.maxItems,
+                bag.where != null ? exprRewrite(bag.where, enumNames, aliasRenames) : null,
+                parentRef,
+                assign,
+                nestedBags,
+                SYNTHETIC);
     }
 
-    private IlimapRefBlock mapRef(JobConfig.RefMapping ref, Set<String> enumNames) {
+    private IlimapRefBlock mapRef(JobConfig.RefMapping ref, Set<String> enumNames, Map<String, String> aliasRenames) {
         String targetRuleId = null;
         IlimapExpressionText sourceRef = null;
 
         if (ref.targetObject != null) {
             targetRuleId = ref.targetObject.rule;
             if (ref.targetObject.sourceRef != null) {
-                sourceRef = expr(denormalizeEnumMap(ref.targetObject.sourceRef, enumNames));
+                sourceRef = exprRewrite(ref.targetObject.sourceRef, enumNames, aliasRenames);
             }
         } else if (ref.targetRule != null) {
             targetRuleId = ref.targetRule;
             if (ref.sourceRef != null) {
-                sourceRef = expr(denormalizeEnumMap(ref.sourceRef, enumNames));
+                sourceRef = exprRewrite(ref.sourceRef, enumNames, aliasRenames);
             }
         }
 
@@ -270,34 +288,203 @@ public final class JobConfigToIlimapAstMapper {
         return new IlimapRefBlock(refName, ref.association, ref.role, ref.required, targetRuleId, sourceRef, SYNTHETIC);
     }
 
-    private IlimapCreateBlock mapCreate(JobConfig.CreateSpec create, Set<String> enumNames) {
+    private IlimapCreateBlock mapCreate(
+            JobConfig.CreateSpec create, Set<String> enumNames, Map<String, String> aliasRenames) {
         IlimapAssignmentBlock assign = null;
         if (create.assign != null && !create.assign.isEmpty()) {
-            assign = new IlimapAssignmentBlock(mapAssignments(create.assign, enumNames), SYNTHETIC);
+            assign = new IlimapAssignmentBlock(mapAssignments(create.assign, enumNames, aliasRenames), SYNTHETIC);
         }
         return new IlimapCreateBlock(create.clazz, assign, SYNTHETIC);
     }
 
-    private IlimapLossBlock mapLoss(JobConfig.LossSpec loss, Set<String> enumNames) {
+    private IlimapLossBlock mapLoss(JobConfig.LossSpec loss, Set<String> enumNames, Map<String, String> aliasRenames) {
         return new IlimapLossBlock(
-                loss.sourcePath != null ? expr(denormalizeEnumMap(loss.sourcePath, enumNames)) : null,
+                loss.sourcePath != null ? exprRewrite(loss.sourcePath, enumNames, aliasRenames) : null,
                 loss.reasonCode,
                 loss.description,
-                loss.when != null ? expr(denormalizeEnumMap(loss.when, enumNames)) : null,
+                loss.when != null ? exprRewrite(loss.when, enumNames, aliasRenames) : null,
                 SYNTHETIC);
     }
 
-    private List<IlimapAssignment> mapAssignments(Map<String, String> assignments, Set<String> enumNames) {
+    private List<IlimapAssignment> mapAssignments(
+            Map<String, String> assignments, Set<String> enumNames, Map<String, String> aliasRenames) {
         List<IlimapAssignment> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : assignments.entrySet()) {
             result.add(new IlimapAssignment(
-                    entry.getKey(), expr(denormalizeEnumMap(entry.getValue(), enumNames)), SYNTHETIC));
+                    entry.getKey(), exprRewrite(entry.getValue(), enumNames, aliasRenames), SYNTHETIC));
         }
         return result;
     }
 
     private static IlimapExpressionText expr(String text) {
         return new IlimapExpressionText(text, SYNTHETIC);
+    }
+
+    private IlimapExpressionText exprRewrite(String text, Set<String> enumNames, Map<String, String> aliasRenames) {
+        if (text == null) {
+            return expr(null);
+        }
+        String rewritten = rewriteExpression(denormalizeEnumMap(text, enumNames), aliasRenames);
+        return expr(rewritten);
+    }
+
+    /**
+     * Collects every source/bag alias declared in a rule and maps any alias that collides with a reserved {@code
+     * .ilimap} keyword to a unique, non-reserved replacement. Aliases are rule-scoped, so nested bag aliases are
+     * included to keep references consistent.
+     */
+    private static Map<String, String> buildAliasRenames(JobConfig.RuleSpec rule) {
+        Set<String> aliases = new LinkedHashSet<>();
+        collectAliases(rule, aliases);
+        Map<String, String> renames = new LinkedHashMap<>();
+        Set<String> used = new LinkedHashSet<>(aliases);
+        for (String alias : aliases) {
+            if (alias == null || alias.isBlank() || !IlimapReservedWords.isReserved(alias)) {
+                continue;
+            }
+            String candidate = alias + "_";
+            while (IlimapReservedWords.isReserved(candidate) || used.contains(candidate)) {
+                candidate = candidate + "_";
+            }
+            renames.put(alias, candidate);
+            used.add(candidate);
+        }
+        return renames;
+    }
+
+    private static void collectAliases(JobConfig.RuleSpec rule, Set<String> aliases) {
+        if (rule.sources != null) {
+            for (JobConfig.SourceSpec source : rule.sources) {
+                if (source.alias != null && !source.alias.isBlank()) {
+                    aliases.add(source.alias);
+                }
+            }
+        }
+        if (rule.bags != null) {
+            for (JobConfig.BagSpec bag : rule.bags.values()) {
+                collectBagAliases(bag, aliases);
+            }
+        }
+    }
+
+    private static void collectBagAliases(JobConfig.BagSpec bag, Set<String> aliases) {
+        if (bag == null) {
+            return;
+        }
+        if (bag.from != null && bag.from.alias != null && !bag.from.alias.isBlank()) {
+            aliases.add(bag.from.alias);
+        }
+        if (bag.nestedBags != null) {
+            for (JobConfig.BagSpec nested : bag.nestedBags.values()) {
+                collectBagAliases(nested, aliases);
+            }
+        }
+    }
+
+    private static String applyAlias(String alias, Map<String, String> aliasRenames) {
+        if (alias == null) {
+            return null;
+        }
+        return aliasRenames.getOrDefault(alias, alias);
+    }
+
+    /**
+     * Rewrites a raw expression text so it is round-trippable through the {@code .ilimap} lexer/parser:
+     *
+     * <ul>
+     *   <li>single-quoted string literals are converted to double-quoted literals (the lexer only recognizes {@code
+     *       "..."}), and
+     *   <li>identifier tokens that match a renamed alias are replaced (attribute accesses after a {@code .} are left
+     *       untouched).
+     * </ul>
+     *
+     * String literal contents are copied verbatim and never subjected to alias renaming.
+     */
+    static String rewriteExpression(String text, Map<String, String> aliasRenames) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        StringBuilder out = new StringBuilder(text.length());
+        int i = 0;
+        int n = text.length();
+        while (i < n) {
+            char c = text.charAt(i);
+            if (c == '"') {
+                int j = i + 1;
+                out.append('"');
+                while (j < n) {
+                    char d = text.charAt(j);
+                    out.append(d);
+                    if (d == '\\' && j + 1 < n) {
+                        out.append(text.charAt(j + 1));
+                        j += 2;
+                        continue;
+                    }
+                    j++;
+                    if (d == '"') {
+                        break;
+                    }
+                }
+                i = j;
+            } else if (c == '\'') {
+                int j = i + 1;
+                StringBuilder inner = new StringBuilder();
+                while (j < n) {
+                    char d = text.charAt(j);
+                    if (d == '\\' && j + 1 < n) {
+                        char e = text.charAt(j + 1);
+                        if (e == '\'') {
+                            inner.append('\'');
+                        } else {
+                            inner.append('\\').append(e);
+                        }
+                        j += 2;
+                        continue;
+                    }
+                    if (d == '\'') {
+                        j++;
+                        break;
+                    }
+                    inner.append(d);
+                    j++;
+                }
+                out.append('"');
+                for (int k = 0; k < inner.length(); k++) {
+                    char d = inner.charAt(k);
+                    if (d == '"') {
+                        out.append('\\');
+                    }
+                    out.append(d);
+                }
+                out.append('"');
+                i = j;
+            } else if (isIdentifierStart(c)) {
+                int j = i;
+                while (j < n && isIdentifierPart(text.charAt(j))) {
+                    j++;
+                }
+                String word = text.substring(i, j);
+                boolean attributeAccess = i > 0 && text.charAt(i - 1) == '.';
+                if (!attributeAccess && aliasRenames.containsKey(word)) {
+                    out.append(aliasRenames.get(word));
+                } else {
+                    out.append(word);
+                }
+                i = j;
+            } else {
+                out.append(c);
+                i++;
+            }
+        }
+        return out.toString();
+    }
+
+    private static boolean isIdentifierStart(char c) {
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_';
+    }
+
+    private static boolean isIdentifierPart(char c) {
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
     }
 
     static IlimapLiteral parseLiteral(String value) {

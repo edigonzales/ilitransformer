@@ -1,0 +1,163 @@
+mapping v2 "dm01-to-dmav-rohrleitungen" {
+  job {
+    description "Pilot-Transformation DM01 Rohrleitungen nach DMAV Rohrleitungen";
+    direction dm01-to-dmav;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "models/";
+  }
+
+  input dm01 {
+    path "input/dm01.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  output dmav {
+    path "build/out/dmav-rohrleitungen.xtf";
+    model "DMAV_Rohrleitungen_V1_1";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "dm01-to-dmav-rohrleitungen";
+  }
+
+  basket byTopic;
+
+  enum Medium_DM01_DMAV {
+    "Oel" => "Oel";
+    "Gas" => "Gas";
+    "weitere" => "weitere";
+  }
+
+  enum Qualitaetsstandard_DM01_DMAV {
+    "AV93" => "AV93";
+    "PV74" => "PN";
+    "PN" => "PN";
+    "PEP" => "PN";
+    "weitere" => "PN";
+  }
+
+  enum Punktart_Signalart {
+    "Signal" => "Signal";
+    "Tafel_Stein" => "Tafel_Stein";
+    "weitere" => "weitere";
+  }
+
+  enum Schriftgroesse_DM01_DMAV {
+    "klein" => "Klein";
+    "mittel" => "Mittel";
+    "gross" => "Gross";
+  }
+
+  rule rl-nachfuehrung {
+    target dmav class "DMAV_Rohrleitungen_V1_1.Rohrleitungen.RLNachfuehrung";
+    source rl from dm01 class "DM01AVCH24LV95D.Rohrleitungen.RLNachfuehrung";
+    identity rl.NBIdent, rl.Identifikator;
+
+    assign {
+      NBIdent = rl.NBIdent;
+      Identifikator = rl.Identifikator;
+      Beschreibung = truncate(rl.Beschreibung, 60);
+      GueltigerEintrag = toXmlDateTime(coalesce(rl.GueltigerEintrag, "2024-01-01"));
+    }
+  }
+
+  rule leitungsobjekt {
+    target dmav class "DMAV_Rohrleitungen_V1_1.Rohrleitungen.Leitungsobjekt";
+    source lo from dm01 class "DM01AVCH24LV95D.Rohrleitungen.Leitungsobjekt";
+    identity lo.Betreiber;
+
+    assign {
+      Betreiber = lo.Betreiber;
+      Qualitaetsstandard = enumMap(coalesce(lo.Qualitaet, "PN"), Qualitaetsstandard_DM01_DMAV);
+      Medium = enumMap(coalesce(lo.Art, "Gas"), Medium_DM01_DMAV);
+      Objektstatus = "real";
+    }
+
+    bag Punktelement {
+      from pe in dm01 class "DM01AVCH24LV95D.Rohrleitungen.Punktelement";
+      parentRef attribute "Punktelement_von" parent lo;
+      assign {
+        Geometrie = pe.Geometrie;
+        SymbolOri = pe.Ori;
+      }
+    }
+
+    bag Textposition {
+      from lop in dm01 class "DM01AVCH24LV95D.Rohrleitungen.LeitungsobjektPos";
+      parentRef attribute "LeitungsobjektPos_von" parent lo;
+      assign {
+        Position = lop.Pos;
+        Orientierung = coalesce(lop.Ori, "100.0");
+        HReferenzpunkt = coalesce(lop.HAli, "Center");
+        VReferenzpunkt = coalesce(lop.VAli, "Half");
+        Textgroesse = enumMap(coalesce(lop.Groesse, "mittel"), Schriftgroesse_DM01_DMAV);
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_Leitungsobjekt";
+      role "Entstehung";
+      required;
+      target rule rl-nachfuehrung sourceRef lo.Entstehung;
+    }
+  }
+
+  rule signal {
+    target dmav class "DMAV_Rohrleitungen_V1_1.Rohrleitungen.Signal";
+    source sp from dm01 class "DM01AVCH24LV95D.Rohrleitungen.Signalpunkt";
+    identity sp.Nummer;
+
+    assign {
+      Nummer = sp.Nummer;
+      Betreiber = sp.Betreiber;
+      Geometrie = sp.Geometrie;
+      Qualitaetsstandard = enumMap(coalesce(sp.Qualitaet, "PN"), Qualitaetsstandard_DM01_DMAV);
+      Medium = enumMap(coalesce(sp.Art, "Gas"), Medium_DM01_DMAV);
+      Objektstatus = "real";
+      Signalart = enumMap(coalesce(sp.Punktart, "Signal"), Punktart_Signalart);
+    }
+
+    bag Textposition {
+      from spp in dm01 class "DM01AVCH24LV95D.Rohrleitungen.SignalpunktPos";
+      parentRef attribute "SignalpunktPos_von" parent sp;
+      assign {
+        Position = spp.Pos;
+        Orientierung = coalesce(spp.Ori, "100.0");
+        HReferenzpunkt = coalesce(spp.HAli, "Center");
+        VReferenzpunkt = coalesce(spp.VAli, "Half");
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_Signal";
+      role "Entstehung";
+      required;
+      target rule rl-nachfuehrung sourceRef sp.Entstehung;
+    }
+  }
+
+  rule messpunkt {
+    target dmav class "DMAV_Rohrleitungen_V1_1.Rohrleitungen.Messpunkt";
+    source ep from dm01 class "DM01AVCH24LV95D.Rohrleitungen.Einzelpunkt";
+    identity ep.Identifikator;
+
+    assign {
+      Nummer = coalesce(ep.Identifikator, "");
+      Geometrie = ep.Geometrie;
+      Lagegenauigkeit = mul(ep.LageGen, 0.01);
+      IstLagezuverlaessig = "true";
+      IstExaktDefiniert = "true";
+    }
+
+    ref Entstehung {
+      association "Entstehung_Messpunkt";
+      role "Entstehung";
+      target rule rl-nachfuehrung sourceRef ep.Entstehung;
+    }
+  }
+}

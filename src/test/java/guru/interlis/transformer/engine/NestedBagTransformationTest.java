@@ -188,6 +188,7 @@ class NestedBagTransformationTest {
                 new LinkedHashMap<>(),
                 null,
                 Map.of(),
+                null,
                 null);
 
         // Service with dummy OID generation
@@ -325,6 +326,7 @@ class NestedBagTransformationTest {
                 new LinkedHashMap<>(),
                 null,
                 Map.of(),
+                null,
                 new InMemoryReferenceIndex());
 
         OidGenerationService oidGenerator = new OidGenerationService() {

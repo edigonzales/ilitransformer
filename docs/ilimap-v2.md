@@ -23,7 +23,6 @@ Ziele:
 
 - Keine Makros, Includes oder bedingte Kompilierung.
 - Keine neue Runtime-Semantik gegenueber der YAML-DSL.
-- Keine Aenderung der Expression-Funktionen.
 - Keine INTERLIS-Modellsyntax in `.ilimap`.
 - Keine Ref-Kurzform (`->` / `using`) in v2.0.
 - Kein Versuch, YAML direkt syntaktisch kompatibel zu halten.
@@ -402,13 +401,30 @@ Erlaubte Bag-Elemente:
 
 | Element | Anzahl | Zweck |
 |---|---:|---|
-| `from` | 1 | Quellstruktur oder Quelltabelle |
+| `from` | 0..1 | Quellstruktur oder Quelltabelle; fehlt nur bei synthetischen Parent-Bags |
+| `target` | 0..1 | Ziel-Bag-Attribut, wenn der Bag-Name nicht dem Zielattribut entspricht |
 | `structure` | 0..1 | Zielstrukturklasse |
 | `mode` | 0..1 | `embed` oder `expand` |
 | `maxItems` | 0..1 | Kardinalitaetsbegrenzung (muss > 0 sein) |
 | `parentRef` | 0..1 | Parent-Child-Beziehung |
+| `where` | 0..1 | Bag-Filter; bei synthetischen Parent-Bags entscheidet er, ob genau ein Eintrag erzeugt wird |
 | `assign` | 0..1 | Strukturattribut-Zuweisungen |
 | `bag` | 0..n | Nested Bags |
+
+Ein Bag ohne `from` ist ein synthetischer Parent-Bag. Er erzeugt pro Parent-Zielobjekt
+hoechstens ein Struktur-Element aus den Parent-Quellattributen. Dafuer muss `target`
+gesetzt sein, damit ein vergessenes `from` nicht still akzeptiert wird.
+
+```ilimap
+bag SyntheticSymbolposition {
+  target Symbolposition;
+  where not(existsIn("dm01", "DM01.Topic.Symbol", "Symbol_von", oid(bb)));
+  assign {
+    Position = pointOnSurface(bb.Geometrie);
+    Orientierung = 100.0;
+  }
+}
+```
 
 ### maxItems-Semantik
 
@@ -463,6 +479,9 @@ loss {
 Loss-Blocks dokumentieren bekannten Informationsverlust. Sie werden ueber
 `IlimapToJobConfigMapper` auf `LossSpec` abgebildet. Alle Felder (`sourcePath`,
 `reasonCode`, `description`, `when`) werden gemappt und sind in `JobConfig` verfuegbar.
+Bei Single-Source-Rules werden passende Loss-Blocks auch fuer durch `where` gefilterte
+Quellobjekte aufgezeichnet. Damit koennen bewusst verworfene Quellobjekte dokumentiert
+werden.
 
 ## Metadata
 
@@ -621,13 +640,16 @@ assignment        = id "=" expression ";" ;
 
 bagDecl           = "bag" id "{" bagElement* "}" ;
 bagElement        = bagFromStmt
+                  | targetBagStmt
                   | structureStmt
                   | modeStmt
                   | maxItemsStmt
                   | parentRefStmt
+                  | whereStmt
                   | assignDecl
                   | bagDecl ;
 bagFromStmt       = "from" id "in" id "class" string whereTail? ";" ;
+targetBagStmt     = "target" id ";" ;
 structureStmt     = "structure" string ";" ;
 modeStmt          = "mode" ("embed" | "expand") ";" ;
 maxItemsStmt      = "maxItems" number ";" ;

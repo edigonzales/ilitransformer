@@ -71,6 +71,8 @@ class FunctionRegistryTest {
         assertThat(registry.resolve("refEquals")).isPresent();
         assertThat(registry.resolve("div")).isPresent();
         assertThat(registry.resolve("lookup")).isPresent();
+        assertThat(registry.resolve("existsIn")).isPresent();
         assertThat(registry.resolve("coordEquals")).isPresent();
+        assertThat(registry.resolve("pointOnSurface")).isPresent();
     }
 }

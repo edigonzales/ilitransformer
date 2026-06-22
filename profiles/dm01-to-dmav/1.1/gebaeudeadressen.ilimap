@@ -1,0 +1,162 @@
+mapping v2 "dm01-to-dmav-gebaeudeadressen" {
+  job {
+    description "Pilot-Transformation DM01 Gebaeudeadressen nach DMAV Gebaeudeadressen";
+    direction dm01-to-dmav;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "models/";
+  }
+
+  input dm01 {
+    path "input/dm01.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  output dmav {
+    path "build/out/dmav-gebaeudeadressen.xtf";
+    model "DMAV_Gebaeudeadressen_V1_1";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "dm01-to-dmav-gebaeudeadressen";
+  }
+
+  basket byTopic;
+
+  enum JaNein_DM01_DMAV {
+    "ja" => true;
+    "nein" => false;
+  }
+
+  enum ImGebaeude_DM01_DMAV {
+    "BB" => "Bodenbedeckung";
+    "EO" => "Einzelobjekte";
+  }
+
+  enum IstAchse_DM01_DMAV {
+    "ja" => true;
+    "nein" => false;
+  }
+
+  enum Schriftgroesse_DM01_DMAV {
+    "klein" => "Klein";
+    "mittel" => "Mittel";
+    "gross" => "Gross";
+  }
+
+  rule ga-nachfuehrung-gueltig {
+    target dmav class "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.GANachfuehrung";
+    source nf from dm01 class "DM01AVCH24LV95D.Gebaeudeadressen.GEBNachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 60);
+      GueltigerEintrag = toXmlDateTime(nf.GueltigerEintrag);
+    }
+  }
+
+  rule lokalisation {
+    target dmav class "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Lokalisation";
+    source lok from dm01 class "DM01AVCH24LV95D.Gebaeudeadressen.Lokalisation"
+      where not((lok.Art == #Strasse or lok.Art == #Platz)
+        and not(existsIn("dm01", "DM01AVCH24LV95D.Gebaeudeadressen.Strassenstueck", "Strassenstueck_von", oid(lok))));
+
+    assign {
+      Nummerierungsprinzip = lok.Nummerierungsprinzip;
+      LokalisationNummer = lok.LokalisationNummer;
+      AttributeProvisorisch = enumMap(lok.AttributeProvisorisch, JaNein_DM01_DMAV);
+      IstOffizielleBezeichnung = enumMap(lok.IstOffizielleBezeichnung, JaNein_DM01_DMAV);
+      Lokalisationsstatus = lok.Status;
+      InAenderung = enumMap(lok.InAenderung, JaNein_DM01_DMAV);
+      Lokalisationsart = lok.Art;
+    }
+
+    bag LokalisationName {
+      from ln in dm01 class "DM01AVCH24LV95D.Gebaeudeadressen.LokalisationsName";
+      parentRef attribute "Benannte" parent lok;
+      assign {
+        Name = ln.Text;
+        NameKurz = ln.KurzText;
+        NameAlsIndex = ln.IndexText;
+        Sprache = ln.Sprache;
+      }
+    }
+
+    bag Strassenstueck {
+      from ss in dm01 class "DM01AVCH24LV95D.Gebaeudeadressen.Strassenstueck";
+      parentRef attribute "Strassenstueck_von" parent lok;
+      assign {
+        Geometrie = ss.Geometrie;
+        IstAchse = enumMap(ss.IstAchse, IstAchse_DM01_DMAV);
+      }
+    }
+
+    bag BenanntesGebiet {
+      from bg in dm01 class "DM01AVCH24LV95D.Gebaeudeadressen.BenanntesGebiet";
+      parentRef attribute "BenanntesGebiet_von" parent lok;
+      assign {
+        Geometrie = bg.Flaeche;
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_Lokalisation";
+      role "Entstehung";
+      required;
+      target rule ga-nachfuehrung-gueltig sourceRef lok.Entstehung;
+    }
+
+    loss {
+      sourcePath lok.Art;
+      reasonCode "DROPPED_LOKALISATION_WITHOUT_STRASSENSTUECK";
+      description "DMAV verlangt fuer Lokalisationen der Art Strasse/Platz mindestens ein echtes Strassenstueck; es wird kein synthetisches Strassenstueck erzeugt.";
+      when (lok.Art == #Strasse or lok.Art == #Platz)
+        and not(existsIn("dm01", "DM01AVCH24LV95D.Gebaeudeadressen.Strassenstueck", "Strassenstueck_von", oid(lok)));
+    }
+  }
+
+  rule gebaeudeeingang {
+    target dmav class "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Gebaeudeeingang";
+    source ge from dm01 class "DM01AVCH24LV95D.Gebaeudeadressen.Gebaeudeeingang";
+
+    assign {
+      Gebaeudestatus = ge.Status;
+      InAenderung = enumMap(ge.InAenderung, JaNein_DM01_DMAV);
+      AttributeProvisorisch = enumMap(ge.AttributeProvisorisch, JaNein_DM01_DMAV);
+      IstOffizielleGebaeudeadresse = enumMap(ge.IstOffizielleBezeichnung, JaNein_DM01_DMAV);
+      Geometrie = ge.Lage;
+      Hausnummer = ge.Hausnummer;
+      ImModul = enumMap(ge.Im_Gebaeude, ImGebaeude_DM01_DMAV);
+    }
+
+    bag GebaeudeName {
+      from gn in dm01 class "DM01AVCH24LV95D.Gebaeudeadressen.GebaeudeName";
+      parentRef attribute "GebaeudeName_von" parent ge;
+      assign {
+        Name = gn.Text;
+        NameKurz = gn.KurzText;
+        NameAlsIndex = gn.IndexText;
+        Sprache = gn.Sprache;
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_Gebaeudeeingang";
+      role "Entstehung";
+      required;
+      target rule ga-nachfuehrung-gueltig sourceRef ge.Entstehung;
+    }
+
+    ref Lokalisation {
+      association "LokalisationGebaeudeeingang";
+      role "Lokalisation";
+      target rule lokalisation sourceRef ge.Gebaeudeeingang_von;
+    }
+  }
+}

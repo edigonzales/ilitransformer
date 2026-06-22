@@ -1,0 +1,71 @@
+mapping v2 "dm01-to-dmav-toleranzstufen" {
+  job {
+    description "Pilot-Transformation DM01 TSEinteilung nach DMAV Toleranzstufen";
+    direction dm01-to-dmav;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "models/";
+  }
+
+  input dm01 {
+    path "input/dm01.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  output dmav {
+    path "build/out/dmav-toleranzstufen.xtf";
+    model "DMAV_Toleranzstufen_V1_1";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "dm01-to-dmav-toleranzstufen";
+  }
+
+  basket byTopic;
+
+  enum Toleranzstufe_DM01_DMAV {
+    "TS1" => "TS1";
+    "TS2" => "TS2";
+    "TS3" => "TS3";
+    "TS4" => "TS4";
+    "TS5" => "TS5";
+  }
+
+  rule ts-nachfuehrung {
+    target dmav class "DMAV_Toleranzstufen_V1_1.Toleranzstufen.TSNachfuehrung";
+    source ts from dm01 class "DM01AVCH24LV95D.TSEinteilung.Toleranzstufe";
+    identity ts.NBIdent, ts.Identifikator;
+
+    assign {
+      NBIdent = ts.NBIdent;
+      Identifikator = ts.Identifikator;
+      Beschreibung = truncate(ts.Identifikator, 60);
+      GueltigerEintrag = toXmlDateTime(coalesce(ts.GueltigerEintrag, "2024-01-01"));
+    }
+  }
+
+  rule toleranzstufe {
+    target dmav class "DMAV_Toleranzstufen_V1_1.Toleranzstufen.Toleranzstufe";
+    source ts from dm01 class "DM01AVCH24LV95D.TSEinteilung.Toleranzstufe";
+    identity ts.NBIdent, ts.Identifikator;
+
+    assign {
+      NBIdent = ts.NBIdent;
+      Identifikator = ts.Identifikator;
+      Geometrie = ts.Geometrie;
+      Toleranzstufe = enumMap(ts.Art, Toleranzstufe_DM01_DMAV);
+      Fiktiv = false;
+    }
+
+    ref Entstehung {
+      association "Entstehung_Toleranzstufe";
+      role "Entstehung";
+      required;
+      target rule ts-nachfuehrung sourceRef ts;
+    }
+  }
+}

@@ -406,4 +406,28 @@ class JobConfigToIlimapAstMapperTest {
         assertThat(doc.defaults().assignments()).hasSize(1);
         assertThat(doc.defaults().assignments().get(0).targetAttribute()).isEqualTo("Description");
     }
+
+    @Test
+    void rewriteExpressionConvertsSingleQuotesToDoubleQuotes() {
+        assertThat(JobConfigToIlimapAstMapper.rewriteExpression("'real'", java.util.Map.of()))
+                .isEqualTo("\"real\"");
+        assertThat(JobConfigToIlimapAstMapper.rewriteExpression("coalesce(s.K, 'BE')", java.util.Map.of()))
+                .isEqualTo("coalesce(s.K, \"BE\")");
+    }
+
+    @Test
+    void rewriteExpressionRenamesAliasButNotAttribute() {
+        java.util.Map<String, String> renames = java.util.Map.of("on", "on_");
+        assertThat(JobConfigToIlimapAstMapper.rewriteExpression("on.Name", renames))
+                .isEqualTo("on_.Name");
+        assertThat(JobConfigToIlimapAstMapper.rewriteExpression("refEquals(x.on, on)", renames))
+                .isEqualTo("refEquals(x.on, on_)");
+    }
+
+    @Test
+    void rewriteExpressionLeavesAliasInsideStringUntouched() {
+        java.util.Map<String, String> renames = java.util.Map.of("on", "on_");
+        assertThat(JobConfigToIlimapAstMapper.rewriteExpression("'on switch'", renames))
+                .isEqualTo("\"on switch\"");
+    }
 }

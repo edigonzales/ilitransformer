@@ -1,0 +1,81 @@
+datasetSlug: so-2546
+description: Full-run bundle for the SO-2546 DM01 dataset into the DMAV umbrella model, ilimap-only.
+direction: dm01-to-dmav
+failPolicy: strict
+
+source:
+  pathHint: ./source/2546.ch.so.agi.av.dm01_ch.itf
+  sha256: 8dd8de7144af48900fa68a8ce30fada3ab0a1340d988302e62deac5abb749471
+  model: DM01AVCH24LV95D
+  format: itf
+  inputId: dm01
+
+output:
+  outputId: dmav
+  model: DMAVTYM_Alles_V1_1
+  format: xtf
+  fileName: dmav-so-2546.xtf
+
+mapping:
+  oidStrategy: deterministicUuid
+  oidNamespace: dm01-to-dmav-so-2546-all
+  basketStrategy: byTopic
+  compileMode: compatible
+
+report:
+  expectedSummary: ./expected-summary.yaml
+
+modeldirs:
+  - src/test/data/av/models
+  - https://models.interlis.ch
+  - https://models.geo.admin.ch
+  - https://models.kgk-cgc.ch
+
+topics:
+  include:
+    - id: bb
+      mapping: profiles/dm01-to-dmav/1.1/bb.ilimap
+    - id: eo
+      mapping: profiles/dm01-to-dmav/1.1/eo.ilimap
+    - id: fpds2
+      mapping: profiles/dm01-to-dmav/1.1/fpds2.ilimap
+    - id: gebaeudeadressen
+      mapping: profiles/dm01-to-dmav/1.1/gebaeudeadressen.ilimap
+    - id: gs
+      mapping: profiles/dm01-to-dmav/1.1/gs.ilimap
+    - id: hfp3
+      mapping: profiles/dm01-to-dmav/1.1/hfp3.ilimap
+    - id: lfp3
+      mapping: profiles/dm01-to-dmav/1.1/lfp3.ilimap
+    - id: nomenklatur
+      mapping: profiles/dm01-to-dmav/1.1/nomenklatur.ilimap
+    - id: rohrleitungen
+      mapping: profiles/dm01-to-dmav/1.1/rohrleitungen.ilimap
+    - id: toleranzstufen
+      mapping: profiles/dm01-to-dmav/1.1/toleranzstufen.ilimap
+  exclude:
+    - id: dbv
+      reason: "dataset: DM01AVCH24LV95D.Rutschgebiete contains no objects in the SO-2546 dataset."
+    - id: fixpunktelv
+      reason: "validate-mapping: target classes DMAV_FixpunkteLV_V1_0.FixpunkteLV.LFP1 and HFP1 are not present under output model DMAVTYM_Alles_V1_1."
+    - id: hoheitsgrenzenlv
+      reason: "validate-mapping: target class DMAV_HoheitsgrenzenLV_V1_0.HoheitsgrenzenLV.Landesgrenze is not present under output model DMAVTYM_Alles_V1_1; dataset also contains no Landesgrenzen objects."
+    - id: plzortschaft
+      reason: "validate-mapping: target classes DMAV_PLZ_Ortschaft_V1_0.PLZ_Ortschaft.Ortschaft and PLZ are not present under output model DMAVTYM_Alles_V1_1; dataset also contains no PLZOrtschaft objects."
+    - id: hoheitsgrenzen
+      reason: "transform: ambiguous #first references in DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung; multiple target candidates are found."
+
+sourceTopicsWithoutProfile:
+  - DM01AVCH24LV95D.Bezirksgrenzen
+  - DM01AVCH24LV95D.Hoehen
+  - DM01AVCH24LV95D.Kantonsgrenzen
+  - DM01AVCH24LV95D.Nummerierungsbereiche
+  - DM01AVCH24LV95D.Planeinteilungen
+  - DM01AVCH24LV95D.Planrahmen
+
+sourceTopicsPresentInDataset:
+  - DM01AVCH24LV95D.Bezirksgrenzen
+  - DM01AVCH24LV95D.Kantonsgrenzen
+  - DM01AVCH24LV95D.Nummerierungsbereiche
+  - DM01AVCH24LV95D.Planeinteilungen
+  - DM01AVCH24LV95D.Planrahmen

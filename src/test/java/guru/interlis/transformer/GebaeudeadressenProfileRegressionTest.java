@@ -9,7 +9,6 @@ import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
-import guru.interlis.transformer.dmav.Dm01DmavFixtures;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
@@ -42,7 +41,7 @@ import org.w3c.dom.NodeList;
 
 class GebaeudeadressenProfileRegressionTest {
 
-    private static final Path PROFILE = Dm01DmavFixtures.GA.dm01ToDmavProfile();
+    private static final Path PROFILE = Path.of("profiles/dm01-to-dmav/1.1/gebaeudeadressen.ilimap");
     private static final String ILI_NS = "http://www.interlis.ch/xtf/2.4/INTERLIS";
     private static final String GA_NS = "http://www.interlis.ch/xtf/2.4/DMAV_Gebaeudeadressen_V1_1";
 
@@ -119,18 +118,56 @@ class GebaeudeadressenProfileRegressionTest {
         assertThat(lokalisationRefs.get(0).getAttributeNS(ILI_NS, "ref")).isNotBlank();
     }
 
+    @Test
+    void forwardProfileDropsStrasseWithoutStrassenstueckAndRecordsLoss() throws Exception {
+        PreparedJob prepared = prepareProfile();
+        TransformPlan plan = prepared.plan();
+        assertThat(plan.diagnostics().hasErrors())
+                .as("Compiler diagnostics: %s", plan.diagnostics().all())
+                .isFalse();
+
+        Path outputPath = tempDir.resolve("gebaeudeadressen-drop-regression.xtf");
+        DiagnosticCollector runtimeDiagnostics = new DiagnosticCollector();
+        TransformationEngine engine =
+                new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), runtimeDiagnostics);
+
+        TransformResult result;
+        IoxWriter writer = new InterlisIoFactory()
+                .createWriter(outputPath, plan.outputsById().get("dmav").transferDescription(), runtimeDiagnostics);
+        try {
+            result = engine.runTyped(
+                    plan,
+                    inputId -> TestMockReaders.mockReader(sourceObjectsWithStrasseWithoutStrassenstueck()),
+                    Map.of("dmav", writer));
+        } finally {
+            try {
+                writer.close();
+            } catch (Exception ignored) {
+                // TransformationEngine closes writers on the normal path.
+            }
+        }
+
+        assertThat(result.errors()).isEqualTo(0);
+        assertThat(engine.getLossinessCollector().events())
+                .extracting(event -> event.reasonCode())
+                .containsExactly("DROPPED_LOKALISATION_WITHOUT_STRASSENSTUECK");
+
+        Document document = parse(outputPath);
+        assertThat(topLevelObjects(document, "GANachfuehrung")).hasSize(1);
+        assertThat(topLevelObjects(document, "Lokalisation")).isEmpty();
+    }
+
     private PreparedJob prepareProfile() throws Exception {
-        Path materializedProfile = tempDir.resolve("gebaeudeadressen-regression.yaml");
-        String yaml = Files.readString(PROFILE, StandardCharsets.UTF_8).replace("""
-                  modeldir:
-                    - "https://models.geo.admin.ch/"
-                    - "models/"
-                """, """
-                  modeldir:
-                    - "src/test/data/av/models"
-                    - "https://models.interlis.ch"
-                """);
-        Files.writeString(materializedProfile, yaml, StandardCharsets.UTF_8);
+        Path materializedProfile = tempDir.resolve("gebaeudeadressen-regression.ilimap");
+        String ilimap = Files.readString(PROFILE, StandardCharsets.UTF_8).replace("""
+              modeldir "https://models.geo.admin.ch/";
+              modeldir "models/";
+        """, """
+              modeldir "src/test/data/av/models";
+              modeldir "https://models.interlis.ch";
+              modeldir "https://models.geo.admin.ch";
+        """);
+        Files.writeString(materializedProfile, ilimap, StandardCharsets.UTF_8);
         return new JobRunner().prepare(materializedProfile, new RunOptions(List.of()));
     }
 
@@ -168,6 +205,20 @@ class GebaeudeadressenProfileRegressionTest {
         return new Iom_jObject[] {
             nf, lokStrasse1, lokStrasse2, lokGebiet, lnStrasse1, lnStrasse2, lnGebiet, ss1, ss2, bg1, eingang
         };
+    }
+
+    private Iom_jObject[] sourceObjectsWithStrasseWithoutStrassenstueck() {
+        Iom_jObject nf = new Iom_jObject("DM01AVCH24LV95D.Gebaeudeadressen.GEBNachfuehrung", "nf-drop");
+        nf.setattrvalue("NBIdent", "GA_NB");
+        nf.setattrvalue("Identifikator", "GA_DROP");
+        nf.setattrvalue("Beschreibung", "GaDropRegression");
+        nf.setattrvalue("Gueltigkeit", "gueltig");
+        nf.setattrvalue("GueltigerEintrag", "2025-03-15");
+
+        Iom_jObject lokStrasse = lokalisation("lok-no-ss", "nf-drop", "aufsteigend", "103", "Strasse");
+        Iom_jObject name = lokalisationsName("ln-drop", "lok-no-ss", "Ohne Stueck");
+
+        return new Iom_jObject[] {nf, lokStrasse, name};
     }
 
     private Iom_jObject lokalisation(

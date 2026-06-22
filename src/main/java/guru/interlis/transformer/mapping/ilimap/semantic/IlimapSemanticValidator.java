@@ -328,11 +328,12 @@ public final class IlimapSemanticValidator {
                     "Use a unique bag name"));
         }
 
-        if (bag.from() == null) {
+        if (bag.from() == null
+                && (bag.targetAttribute() == null || bag.targetAttribute().isBlank())) {
             diagnostics.add(new Diagnostic(
                     DiagnosticCode.ILIMAP_MISSING_BAG_FROM,
                     Severity.ERROR,
-                    "bag '" + bag.id() + "' must have a 'from' statement",
+                    "bag '" + bag.id() + "' must have a 'from' statement or an explicit target attribute",
                     formatRange(bag.range()),
                     null));
         }
@@ -487,6 +488,9 @@ public final class IlimapSemanticValidator {
     private void collectBagExpressions(IlimapBagBlock bag, List<IlimapExpressionText> result) {
         if (bag.from() != null && bag.from().where() != null) {
             result.add(bag.from().where());
+        }
+        if (bag.where() != null) {
+            result.add(bag.where());
         }
         if (bag.assign() != null) {
             bag.assign().assignments().forEach(a -> result.add(a.expression()));

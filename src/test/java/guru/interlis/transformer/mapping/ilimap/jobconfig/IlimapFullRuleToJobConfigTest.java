@@ -87,6 +87,36 @@ class IlimapFullRuleToJobConfigTest {
     }
 
     @Test
+    void mapsSyntheticBagTargetAndWhereToJobConfig() {
+        JobConfig config = mapFromSource("""
+                mapping v2 {
+                  input src { path "in.xtf"; model "M"; }
+                  output out { path "out.xtf"; model "M"; }
+                  rule r1 {
+                    target out class "M.A";
+                    source s from src class "M.A";
+                    bag SyntheticSymbolposition {
+                      target Symbolposition;
+                      where not(existsIn("src", "M.Symbol", "Symbol_von", oid(s)));
+                      assign {
+                        Position = pointOnSurface(s.Geometrie);
+                        Orientierung = 100.0;
+                      }
+                    }
+                  }
+                }
+                """);
+        JobConfig.RuleSpec rule = config.mapping.rules.get(0);
+        assertThat(rule.bags).containsKey("SyntheticSymbolposition");
+        JobConfig.BagSpec bag = rule.bags.get("SyntheticSymbolposition");
+        assertThat(bag.target).isEqualTo("Symbolposition");
+        assertThat(bag.from).isNull();
+        assertThat(bag.where).isEqualTo("not(existsIn(\"src\", \"M.Symbol\", \"Symbol_von\", oid(s)))");
+        assertThat(bag.assign).containsEntry("Position", "pointOnSurface(s.Geometrie)");
+        assertThat(bag.assign).containsEntry("Orientierung", "100.0");
+    }
+
+    @Test
     void mapsNestedBagToJobConfig() {
         JobConfig config = mapFromSource("""
                 mapping v2 {

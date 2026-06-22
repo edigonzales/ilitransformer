@@ -54,6 +54,8 @@ final class BagCompiler {
         for (var entry : rule.bags.entrySet()) {
             String bagAttrName = entry.getKey();
             JobConfig.BagSpec bagSpec = entry.getValue();
+            String targetBagAttrName =
+                    bagSpec.target != null && !bagSpec.target.isBlank() ? bagSpec.target : bagAttrName;
 
             BagPlan.BagMode mode =
                     "expand".equalsIgnoreCase(bagSpec.mode) ? BagPlan.BagMode.EXPAND : BagPlan.BagMode.EMBED;
@@ -88,12 +90,13 @@ final class BagCompiler {
                 }
                 effectiveStructureName = CompileUtils.getScopedName(componentTable);
             } else {
-                AttributeDef bagAttr = targetTs != null ? targetTs.findAttribute(targetClass, bagAttrName) : null;
+                AttributeDef bagAttr = targetTs != null ? targetTs.findAttribute(targetClass, targetBagAttrName) : null;
                 if (bagAttr == null) {
                     diag.add(new Diagnostic(
                             DiagnosticCode.MAP_UNKNOWN_TARGET_ATTRIBUTE,
                             Severity.ERROR,
-                            "Bag target attribute not found: " + bagAttrName + " in class " + targetClass.getName(),
+                            "Bag target attribute not found: " + targetBagAttrName + " in class "
+                                    + targetClass.getName(),
                             ruleId,
                             "Check the bag attribute name in the target class"));
                     continue;
@@ -141,61 +144,97 @@ final class BagCompiler {
             }
 
             JobConfig.BagFrom from = bagSpec.from;
-            if (from == null || from.clazz == null || from.clazz.isBlank()) {
-                diag.add(new Diagnostic(
-                        DiagnosticCode.MAP_MISSING_SOURCE_CLASS,
-                        Severity.ERROR,
-                        "Bag '" + bagAttrName + "' is missing from.class",
-                        ruleId,
-                        "Specify the source class in bags.<name>.from.class"));
-                continue;
+            String parentRefAttribute = null;
+            String parentAlias = null;
+            if (bagSpec.parentRef != null) {
+                if (bagSpec.parentRef.attribute != null && !bagSpec.parentRef.attribute.isBlank()) {
+                    parentRefAttribute = bagSpec.parentRef.attribute;
+                }
+                if (bagSpec.parentRef.parentAlias != null && !bagSpec.parentRef.parentAlias.isBlank()) {
+                    parentAlias = bagSpec.parentRef.parentAlias;
+                }
             }
-            if (from.alias == null || from.alias.isBlank()) {
-                diag.add(new Diagnostic(
-                        DiagnosticCode.MAP_MISSING_ALIAS,
-                        Severity.ERROR,
-                        "Bag '" + bagAttrName + "' is missing from.alias",
-                        ruleId,
-                        "Specify an alias in bags.<name>.from.alias"));
-                continue;
+            if (parentAlias == null && fallbackParentAlias != null && !fallbackParentAlias.isBlank()) {
+                parentAlias = fallbackParentAlias;
             }
-            if (from.input == null || from.input.isBlank()) {
-                diag.add(new Diagnostic(
-                        DiagnosticCode.MAP_MISSING_INPUT,
-                        Severity.ERROR,
-                        "Bag '" + bagAttrName + "' is missing from.input",
-                        ruleId,
-                        "Specify the input in bags.<name>.from.input"));
-                continue;
+            if (parentAlias == null && !sourcePlans.isEmpty()) {
+                parentAlias = sourcePlans.get(0).alias();
             }
 
-            TypeSystemFacade sourceTs = ctx.modelRegistry().requireSourceTypeSystem(from.input);
-            Table bagSourceClass = null;
-            if (sourceTs != null) {
-                bagSourceClass = sourceTs.resolveClass(from.clazz);
-            }
-            if (bagSourceClass == null) {
-                diag.add(new Diagnostic(
-                        DiagnosticCode.MAP_UNKNOWN_SOURCE_CLASS,
-                        Severity.ERROR,
-                        "Bag source class not found: " + from.clazz,
-                        ruleId,
-                        "Check the class name in bags.<name>.from.class"));
-                continue;
-            }
+            SourcePlan bagSourcePlan;
+            boolean syntheticFromParent = from == null;
+            if (syntheticFromParent) {
+                if (parentAlias == null || !sourcesByAlias.containsKey(parentAlias)) {
+                    diag.add(new Diagnostic(
+                            DiagnosticCode.MAP_MISSING_ALIAS,
+                            Severity.ERROR,
+                            "Synthetic bag '" + bagAttrName + "' has no resolvable parent alias",
+                            ruleId,
+                            "Set parentRef.parentAlias or define a rule source"));
+                    continue;
+                }
+                bagSourcePlan = new SourcePlan(parentAlias, null, List.of(), null);
+            } else {
+                if (from.clazz == null || from.clazz.isBlank()) {
+                    diag.add(new Diagnostic(
+                            DiagnosticCode.MAP_MISSING_SOURCE_CLASS,
+                            Severity.ERROR,
+                            "Bag '" + bagAttrName + "' is missing from.class",
+                            ruleId,
+                            "Specify the source class in bags.<name>.from.class"));
+                    continue;
+                }
+                if (from.alias == null || from.alias.isBlank()) {
+                    diag.add(new Diagnostic(
+                            DiagnosticCode.MAP_MISSING_ALIAS,
+                            Severity.ERROR,
+                            "Bag '" + bagAttrName + "' is missing from.alias",
+                            ruleId,
+                            "Specify an alias in bags.<name>.from.alias"));
+                    continue;
+                }
+                if (from.input == null || from.input.isBlank()) {
+                    diag.add(new Diagnostic(
+                            DiagnosticCode.MAP_MISSING_INPUT,
+                            Severity.ERROR,
+                            "Bag '" + bagAttrName + "' is missing from.input",
+                            ruleId,
+                            "Specify the input in bags.<name>.from.input"));
+                    continue;
+                }
 
-            SourcePlan bagSourcePlan = new SourcePlan(from.alias, bagSourceClass, List.of(from.input), null);
+                TypeSystemFacade sourceTs = ctx.modelRegistry().requireSourceTypeSystem(from.input);
+                Table bagSourceClass = null;
+                if (sourceTs != null) {
+                    bagSourceClass = sourceTs.resolveClass(from.clazz);
+                }
+                if (bagSourceClass == null) {
+                    diag.add(new Diagnostic(
+                            DiagnosticCode.MAP_UNKNOWN_SOURCE_CLASS,
+                            Severity.ERROR,
+                            "Bag source class not found: " + from.clazz,
+                            ruleId,
+                            "Check the class name in bags.<name>.from.class"));
+                    continue;
+                }
+
+                bagSourcePlan = new SourcePlan(from.alias, bagSourceClass, List.of(from.input), null);
+            }
 
             CompiledExpression bagWhere = null;
-            if (from.where != null && !from.where.isBlank()) {
+            String combinedWhere = combineWhere(from != null ? from.where : null, bagSpec.where);
+            if (combinedWhere != null && !combinedWhere.isBlank()) {
                 Map<String, SourcePlan> bagSourcesByAlias = new HashMap<>(sourcesByAlias);
-                bagSourcesByAlias.put(from.alias, bagSourcePlan);
+                if (!syntheticFromParent) {
+                    bagSourcesByAlias.put(from.alias, bagSourcePlan);
+                }
                 ExpressionCompileContext whereCtx = new ExpressionCompileContext(
                         ruleId, bagSourcesByAlias, TypeInfo.BOOLEAN, ctx.functionRegistry(), ctx.enumMaps());
-                bagWhere = ctx.expressionCompiler().compile(from.where, whereCtx, diag);
+                bagWhere = ctx.expressionCompiler().compile(combinedWhere, whereCtx, diag);
             }
 
-            bagSourcePlan = new SourcePlan(from.alias, bagSourceClass, List.of(from.input), bagWhere);
+            bagSourcePlan = new SourcePlan(
+                    bagSourcePlan.alias(), bagSourcePlan.sourceClass(), bagSourcePlan.inputIds(), bagWhere);
 
             List<AssignmentPlan> bagAssignments = new ArrayList<>();
             Set<String> assignedBagAttrs = new HashSet<>();
@@ -230,7 +269,9 @@ final class BagCompiler {
                             structAttr != null ? ExpressionCompiler.classifyIliAttr(structAttr) : TypeInfo.UNKNOWN;
 
                     Map<String, SourcePlan> bagCtxSources = new HashMap<>();
-                    bagCtxSources.put(from.alias, bagSourcePlan);
+                    if (!syntheticFromParent) {
+                        bagCtxSources.put(from.alias, bagSourcePlan);
+                    }
                     bagCtxSources.putAll(sourcesByAlias);
 
                     ExpressionCompileContext compileCtx = new ExpressionCompileContext(
@@ -243,17 +284,6 @@ final class BagCompiler {
             }
 
             checkStructureMandatoryCoverage(componentTable, bagAssignments, bagAttrName, ruleId, diag);
-
-            String parentRefAttribute = null;
-            String parentAlias = null;
-            if (bagSpec.parentRef != null) {
-                if (bagSpec.parentRef.attribute != null && !bagSpec.parentRef.attribute.isBlank()) {
-                    parentRefAttribute = bagSpec.parentRef.attribute;
-                }
-                if (bagSpec.parentRef.parentAlias != null && !bagSpec.parentRef.parentAlias.isBlank()) {
-                    parentAlias = bagSpec.parentRef.parentAlias;
-                }
-            }
             if (parentRefAttribute == null
                     && bagWhere != null
                     && bagWhere.ast() instanceof FunctionCallExpr fce
@@ -266,13 +296,7 @@ final class BagCompiler {
                     parentAlias = second.alias();
                 }
             }
-            if (parentAlias == null && fallbackParentAlias != null && !fallbackParentAlias.isBlank()) {
-                parentAlias = fallbackParentAlias;
-            }
-            if (parentAlias == null && !sourcePlans.isEmpty()) {
-                parentAlias = sourcePlans.get(0).alias();
-            }
-            if (parentRefAttribute == null && parentAlias == null) {
+            if (!syntheticFromParent && parentRefAttribute == null && parentAlias == null) {
                 diag.add(new Diagnostic(
                         DiagnosticCode.MAP_BAG_PARENT_REF_MISSING,
                         Severity.WARNING,
@@ -286,8 +310,8 @@ final class BagCompiler {
             Integer cardinalityMax = null;
             if (mode == BagPlan.BagMode.EMBED
                     && targetTs != null
-                    && targetTs.findAttribute(targetClass, bagAttrName) != null) {
-                var bagAttr2 = targetTs.findAttribute(targetClass, bagAttrName);
+                    && targetTs.findAttribute(targetClass, targetBagAttrName) != null) {
+                var bagAttr2 = targetTs.findAttribute(targetClass, targetBagAttrName);
                 if (bagAttr2 != null
                         && bagAttr2.getDomain() instanceof CompositionType ct
                         && ct.getCardinality() instanceof Cardinality card) {
@@ -334,7 +358,9 @@ final class BagCompiler {
                 nestedRule.identity = rule.identity;
                 nestedRule.bags = bagSpec.nestedBags;
                 Map<String, SourcePlan> nestedSourcesByAlias = new HashMap<>(sourcesByAlias);
-                nestedSourcesByAlias.put(bagSourcePlan.alias(), bagSourcePlan);
+                if (!syntheticFromParent) {
+                    nestedSourcesByAlias.put(bagSourcePlan.alias(), bagSourcePlan);
+                }
                 nestedBagPlans = compileBags(
                         nestedRule,
                         sourcePlans,
@@ -347,7 +373,7 @@ final class BagCompiler {
             }
 
             BagPlan bp = new BagPlan(
-                    bagAttrName,
+                    targetBagAttrName,
                     bagSourcePlan,
                     effectiveStructureName,
                     bagAssignments,
@@ -364,6 +390,18 @@ final class BagCompiler {
             bagPlans.add(bp);
         }
         return bagPlans;
+    }
+
+    private static String combineWhere(String sourceWhere, String bagWhere) {
+        boolean hasSourceWhere = sourceWhere != null && !sourceWhere.isBlank();
+        boolean hasBagWhere = bagWhere != null && !bagWhere.isBlank();
+        if (hasSourceWhere && hasBagWhere) {
+            return "(" + sourceWhere + ") and (" + bagWhere + ")";
+        }
+        if (hasSourceWhere) {
+            return sourceWhere;
+        }
+        return hasBagWhere ? bagWhere : null;
     }
 
     private void checkStructureMandatoryCoverage(

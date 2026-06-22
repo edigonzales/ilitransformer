@@ -102,6 +102,40 @@ class IlimapParserFullRuleTest {
     }
 
     @Test
+    void parsesSyntheticBagWithTargetAndWhere() {
+        var doc = parse("""
+                mapping v2 {
+                  input src { path "in.xtf"; model "M"; }
+                  output out { path "out.xtf"; model "M"; }
+                  rule r1 {
+                    target out class "M.A";
+                    source s from src class "M.A";
+                    bag SyntheticSymbolposition {
+                      target Symbolposition;
+                      where not(existsIn("src", "M.Symbol", "Symbol_von", oid(s)));
+                      assign {
+                        Position = pointOnSurface(s.Geometrie);
+                        Orientierung = 100.0;
+                      }
+                    }
+                  }
+                }
+                """);
+        IlimapBagBlock bag = doc.rules().get(0).elements().stream()
+                .filter(e -> e instanceof IlimapBagBlock)
+                .map(e -> (IlimapBagBlock) e)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(bag.id()).isEqualTo("SyntheticSymbolposition");
+        assertThat(bag.targetAttribute()).isEqualTo("Symbolposition");
+        assertThat(bag.from()).isNull();
+        assertThat(bag.where()).isNotNull();
+        assertThat(bag.where().text()).isEqualTo("not(existsIn(\"src\", \"M.Symbol\", \"Symbol_von\", oid(s)))");
+        assertThat(bag.assign().assignments()).hasSize(2);
+    }
+
+    @Test
     void parsesNestedBags() {
         var doc = parse("""
                 mapping v2 {

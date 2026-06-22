@@ -234,6 +234,7 @@ public final class TargetObjectFactory {
                     ctx.expandedTargets(),
                     ctx.geometryAdapter(),
                     ctx.sourceAttributeTypes(),
+                    ctx.sourceLookupIndex(),
                     ctx.referenceIndex());
             if (bag.isEmbed()) {
                 bagTransformationService.embed(bagCtx);
@@ -535,7 +536,8 @@ public final class TargetObjectFactory {
             ParentChildIndex parentChildIndex,
             ExecutionMetrics metrics,
             GeometryAdapter geometryAdapter,
-            Map<String, Map<String, TypeInfo>> sourceAttributeTypes) {
+            Map<String, Map<String, TypeInfo>> sourceAttributeTypes,
+            guru.interlis.transformer.state.SourceLookupIndex sourceLookupIndex) {
         public void recordTargetsCreated(int count) {
             if (metrics != null) {
                 for (int i = 0; i < count; i++) {

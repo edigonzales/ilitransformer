@@ -30,6 +30,11 @@ public record FunctionDef(
         return new FunctionDef(name, params, false, argTypes -> returnType, false, EvaluationMode.EAGER, impl, null);
     }
 
+    public static FunctionDef eagerVariadic(
+            String name, TypeInfo returnType, List<FunctionParam> params, FunctionImplementation impl) {
+        return new FunctionDef(name, params, true, argTypes -> returnType, true, EvaluationMode.EAGER, impl, null);
+    }
+
     public static FunctionDef lazy(
             String name,
             TypeResolver returnTypeResolver,

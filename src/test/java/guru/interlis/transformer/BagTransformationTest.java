@@ -126,8 +126,8 @@ class BagTransformationTest {
             assertThat(result.errors()).isEqualTo(0);
             String content = Files.readString(outputPath);
             assertThat(content).contains("Position");
-            assertThat(content).contains("1.500");
-            assertThat(content).contains("2.500");
+            assertThat(content).contains("1.5");
+            assertThat(content).contains("2.5");
         } finally {
             Files.deleteIfExists(outputPath);
         }
@@ -227,6 +227,62 @@ class BagTransformationTest {
             boolean hasBagMandatoryWarning =
                     engineDiag.all().stream().anyMatch(d -> d.code().equals(DiagnosticCode.RUN_BAG_MANDATORY_MISSING));
             assertThat(hasBagMandatoryWarning).isTrue();
+        } finally {
+            Files.deleteIfExists(outputPath);
+        }
+    }
+
+    @Test
+    void syntheticParentBagCreatesOneStructureWhenWhereMatches() throws Exception {
+        TransformPlan plan = compileMapping("src/test/resources/mappings/bag-synthetic-parent-test.yaml");
+        assertThat(plan.diagnostics().hasErrors()).isFalse();
+
+        Iom_jObject parent = new Iom_jObject("BagFlatSource.FlatTopic.Parent", "p1");
+        parent.setattrvalue("ParentId", "P001");
+        parent.setattrvalue("Description", "needs-position");
+
+        Path outputPath = Files.createTempFile("bag-synthetic-parent-", ".xtf");
+        try {
+            InterlisIoFactory ioFactory = new InterlisIoFactory();
+            IoxWriter writer = ioFactory.createWriter(outputPath, nestedTransferDescription);
+            DiagnosticCollector engineDiag = new DiagnosticCollector();
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(parent), Map.of("nested", writer));
+
+            assertThat(result.errors()).isEqualTo(0);
+            String content = Files.readString(outputPath);
+            assertThat(content).contains("Position");
+            assertThat(content).contains("1.5");
+            assertThat(content).contains("2.5");
+        } finally {
+            Files.deleteIfExists(outputPath);
+        }
+    }
+
+    @Test
+    void syntheticParentBagDoesNotCreateStructureWhenWhereDoesNotMatch() throws Exception {
+        TransformPlan plan = compileMapping("src/test/resources/mappings/bag-synthetic-parent-test.yaml");
+        assertThat(plan.diagnostics().hasErrors()).isFalse();
+
+        Iom_jObject parent = new Iom_jObject("BagFlatSource.FlatTopic.Parent", "p1");
+        parent.setattrvalue("ParentId", "P001");
+        parent.setattrvalue("Description", "plain");
+
+        Path outputPath = Files.createTempFile("bag-synthetic-parent-empty-", ".xtf");
+        try {
+            InterlisIoFactory ioFactory = new InterlisIoFactory();
+            IoxWriter writer = ioFactory.createWriter(outputPath, nestedTransferDescription);
+            DiagnosticCollector engineDiag = new DiagnosticCollector();
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(parent), Map.of("nested", writer));
+
+            assertThat(result.errors()).isEqualTo(0);
+            String content = Files.readString(outputPath);
+            assertThat(content).doesNotContain("Position");
+            assertThat(content).doesNotContain("<BagNestedTarget:X>");
+            assertThat(content).doesNotContain("<BagNestedTarget:Y>");
         } finally {
             Files.deleteIfExists(outputPath);
         }

@@ -19,6 +19,7 @@ public final class InMemorySourceLookupIndex implements SourceLookupIndex {
 
         Map<String, Map<CanonicalValue, List<SourceRecord>>> classIndex =
                 index.computeIfAbsent(sourceClass, k -> new LinkedHashMap<>());
+        indexObjectOid(classIndex, record);
 
         for (int i = 0; i < obj.getattrcount(); i++) {
             String attrName = obj.getattrname(i);
@@ -45,6 +46,17 @@ public final class InMemorySourceLookupIndex implements SourceLookupIndex {
                 }
             }
         }
+    }
+
+    private static void indexObjectOid(
+            Map<String, Map<CanonicalValue, List<SourceRecord>>> classIndex, SourceRecord record) {
+        String oid = record.sourceObject().getobjectoid();
+        if (oid == null || oid.isBlank()) return;
+        CanonicalValue cv = new CanonicalValue("text", oid, true);
+        classIndex
+                .computeIfAbsent(SourceLookupIndex.OBJECT_OID_ATTRIBUTE, k -> new LinkedHashMap<>())
+                .computeIfAbsent(cv, k -> new ArrayList<>())
+                .add(record);
     }
 
     @Override

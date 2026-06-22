@@ -1,0 +1,68 @@
+mapping v2 "dm01-to-dmav-fixpunktelv" {
+  job {
+    description "Pilot-Transformation DM01 FixpunkteKategorie1 nach DMAV FixpunkteLV";
+    direction dm01-to-dmav;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "models/";
+  }
+
+  input dm01 {
+    path "input/dm01.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  output dmav {
+    path "build/out/dmav-fixpunktelv.xtf";
+    model "DMAV_FixpunkteLV_V1_0";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "dm01-to-dmav-fixpunktelv";
+  }
+
+  basket byTopic;
+
+  enum Zuverlaessigkeit_DM01_DMAV {
+    "ja" => true;
+    "nein" => false;
+  }
+
+  rule lfp1 {
+    target dmav class "DMAV_FixpunkteLV_V1_0.FixpunkteLV.LFP1";
+    source p from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie1.LFP1";
+    identity p.NBIdent, p.Nummer;
+
+    assign {
+      Nummer = p.Nummer;
+      Geometrie = p.Geometrie;
+      Hoehengeometrie = p.HoeheGeom;
+      Lagegenauigkeit = div(p.LageGen, 100.0);
+      IstLagezuverlaessig = enumMap(p.LageZuv, Zuverlaessigkeit_DM01_DMAV);
+      Hoehengenauigkeit = div(p.HoeheGen, 100.0);
+      IstHoehenzuverlaessig = enumMap(p.HoeheZuv, Zuverlaessigkeit_DM01_DMAV);
+      Begehbar = eq(p.Begehbarkeit, #begehbar);
+      Punktzeichen = p.Punktzeichen;
+    }
+  }
+
+  rule hfp1 {
+    target dmav class "DMAV_FixpunkteLV_V1_0.FixpunkteLV.HFP1";
+    source p from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie1.HFP1";
+    identity p.NBIdent, p.Nummer;
+
+    assign {
+      Nummer = p.Nummer;
+      Geometrie = p.Geometrie;
+      Hoehengeometrie = p.HoeheGeom;
+      Lagegenauigkeit = div(p.LageGen, 100.0);
+      IstLagezuverlaessig = enumMap(p.LageZuv, Zuverlaessigkeit_DM01_DMAV);
+      Hoehengenauigkeit = div(p.HoeheGen, 100.0);
+      IstHoehenzuverlaessig = enumMap(p.HoeheZuv, Zuverlaessigkeit_DM01_DMAV);
+    }
+  }
+}

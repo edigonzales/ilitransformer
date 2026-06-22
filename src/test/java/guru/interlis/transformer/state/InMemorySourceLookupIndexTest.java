@@ -38,6 +38,21 @@ class InMemorySourceLookupIndexTest {
     }
 
     @Test
+    void objectOidLookupFindsRecord() {
+        InMemorySourceLookupIndex index = new InMemorySourceLookupIndex();
+        index.index(sourceRecord("dm01", "Model.T.ClassA", "OID_42", "Name", "Ignored"));
+
+        List<SourceRecord> hits = index.lookup(new LookupKey(
+                "dm01",
+                "Model.T.ClassA",
+                SourceLookupIndex.OBJECT_OID_ATTRIBUTE,
+                new CanonicalValue("text", "OID_42", true)));
+
+        assertThat(hits).hasSize(1);
+        assertThat(hits.get(0).sourceObject().getobjectoid()).isEqualTo("OID_42");
+    }
+
+    @Test
     void inputIdFilterWorksCorrectly() {
         InMemorySourceLookupIndex index = new InMemorySourceLookupIndex();
         index.index(sourceRecord("input-A", "Model.T.ClassA", "1", "Name", "ValueA"));

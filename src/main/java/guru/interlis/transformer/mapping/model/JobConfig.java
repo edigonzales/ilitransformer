@@ -247,6 +247,9 @@ public final class JobConfig {
     // -- BagSpec -----------------------------------------------------------
 
     public static final class BagSpec {
+        @JsonProperty("target")
+        public String target;
+
         @JsonProperty("from")
         public BagFrom from;
 
@@ -254,6 +257,7 @@ public final class JobConfig {
         public Map<String, String> assign;
         public String mode;
         public Integer maxItems;
+        public String where;
 
         @JsonProperty("parentRef")
         public BagParentRef parentRef;

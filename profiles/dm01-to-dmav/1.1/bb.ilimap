@@ -1,0 +1,280 @@
+mapping v2 "dm01-to-dmav-bb" {
+  job {
+    description "Pilot-Transformation DM01 Bodenbedeckung nach DMAV Bodenbedeckung";
+    direction dm01-to-dmav;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "models/";
+  }
+
+  input dm01 {
+    path "input/dm01.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  output dmav {
+    path "build/out/dmav-bb.xtf";
+    model "DMAV_Bodenbedeckung_V1_1";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "dm01-to-dmav-bb";
+  }
+
+  basket byTopic;
+
+  enum Zuverlaessigkeit_DM01_DMAV {
+    "ja" => true;
+    "nein" => false;
+  }
+
+  enum ExaktDefiniert_DM01_DMAV {
+    "Ja" => true;
+    "Nein" => false;
+  }
+
+  enum Schriftgroesse_DM01_DMAV {
+    "klein" => "Klein";
+    "mittel" => "Mittel";
+    "gross" => "Gross";
+  }
+
+  enum Bodenbedeckungsart_DM01_DMAV {
+    "Gebaeude" => "Gebaeude";
+    "befestigt.Strasse_Weg" => "befestigt.Strasse_Weg";
+    "befestigt.Trottoir" => "befestigt.Trottoir";
+    "befestigt.Verkehrsinsel" => "befestigt.Verkehrsinsel";
+    "befestigt.Bahn" => "befestigt.Bahn";
+    "befestigt.Flugplatz" => "befestigt.Flugplatz";
+    "befestigt.Wasserbecken" => "befestigt.Wasserbecken";
+    "befestigt.uebrige_befestigte" => "befestigt.uebrige_befestigte";
+    "humusiert.Acker_Wiese_Weide" => "humusiert.Acker_Wiese_Weide";
+    "humusiert.Intensivkultur.Reben" => "humusiert.Intensivkultur.Reben";
+    "humusiert.Intensivkultur.uebrige_Intensivkultur" => "humusiert.Intensivkultur.uebrige_Intensivkultur";
+    "humusiert.Gartenanlage" => "humusiert.Gartenanlage";
+    "humusiert.Hoch_Flachmoor" => "humusiert.Hoch_Flachmoor";
+    "humusiert.uebrige_humusierte" => "humusiert.uebrige_humusierte";
+    "Gewaesser.stehendes" => "Gewaesser.stehendes_Gewaesser";
+    "Gewaesser.fliessendes" => "Gewaesser.fliessendes_Gewaesser";
+    "Gewaesser.Schilfguertel" => "Gewaesser.Schilfguertel";
+    "bestockt.geschlossener_Wald" => "bestockt.geschlossener_Wald";
+    "bestockt.Wytweide.Wytweide_dicht" => "bestockt.Wytweide.Wytweide_dicht";
+    "bestockt.Wytweide.Wytweide_offen" => "bestockt.Wytweide.Wytweide_offen";
+    "bestockt.uebrige_bestockte" => "bestockt.uebrige_bestockte";
+    "vegetationslos.Fels" => "vegetationslos.Fels";
+    "vegetationslos.Gletscher_Firn" => "vegetationslos.Gletscher_Firn";
+    "vegetationslos.Geroell_Sand" => "vegetationslos.Geroell_Sand";
+    "vegetationslos.Abbau_Deponie" => "vegetationslos.Abbau_Deponie";
+    "vegetationslos.uebrige_vegetationslose" => "vegetationslos.uebrige_vegetationslose";
+  }
+
+  rule bb-nachfuehrung {
+    target dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.BBNachfuehrung";
+    source nf from dm01 class "DM01AVCH24LV95D.Bodenbedeckung.BBNachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 60);
+      Perimeter = nf.Perimeter;
+      GueltigerEintrag = toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1));
+    }
+  }
+
+  rule boflaeche-gueltig {
+    target dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung";
+    source bb from dm01 class "DM01AVCH24LV95D.Bodenbedeckung.BoFlaeche";
+
+    assign {
+      Geometrie = bb.Geometrie;
+      Qualitaetsstandard = bb.Qualitaet;
+      Bodenbedeckungsart = enumMap(bb.Art, Bodenbedeckungsart_DM01_DMAV);
+      Fiktiv = false;
+      Objektstatus = #real;
+      EGID = if(bb.Art == #Gebaeude, lookup("DM01AVCH24LV95D.Bodenbedeckung.Gebaeudenummer", "Gebaeudenummer_von", oid(bb), "GWR_EGID"), null);
+    }
+
+    bag Objektnummer {
+      from gn in dm01 class "DM01AVCH24LV95D.Bodenbedeckung.Gebaeudenummer";
+      parentRef attribute "Gebaeudenummer_von" parent bb;
+      assign {
+        Nummer = gn.Nummer;
+      }
+      bag Textposition {
+        from gnp in dm01 class "DM01AVCH24LV95D.Bodenbedeckung.GebaeudenummerPos";
+        parentRef attribute "GebaeudenummerPos_von" parent gn;
+        assign {
+          Position = gnp.Pos;
+          Orientierung = coalesce(gnp.Ori, 100.0);
+          HReferenzpunkt = coalesce(gnp.HAli, "Center");
+          VReferenzpunkt = coalesce(gnp.VAli, "Half");
+          Textgroesse = enumMap(coalesce(gnp.Groesse, "mittel"), Schriftgroesse_DM01_DMAV);
+        }
+      }
+    }
+
+    bag Objektname {
+      from on_ in dm01 class "DM01AVCH24LV95D.Bodenbedeckung.Objektname";
+      parentRef attribute "Objektname_von" parent bb;
+      assign {
+        Name = on_.Name;
+      }
+      bag Textposition {
+        from onp in dm01 class "DM01AVCH24LV95D.Bodenbedeckung.ObjektnamePos";
+        parentRef attribute "ObjektnamePos_von" parent on_;
+        assign {
+          Position = onp.Pos;
+          Orientierung = coalesce(onp.Ori, 100.0);
+          HReferenzpunkt = coalesce(onp.HAli, "Center");
+          VReferenzpunkt = coalesce(onp.VAli, "Half");
+          Textgroesse = enumMap(coalesce(onp.Groesse, "mittel"), Schriftgroesse_DM01_DMAV);
+        }
+      }
+    }
+
+    bag Symbolposition {
+      from sym in dm01 class "DM01AVCH24LV95D.Bodenbedeckung.BoFlaecheSymbol";
+      parentRef attribute "BoFlaecheSymbol_von" parent bb;
+      assign {
+        Position = sym.Pos;
+        Orientierung = coalesce(sym.Ori, 100.0);
+      }
+    }
+
+    bag SyntheticSymbolposition {
+      target Symbolposition;
+      where (bb.Art == "befestigt.Wasserbecken" or bb.Art == "Gewaesser.stehendes")
+        and not(existsIn("dm01", "DM01AVCH24LV95D.Bodenbedeckung.BoFlaecheSymbol", "BoFlaecheSymbol_von", oid(bb)));
+      assign {
+        Position = pointOnSurface(bb.Geometrie);
+        Orientierung = 100.0;
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_Bodenbedeckung";
+      role "Entstehung";
+      required;
+      target rule bb-nachfuehrung sourceRef bb.Entstehung;
+    }
+
+    loss {
+      sourcePath bb.Geometrie;
+      reasonCode "SYNTHETIC_BB_SYMBOLPOSITION";
+      description "DMAV verlangt fuer Wasserbecken/stehendes Gewaesser eine Symbolposition; Quelle liefert kein BoFlaecheSymbol, Position wurde aus der Flaeche abgeleitet.";
+      when (bb.Art == "befestigt.Wasserbecken" or bb.Art == "Gewaesser.stehendes")
+        and not(existsIn("dm01", "DM01AVCH24LV95D.Bodenbedeckung.BoFlaecheSymbol", "BoFlaecheSymbol_von", oid(bb)));
+    }
+  }
+
+  rule boflaeche-projektiert {
+    target dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung";
+    source bb from dm01 class "DM01AVCH24LV95D.Bodenbedeckung.ProjBoFlaeche";
+
+    assign {
+      Geometrie = bb.Geometrie;
+      Qualitaetsstandard = bb.Qualitaet;
+      Bodenbedeckungsart = enumMap(bb.Art, Bodenbedeckungsart_DM01_DMAV);
+      Fiktiv = false;
+      Objektstatus = #projektiert;
+      EGID = if(bb.Art == #Gebaeude, lookup("DM01AVCH24LV95D.Bodenbedeckung.ProjGebaeudenummer", "ProjGebaeudenummer_von", oid(bb), "GWR_EGID"), null);
+    }
+
+    bag Objektnummer {
+      from gn in dm01 class "DM01AVCH24LV95D.Bodenbedeckung.ProjGebaeudenummer";
+      parentRef attribute "ProjGebaeudenummer_von" parent bb;
+      assign {
+        Nummer = gn.Nummer;
+      }
+      bag Textposition {
+        from gnp in dm01 class "DM01AVCH24LV95D.Bodenbedeckung.ProjGebaeudenummerPos";
+        parentRef attribute "ProjGebaeudenummerPos_von" parent gn;
+        assign {
+          Position = gnp.Pos;
+          Orientierung = coalesce(gnp.Ori, 100.0);
+          HReferenzpunkt = coalesce(gnp.HAli, "Center");
+          VReferenzpunkt = coalesce(gnp.VAli, "Half");
+          Textgroesse = enumMap(coalesce(gnp.Groesse, "mittel"), Schriftgroesse_DM01_DMAV);
+        }
+      }
+    }
+
+    bag Objektname {
+      from on_ in dm01 class "DM01AVCH24LV95D.Bodenbedeckung.ProjObjektname";
+      parentRef attribute "ProjObjektname_von" parent bb;
+      assign {
+        Name = on_.Name;
+      }
+      bag Textposition {
+        from onp in dm01 class "DM01AVCH24LV95D.Bodenbedeckung.ProjObjektnamePos";
+        parentRef attribute "ProjObjektnamePos_von" parent on_;
+        assign {
+          Position = onp.Pos;
+          Orientierung = coalesce(onp.Ori, 100.0);
+          HReferenzpunkt = coalesce(onp.HAli, "Center");
+          VReferenzpunkt = coalesce(onp.VAli, "Half");
+          Textgroesse = enumMap(coalesce(onp.Groesse, "mittel"), Schriftgroesse_DM01_DMAV);
+        }
+      }
+    }
+
+    bag Symbolposition {
+      from sym in dm01 class "DM01AVCH24LV95D.Bodenbedeckung.ProjBoFlaecheSymbol";
+      parentRef attribute "ProjBoFlaecheSymbol_von" parent bb;
+      assign {
+        Position = sym.Pos;
+        Orientierung = coalesce(sym.Ori, 100.0);
+      }
+    }
+
+    bag SyntheticSymbolposition {
+      target Symbolposition;
+      where (bb.Art == "befestigt.Wasserbecken" or bb.Art == "Gewaesser.stehendes")
+        and not(existsIn("dm01", "DM01AVCH24LV95D.Bodenbedeckung.ProjBoFlaecheSymbol", "ProjBoFlaecheSymbol_von", oid(bb)));
+      assign {
+        Position = pointOnSurface(bb.Geometrie);
+        Orientierung = 100.0;
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_Bodenbedeckung";
+      role "Entstehung";
+      required;
+      target rule bb-nachfuehrung sourceRef bb.Entstehung;
+    }
+
+    loss {
+      sourcePath bb.Geometrie;
+      reasonCode "SYNTHETIC_BB_SYMBOLPOSITION";
+      description "DMAV verlangt fuer Wasserbecken/stehendes Gewaesser eine Symbolposition; Quelle liefert kein ProjBoFlaecheSymbol, Position wurde aus der Flaeche abgeleitet.";
+      when (bb.Art == "befestigt.Wasserbecken" or bb.Art == "Gewaesser.stehendes")
+        and not(existsIn("dm01", "DM01AVCH24LV95D.Bodenbedeckung.ProjBoFlaecheSymbol", "ProjBoFlaecheSymbol_von", oid(bb)));
+    }
+  }
+
+  rule einzelpunkt {
+    target dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Messpunkt";
+    source ep from dm01 class "DM01AVCH24LV95D.Bodenbedeckung.Einzelpunkt";
+    identity ep.Identifikator;
+
+    assign {
+      Nummer = ep.Identifikator;
+      Geometrie = ep.Geometrie;
+      Lagegenauigkeit = div(ep.LageGen, 100.0);
+      IstLagezuverlaessig = enumMap(ep.LageZuv, Zuverlaessigkeit_DM01_DMAV);
+      IstExaktDefiniert = enumMap(ep.ExaktDefiniert, ExaktDefiniert_DM01_DMAV);
+    }
+
+    ref Entstehung {
+      association "Entstehung_Messpunkt";
+      role "Entstehung";
+      target rule bb-nachfuehrung sourceRef ep.Entstehung;
+    }
+  }
+}

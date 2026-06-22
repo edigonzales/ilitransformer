@@ -246,6 +246,7 @@ public final class IlimapToJobConfigMapper {
 
     private JobConfig.BagSpec mapBag(IlimapBagBlock bag, IlimapSymbolTable symbols) {
         JobConfig.BagSpec bs = new JobConfig.BagSpec();
+        bs.target = bag.targetAttribute();
         if (bag.from() != null) {
             bs.from = new JobConfig.BagFrom();
             bs.from.alias = bag.from().alias();
@@ -258,6 +259,9 @@ public final class IlimapToJobConfigMapper {
         bs.structure = bag.structure();
         bs.mode = bag.mode();
         bs.maxItems = bag.maxItems();
+        if (bag.where() != null) {
+            bs.where = normalizer.normalizeForJobConfig(bag.where(), symbols);
+        }
         if (bag.parentRef() != null) {
             bs.parentRef = new JobConfig.BagParentRef();
             bs.parentRef.parentAlias = bag.parentRef().parentAlias();

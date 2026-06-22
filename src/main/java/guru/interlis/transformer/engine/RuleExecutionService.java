@@ -189,7 +189,8 @@ public final class RuleExecutionService {
                 parentChildIndex,
                 metrics,
                 geometryAdapter,
-                sourceAttrTypes);
+                sourceAttrTypes,
+                sourceLookupIndex);
 
         for (SourcePlan source : rule.sources()) {
             if (source.sourceClass() == null) continue;
@@ -206,7 +207,10 @@ public final class RuleExecutionService {
                                     sourceAttrTypes)
                             .withLookupIndex(sourceLookupIndex);
 
-                    if (!evaluateWhereAndPredicate(source, rule, evalCtx, expressionEngine, metrics)) continue;
+                    if (!evaluateWhereAndPredicate(source, rule, evalCtx, expressionEngine, metrics)) {
+                        recordLosses(rule, record, evalCtx);
+                        continue;
+                    }
 
                     metrics.recordRuleMatch(rule.ruleId());
                     recordLosses(rule, record, evalCtx);
@@ -237,7 +241,8 @@ public final class RuleExecutionService {
                 parentChildIndex,
                 metrics,
                 geometryAdapter,
-                sourceAttrTypes);
+                sourceAttrTypes,
+                sourceLookupIndex);
 
         List<JoinPlan> joins = rule.joins();
         SourcePlan driverPlan = joins.get(0).left();
@@ -438,15 +443,14 @@ public final class RuleExecutionService {
 
         metrics.recordJoinLookup();
         if (joinParts.rightIsObject()) {
-            List<SourceRecord> matches = new java.util.ArrayList<>();
-            for (SourceRecord candidate : stateStore.sourceRecords()) {
-                if (!sourceMatchesPlan(candidate, join.right())) continue;
-                String oid = candidate.sourceObject().getobjectoid();
-                if (oid != null && oid.equals(leftAttrValue)) {
-                    matches.add(candidate);
-                }
-            }
-            return matches;
+            LookupKey lookupKey = new LookupKey(
+                    null,
+                    TargetObjectFactory.getScopedName(join.right().sourceClass()),
+                    SourceLookupIndex.OBJECT_OID_ATTRIBUTE,
+                    new CanonicalValue("text", leftAttrValue, true));
+            return sourceLookupIndex.lookup(lookupKey).stream()
+                    .filter(candidate -> sourceMatchesPlan(candidate, join.right()))
+                    .toList();
         }
 
         LookupKey lookupKey = new LookupKey(
@@ -514,7 +518,8 @@ public final class RuleExecutionService {
                 parentChildIndex,
                 metrics,
                 geometryAdapter,
-                sourceAttrTypes);
+                sourceAttrTypes,
+                sourceLookupIndex);
 
         for (SourceRecord record : stateStore.sourceRecords()) {
             SourcePlan sp = findSourcePlan(parentRule, record);

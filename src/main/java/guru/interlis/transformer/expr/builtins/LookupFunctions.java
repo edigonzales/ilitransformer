@@ -3,6 +3,7 @@ package guru.interlis.transformer.expr.builtins;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
+import guru.interlis.transformer.expr.BooleanValue;
 import guru.interlis.transformer.expr.EvalContext;
 import guru.interlis.transformer.expr.FunctionDef;
 import guru.interlis.transformer.expr.FunctionRegistry;
@@ -19,6 +20,7 @@ import guru.interlis.transformer.state.SourceRecord;
 import ch.interlis.iom.IomObject;
 
 import java.util.List;
+import java.util.Objects;
 
 public final class LookupFunctions {
 
@@ -60,6 +62,16 @@ public final class LookupFunctions {
                         new FunctionDef.FunctionParam("keyValue", TypeInfo.TEXT),
                         new FunctionDef.FunctionParam("returnAttr", TypeInfo.TEXT)),
                 LookupFunctions::lookupIn);
+
+        registry.register(FunctionDef.eagerVariadic(
+                "existsIn",
+                TypeInfo.BOOLEAN,
+                List.of(
+                        new FunctionDef.FunctionParam("inputId", TypeInfo.TEXT),
+                        new FunctionDef.FunctionParam("classPath", TypeInfo.TEXT),
+                        new FunctionDef.FunctionParam("keyAttr", TypeInfo.TEXT),
+                        new FunctionDef.FunctionParam("keyValue", TypeInfo.TEXT)),
+                LookupFunctions::existsIn));
     }
 
     static Value bagFirst(List<Value> args, EvalContext ctx) {
@@ -161,6 +173,57 @@ public final class LookupFunctions {
         return lookupInternal(inputId, classPath, keyAttr, keyValue, returnAttr, ctx, "lookupIn");
     }
 
+    static Value existsIn(List<Value> args, EvalContext ctx) {
+        if (args.size() < 4 || args.size() % 2 != 0) {
+            if (ctx.diagnostics() != null) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_WRONG_ARG_COUNT,
+                                Severity.ERROR,
+                                "existsIn() requires inputId, classPath and one or more keyAttr/keyValue pairs",
+                                ctx.ruleId(),
+                                "Use existsIn('inputId', 'Class.Path', 'KeyAttr', keyValue)"));
+            }
+            return BooleanValue.FALSE;
+        }
+
+        SourceLookupIndex index = ctx.lookupIndex();
+        if (index == null) {
+            if (ctx.diagnostics() != null) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.LOOKUP_INDEX_MISSING,
+                                Severity.ERROR,
+                                "existsIn() called but no SourceLookupIndex is available in context",
+                                ctx.ruleId(),
+                                "Ensure the engine initialized the source lookup index"));
+            }
+            return BooleanValue.FALSE;
+        }
+
+        String inputId = args.get(0).asText();
+        String classPath = args.get(1).asText();
+        String firstKeyAttr = args.get(2).asText();
+        String firstKeyValue = args.get(3).asText();
+        if (isBlank(classPath) || isBlank(firstKeyAttr) || firstKeyValue == null) {
+            return BooleanValue.FALSE;
+        }
+
+        LookupKey key =
+                new LookupKey(inputId, classPath, firstKeyAttr, new CanonicalValue("text", firstKeyValue, true));
+        List<SourceRecord> hits = index.lookup(key);
+        if (hits.isEmpty()) {
+            return BooleanValue.FALSE;
+        }
+
+        for (SourceRecord hit : hits) {
+            if (matchesAllAdditionalPairs(hit, args)) {
+                return BooleanValue.TRUE;
+            }
+        }
+        return BooleanValue.FALSE;
+    }
+
     private static Value lookupInternal(
             String inputId,
             String classPath,
@@ -233,5 +296,41 @@ public final class LookupFunctions {
             }
         }
         return true;
+    }
+
+    private static boolean matchesAllAdditionalPairs(SourceRecord hit, List<Value> args) {
+        IomObject sourceObject = hit.sourceObject();
+        if (sourceObject == null) {
+            return false;
+        }
+        for (int i = 4; i < args.size(); i += 2) {
+            String attrName = args.get(i).asText();
+            String expected = args.get(i + 1).asText();
+            if (expected == null || !Objects.equals(expected, readAttributeOrRefOid(sourceObject, attrName))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static String readAttributeOrRefOid(IomObject source, String attrName) {
+        if (source == null || isBlank(attrName)) {
+            return null;
+        }
+        String scalar = source.getattrvalue(attrName);
+        if (scalar != null) {
+            return scalar;
+        }
+        if (source.getattrvaluecount(attrName) > 0) {
+            IomObject refObj = source.getattrobj(attrName, 0);
+            if (refObj != null && refObj.getobjectrefoid() != null) {
+                return refObj.getobjectrefoid();
+            }
+        }
+        return null;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

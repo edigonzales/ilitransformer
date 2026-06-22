@@ -1,0 +1,165 @@
+mapping v2 "dm01-to-dmav-hoheitsgrenzen" {
+  job {
+    description "Pilot-Transformation DM01 Hoheitsgrenzen nach DMAV HoheitsgrenzenAV";
+    direction dm01-to-dmav;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "models/";
+  }
+
+  input dm01 {
+    path "input/dm01.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  output dmav {
+    path "build/out/dmav-hoheitsgrenzen.xtf";
+    model "DMAV_HoheitsgrenzenAV_V1_0";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "dm01-to-dmav-hoheitsgrenzen";
+  }
+
+  basket byTopic;
+
+  enum Gueltigkeit_DM01_DMAV {
+    "rechtskraeftig" => "rechtskraeftig";
+    "streitig" => "streitig";
+    "provisorisch" => "provisorisch";
+    "undefiniert" => "undefiniert";
+  }
+
+  rule hhg-nachfuehrung-gueltig {
+    target dmav class "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.HHGNachfuehrung";
+    source nf from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung" where if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert);
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 60);
+      Perimeter = nf.Perimeter;
+      GueltigerEintrag = toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1));
+      GenehmigtAm = toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1));
+    }
+  }
+
+  rule hhg-nachfuehrung-projektiert {
+    target dmav class "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.HHGNachfuehrung";
+    source nf from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung" where nf.Gueltigkeit == #projektiert;
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 60);
+      Perimeter = nf.Perimeter;
+      GueltigerEintrag = toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1));
+    }
+  }
+
+  rule gemeinde-to-dmav {
+    target dmav class "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Gemeinde";
+    source gm from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.Gemeinde";
+    identity gm.BFSNr;
+
+    assign {
+      Name = truncate(gm.Name, 60);
+      BFSNummer = gm.BFSNr;
+      Fiktiv = false;
+    }
+
+    ref Entstehung {
+      association "Entstehung_Gemeinde";
+      role "Entstehung";
+      required;
+      target rule hhg-nachfuehrung-gueltig sourceRef #first;
+    }
+  }
+
+  rule projgemeindegrenzabschnitt-to-dmav {
+    target dmav class "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.ProjGemeindegrenzabschnitt";
+    source pg from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.ProjGemeindegrenze";
+
+    assign {
+      Geometrie = pg.Geometrie;
+    }
+
+    ref Entstehung {
+      association "Entstehung_ProjGemeindegrenzabschnitt";
+      role "Entstehung";
+      required;
+      target rule hhg-nachfuehrung-projektiert sourceRef pg.Entstehung;
+    }
+
+    ref Gemeinde {
+      association "GemeindeProjGemeindegrenzabschnitt";
+      role "Gemeinde";
+      required;
+      target rule gemeinde-to-dmav sourceRef pg.ProjGemeindegrenze_von;
+    }
+  }
+
+  rule gemeindegrenze-to-dmav {
+    target dmav class "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Gemeindegrenze";
+    source gg from dm01 class "DM01AVCH24LV95D.Gemeindegrenzen.Gemeindegrenze";
+
+    assign {
+      Geometrie = gg.Geometrie;
+      Fiktiv = false;
+    }
+
+    ref Entstehung {
+      association "Entstehung_Gemeindegrenze";
+      role "Entstehung";
+      required;
+      target rule hhg-nachfuehrung-gueltig sourceRef gg.Entstehung;
+    }
+
+    ref Gemeinde {
+      association "GemeindeGemeindegrenze";
+      role "Gemeinde";
+      required;
+      target rule gemeinde-to-dmav sourceRef gg.Gemeindegrenze_von;
+    }
+  }
+
+  rule bezirksgrenzabschnitt-to-dmav {
+    target dmav class "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Bezirksgrenzabschnitt";
+    source bga from dm01 class "DM01AVCH24LV95D.Bezirksgrenzen.Bezirksgrenzabschnitt";
+
+    assign {
+      Geometrie = bga.Geometrie;
+      Gueltigkeit = enumMap(bga.Gueltigkeit, Gueltigkeit_DM01_DMAV);
+    }
+
+    ref Entstehung {
+      association "Entstehung_Bezirksgrenzabschnitt";
+      role "Entstehung";
+      required;
+      target rule hhg-nachfuehrung-gueltig sourceRef #first;
+    }
+  }
+
+  rule kantonsgrenzabschnitt-to-dmav {
+    target dmav class "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Kantonsgrenzabschnitt";
+    source kga from dm01 class "DM01AVCH24LV95D.Kantonsgrenzen.Kantonsgrenzabschnitt";
+
+    assign {
+      Geometrie = kga.Geometrie;
+      Gueltigkeit = enumMap(kga.Gueltigkeit, Gueltigkeit_DM01_DMAV);
+    }
+
+    ref Entstehung {
+      association "Entstehung_Kantonsgrenzabschnitt";
+      role "Entstehung";
+      required;
+      target rule hhg-nachfuehrung-gueltig sourceRef #first;
+    }
+  }
+}

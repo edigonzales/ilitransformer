@@ -1,0 +1,142 @@
+mapping v2 "dm01-to-dmav-nomenklatur" {
+  job {
+    description "Pilot-Transformation DM01 Nomenklatur nach DMAV Nomenklatur";
+    direction dm01-to-dmav;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "models/";
+  }
+
+  input dm01 {
+    path "input/dm01.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  output dmav {
+    path "build/out/dmav-nomenklatur.xtf";
+    model "DMAV_Nomenklatur_V1_1";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "dm01-to-dmav-nomenklatur";
+  }
+
+  basket byTopic;
+
+  enum Schriftgroesse_DM01_DMAV {
+    "klein" => "Klein";
+    "mittel" => "Mittel";
+    "gross" => "Gross";
+  }
+
+  rule nk-nachfuehrung-gueltig {
+    target dmav class "DMAV_Nomenklatur_V1_1.Nomenklatur.NKNachfuehrung";
+    source nf from dm01 class "DM01AVCH24LV95D.Nomenklatur.NKNachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 60);
+      Perimeter = nf.Perimeter;
+      GueltigerEintrag = toXmlDateTime(coalesce(nf.GueltigerEintrag, nf.Datum1));
+    }
+  }
+
+  rule flurname {
+    target dmav class "DMAV_Nomenklatur_V1_1.Nomenklatur.Flurname";
+    source fn from dm01 class "DM01AVCH24LV95D.Nomenklatur.Flurname";
+
+    assign {
+      Name = fn.Name;
+      Geometrie = fn.Geometrie;
+      Fiktiv = false;
+    }
+
+    bag Textposition {
+      from fnp in dm01 class "DM01AVCH24LV95D.Nomenklatur.FlurnamePos";
+      parentRef attribute "FlurnamePos_von" parent fn;
+      assign {
+        Position = fnp.Pos;
+        Orientierung = coalesce(fnp.Ori, 100.0);
+        HReferenzpunkt = coalesce(fnp.HAli, "Center");
+        VReferenzpunkt = coalesce(fnp.VAli, "Half");
+        Textgroesse = enumMap(coalesce(fnp.Groesse, "mittel"), Schriftgroesse_DM01_DMAV);
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_Flurname";
+      role "Entstehung";
+      required;
+      target rule nk-nachfuehrung-gueltig sourceRef fn.Entstehung;
+    }
+  }
+
+  rule ortsname {
+    target dmav class "DMAV_Nomenklatur_V1_1.Nomenklatur.Ortsname";
+    source on_ from dm01 class "DM01AVCH24LV95D.Nomenklatur.Ortsname";
+    identity on_.Name;
+
+    assign {
+      Name = on_.Name;
+      Geometrie = on_.Geometrie;
+      Typ = on_.Typ;
+    }
+
+    bag Textposition {
+      from onp in dm01 class "DM01AVCH24LV95D.Nomenklatur.OrtsnamePos";
+      parentRef attribute "OrtsnamePos_von" parent on_;
+      assign {
+        Position = onp.Pos;
+        Orientierung = coalesce(onp.Ori, 100.0);
+        HReferenzpunkt = coalesce(onp.HAli, "Center");
+        VReferenzpunkt = coalesce(onp.VAli, "Half");
+        Textgroesse = enumMap(coalesce(onp.Groesse, "mittel"), Schriftgroesse_DM01_DMAV);
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_Ortsname";
+      role "Entstehung";
+      required;
+      target rule nk-nachfuehrung-gueltig sourceRef on_.Entstehung;
+    }
+  }
+
+  rule gelaendename {
+    target dmav class "DMAV_Nomenklatur_V1_1.Nomenklatur.Gelaendename";
+    source gnp from dm01 class "DM01AVCH24LV95D.Nomenklatur.GelaendenamePos";
+    source gn from dm01 class "DM01AVCH24LV95D.Nomenklatur.Gelaendename";
+    join inner gn to gnp on eq(gnp.GelaendenamePos_von, gn);
+    identity gn.Name;
+
+    assign {
+      Name = gn.Name;
+      Geometrie = gnp.Pos;
+    }
+
+    bag Textposition {
+      from gnpBag in dm01 class "DM01AVCH24LV95D.Nomenklatur.GelaendenamePos";
+      parentRef attribute "GelaendenamePos_von" parent gn;
+      assign {
+        Position = gnpBag.Pos;
+        Orientierung = coalesce(gnpBag.Ori, 100.0);
+        HReferenzpunkt = coalesce(gnpBag.HAli, "Center");
+        VReferenzpunkt = coalesce(gnpBag.VAli, "Half");
+        Textgroesse = enumMap(coalesce(gnpBag.Groesse, "mittel"), Schriftgroesse_DM01_DMAV);
+      }
+    }
+
+    ref Entstehung {
+      association "Entstehung_Gelaendename";
+      role "Entstehung";
+      required;
+      target rule nk-nachfuehrung-gueltig sourceRef gn.Entstehung;
+    }
+  }
+}

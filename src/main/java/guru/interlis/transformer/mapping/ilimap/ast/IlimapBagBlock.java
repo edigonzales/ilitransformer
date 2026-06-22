@@ -6,10 +6,12 @@ import java.util.List;
 
 public record IlimapBagBlock(
         String id,
+        String targetAttribute,
         IlimapBagFromStmt from,
         String structure,
         String mode,
         Integer maxItems,
+        IlimapExpressionText where,
         IlimapParentRefStmt parentRef,
         IlimapAssignmentBlock assign,
         List<IlimapBagBlock> nestedBags,

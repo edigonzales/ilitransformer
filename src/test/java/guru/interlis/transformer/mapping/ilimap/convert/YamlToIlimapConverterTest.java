@@ -192,4 +192,83 @@ class YamlToIlimapConverterTest {
         assertThat(result).contains("output tgt");
         assertThat(result).contains("rule r1");
     }
+
+    @Test
+    void renamesReservedKeywordAliasConsistently() {
+        JobConfig config = baseConfig();
+        JobConfig.RuleSpec rule = config.mapping.rules.get(0);
+
+        JobConfig.BagSpec bag = new JobConfig.BagSpec();
+        bag.from = new JobConfig.BagFrom();
+        bag.from.alias = "on";
+        bag.from.input = "src";
+        bag.from.clazz = "M.T.Name";
+        bag.assign = new LinkedHashMap<>();
+        bag.assign.put("Name", "on.Text");
+        bag.parentRef = new JobConfig.BagParentRef();
+        bag.parentRef.attribute = "Name_von";
+        bag.parentRef.parentAlias = "s";
+        rule.bags = new LinkedHashMap<>();
+        rule.bags.put("Names", bag);
+
+        String result = converter.convert(config);
+
+        assertThat(result).contains("from on_ in src");
+        assertThat(result).contains("Name = on_.Text;");
+        assertThat(result).doesNotContain("from on ");
+        assertThatCode(() -> new IlimapParser(result).parseDocument()).doesNotThrowAnyException();
+    }
+
+    @Test
+    void normalizesSingleQuotedStringLiteralToDoubleQuoted() {
+        JobConfig config = baseConfig();
+        JobConfig.RuleSpec rule = config.mapping.rules.get(0);
+        rule.assign.put("Status", "'real'");
+        rule.assign.put("Kanton", "coalesce(s.K, 'BE')");
+
+        String result = converter.convert(config);
+
+        assertThat(result).contains("Status = \"real\";");
+        assertThat(result).contains("coalesce(s.K, \"BE\")");
+        assertThat(result).doesNotContain("'");
+        assertThatCode(() -> new IlimapParser(result).parseDocument()).doesNotThrowAnyException();
+    }
+
+    private static JobConfig baseConfig() {
+        JobConfig config = new JobConfig();
+        config.version = 1;
+        config.job = new JobConfig.JobSection();
+        config.job.name = "alias-test";
+        config.job.inputs = new ArrayList<>();
+        config.job.outputs = new ArrayList<>();
+        config.mapping = new JobConfig.MappingSection();
+        config.mapping.rules = new ArrayList<>();
+
+        JobConfig.InputSpec input = new JobConfig.InputSpec();
+        input.id = "src";
+        input.path = "in.xtf";
+        input.model = "M";
+        config.job.inputs.add(input);
+
+        JobConfig.OutputSpec output = new JobConfig.OutputSpec();
+        output.id = "tgt";
+        output.path = "out.xtf";
+        output.model = "M";
+        config.job.outputs.add(output);
+
+        JobConfig.RuleSpec rule = new JobConfig.RuleSpec();
+        rule.id = "r1";
+        rule.target = new JobConfig.TargetSpec();
+        rule.target.output = "tgt";
+        rule.target.clazz = "M.T.C";
+        rule.sources = new ArrayList<>();
+        JobConfig.SourceSpec source = new JobConfig.SourceSpec();
+        source.alias = "s";
+        source.inputs = java.util.List.of("src");
+        source.clazz = "M.T.C";
+        rule.sources.add(source);
+        rule.assign = new LinkedHashMap<>();
+        config.mapping.rules.add(rule);
+        return config;
+    }
 }
