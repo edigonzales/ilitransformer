@@ -34,30 +34,30 @@ modeldirs:
 topics:
   include:
     - id: bb
-      mapping: profiles/dmav-to-dm01/1.1/bb.yaml
+      mapping: profiles/dmav-to-dm01/1.1/bb.ilimap
     - id: dbv
-      mapping: profiles/dmav-to-dm01/1.1/dbv.yaml
+      mapping: profiles/dmav-to-dm01/1.1/dbv.ilimap
     - id: eo
-      mapping: profiles/dmav-to-dm01/1.1/eo.yaml
+      mapping: profiles/dmav-to-dm01/1.1/eo.ilimap
     - id: gebaeudeadressen
-      mapping: profiles/dmav-to-dm01/1.1/gebaeudeadressen.yaml
+      mapping: profiles/dmav-to-dm01/1.1/gebaeudeadressen.ilimap
     - id: gs
-      mapping: profiles/dmav-to-dm01/1.1/gs.yaml
+      mapping: profiles/dmav-to-dm01/1.1/gs.ilimap
     - id: hoheitsgrenzen
-      mapping: profiles/dmav-to-dm01/1.1/hoheitsgrenzen.yaml
+      mapping: profiles/dmav-to-dm01/1.1/hoheitsgrenzen.ilimap
     - id: hfp3
-      mapping: profiles/dmav-to-dm01/1.1/hfp3.yaml
+      mapping: profiles/dmav-to-dm01/1.1/hfp3.ilimap
     - id: lfp3
-      mapping: profiles/dmav-to-dm01/1.1/lfp3.yaml
+      mapping: profiles/dmav-to-dm01/1.1/lfp3.ilimap
     - id: nomenklatur
-      mapping: profiles/dmav-to-dm01/1.1/nomenklatur.yaml
+      mapping: profiles/dmav-to-dm01/1.1/nomenklatur.ilimap
     - id: rohrleitungen
-      mapping: profiles/dmav-to-dm01/1.1/rohrleitungen.yaml
+      mapping: profiles/dmav-to-dm01/1.1/rohrleitungen.ilimap
     - id: toleranzstufen
-      mapping: profiles/dmav-to-dm01/1.1/toleranzstufen.yaml
+      mapping: profiles/dmav-to-dm01/1.1/toleranzstufen.ilimap
   exclude:
     - id: dienstbarkeitsgrenzen
-      reason: "profile-missing: no profiles/dmav-to-dm01/1.1/dienstbarkeitsgrenzen.yaml exists yet."
+      reason: "profile-missing: no dmav-to-dm01 profile exists yet."
     - id: untereinheitgrundbuch
       reason: "profile-missing: no dmav-to-dm01 profile exists and no direct DM01 target structure is currently defined."
 

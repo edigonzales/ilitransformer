@@ -1,0 +1,58 @@
+mapping v2 "dmav-to-dm01-dbv" {
+  job {
+    description "Pilot-Transformation DMAV DauerndeBodenverschiebungen nach DM01 Rutschgebiete";
+    direction dmav-to-dm01;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "https://models.interlis.ch";
+    modeldir "models/";
+  }
+
+  input dmav {
+    path "input/dmav.xtf";
+    model "DMAV_DauerndeBodenverschiebungen_V1_1";
+    format xtf;
+  }
+
+  output dm01 {
+    path "build/out/dm01-dbv.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  basket byTopic;
+
+  enum Schriftgroesse_DMAV_DM01 {
+    "Klein" => "klein";
+    "Mittel" => "mittel";
+    "Gross" => "gross";
+  }
+
+  rule rutschung-gueltig {
+    target dm01 class "DM01AVCH24LV95D.Rutschgebiete.Rutschung";
+    source dbv from dmav class "DMAV_DauerndeBodenverschiebungen_V1_1.DauerndeBodenverschiebungen.DauerndeBodenverschiebung";
+    identity dbv.NBIdent, dbv.Identifikator;
+
+    assign {
+      NBIdent = dbv.NBIdent;
+      Identifikator = dbv.Identifikator;
+      Name = truncate(dbv.Beschreibung, 30);
+      Geometrie = dbv.Geometrie;
+    }
+
+    bag Textposition {
+      from tpItem in dmav class "DMAVTYM_Grafik_V1_0.Textposition";
+      structure "DM01AVCH24LV95D.Rutschgebiete.RutschungPos";
+      mode expand;
+      parentRef role "RutschungPos_von" parent dbv;
+      assign {
+        Pos = tpItem.Position;
+        Ori = coalesce(tpItem.Orientierung, 100.0);
+        HAli = coalesce(tpItem.HReferenzpunkt, "Center");
+        VAli = coalesce(tpItem.VReferenzpunkt, "Half");
+        Groesse = enumMap(coalesce(tpItem.Textgroesse, "Mittel"), Schriftgroesse_DMAV_DM01);
+      }
+    }
+  }
+}

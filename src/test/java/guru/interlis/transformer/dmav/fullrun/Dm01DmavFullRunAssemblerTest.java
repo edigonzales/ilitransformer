@@ -130,7 +130,7 @@ class Dm01DmavFullRunAssemblerTest {
                         "nomenklatur",
                         "rohrleitungen",
                         "toleranzstufen");
-        assertThat(assembled.loadedTopics()).allSatisfy(topic -> assertThat(topic.format()).isEqualTo("yaml"));
+        assertThat(assembled.loadedTopics()).allSatisfy(topic -> assertThat(topic.format()).isEqualTo("ilimap"));
 
         assertThat(combined.job.name).isEqualTo("dmav-to-dm01-dmav-tym-alles-v1-1-all");
         assertThat(combined.job.direction).isEqualTo("dmav-to-dm01");

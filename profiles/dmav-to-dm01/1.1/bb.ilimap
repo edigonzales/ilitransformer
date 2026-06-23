@@ -1,0 +1,275 @@
+mapping v2 "dmav-to-dm01-bb" {
+  job {
+    description "Pilot-Transformation DMAV Bodenbedeckung nach DM01 Bodenbedeckung";
+    direction dmav-to-dm01;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "models/";
+  }
+
+  input dmav {
+    path "input/dmav.xtf";
+    model "DMAV_Bodenbedeckung_V1_1";
+    format xtf;
+  }
+
+  output dm01 {
+    path "build/out/dm01-bb.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  basket byTopic;
+
+  enum Bodenbedeckungsart_DMAV_DM01 {
+    "Gebaeude" => "Gebaeude";
+    "befestigt.Strasse_Weg" => "befestigt.Strasse_Weg";
+    "befestigt.Trottoir" => "befestigt.Trottoir";
+    "befestigt.Verkehrsinsel" => "befestigt.Verkehrsinsel";
+    "befestigt.Bahn" => "befestigt.Bahn";
+    "befestigt.Flugplatz" => "befestigt.Flugplatz";
+    "befestigt.Wasserbecken" => "befestigt.Wasserbecken";
+    "befestigt.uebrige_befestigte" => "befestigt.uebrige_befestigte";
+    "humusiert.Acker_Wiese_Weide" => "humusiert.Acker_Wiese_Weide";
+    "humusiert.Intensivkultur.Reben" => "humusiert.Intensivkultur.Reben";
+    "humusiert.Intensivkultur.uebrige_Intensivkultur" => "humusiert.Intensivkultur.uebrige_Intensivkultur";
+    "humusiert.Gartenanlage" => "humusiert.Gartenanlage";
+    "humusiert.Hoch_Flachmoor" => "humusiert.Hoch_Flachmoor";
+    "humusiert.uebrige_humusierte" => "humusiert.uebrige_humusierte";
+    "stehendes_Gewaesser" => "stehendes";
+    "fliessendes_Gewaesser" => "fliessendes";
+    "Gewaesser.stehendes_Gewaesser" => "Gewaesser.stehendes";
+    "Gewaesser.fliessendes_Gewaesser" => "Gewaesser.fliessendes";
+    "Gewaesser.Schilfguertel" => "Gewaesser.Schilfguertel";
+    "bestockt.geschlossener_Wald" => "bestockt.geschlossener_Wald";
+    "bestockt.Wytweide.Wytweide_dicht" => "bestockt.Wytweide.Wytweide_dicht";
+    "bestockt.Wytweide.Wytweide_offen" => "bestockt.Wytweide.Wytweide_offen";
+    "bestockt.uebrige_bestockte" => "bestockt.uebrige_bestockte";
+    "vegetationslos.Fels" => "vegetationslos.Fels";
+    "vegetationslos.Gletscher_Firn" => "vegetationslos.Gletscher_Firn";
+    "vegetationslos.Geroell_Sand" => "vegetationslos.Geroell_Sand";
+    "vegetationslos.Abbau_Deponie" => "vegetationslos.Abbau_Deponie";
+    "vegetationslos.uebrige_vegetationslose" => "vegetationslos.uebrige_vegetationslose";
+  }
+
+  enum Zuverlaessigkeit_DMAV_DM01 {
+    true => "ja";
+    false => "nein";
+  }
+
+  enum ExaktDefiniert_DMAV_DM01 {
+    true => "Ja";
+    false => "Nein";
+  }
+
+  enum Schriftgroesse_DMAV_DM01 {
+    "Klein" => "klein";
+    "Mittel" => "mittel";
+    "Gross" => "gross";
+  }
+
+  rule bb-nachfuehrung-gueltig {
+    target dm01 class "DM01AVCH24LV95D.Bodenbedeckung.BBNachfuehrung";
+    source nf from dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.BBNachfuehrung" where lookup("DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung", "Entstehung", oid(nf), "Objektstatus") != #projektiert;
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 30);
+      Perimeter = nf.Perimeter;
+      Gueltigkeit = #gueltig;
+      Datum1 = toInterlis1Date(nf.GueltigerEintrag);
+    }
+  }
+
+  rule bb-nachfuehrung-projektiert {
+    target dm01 class "DM01AVCH24LV95D.Bodenbedeckung.BBNachfuehrung";
+    source nf from dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.BBNachfuehrung" where lookup("DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung", "Entstehung", oid(nf), "Objektstatus") == #projektiert;
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 30);
+      Perimeter = nf.Perimeter;
+      Gueltigkeit = #projektiert;
+      Datum1 = toInterlis1Date(nf.GueltigerEintrag);
+    }
+  }
+
+  rule boflaeche-gueltig {
+    target dm01 class "DM01AVCH24LV95D.Bodenbedeckung.BoFlaeche";
+    source b from dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung" where b.Fiktiv == "false" and b.Objektstatus != #projektiert;
+    identity b.Objektstatus, b.Bodenbedeckungsart, b.EGID;
+
+    assign {
+      Geometrie = b.Geometrie;
+      Qualitaet = b.Qualitaetsstandard;
+      Art = enumMap(b.Bodenbedeckungsart, Bodenbedeckungsart_DMAV_DM01);
+    }
+
+    bag Objektnummer {
+      from gn in dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Objektnummer";
+      structure "DM01AVCH24LV95D.Bodenbedeckung.Gebaeudenummer";
+      mode expand;
+      parentRef role "Gebaeudenummer_von" parent b;
+      assign {
+        Nummer = gn.Nummer;
+        GWR_EGID = b.EGID;
+      }
+      bag Textposition {
+        from gnp in dmav class "DMAVTYM_Grafik_V1_0.Textposition";
+        structure "DM01AVCH24LV95D.Bodenbedeckung.GebaeudenummerPos";
+        mode expand;
+        parentRef role "GebaeudenummerPos_von" parent gn;
+        assign {
+          Pos = gnp.Position;
+          Ori = coalesce(gnp.Orientierung, 100.0);
+          HAli = coalesce(gnp.HReferenzpunkt, "Center");
+          VAli = coalesce(gnp.VReferenzpunkt, "Half");
+          Groesse = enumMap(coalesce(gnp.Textgroesse, "Mittel"), Schriftgroesse_DMAV_DM01);
+        }
+      }
+    }
+
+    bag Objektname {
+      from onItem in dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Objektname";
+      structure "DM01AVCH24LV95D.Bodenbedeckung.Objektname";
+      mode expand;
+      parentRef role "Objektname_von" parent b;
+      assign {
+        Name = onItem.Name;
+      }
+      bag Textposition {
+        from onp in dmav class "DMAVTYM_Grafik_V1_0.Textposition";
+        structure "DM01AVCH24LV95D.Bodenbedeckung.ObjektnamePos";
+        mode expand;
+        parentRef role "ObjektnamePos_von" parent onItem;
+        assign {
+          Pos = onp.Position;
+          Ori = coalesce(onp.Orientierung, 100.0);
+          HAli = coalesce(onp.HReferenzpunkt, "Center");
+          VAli = coalesce(onp.VReferenzpunkt, "Half");
+          Groesse = enumMap(coalesce(onp.Textgroesse, "Mittel"), Schriftgroesse_DMAV_DM01);
+        }
+      }
+    }
+
+    bag Symbolposition {
+      from symItem in dmav class "DMAVTYM_Grafik_V1_0.Symbolposition";
+      structure "DM01AVCH24LV95D.Bodenbedeckung.BoFlaecheSymbol";
+      mode expand;
+      parentRef role "BoFlaecheSymbol_von" parent b;
+      assign {
+        Pos = symItem.Position;
+        Ori = coalesce(symItem.Orientierung, 100.0);
+      }
+    }
+
+    ref Entstehung {
+      association "BoFlaecheEntstehung";
+      role "Entstehung";
+      required;
+      target rule bb-nachfuehrung-gueltig sourceRef b.Entstehung;
+    }
+  }
+
+  rule boflaeche-projektiert {
+    target dm01 class "DM01AVCH24LV95D.Bodenbedeckung.ProjBoFlaeche";
+    source b from dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung" where b.Fiktiv == "false" and b.Objektstatus == #projektiert;
+    identity b.Objektstatus, b.Bodenbedeckungsart, b.EGID;
+
+    assign {
+      Geometrie = b.Geometrie;
+      Qualitaet = b.Qualitaetsstandard;
+      Art = enumMap(b.Bodenbedeckungsart, Bodenbedeckungsart_DMAV_DM01);
+    }
+
+    bag Objektnummer {
+      from gn in dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Objektnummer";
+      structure "DM01AVCH24LV95D.Bodenbedeckung.ProjGebaeudenummer";
+      mode expand;
+      parentRef role "ProjGebaeudenummer_von" parent b;
+      assign {
+        Nummer = gn.Nummer;
+        GWR_EGID = b.EGID;
+      }
+      bag Textposition {
+        from gnp in dmav class "DMAVTYM_Grafik_V1_0.Textposition";
+        structure "DM01AVCH24LV95D.Bodenbedeckung.ProjGebaeudenummerPos";
+        mode expand;
+        parentRef role "ProjGebaeudenummerPos_von" parent gn;
+        assign {
+          Pos = gnp.Position;
+          Ori = coalesce(gnp.Orientierung, 100.0);
+          HAli = coalesce(gnp.HReferenzpunkt, "Center");
+          VAli = coalesce(gnp.VReferenzpunkt, "Half");
+          Groesse = enumMap(coalesce(gnp.Textgroesse, "Mittel"), Schriftgroesse_DMAV_DM01);
+        }
+      }
+    }
+
+    bag Objektname {
+      from onItem in dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Objektname";
+      structure "DM01AVCH24LV95D.Bodenbedeckung.ProjObjektname";
+      mode expand;
+      parentRef role "ProjObjektname_von" parent b;
+      assign {
+        Name = onItem.Name;
+      }
+      bag Textposition {
+        from onp in dmav class "DMAVTYM_Grafik_V1_0.Textposition";
+        structure "DM01AVCH24LV95D.Bodenbedeckung.ProjObjektnamePos";
+        mode expand;
+        parentRef role "ProjObjektnamePos_von" parent onItem;
+        assign {
+          Pos = onp.Position;
+          Ori = coalesce(onp.Orientierung, 100.0);
+          HAli = coalesce(onp.HReferenzpunkt, "Center");
+          VAli = coalesce(onp.VReferenzpunkt, "Half");
+          Groesse = enumMap(coalesce(onp.Textgroesse, "Mittel"), Schriftgroesse_DMAV_DM01);
+        }
+      }
+    }
+
+    bag Symbolposition {
+      from symItem in dmav class "DMAVTYM_Grafik_V1_0.Symbolposition";
+      structure "DM01AVCH24LV95D.Bodenbedeckung.ProjBoFlaecheSymbol";
+      mode expand;
+      parentRef role "ProjBoFlaecheSymbol_von" parent b;
+      assign {
+        Pos = symItem.Position;
+        Ori = coalesce(symItem.Orientierung, 100.0);
+      }
+    }
+
+    ref Entstehung {
+      association "ProjBoFlaecheEntstehung";
+      role "Entstehung";
+      required;
+      target rule bb-nachfuehrung-projektiert sourceRef b.Entstehung;
+    }
+  }
+
+  rule einzelpunkt {
+    target dm01 class "DM01AVCH24LV95D.Bodenbedeckung.Einzelpunkt";
+    source m from dmav class "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Messpunkt";
+    identity m.Nummer;
+
+    assign {
+      Identifikator = m.Nummer;
+      Geometrie = m.Geometrie;
+      LageGen = div(m.Lagegenauigkeit, 0.01);
+      LageZuv = enumMap(m.IstLagezuverlaessig, Zuverlaessigkeit_DMAV_DM01);
+      ExaktDefiniert = enumMap(m.IstExaktDefiniert, ExaktDefiniert_DMAV_DM01);
+    }
+
+    ref Entstehung {
+      association "EinzelpunktEntstehung";
+      role "Entstehung";
+      target rule bb-nachfuehrung-gueltig sourceRef m.Entstehung;
+    }
+  }
+}

@@ -23,7 +23,7 @@ includedTopics:
 - "toleranzstufen"
 excludedTopics:
 - id: "dienstbarkeitsgrenzen"
-  reason: "profile-missing: no profiles/dmav-to-dm01/1.1/dienstbarkeitsgrenzen.yaml exists yet."
+  reason: "profile-missing: no dmav-to-dm01 profile exists yet."
 - id: "untereinheitgrundbuch"
   reason: "profile-missing: no dmav-to-dm01 profile exists and no direct DM01 target structure is currently defined."
 sourceTopicsWithoutProfile:

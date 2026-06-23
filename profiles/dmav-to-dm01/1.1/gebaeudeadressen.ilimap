@@ -1,0 +1,137 @@
+mapping v2 "dmav-to-dm01-gebaeudeadressen" {
+  job {
+    description "Pilot-Transformation DMAV Gebaeudeadressen nach DM01 Gebaeudeadressen";
+    direction dmav-to-dm01;
+    failPolicy strict;
+    compileMode compatible;
+    modeldir "https://models.geo.admin.ch/";
+    modeldir "https://models.interlis.ch";
+    modeldir "models/";
+  }
+
+  input dmav {
+    path "input/dmav.xtf";
+    model "DMAV_Gebaeudeadressen_V1_1";
+    format xtf;
+  }
+
+  output dm01 {
+    path "build/out/dm01-gebaeudeadressen.itf";
+    model "DM01AVCH24LV95D";
+    format itf;
+  }
+
+  basket byTopic;
+
+  enum JaNein_DMAV_DM01 {
+    true => "ja";
+    false => "nein";
+  }
+
+  enum ImModul_DMAV_DM01 {
+    "Bodenbedeckung" => "BB";
+    "Einzelobjekte" => "EO";
+  }
+
+  enum IstAchse_DMAV_DM01 {
+    true => "ja";
+    false => "nein";
+  }
+
+  enum Schriftgroesse_DMAV_DM01 {
+    "Klein" => "klein";
+    "Mittel" => "mittel";
+    "Gross" => "gross";
+  }
+
+  rule ga-nachfuehrung-gueltig {
+    target dm01 class "DM01AVCH24LV95D.Gebaeudeadressen.GEBNachfuehrung";
+    source nf from dmav class "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.GANachfuehrung";
+    identity nf.NBIdent, nf.Identifikator;
+
+    assign {
+      NBIdent = nf.NBIdent;
+      Identifikator = nf.Identifikator;
+      Beschreibung = truncate(nf.Beschreibung, 30);
+      GueltigerEintrag = toDate(nf.GueltigerEintrag);
+      Gueltigkeit = #gueltig;
+    }
+  }
+
+  rule lokalisation-gueltig {
+    target dm01 class "DM01AVCH24LV95D.Gebaeudeadressen.Lokalisation";
+    source l from dmav class "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Lokalisation";
+
+    assign {
+      Nummerierungsprinzip = l.Nummerierungsprinzip;
+      AttributeProvisorisch = enumMap(l.AttributeProvisorisch, JaNein_DMAV_DM01);
+      IstOffizielleBezeichnung = enumMap(l.IstOffizielleBezeichnung, JaNein_DMAV_DM01);
+      Status = l.Lokalisationsstatus;
+      InAenderung = enumMap(l.InAenderung, JaNein_DMAV_DM01);
+      Art = l.Lokalisationsart;
+    }
+
+    bag LokalisationName {
+      from lnItem in dmav class "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Lokalisationsname";
+      structure "DM01AVCH24LV95D.Gebaeudeadressen.LokalisationsName";
+      mode expand;
+      parentRef role "Benannte" parent l;
+      assign {
+        Text = lnItem.Name;
+        KurzText = lnItem.NameKurz;
+        IndexText = lnItem.NameAlsIndex;
+        Sprache = lnItem.Sprache;
+      }
+    }
+
+    ref Entstehung {
+      association "LokalisationEntstehung";
+      role "Entstehung";
+      required;
+      target rule ga-nachfuehrung-gueltig sourceRef l.Entstehung;
+    }
+  }
+
+  rule gebaeudeeingang-gueltig {
+    target dm01 class "DM01AVCH24LV95D.Gebaeudeadressen.Gebaeudeeingang";
+    source ge from dmav class "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Gebaeudeeingang";
+
+    assign {
+      Status = ge.Gebaeudestatus;
+      InAenderung = enumMap(ge.InAenderung, JaNein_DMAV_DM01);
+      AttributeProvisorisch = enumMap(ge.AttributeProvisorisch, JaNein_DMAV_DM01);
+      IstOffizielleBezeichnung = enumMap(ge.IstOffizielleGebaeudeadresse, JaNein_DMAV_DM01);
+      Lage = ge.Geometrie;
+      Hausnummer = ge.Hausnummer;
+      Im_Gebaeude = enumMap(ge.ImModul, ImModul_DMAV_DM01);
+      GWR_EGID = ge.EGID;
+      GWR_EDID = ge.EDID;
+    }
+
+    bag GebaeudeName {
+      from gnItem in dmav class "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Gebaeudename";
+      structure "DM01AVCH24LV95D.Gebaeudeadressen.GebaeudeName";
+      mode expand;
+      parentRef role "GebaeudeName_von" parent ge;
+      assign {
+        Text = gnItem.Name;
+        KurzText = gnItem.NameKurz;
+        IndexText = gnItem.NameAlsIndex;
+        Sprache = gnItem.Sprache;
+      }
+    }
+
+    ref Entstehung {
+      association "GebaeudeeingangEntstehung";
+      role "Entstehung";
+      required;
+      target rule ga-nachfuehrung-gueltig sourceRef ge.Entstehung;
+    }
+
+    ref Gebaeudeeingang_von {
+      association "GebaeudeeingangGebaeudeeingang_von";
+      role "Gebaeudeeingang_von";
+      target rule lokalisation-gueltig sourceRef ge.Lokalisation;
+    }
+  }
+}

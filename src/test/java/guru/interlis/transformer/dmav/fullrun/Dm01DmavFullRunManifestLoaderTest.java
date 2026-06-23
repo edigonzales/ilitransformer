@@ -75,9 +75,11 @@ class Dm01DmavFullRunManifestLoaderTest {
                         "rohrleitungen",
                         "toleranzstufen");
         assertThat(manifest.topics.include)
+                .allSatisfy(topic -> assertThat(topic.mapping).endsWith(".ilimap"));
+        assertThat(manifest.topics.include)
                 .filteredOn(topic -> "gs".equals(topic.id))
                 .singleElement()
-                .satisfies(topic -> assertThat(topic.mapping).isEqualTo("profiles/dmav-to-dm01/1.1/gs.yaml"));
+                .satisfies(topic -> assertThat(topic.mapping).isEqualTo("profiles/dmav-to-dm01/1.1/gs.ilimap"));
         assertThat(manifest.topics.exclude)
                 .extracting(topic -> topic.id)
                 .containsExactly("dienstbarkeitsgrenzen", "untereinheitgrundbuch");
