@@ -36,7 +36,7 @@ public final class Dm01DmavFullRunAssembler {
 
     static BundleManifest toBundleManifest(Dm01DmavFullRunManifest manifest) {
         BundleManifest bundle = new BundleManifest();
-        bundle.name = "dm01-to-dmav-" + manifest.datasetSlug + "-all";
+        bundle.name = manifest.direction + "-" + manifest.datasetSlug + "-all";
         bundle.description = manifest.description;
         bundle.direction = manifest.direction;
         bundle.failPolicy = manifest.failPolicy;

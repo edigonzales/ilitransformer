@@ -60,8 +60,6 @@ mapping:
         - alias: f
           input: dmav
           class: "DMAV_Nomenklatur_V1_1.Nomenklatur.Flurname"
-      identity:
-        sourceKey: ["f.Name"]
       assign:
         Name: "f.Name"
         Geometrie: "f.Geometrie"

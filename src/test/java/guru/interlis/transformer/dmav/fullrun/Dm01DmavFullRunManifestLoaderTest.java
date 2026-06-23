@@ -42,6 +42,48 @@ class Dm01DmavFullRunManifestLoaderTest {
     }
 
     @Test
+    void loadsCheckedInDmavToDm01Manifest() throws Exception {
+        Path manifestPath = Dm01DmavPaths.fullRunBundleDir("dmav-tym-alles-v1-1").resolve("manifest.yaml");
+
+        Dm01DmavFullRunManifest manifest = loader.load(manifestPath, REPOSITORY_ROOT);
+
+        assertThat(manifest.datasetSlug).isEqualTo("dmav-tym-alles-v1-1");
+        assertThat(manifest.direction).isEqualTo("dmav-to-dm01");
+        assertThat(manifest.source.pathHint)
+                .isEqualTo("src/test/data/DMAV_Version_1_1/DMAVTYM_Alles_V1_1.xtf");
+        assertThat(manifest.source.sha256)
+                .isEqualTo("82daf40cdbddc49165bcdae53deb686e430a15e0183c45aa28a60bea670e690a");
+        assertThat(manifest.source.inputId).isEqualTo("dmav");
+        assertThat(manifest.source.model).isEqualTo("DMAVTYM_Alles_V1_1");
+        assertThat(manifest.source.format).isEqualTo("xtf");
+        assertThat(manifest.output.outputId).isEqualTo("dm01");
+        assertThat(manifest.output.model).isEqualTo("DM01AVCH24LV95D");
+        assertThat(manifest.output.format).isEqualTo("itf");
+        assertThat(manifest.report.expectedSummary).isEqualTo("./expected-summary.yaml");
+        assertThat(manifest.topics.include)
+                .extracting(topic -> topic.id)
+                .containsExactly(
+                        "bb",
+                        "dbv",
+                        "eo",
+                        "gebaeudeadressen",
+                        "gs",
+                        "hoheitsgrenzen",
+                        "hfp3",
+                        "lfp3",
+                        "nomenklatur",
+                        "rohrleitungen",
+                        "toleranzstufen");
+        assertThat(manifest.topics.include)
+                .filteredOn(topic -> "gs".equals(topic.id))
+                .singleElement()
+                .satisfies(topic -> assertThat(topic.mapping).isEqualTo("profiles/dmav-to-dm01/1.1/gs.yaml"));
+        assertThat(manifest.topics.exclude)
+                .extracting(topic -> topic.id)
+                .containsExactly("dienstbarkeitsgrenzen", "untereinheitgrundbuch");
+    }
+
+    @Test
     void resolvesManifestRelativePathsEvenWhenTargetDoesNotExist() {
         Path manifestPath = tempDir.resolve("manifest.yaml");
 

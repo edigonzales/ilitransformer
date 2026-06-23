@@ -70,8 +70,9 @@ mapping:
         NBIdent: "nf.NBIdent"
         Identifikator: "nf.Identifikator"
         Beschreibung: "truncate(nf.Beschreibung, 30)"
-        Gueltigkeit: "enumMap(coalesce(nf.Mutationsart, 'Normal'), 'Mutationsart_Status')"
+        Gueltigkeit: "if(notDefined(nf.Grundbucheintrag), #projektiert, #gueltig)"
         GueltigerEintrag: "toDate(nf.GueltigerEintrag)"
+        GBEintrag: "toDate(nf.Grundbucheintrag)"
 
     - id: grenzpunkt
       target:
@@ -128,7 +129,7 @@ mapping:
         - alias: gs
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
-          where: "gs.Fiktiv == true"
+          where: 'gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
       identity:
         sourceKey: ["gs.NBIdent", "gs.Nummer"]
       assign:
@@ -172,11 +173,15 @@ mapping:
         - alias: ls
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft"
-          where: "ls.Fiktiv == true"
+          where: "ls.Fiktiv == false"
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       assign:
         NummerTeilGrundstueck: "ls.NummerTeilgrundstueck"
         Geometrie: "ls.Geometrie"
         Flaechenmass: "ls.Flaechenmass"
+      where: 'gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
       refs:
         - association: "ProjLiegenschaftProjLiegenschaft_von"
           role: "ProjLiegenschaft_von"
@@ -184,6 +189,123 @@ mapping:
           targetObject:
             rule: proj-grundstueck
             sourceRef: "ls.Grundstueck"
+      joins:
+        - left: ls
+          right: gs
+          on: "eq(ls.Grundstueck, gs)"
+          type: inner
+
+    - id: proj-selbstrecht-grundstueck
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck"
+      sources:
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
+          where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
+      identity:
+        sourceKey: ["gs.NBIdent", "gs.Nummer"]
+      assign:
+        NBIdent: "gs.NBIdent"
+        Nummer: "gs.Nummer"
+        EGRIS_EGRID: "gs.EGRID"
+        Art: "#Baurecht"
+        Gueltigkeit: "#rechtskraeftig"
+        Vollstaendigkeit: "#Vollstaendig"
+        GesamteFlaechenmass: "gs.Gesamtflaechenmass"
+      refs:
+        - association: "ProjGrundstueckEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-gueltig
+            sourceRef: "gs.Entstehung"
+
+    - id: proj-selbstrecht
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.ProjSelbstRecht"
+      sources:
+        - alias: sr
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.SelbstaendigesDauerndesRecht"
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
+      assign:
+        NummerTeilGrundstueck: "sr.NummerTeilgrundstueck"
+        Geometrie: "sr.Geometrie"
+        Flaechenmass: "sr.Flaechenmass"
+      where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
+      refs:
+        - association: "ProjSelbstRechtProjSelbstRecht_von"
+          role: "ProjSelbstRecht_von"
+          required: true
+          targetObject:
+            rule: proj-selbstrecht-grundstueck
+            sourceRef: "sr.Grundstueck"
+      joins:
+        - left: sr
+          right: gs
+          on: "eq(sr.Grundstueck, gs)"
+          type: inner
+
+    - id: proj-bergwerk-grundstueck
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck"
+      sources:
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
+          where: 'gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
+      identity:
+        sourceKey: ["gs.NBIdent", "gs.Nummer"]
+      assign:
+        NBIdent: "gs.NBIdent"
+        Nummer: "gs.Nummer"
+        EGRIS_EGRID: "gs.EGRID"
+        Art: "#Bergwerk"
+        Gueltigkeit: "#rechtskraeftig"
+        Vollstaendigkeit: "#Vollstaendig"
+        GesamteFlaechenmass: "gs.Gesamtflaechenmass"
+      refs:
+        - association: "ProjGrundstueckEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-gueltig
+            sourceRef: "gs.Entstehung"
+
+    - id: proj-bergwerk
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.ProjBergwerk"
+      sources:
+        - alias: bw
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Bergwerk"
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
+      assign:
+        NummerTeilGrundstueck: "bw.NummerTeilgrundstueck"
+        Geometrie: "bw.Geometrie"
+        Flaechenmass: "bw.Flaechenmass"
+      where: 'gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
+      refs:
+        - association: "ProjBergwerkProjBergwerk_von"
+          role: "ProjBergwerk_von"
+          required: true
+          targetObject:
+            rule: proj-bergwerk-grundstueck
+            sourceRef: "bw.Grundstueck"
+      joins:
+        - left: bw
+          right: gs
+          on: "eq(bw.Grundstueck, gs)"
+          type: inner
 
     - id: selbstrecht-grundstueck
       target:
@@ -193,7 +315,7 @@ mapping:
         - alias: gs
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
-          where: "gs.Grundstuecksart == #SelbstaendigesDauerndesRecht"
+          where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
       identity:
         sourceKey: ["gs.NBIdent", "gs.Nummer"]
       assign:
@@ -220,10 +342,14 @@ mapping:
         - alias: sr
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.SelbstaendigesDauerndesRecht"
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       assign:
         NummerTeilGrundstueck: "sr.NummerTeilgrundstueck"
         Geometrie: "sr.Geometrie"
         Flaechenmass: "sr.Flaechenmass"
+      where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
       refs:
         - association: "SelbstRechtSelbstRecht_von"
           role: "SelbstRecht_von"
@@ -231,6 +357,67 @@ mapping:
           targetObject:
             rule: selbstrecht-grundstueck
             sourceRef: "sr.Grundstueck"
+      joins:
+        - left: sr
+          right: gs
+          on: "eq(sr.Grundstueck, gs)"
+          type: inner
+
+    - id: bergwerk-grundstueck
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.Grundstueck"
+      sources:
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
+          where: 'gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
+      identity:
+        sourceKey: ["gs.NBIdent", "gs.Nummer"]
+      assign:
+        NBIdent: "gs.NBIdent"
+        Nummer: "gs.Nummer"
+        EGRIS_EGRID: "gs.EGRID"
+        Art: "#Bergwerk"
+        Gueltigkeit: "#rechtskraeftig"
+        Vollstaendigkeit: "#Vollstaendig"
+        GesamteFlaechenmass: "gs.Gesamtflaechenmass"
+      refs:
+        - association: "GrundstueckEntstehung"
+          role: "Entstehung"
+          required: true
+          targetObject:
+            rule: gs-nachfuehrung-gueltig
+            sourceRef: "gs.Entstehung"
+
+    - id: bergwerk
+      target:
+        output: dm01
+        class: "DM01AVCH24LV95D.Liegenschaften.Bergwerk"
+      sources:
+        - alias: bw
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Bergwerk"
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
+      assign:
+        NummerTeilGrundstueck: "bw.NummerTeilgrundstueck"
+        Geometrie: "bw.Geometrie"
+        Flaechenmass: "bw.Flaechenmass"
+      where: 'gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
+      refs:
+        - association: "BergwerkBergwerk_von"
+          role: "Bergwerk_von"
+          required: true
+          targetObject:
+            rule: bergwerk-grundstueck
+            sourceRef: "bw.Grundstueck"
+      joins:
+        - left: bw
+          right: gs
+          on: "eq(bw.Grundstueck, gs)"
+          type: inner
 
     - id: grundstueck-gueltig
       target:
@@ -240,9 +427,7 @@ mapping:
         - alias: gs
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
-          where: "gs.Grundstuecksart == #Liegenschaft AND gs.Fiktiv == false"
-      identity:
-        sourceKey: ["gs.NBIdent", "gs.Nummer"]
+          where: 'gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
       assign:
         NBIdent: "gs.NBIdent"
         Nummer: "gs.Nummer"
@@ -285,10 +470,14 @@ mapping:
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft"
           where: "ls.Fiktiv == false"
+        - alias: gs
+          input: dmav
+          class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       assign:
         NummerTeilGrundstueck: "ls.NummerTeilgrundstueck"
         Geometrie: "ls.Geometrie"
         Flaechenmass: "ls.Flaechenmass"
+      where: 'gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
       refs:
         - association: "LiegenschaftLiegenschaft_von"
           role: "Liegenschaft_von"
@@ -296,3 +485,8 @@ mapping:
           targetObject:
             rule: grundstueck-gueltig
             sourceRef: "ls.Grundstueck"
+      joins:
+        - left: ls
+          right: gs
+          on: "eq(ls.Grundstueck, gs)"
+          type: inner

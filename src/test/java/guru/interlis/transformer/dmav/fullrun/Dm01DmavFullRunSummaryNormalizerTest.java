@@ -46,6 +46,22 @@ class Dm01DmavFullRunSummaryNormalizerTest {
         assertThat(reloaded).usingRecursiveComparison().isEqualTo(expected);
     }
 
+    @Test
+    void normalizesDmavToDm01ReportToCheckedInExpectedSummary() throws Exception {
+        Path manifestPath = Dm01DmavPaths.fullRunBundleDir("dmav-tym-alles-v1-1").resolve("manifest.yaml");
+        Dm01DmavFullRunManifest manifest = manifestLoader.load(manifestPath, REPOSITORY_ROOT);
+        Path expectedSummaryPath =
+                manifestLoader.resolveManifestPath(manifestPath, REPOSITORY_ROOT, manifest.report.expectedSummary);
+        Dm01DmavFullRunSummary expected = normalizer.readSummary(expectedSummaryPath);
+
+        Path reportPath = tempDir.resolve("dmav-to-dm01-transformation-report.json");
+        JSON_MAPPER.writeValue(reportPath.toFile(), syntheticReport(expected));
+
+        Dm01DmavFullRunSummary actual = normalizer.normalize(reportPath, manifest);
+
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
     private static Map<String, Object> syntheticReport(Dm01DmavFullRunSummary expected) {
         Map<String, Object> report = new LinkedHashMap<>();
         report.put(

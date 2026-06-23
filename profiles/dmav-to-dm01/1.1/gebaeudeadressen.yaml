@@ -68,8 +68,6 @@ mapping:
         - alias: l
           input: dmav
           class: "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Lokalisation"
-      identity:
-        sourceKey: ["l.Nummerierungsprinzip", "l.Lokalisationsart"]
       assign:
         Nummerierungsprinzip: "l.Nummerierungsprinzip"
         AttributeProvisorisch: "enumMap(l.AttributeProvisorisch, 'JaNein_DMAV_DM01')"
@@ -109,8 +107,6 @@ mapping:
         - alias: ge
           input: dmav
           class: "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Gebaeudeeingang"
-      identity:
-        sourceKey: ["ge.Hausnummer"]
       assign:
         Status: "ge.Gebaeudestatus"
         InAenderung: "enumMap(ge.InAenderung, 'JaNein_DMAV_DM01')"

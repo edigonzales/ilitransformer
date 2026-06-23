@@ -1,4 +1,4 @@
-# DM01 → DMAV Full-Run Bundles
+# DM01/DMAV Full-Run Bundles
 
 Diese Bundles versionieren reproduzierbare Voll-Läufe als Produktartefakte unter `products/dm01-dmav/full-runs/`.
 

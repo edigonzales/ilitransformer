@@ -34,7 +34,7 @@ tasks.register('validateTransfer', JavaExec) {
 
 tasks.register('runDm01DmavFullRun', JavaExec) {
     group = 'dm01-dmav'
-    description = 'Run a manifest-driven DM01 to DMAV full dataset bundle'
+    description = 'Run a manifest-driven DM01/DMAV full dataset bundle'
     classpath = configurations.validator + sourceSets.main.runtimeClasspath
     mainClass = 'guru.interlis.transformer.dmav.fullrun.Dm01DmavFullRunTask'
 

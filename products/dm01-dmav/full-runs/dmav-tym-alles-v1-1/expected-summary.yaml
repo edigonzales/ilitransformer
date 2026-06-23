@@ -1,0 +1,81 @@
+---
+datasetSlug: "dmav-tym-alles-v1-1"
+direction: "dmav-to-dm01"
+sourceSha256: "82daf40cdbddc49165bcdae53deb686e430a15e0183c45aa28a60bea670e690a"
+counts:
+  sourceRecordsRead: 20472
+  sourceRecordsFiltered: 20017
+  targetsCreated: 23580
+  targetsWritten: 23580
+  errors: 0
+  warnings: 4
+includedTopics:
+- "bb"
+- "dbv"
+- "eo"
+- "gebaeudeadressen"
+- "gs"
+- "hoheitsgrenzen"
+- "hfp3"
+- "lfp3"
+- "nomenklatur"
+- "rohrleitungen"
+- "toleranzstufen"
+excludedTopics:
+- id: "dienstbarkeitsgrenzen"
+  reason: "profile-missing: no profiles/dmav-to-dm01/1.1/dienstbarkeitsgrenzen.yaml exists yet."
+- id: "untereinheitgrundbuch"
+  reason: "profile-missing: no dmav-to-dm01 profile exists and no direct DM01 target structure is currently defined."
+sourceTopicsWithoutProfile:
+- "DMAV_Dienstbarkeitsgrenzen_V1_1.Dienstbarkeitsgrenzen"
+- "DMAVSUP_UntereinheitGrundbuch_V1_1.UntereinheitGrundbuch"
+sourceTopicsPresentInDataset:
+- "DMAV_Dienstbarkeitsgrenzen_V1_1.Dienstbarkeitsgrenzen"
+- "DMAVSUP_UntereinheitGrundbuch_V1_1.UntereinheitGrundbuch"
+targetsByClass:
+  (expanded): 3004
+  DM01AVCH24LV95D.Bezirksgrenzen.Bezirksgrenzabschnitt: 1
+  DM01AVCH24LV95D.Bodenbedeckung.BBNachfuehrung: 19
+  DM01AVCH24LV95D.Bodenbedeckung.BoFlaeche: 1525
+  DM01AVCH24LV95D.Bodenbedeckung.Einzelpunkt: 3861
+  DM01AVCH24LV95D.Bodenbedeckung.ProjBoFlaeche: 7
+  DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung: 20
+  DM01AVCH24LV95D.Einzelobjekte.Einzelobjekt: 666
+  DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt: 436
+  DM01AVCH24LV95D.FixpunkteKategorie3.HFP3: 1
+  DM01AVCH24LV95D.FixpunkteKategorie3.HFP3Nachfuehrung: 1
+  DM01AVCH24LV95D.FixpunkteKategorie3.LFP3: 113
+  DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Nachfuehrung: 3
+  DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Symbol: 113
+  DM01AVCH24LV95D.Gebaeudeadressen.GEBNachfuehrung: 20
+  DM01AVCH24LV95D.Gebaeudeadressen.Gebaeudeeingang: 925
+  DM01AVCH24LV95D.Gebaeudeadressen.Lokalisation: 85
+  DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung: 1
+  DM01AVCH24LV95D.Gemeindegrenzen.Gemeinde: 1
+  DM01AVCH24LV95D.Gemeindegrenzen.Gemeindegrenze: 1
+  DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt: 430
+  DM01AVCH24LV95D.Kantonsgrenzen.Kantonsgrenzabschnitt: 1
+  DM01AVCH24LV95D.Liegenschaften.Grenzpunkt: 9203
+  DM01AVCH24LV95D.Liegenschaften.Grundstueck: 1463
+  DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung: 11
+  DM01AVCH24LV95D.Liegenschaften.Liegenschaft: 1453
+  DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck: 5
+  DM01AVCH24LV95D.Liegenschaften.ProjLiegenschaft: 5
+  DM01AVCH24LV95D.Liegenschaften.SelbstRecht: 12
+  DM01AVCH24LV95D.Nomenklatur.Flurname: 169
+  DM01AVCH24LV95D.Nomenklatur.Gelaendename: 3
+  DM01AVCH24LV95D.Nomenklatur.NKNachfuehrung: 2
+  DM01AVCH24LV95D.Nomenklatur.Ortsname: 3
+  DM01AVCH24LV95D.Rohrleitungen.Einzelpunkt: 1
+  DM01AVCH24LV95D.Rohrleitungen.Leitungsobjekt: 2
+  DM01AVCH24LV95D.Rohrleitungen.RLNachfuehrung: 1
+  DM01AVCH24LV95D.Rohrleitungen.Signalpunkt: 1
+  DM01AVCH24LV95D.Rutschgebiete.Rutschung: 1
+  DM01AVCH24LV95D.TSEinteilung.Toleranzstufe: 11
+warningsByCode:
+  ILITRF-LOOKUP-NO-MATCH: 4
+warningsByRule:
+  bb-bb-nachfuehrung-gueltig:
+    ILITRF-LOOKUP-NO-MATCH: 2
+  bb-bb-nachfuehrung-projektiert:
+    ILITRF-LOOKUP-NO-MATCH: 2

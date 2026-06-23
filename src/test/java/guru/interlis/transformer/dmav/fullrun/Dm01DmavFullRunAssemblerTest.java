@@ -105,6 +105,172 @@ class Dm01DmavFullRunAssemblerTest {
     }
 
     @Test
+    void assemblesDmavToDm01FullRunBundle() throws Exception {
+        Path manifestPath = Dm01DmavPaths.fullRunBundleDir("dmav-tym-alles-v1-1").resolve("manifest.yaml");
+        Dm01DmavFullRunManifest manifest = manifestLoader.load(manifestPath, REPOSITORY_ROOT);
+
+        Dm01DmavFullRunAssembler.AssembledFullRun assembled = assembler.assemble(
+                manifest, manifestPath, REPOSITORY_ROOT, tempDir.resolve("source.xtf"), tempDir.resolve("output.itf"));
+
+        JobConfig combined = assembled.combinedConfig();
+        Map<String, JobConfig.RuleSpec> rulesById =
+                combined.mapping.rules.stream().collect(Collectors.toMap(rule -> rule.id, Function.identity()));
+
+        assertThat(assembled.loadedTopics())
+                .extracting(Dm01DmavFullRunAssembler.LoadedTopic::topicId)
+                .containsExactly(
+                        "bb",
+                        "dbv",
+                        "eo",
+                        "gebaeudeadressen",
+                        "gs",
+                        "hoheitsgrenzen",
+                        "hfp3",
+                        "lfp3",
+                        "nomenklatur",
+                        "rohrleitungen",
+                        "toleranzstufen");
+        assertThat(assembled.loadedTopics()).allSatisfy(topic -> assertThat(topic.format()).isEqualTo("yaml"));
+
+        assertThat(combined.job.name).isEqualTo("dmav-to-dm01-dmav-tym-alles-v1-1-all");
+        assertThat(combined.job.direction).isEqualTo("dmav-to-dm01");
+        assertThat(combined.job.inputs).singleElement().satisfies(input -> {
+            assertThat(input.id).isEqualTo("dmav");
+            assertThat(input.model).isEqualTo("DMAVTYM_Alles_V1_1");
+            assertThat(input.format).isEqualTo("xtf");
+            assertThat(input.path)
+                    .isEqualTo(tempDir.resolve("source.xtf")
+                            .toAbsolutePath()
+                            .normalize()
+                            .toString());
+        });
+        assertThat(combined.job.outputs).singleElement().satisfies(output -> {
+            assertThat(output.id).isEqualTo("dm01");
+            assertThat(output.model).isEqualTo("DM01AVCH24LV95D");
+            assertThat(output.format).isEqualTo("itf");
+            assertThat(output.path)
+                    .isEqualTo(tempDir.resolve("output.itf")
+                            .toAbsolutePath()
+                            .normalize()
+                            .toString());
+        });
+        assertThat(combined.mapping.oidStrategy.namespace)
+                .isEqualTo("dmav-to-dm01-dmav-tym-alles-v1-1-all");
+        assertThat(combined.mapping.basketStrategy.defaultStrategy).isEqualTo("byTopic");
+        assertThat(combined.mapping.compileMode).isEqualTo("compatible");
+
+        assertThat(rulesById)
+                .containsKeys(
+                        "gs-gs-nachfuehrung-gueltig",
+                        "gs-proj-grundstueck",
+                        "gs-proj-liegenschaft",
+                        "gs-proj-selbstrecht-grundstueck",
+                        "gs-proj-selbstrecht",
+                        "gs-proj-bergwerk-grundstueck",
+                        "gs-proj-bergwerk",
+                        "gs-selbstrecht-grundstueck",
+                        "gs-selbstrecht",
+                        "gs-bergwerk-grundstueck",
+                        "gs-bergwerk",
+                        "gs-grundstueck-gueltig",
+                        "gs-liegenschaft");
+        assertThat(rulesById.get("gs-gs-nachfuehrung-gueltig").assign)
+                .containsEntry("Gueltigkeit", "if(notDefined(nf.Grundbucheintrag), #projektiert, #gueltig)")
+                .containsEntry("GBEintrag", "toDate(nf.Grundbucheintrag)");
+
+        assertThat(sourceWhere(rulesById.get("gs-grundstueck-gueltig"), "gs"))
+                .contains("gs.Grundstuecksart == #Liegenschaft")
+                .contains("gs.Fiktiv == false")
+                .contains("defined(gs.Entstehung)")
+                .contains("Grundbucheintrag")
+                .contains("notDefined(gs.Untergang)");
+        assertThat(rulesById.get("gs-liegenschaft").where)
+                .contains("gs.Grundstuecksart == #Liegenschaft")
+                .contains("gs.Fiktiv == false")
+                .contains("defined(gs.Entstehung)")
+                .contains("Grundbucheintrag");
+        assertThat(sourceWhere(rulesById.get("gs-liegenschaft"), "ls")).isEqualTo("ls.Fiktiv == false");
+        assertThat(rulesById.get("gs-liegenschaft").joins)
+                .singleElement()
+                .satisfies(join -> {
+                    assertThat(join.left).isEqualTo("ls");
+                    assertThat(join.right).isEqualTo("gs");
+                    assertThat(join.on).isEqualTo("eq(ls.Grundstueck, gs)");
+                    assertThat(join.type).isEqualTo("inner");
+                });
+
+        assertThat(sourceWhere(rulesById.get("gs-proj-grundstueck"), "gs"))
+                .contains("gs.Grundstuecksart == #Liegenschaft")
+                .contains("gs.Fiktiv == false")
+                .contains("notDefined(lookupIn")
+                .contains("notDefined(gs.Untergang)")
+                .doesNotContain("gs.Fiktiv == true");
+        assertThat(sourceWhere(rulesById.get("gs-proj-liegenschaft"), "ls")).isEqualTo("ls.Fiktiv == false");
+        assertThat(rulesById.get("gs-proj-liegenschaft").where)
+                .contains("gs.Fiktiv == false")
+                .contains("notDefined(lookupIn")
+                .contains("notDefined(gs.Untergang)")
+                .doesNotContain("gs.Fiktiv == true");
+        assertThat(rulesById.get("gs-proj-liegenschaft").joins)
+                .singleElement()
+                .satisfies(join -> assertThat(join.on).isEqualTo("eq(ls.Grundstueck, gs)"));
+
+        assertThat(sourceWhere(rulesById.get("gs-selbstrecht-grundstueck"), "gs"))
+                .contains("gs.Grundstuecksart == #SelbstaendigesDauerndesRecht")
+                .contains("gs.Fiktiv == false")
+                .contains("defined(lookupIn")
+                .contains("notDefined(gs.Untergang)");
+        assertThat(rulesById.get("gs-selbstrecht").where)
+                .contains("gs.Grundstuecksart == #SelbstaendigesDauerndesRecht")
+                .contains("gs.Fiktiv == false")
+                .contains("defined(lookupIn");
+        assertThat(rulesById.get("gs-selbstrecht").joins)
+                .singleElement()
+                .satisfies(join -> assertThat(join.on).isEqualTo("eq(sr.Grundstueck, gs)"));
+
+        assertThat(sourceWhere(rulesById.get("gs-proj-selbstrecht-grundstueck"), "gs"))
+                .contains("gs.Grundstuecksart == #SelbstaendigesDauerndesRecht")
+                .contains("gs.Fiktiv == false")
+                .contains("notDefined(lookupIn")
+                .contains("notDefined(gs.Untergang)")
+                .doesNotContain("gs.Fiktiv == true");
+        assertThat(rulesById.get("gs-proj-selbstrecht").where)
+                .contains("gs.Fiktiv == false")
+                .contains("notDefined(lookupIn")
+                .contains("notDefined(gs.Untergang)");
+        assertThat(rulesById.get("gs-proj-selbstrecht").joins)
+                .singleElement()
+                .satisfies(join -> assertThat(join.on).isEqualTo("eq(sr.Grundstueck, gs)"));
+
+        assertThat(sourceWhere(rulesById.get("gs-bergwerk-grundstueck"), "gs"))
+                .contains("gs.Grundstuecksart == #Bergwerk")
+                .contains("gs.Fiktiv == false")
+                .contains("defined(lookupIn")
+                .contains("notDefined(gs.Untergang)");
+        assertThat(rulesById.get("gs-bergwerk").where)
+                .contains("gs.Grundstuecksart == #Bergwerk")
+                .contains("gs.Fiktiv == false")
+                .contains("defined(lookupIn");
+        assertThat(rulesById.get("gs-bergwerk").joins)
+                .singleElement()
+                .satisfies(join -> assertThat(join.on).isEqualTo("eq(bw.Grundstueck, gs)"));
+
+        assertThat(sourceWhere(rulesById.get("gs-proj-bergwerk-grundstueck"), "gs"))
+                .contains("gs.Grundstuecksart == #Bergwerk")
+                .contains("gs.Fiktiv == false")
+                .contains("notDefined(lookupIn")
+                .contains("notDefined(gs.Untergang)")
+                .doesNotContain("gs.Fiktiv == true");
+        assertThat(rulesById.get("gs-proj-bergwerk").where)
+                .contains("gs.Fiktiv == false")
+                .contains("notDefined(lookupIn")
+                .contains("notDefined(gs.Untergang)");
+        assertThat(rulesById.get("gs-proj-bergwerk").joins)
+                .singleElement()
+                .satisfies(join -> assertThat(join.on).isEqualTo("eq(bw.Grundstueck, gs)"));
+    }
+
+    @Test
     void renamesConflictingEnumMapsAcrossYamlAndIlimapTopics() throws Exception {
         Path manifestDir = tempDir.resolve("conflict-bundle");
         Path expectedSummaryPath = manifestDir.resolve("expected-summary.yaml");
@@ -243,5 +409,13 @@ class Dm01DmavFullRunAssemblerTest {
         assertThat(rulesById.get("yamltopic-yaml-rule").assign.get("Flag"))
                 .isEqualTo("enumMap(s.Flag, 'yamltopic_SharedEnum')");
         assertThat(rulesById.get("ilimaptopic-ilimap-rule").assign.get("Flag")).contains("ilimaptopic_SharedEnum");
+    }
+
+    private static String sourceWhere(JobConfig.RuleSpec rule, String alias) {
+        return rule.sources.stream()
+                .filter(source -> alias.equals(source.alias))
+                .findFirst()
+                .map(source -> source.where)
+                .orElse(null);
     }
 }

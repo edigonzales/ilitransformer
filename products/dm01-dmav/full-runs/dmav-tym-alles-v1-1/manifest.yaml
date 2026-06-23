@@ -1,0 +1,70 @@
+datasetSlug: dmav-tym-alles-v1-1
+description: Full-run bundle for the DMAVTYM Alles Version 1.1 dataset into the DM01 model.
+direction: dmav-to-dm01
+failPolicy: strict
+
+source:
+  pathHint: src/test/data/DMAV_Version_1_1/DMAVTYM_Alles_V1_1.xtf
+  sha256: 82daf40cdbddc49165bcdae53deb686e430a15e0183c45aa28a60bea670e690a
+  model: DMAVTYM_Alles_V1_1
+  format: xtf
+  inputId: dmav
+
+output:
+  outputId: dm01
+  model: DM01AVCH24LV95D
+  format: itf
+  fileName: dm01-dmav-tym-alles-v1-1.itf
+
+mapping:
+  oidStrategy: deterministicUuid
+  oidNamespace: dmav-to-dm01-dmav-tym-alles-v1-1-all
+  basketStrategy: byTopic
+  compileMode: compatible
+
+report:
+  expectedSummary: ./expected-summary.yaml
+
+modeldirs:
+  - src/test/data/av/models
+  - https://models.interlis.ch
+  - https://models.geo.admin.ch
+  - https://models.kgk-cgc.ch
+
+topics:
+  include:
+    - id: bb
+      mapping: profiles/dmav-to-dm01/1.1/bb.yaml
+    - id: dbv
+      mapping: profiles/dmav-to-dm01/1.1/dbv.yaml
+    - id: eo
+      mapping: profiles/dmav-to-dm01/1.1/eo.yaml
+    - id: gebaeudeadressen
+      mapping: profiles/dmav-to-dm01/1.1/gebaeudeadressen.yaml
+    - id: gs
+      mapping: profiles/dmav-to-dm01/1.1/gs.yaml
+    - id: hoheitsgrenzen
+      mapping: profiles/dmav-to-dm01/1.1/hoheitsgrenzen.yaml
+    - id: hfp3
+      mapping: profiles/dmav-to-dm01/1.1/hfp3.yaml
+    - id: lfp3
+      mapping: profiles/dmav-to-dm01/1.1/lfp3.yaml
+    - id: nomenklatur
+      mapping: profiles/dmav-to-dm01/1.1/nomenklatur.yaml
+    - id: rohrleitungen
+      mapping: profiles/dmav-to-dm01/1.1/rohrleitungen.yaml
+    - id: toleranzstufen
+      mapping: profiles/dmav-to-dm01/1.1/toleranzstufen.yaml
+  exclude:
+    - id: dienstbarkeitsgrenzen
+      reason: "profile-missing: no profiles/dmav-to-dm01/1.1/dienstbarkeitsgrenzen.yaml exists yet."
+    - id: untereinheitgrundbuch
+      reason: "profile-missing: no dmav-to-dm01 profile exists and no direct DM01 target structure is currently defined."
+
+sourceTopicsWithoutProfile:
+  - DMAV_Dienstbarkeitsgrenzen_V1_1.Dienstbarkeitsgrenzen
+  - DMAVSUP_UntereinheitGrundbuch_V1_1.UntereinheitGrundbuch
+
+sourceTopicsPresentInDataset:
+  - DMAV_Dienstbarkeitsgrenzen_V1_1.Dienstbarkeitsgrenzen
+  - DMAVSUP_UntereinheitGrundbuch_V1_1.UntereinheitGrundbuch
