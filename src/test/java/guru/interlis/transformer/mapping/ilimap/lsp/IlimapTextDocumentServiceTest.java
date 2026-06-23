@@ -14,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
+import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
@@ -83,6 +84,57 @@ class IlimapTextDocumentServiceTest {
         assertThat(params.getDiagnostics()).isEmpty();
     }
 
+    @Test
+    void validateMappingPublishesFreshDiagnosticsForUpdatedText() {
+        IlimapTextDocumentService modelAwareService = new IlimapTextDocumentService(
+                new IlimapDocumentStore(),
+                new IlimapLspDiagnosticMapper(),
+                new IlimapFormattingService(),
+                new IlimapLspRangeMapper(),
+                IlimapAnalysisOptions.modelAware(Path.of(".")));
+        modelAwareService.connect(client);
+        modelAwareService.didOpen(new DidOpenTextDocumentParams(
+                new TextDocumentItem("file:///mapping.ilimap", "ilimap", 1, missingModeldirOnlyMapping())));
+
+        var result = modelAwareService
+                .validateMapping(new guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams(
+                        "file:///mapping.ilimap", validModelAwareMapping(), 2))
+                .join();
+
+        assertThat(result.available()).isTrue();
+        assertThat(result.diagnosticCount()).isZero();
+        assertThat(client.publishedDiagnostics()).hasSize(2);
+        assertThat(client.publishedDiagnostics().get(0).getDiagnostics())
+                .anySatisfy(diagnostic -> assertThat(diagnostic.getMessage().getLeft())
+                        .contains("Model directory does not exist: models/"));
+        PublishDiagnosticsParams params = client.publishedDiagnostics().get(1);
+        assertThat(params.getUri()).isEqualTo("file:///mapping.ilimap");
+        assertThat(params.getVersion()).isEqualTo(2);
+        assertThat(params.getDiagnostics()).isEmpty();
+    }
+
+    @Test
+    void didSavePublishesFreshDiagnosticsForSavedText() {
+        IlimapTextDocumentService modelAwareService = new IlimapTextDocumentService(
+                new IlimapDocumentStore(),
+                new IlimapLspDiagnosticMapper(),
+                new IlimapFormattingService(),
+                new IlimapLspRangeMapper(),
+                IlimapAnalysisOptions.modelAware(Path.of(".")));
+        modelAwareService.connect(client);
+        modelAwareService.didOpen(new DidOpenTextDocumentParams(
+                new TextDocumentItem("file:///mapping.ilimap", "ilimap", 1, missingModeldirOnlyMapping())));
+
+        modelAwareService.didSave(new DidSaveTextDocumentParams(
+                new TextDocumentIdentifier("file:///mapping.ilimap"), validModelAwareMapping()));
+
+        assertThat(client.publishedDiagnostics()).hasSize(2);
+        PublishDiagnosticsParams params = client.publishedDiagnostics().get(1);
+        assertThat(params.getUri()).isEqualTo("file:///mapping.ilimap");
+        assertThat(params.getVersion()).isEqualTo(1);
+        assertThat(params.getDiagnostics()).isEmpty();
+    }
+
     private static String validMapping() {
         return """
                 mapping v2 {
@@ -91,6 +143,32 @@ class IlimapTextDocumentServiceTest {
                   rule r1 {
                     target out class "M.A";
                     source s from src class "M.A";
+                  }
+                }
+                """;
+    }
+
+    private static String validModelAwareMapping() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "TestModel"; }
+                  output out { path "out.xtf"; model "TestModel"; }
+                  rule r1 {
+                    target out class "TestModel.TestTopic.TestClass";
+                    source s from src class "TestModel.TestTopic.TestClass";
+                  }
+                }
+                """;
+    }
+
+    private static String missingModeldirOnlyMapping() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "models/";
                   }
                 }
                 """;

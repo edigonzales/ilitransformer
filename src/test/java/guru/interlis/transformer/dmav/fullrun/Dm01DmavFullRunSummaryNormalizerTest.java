@@ -48,7 +48,8 @@ class Dm01DmavFullRunSummaryNormalizerTest {
 
     @Test
     void normalizesDmavToDm01ReportToCheckedInExpectedSummary() throws Exception {
-        Path manifestPath = Dm01DmavPaths.fullRunBundleDir("dmav-tym-alles-v1-1").resolve("manifest.yaml");
+        Path manifestPath =
+                Dm01DmavPaths.fullRunBundleDir("dmav-tym-alles-v1-1").resolve("manifest.yaml");
         Dm01DmavFullRunManifest manifest = manifestLoader.load(manifestPath, REPOSITORY_ROOT);
         Path expectedSummaryPath =
                 manifestLoader.resolveManifestPath(manifestPath, REPOSITORY_ROOT, manifest.report.expectedSummary);

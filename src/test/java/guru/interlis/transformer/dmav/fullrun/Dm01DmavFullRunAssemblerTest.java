@@ -106,7 +106,8 @@ class Dm01DmavFullRunAssemblerTest {
 
     @Test
     void assemblesDmavToDm01FullRunBundle() throws Exception {
-        Path manifestPath = Dm01DmavPaths.fullRunBundleDir("dmav-tym-alles-v1-1").resolve("manifest.yaml");
+        Path manifestPath =
+                Dm01DmavPaths.fullRunBundleDir("dmav-tym-alles-v1-1").resolve("manifest.yaml");
         Dm01DmavFullRunManifest manifest = manifestLoader.load(manifestPath, REPOSITORY_ROOT);
 
         Dm01DmavFullRunAssembler.AssembledFullRun assembled = assembler.assemble(
@@ -130,7 +131,8 @@ class Dm01DmavFullRunAssemblerTest {
                         "nomenklatur",
                         "rohrleitungen",
                         "toleranzstufen");
-        assertThat(assembled.loadedTopics()).allSatisfy(topic -> assertThat(topic.format()).isEqualTo("ilimap"));
+        assertThat(assembled.loadedTopics())
+                .allSatisfy(topic -> assertThat(topic.format()).isEqualTo("ilimap"));
 
         assertThat(combined.job.name).isEqualTo("dmav-to-dm01-dmav-tym-alles-v1-1-all");
         assertThat(combined.job.direction).isEqualTo("dmav-to-dm01");
@@ -154,8 +156,7 @@ class Dm01DmavFullRunAssemblerTest {
                             .normalize()
                             .toString());
         });
-        assertThat(combined.mapping.oidStrategy.namespace)
-                .isEqualTo("dmav-to-dm01-dmav-tym-alles-v1-1-all");
+        assertThat(combined.mapping.oidStrategy.namespace).isEqualTo("dmav-to-dm01-dmav-tym-alles-v1-1-all");
         assertThat(combined.mapping.basketStrategy.defaultStrategy).isEqualTo("byTopic");
         assertThat(combined.mapping.compileMode).isEqualTo("compatible");
 
@@ -190,14 +191,12 @@ class Dm01DmavFullRunAssemblerTest {
                 .contains("defined(gs.Entstehung)")
                 .contains("Grundbucheintrag");
         assertThat(sourceWhere(rulesById.get("gs-liegenschaft"), "ls")).isEqualTo("ls.Fiktiv == false");
-        assertThat(rulesById.get("gs-liegenschaft").joins)
-                .singleElement()
-                .satisfies(join -> {
-                    assertThat(join.left).isEqualTo("ls");
-                    assertThat(join.right).isEqualTo("gs");
-                    assertThat(join.on).isEqualTo("eq(ls.Grundstueck, gs)");
-                    assertThat(join.type).isEqualTo("inner");
-                });
+        assertThat(rulesById.get("gs-liegenschaft").joins).singleElement().satisfies(join -> {
+            assertThat(join.left).isEqualTo("ls");
+            assertThat(join.right).isEqualTo("gs");
+            assertThat(join.on).isEqualTo("eq(ls.Grundstueck, gs)");
+            assertThat(join.type).isEqualTo("inner");
+        });
 
         assertThat(sourceWhere(rulesById.get("gs-proj-grundstueck"), "gs"))
                 .contains("gs.Grundstuecksart == #Liegenschaft")
@@ -211,9 +210,8 @@ class Dm01DmavFullRunAssemblerTest {
                 .contains("notDefined(lookupIn")
                 .contains("notDefined(gs.Untergang)")
                 .doesNotContain("gs.Fiktiv == true");
-        assertThat(rulesById.get("gs-proj-liegenschaft").joins)
-                .singleElement()
-                .satisfies(join -> assertThat(join.on).isEqualTo("eq(ls.Grundstueck, gs)"));
+        assertThat(rulesById.get("gs-proj-liegenschaft").joins).singleElement().satisfies(join -> assertThat(join.on)
+                .isEqualTo("eq(ls.Grundstueck, gs)"));
 
         assertThat(sourceWhere(rulesById.get("gs-selbstrecht-grundstueck"), "gs"))
                 .contains("gs.Grundstuecksart == #SelbstaendigesDauerndesRecht")
@@ -224,9 +222,8 @@ class Dm01DmavFullRunAssemblerTest {
                 .contains("gs.Grundstuecksart == #SelbstaendigesDauerndesRecht")
                 .contains("gs.Fiktiv == false")
                 .contains("defined(lookupIn");
-        assertThat(rulesById.get("gs-selbstrecht").joins)
-                .singleElement()
-                .satisfies(join -> assertThat(join.on).isEqualTo("eq(sr.Grundstueck, gs)"));
+        assertThat(rulesById.get("gs-selbstrecht").joins).singleElement().satisfies(join -> assertThat(join.on)
+                .isEqualTo("eq(sr.Grundstueck, gs)"));
 
         assertThat(sourceWhere(rulesById.get("gs-proj-selbstrecht-grundstueck"), "gs"))
                 .contains("gs.Grundstuecksart == #SelbstaendigesDauerndesRecht")
@@ -238,9 +235,8 @@ class Dm01DmavFullRunAssemblerTest {
                 .contains("gs.Fiktiv == false")
                 .contains("notDefined(lookupIn")
                 .contains("notDefined(gs.Untergang)");
-        assertThat(rulesById.get("gs-proj-selbstrecht").joins)
-                .singleElement()
-                .satisfies(join -> assertThat(join.on).isEqualTo("eq(sr.Grundstueck, gs)"));
+        assertThat(rulesById.get("gs-proj-selbstrecht").joins).singleElement().satisfies(join -> assertThat(join.on)
+                .isEqualTo("eq(sr.Grundstueck, gs)"));
 
         assertThat(sourceWhere(rulesById.get("gs-bergwerk-grundstueck"), "gs"))
                 .contains("gs.Grundstuecksart == #Bergwerk")
@@ -251,9 +247,8 @@ class Dm01DmavFullRunAssemblerTest {
                 .contains("gs.Grundstuecksart == #Bergwerk")
                 .contains("gs.Fiktiv == false")
                 .contains("defined(lookupIn");
-        assertThat(rulesById.get("gs-bergwerk").joins)
-                .singleElement()
-                .satisfies(join -> assertThat(join.on).isEqualTo("eq(bw.Grundstueck, gs)"));
+        assertThat(rulesById.get("gs-bergwerk").joins).singleElement().satisfies(join -> assertThat(join.on)
+                .isEqualTo("eq(bw.Grundstueck, gs)"));
 
         assertThat(sourceWhere(rulesById.get("gs-proj-bergwerk-grundstueck"), "gs"))
                 .contains("gs.Grundstuecksart == #Bergwerk")
@@ -265,9 +260,8 @@ class Dm01DmavFullRunAssemblerTest {
                 .contains("gs.Fiktiv == false")
                 .contains("notDefined(lookupIn")
                 .contains("notDefined(gs.Untergang)");
-        assertThat(rulesById.get("gs-proj-bergwerk").joins)
-                .singleElement()
-                .satisfies(join -> assertThat(join.on).isEqualTo("eq(bw.Grundstueck, gs)"));
+        assertThat(rulesById.get("gs-proj-bergwerk").joins).singleElement().satisfies(join -> assertThat(join.on)
+                .isEqualTo("eq(bw.Grundstueck, gs)"));
     }
 
     @Test

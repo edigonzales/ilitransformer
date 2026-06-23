@@ -21,6 +21,8 @@ import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapSymbolDisplayKind;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingResult;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -200,7 +202,13 @@ public final class IlimapTextDocumentService implements TextDocumentService {
 
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
-        // No-op in the diagnostics-only MVP.
+        String uri = params.getTextDocument().getUri();
+        if (params.getText() != null) {
+            int version =
+                    documentStore.get(uri).map(IlimapDocumentSnapshot::version).orElse(0);
+            documentStore.updateFull(uri, params.getText(), version);
+        }
+        analyzeAndPublish(uri);
     }
 
     @Override
@@ -317,11 +325,31 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(mappingSummaryService.summarize(analysis));
     }
 
-    private void analyzeAndPublish(String uri) {
+    public CompletableFuture<IlimapValidateMappingResult> validateMapping(IlimapValidateMappingParams params) {
+        if (params == null || params.uri() == null || params.uri().isBlank()) {
+            return CompletableFuture.completedFuture(
+                    IlimapValidateMappingResult.unavailable("No ILIMAP document URI provided."));
+        }
+
+        String uri = params.uri();
+        if (params.text() != null) {
+            documentStore.updateFull(uri, params.text(), params.version() != null ? params.version() : 0);
+        } else if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(
+                    IlimapValidateMappingResult.unavailable("No open ILIMAP document for URI: " + uri));
+        }
+
+        IlimapAnalysis analysis = analyzeAndPublish(uri);
+        return CompletableFuture.completedFuture(
+                IlimapValidateMappingResult.available(analysis.diagnostics().size()));
+    }
+
+    private IlimapAnalysis analyzeAndPublish(String uri) {
         IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
         Integer version =
                 documentStore.get(uri).map(IlimapDocumentSnapshot::version).orElse(null);
         publish(uri, version, diagnosticMapper.map(analysis.diagnostics()));
+        return analysis;
     }
 
     private TextEdit toLspTextEdit(IlimapTextEdit edit) {

@@ -43,14 +43,14 @@ class Dm01DmavFullRunManifestLoaderTest {
 
     @Test
     void loadsCheckedInDmavToDm01Manifest() throws Exception {
-        Path manifestPath = Dm01DmavPaths.fullRunBundleDir("dmav-tym-alles-v1-1").resolve("manifest.yaml");
+        Path manifestPath =
+                Dm01DmavPaths.fullRunBundleDir("dmav-tym-alles-v1-1").resolve("manifest.yaml");
 
         Dm01DmavFullRunManifest manifest = loader.load(manifestPath, REPOSITORY_ROOT);
 
         assertThat(manifest.datasetSlug).isEqualTo("dmav-tym-alles-v1-1");
         assertThat(manifest.direction).isEqualTo("dmav-to-dm01");
-        assertThat(manifest.source.pathHint)
-                .isEqualTo("src/test/data/DMAV_Version_1_1/DMAVTYM_Alles_V1_1.xtf");
+        assertThat(manifest.source.pathHint).isEqualTo("src/test/data/DMAV_Version_1_1/DMAVTYM_Alles_V1_1.xtf");
         assertThat(manifest.source.sha256)
                 .isEqualTo("82daf40cdbddc49165bcdae53deb686e430a15e0183c45aa28a60bea670e690a");
         assertThat(manifest.source.inputId).isEqualTo("dmav");

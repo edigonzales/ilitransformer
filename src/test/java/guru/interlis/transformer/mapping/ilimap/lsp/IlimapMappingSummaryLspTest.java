@@ -3,6 +3,7 @@ package guru.interlis.transformer.mapping.ilimap.lsp;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams;
 
 import java.lang.reflect.Method;
 
@@ -22,6 +23,16 @@ class IlimapMappingSummaryLspTest {
 
         assertThat(request).isNotNull();
         assertThat(request.value()).isEqualTo("ilimap/mappingSummary");
+        assertThat(request.useSegment()).isFalse();
+    }
+
+    @Test
+    void exposesValidateMappingCustomRequest() throws NoSuchMethodException {
+        Method method = IlimapLanguageServer.class.getMethod("validateMapping", IlimapValidateMappingParams.class);
+        JsonRequest request = method.getAnnotation(JsonRequest.class);
+
+        assertThat(request).isNotNull();
+        assertThat(request.value()).isEqualTo("ilimap/validateMapping");
         assertThat(request.useSegment()).isFalse();
     }
 
@@ -56,6 +67,19 @@ class IlimapMappingSummaryLspTest {
         assertThat(summary.message()).contains("No open ILIMAP document");
         assertThat(summary.inputCount()).isZero();
         assertThat(summary.rules()).isEmpty();
+    }
+
+    @Test
+    void returnsUnavailableValidationResultForUnopenedDocumentWithoutText() {
+        IlimapLanguageServer server =
+                new IlimapLanguageServer(new IlimapTextDocumentService(), new IlimapWorkspaceService());
+
+        var result = server.validateMapping(new IlimapValidateMappingParams(URI, null, null))
+                .join();
+
+        assertThat(result.available()).isFalse();
+        assertThat(result.message()).contains("No open ILIMAP document");
+        assertThat(result.diagnosticCount()).isZero();
     }
 
     private static String validMapping() {

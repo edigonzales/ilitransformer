@@ -3,6 +3,8 @@ package guru.interlis.transformer.mapping.ilimap.lsp;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingResult;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -17,6 +19,8 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
+import org.eclipse.lsp4j.TextDocumentSyncOptions;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageClientAware;
@@ -43,7 +47,11 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
         textDocumentService.setAnalysisOptions(IlimapAnalysisOptions.modelAware(workspaceRoot(params)));
         ServerCapabilities capabilities = new ServerCapabilities();
-        capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
+        TextDocumentSyncOptions syncOptions = new TextDocumentSyncOptions();
+        syncOptions.setOpenClose(true);
+        syncOptions.setChange(TextDocumentSyncKind.Full);
+        syncOptions.setSave(new org.eclipse.lsp4j.SaveOptions(true));
+        capabilities.setTextDocumentSync(Either.forRight(syncOptions));
         capabilities.setHoverProvider(true);
         capabilities.setDefinitionProvider(true);
         capabilities.setDocumentFormattingProvider(true);
@@ -117,6 +125,11 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
     @JsonRequest(value = "ilimap/mappingSummary", useSegment = false)
     public CompletableFuture<IlimapMappingSummary> mappingSummary(IlimapMappingSummaryParams params) {
         return textDocumentService.mappingSummary(params);
+    }
+
+    @JsonRequest(value = "ilimap/validateMapping", useSegment = false)
+    public CompletableFuture<IlimapValidateMappingResult> validateMapping(IlimapValidateMappingParams params) {
+        return textDocumentService.validateMapping(params);
     }
 
     @Override
