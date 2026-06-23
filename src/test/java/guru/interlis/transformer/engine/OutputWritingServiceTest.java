@@ -31,7 +31,7 @@ class OutputWritingServiceTest {
 
         assertThat(written).isEqualTo(1);
         assertThat(writer.startTransferEvent).isNotNull();
-        assertThat(writer.startTransferEvent.getSender()).isEqualTo("ilitransformer");
+        assertThat(writer.startTransferEvent.getSender()).matches("ilitransformer-.+-([0-9a-f]{40}|unknown)");
         assertThat(writer.objectEvents)
                 .extracting(objectEvent -> objectEvent.getIomObject().getobjectoid())
                 .containsExactly("o1");

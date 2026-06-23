@@ -18,7 +18,8 @@ public final class OutputWritingService {
         for (var entry : writersByOutputId.entrySet()) {
             String outputId = entry.getKey();
             IoxWriter writer = entry.getValue();
-            writer.write(new ch.interlis.iox_j.StartTransferEvent("ilitransformer", null, null));
+            writer.write(new ch.interlis.iox_j.StartTransferEvent(
+                    guru.interlis.transformer.BuildInfo.get().senderId(), null, null));
             Map<String, List<IomObject>> byBasket = objectsByOutputAndBasket.getOrDefault(outputId, Map.of());
             for (var basketEntry : byBasket.entrySet()) {
                 String[] parts = basketEntry.getKey().split("::", 2);

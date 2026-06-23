@@ -383,7 +383,8 @@ public final class TransformationEngine {
         long written = 0;
         for (JobConfig.OutputSpec output : config.job.outputs) {
             IoxWriter writer = writersByOutputId.get(output.id);
-            writer.write(new ch.interlis.iox_j.StartTransferEvent("ilitransformer", null, null));
+            writer.write(new ch.interlis.iox_j.StartTransferEvent(
+                    guru.interlis.transformer.BuildInfo.get().senderId(), null, null));
             Map<String, List<IomObject>> byBasket = objectsByOutputAndBasket.getOrDefault(output.id, Map.of());
             for (var basketEntry : byBasket.entrySet()) {
                 String[] parts = basketEntry.getKey().split("::", 2);

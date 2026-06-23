@@ -12,6 +12,76 @@ base {
     archivesName = 'ilitransformer'
 }
 
+// -- build info (name, version, full git commit hash) ----------------------
+
+def gitCommitProvider = providers.provider {
+    try {
+        def gitDir = file('.git')
+        if (!gitDir.exists()) {
+            return 'unknown'
+        }
+        def headFile = new File(gitDir, 'HEAD')
+        if (!headFile.exists()) {
+            return 'unknown'
+        }
+        def head = headFile.text.trim()
+        if (head.startsWith('ref: ')) {
+            def ref = head.substring(5).trim()
+            def refFile = new File(gitDir, ref)
+            if (refFile.exists()) {
+                def hash = refFile.text.trim()
+                if (hash) {
+                    return hash
+                }
+            }
+            def packedRefsFile = new File(gitDir, 'packed-refs')
+            if (packedRefsFile.exists()) {
+                def line = packedRefsFile.readLines().find { l ->
+                    !l.startsWith('#') && !l.startsWith('^') && l.endsWith(" ${ref}")
+                }
+                if (line) {
+                    return line.tokenize(' ')[0]
+                }
+            }
+            return 'unknown'
+        } else if (head) {
+            return head
+        }
+        return 'unknown'
+    } catch (Exception ignored) {
+        return 'unknown'
+    }
+}
+
+def buildInfoOutputDir = layout.buildDirectory.dir('generated/buildinfo')
+
+def generateBuildInfo = tasks.register('generateBuildInfo') {
+    description = 'Generates build-info.properties (name, version, full git commit hash).'
+    group = 'build'
+    def nameProvider = providers.provider { 'ilitransformer' }
+    def versionProvider = providers.provider { project.version.toString() }
+    def commitProvider = gitCommitProvider
+    inputs.property('name', nameProvider)
+    inputs.property('version', versionProvider)
+    inputs.property('gitCommit', commitProvider)
+    outputs.dir(buildInfoOutputDir)
+    doLast {
+        def dir = buildInfoOutputDir.get().asFile
+        def propsDir = new File(dir, 'guru/interlis/transformer')
+        propsDir.mkdirs()
+        new File(propsDir, 'build-info.properties').text =
+                "name=${nameProvider.get()}\n" +
+                "version=${versionProvider.get()}\n" +
+                "gitCommit=${commitProvider.get()}\n"
+    }
+}
+
+sourceSets.main.resources.srcDir(generateBuildInfo)
+
+tasks.named('processResources') {
+    dependsOn generateBuildInfo
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)

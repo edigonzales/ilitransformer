@@ -100,7 +100,7 @@ class TransformationEngineIntegrationTest {
         List<IomObject> writtenObjects = new ArrayList<>();
         for (IoxEvent event : events.getAllValues()) {
             if (event instanceof StartTransferEvent startTransferEvent) {
-                assertThat(startTransferEvent.getSender()).isEqualTo("ilitransformer");
+                assertThat(startTransferEvent.getSender()).matches("ilitransformer-.+-([0-9a-f]{40}|unknown)");
             }
             if (event instanceof ObjectEvent objectEvent) {
                 writtenObjects.add(objectEvent.getIomObject());

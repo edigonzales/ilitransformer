@@ -27,6 +27,21 @@ All commands support:
 -V, --version   Print version information
 ```
 
+`--version` prints the build version together with the full git commit hash, e.g.:
+
+```
+ilitransformer 0.1.0 (e5c8c58e2537bcd16906f4fb00a870c531fb351f)
+```
+
+Version and commit hash are generated at build time into
+`build-info.properties` (Gradle task `generateBuildInfo`, parsed from `.git/HEAD`).
+The same information is written as the INTERLIS transfer sender of every produced
+transfer file, in the form `ilitransformer-<version>-<full-git-hash>`
+(for example `<ili:sender>ilitransformer-0.1.0-e5c8c58e...</ili:sender>`). When the
+generated resource is absent (e.g. an IDE run without the task), the commit hash
+falls back to `unknown`.
+
+
 ## Commands
 
 ### transform

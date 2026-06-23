@@ -26,7 +26,7 @@ import picocli.CommandLine.Option;
         name = "ilitransformer",
         description = "Generic INTERLIS transformation engine",
         mixinStandardHelpOptions = true,
-        version = "ilitransformer 0.1.0",
+        versionProvider = BuildInfoVersionProvider.class,
         subcommands = {
             CliMain.TransformCommand.class,
             CliMain.ValidateMappingCommand.class,
