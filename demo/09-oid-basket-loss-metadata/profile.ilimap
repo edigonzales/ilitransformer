@@ -1,0 +1,54 @@
+mapping v2 "demo-09-oid-basket-loss-metadata" {
+  job {
+    description "OID- und Basket-Strategien, dokumentierter Verlust (loss), Metadaten und create";
+    direction quelle-to-ziel;
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "OidDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "OidDemo";
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "demo-09-oid";
+  }
+
+  basket byTopic;
+
+  rule punkt {
+    target tgt class "OidDemo.Ziel.Zielpunkt";
+    source p from src class "OidDemo.Quelle.Punkt";
+    identity p.Nummer;
+
+    assign {
+      Nummer = p.Nummer;
+      Wert = p.Wert;
+    }
+
+    loss {
+      sourcePath p.AltAttribut;
+      reasonCode "NOT_REPRESENTABLE";
+      description "AltAttribut hat im Zielmodell keine Entsprechung und wird bewusst verworfen.";
+      when defined(p.AltAttribut);
+    }
+
+    metadata {
+      direction quelle-to-ziel;
+      roundtrip notGuaranteed;
+      lossiness minor;
+    }
+
+    create class "OidDemo.Ziel.Protokoll" {
+      assign {
+        Meldung = default(p.AltAttribut, "kein Hinweis");
+      }
+    }
+  }
+}

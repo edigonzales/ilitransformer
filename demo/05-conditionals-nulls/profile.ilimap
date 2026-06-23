@@ -1,0 +1,38 @@
+mapping v2 "demo-05-conditionals-nulls" {
+  job {
+    description "Bedingungen und Null-Behandlung: if, coalesce, default, defined, notDefined, and/or/not";
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "CondDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "CondDemo";
+  }
+
+  oid {
+    strategy uuid;
+  }
+
+  rule auswerten {
+    target tgt class "CondDemo.Eingaenge.Ausgang";
+    source s from src class "CondDemo.Eingaenge.Eingang";
+    where s.Kategorie != "X";
+
+    assign {
+      Klasse = if(toNumber(s.Wert) >= 500, "hoch", "tief");
+      HatNotiz = defined(s.Notiz);
+      KeineNotiz = notDefined(s.Notiz);
+      Text = coalesce(s.Notiz, s.Alt, "leer");
+      TextOrDefault = default(s.Notiz, "kein Text");
+      Bewertung = if(toNumber(s.Wert) > coalesce(toNumber(s.Schwelle), 100), "ueber", "unter");
+      Spezial = if(toNumber(s.Wert) >= 500 and defined(s.Notiz), true, false);
+      Relevant = if(s.Kategorie == "A" or toNumber(s.Wert) > 800, true, false);
+      NichtA = not(s.Kategorie == "A");
+    }
+  }
+}

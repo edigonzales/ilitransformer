@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS" xmlns:CondDemo="http://www.interlis.ch/xtf/2.4/CondDemo">
+<ili:headersection><ili:models><ili:model>CondDemo</ili:model></ili:models><ili:sender>demo</ili:sender></ili:headersection>
+<ili:datasection>
+<CondDemo:Eingaenge ili:bid="00000000-0000-0000-0000-0000000000f1">
+<CondDemo:Eingang ili:tid="00000000-0000-0000-0000-000000000001"><CondDemo:Wert>750</CondDemo:Wert><CondDemo:Notiz>wichtig</CondDemo:Notiz><CondDemo:Kategorie>A</CondDemo:Kategorie></CondDemo:Eingang>
+<CondDemo:Eingang ili:tid="00000000-0000-0000-0000-000000000002"><CondDemo:Wert>200</CondDemo:Wert><CondDemo:Schwelle>300</CondDemo:Schwelle><CondDemo:Alt>alternativ</CondDemo:Alt><CondDemo:Kategorie>B</CondDemo:Kategorie></CondDemo:Eingang>
+<CondDemo:Eingang ili:tid="00000000-0000-0000-0000-000000000003"><CondDemo:Wert>900</CondDemo:Wert><CondDemo:Kategorie>X</CondDemo:Kategorie></CondDemo:Eingang>
+</CondDemo:Eingaenge>
+</ili:datasection>
+</ili:transfer>

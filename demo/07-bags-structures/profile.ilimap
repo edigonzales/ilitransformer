@@ -1,0 +1,58 @@
+mapping v2 "demo-07-bags-structures" {
+  job {
+    description "BAG OF / LIST OF Strukturen, parentRef, synthetischer Parent-Bag, bagFirst, Geometrie (pointOnSurface, coordEquals)";
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "BagDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "BagDemo";
+  }
+
+  oid {
+    strategy uuid;
+  }
+
+  rule parzelle {
+    target tgt class "BagDemo.Grundstuecke.ParzelleZiel";
+    source s from src class "BagDemo.Grundstuecke.Parzelle";
+
+    assign {
+      Nummer = s.Nummer;
+      Geometrie = s.Geometrie;
+      ErstesSchlagwort = bagFirst("s", "Schlagwoerter", "Wort");
+    }
+
+    bag Eigentuemer {
+      from e in src class "BagDemo.Grundstuecke.Eigentuemer";
+      parentRef attribute "ParzelleRef" parent s;
+      assign {
+        Name = e.Name;
+        Anteil = coalesce(e.Anteil, 0);
+      }
+    }
+
+    bag Eckpunkte {
+      from p in src class "BagDemo.Grundstuecke.Eckpunkt";
+      parentRef attribute "ParzelleRef" parent s;
+      assign {
+        Position = p.Position;
+        Reihenfolge = p.Reihenfolge;
+        IstAufFlaeche = coordEquals(p.Position, pointOnSurface(s.Geometrie), 1000.0);
+      }
+    }
+
+    bag Schwerpunkt {
+      target Schwerpunkt;
+      where defined(s.Geometrie);
+      assign {
+        Position = pointOnSurface(s.Geometrie);
+      }
+    }
+  }
+}

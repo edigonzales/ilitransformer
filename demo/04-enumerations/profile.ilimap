@@ -1,0 +1,54 @@
+mapping v2 "demo-04-enumerations" {
+  job {
+    description "Enum-Funktionen: enumMap, enumMapDefault, enumMapStrict, enumDefault, enumName, #Literal";
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "EnumDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "EnumDemo";
+  }
+
+  oid {
+    strategy uuid;
+  }
+
+  enum Art_Map {
+    "strasse" => "befestigt.Strasse";
+    "trottoir" => "befestigt.Trottoir";
+    "acker" => "humusiert.Acker";
+    "wiese" => "humusiert.Wiese";
+    "gewaesser" => "Gewaesser";
+  }
+
+  enum Groesse_Map {
+    "k" => "klein";
+    "m" => "mittel";
+    "g" => "gross";
+  }
+
+  enum Aktiv_Map {
+    "ja" => true;
+    "nein" => false;
+  }
+
+  rule mappen {
+    target tgt class "EnumDemo.Objekte.Objekt";
+    source s from src class "EnumDemo.Objekte.RohObjekt";
+    where s.Prio != #tief;
+
+    assign {
+      Art = enumMapStrict(s.ArtText, "Art_Map");
+      Groesse = enumMapDefault(s.GroesseText, "Groesse_Map", #mittel);
+      Aktiv = enumMap(s.AktivText, Aktiv_Map);
+      PrioName = enumName(s.Prio);
+      Status = enumDefault(s.StatusEnum, #inaktiv);
+      IstHoch = if(s.Prio == #hoch, true, false);
+    }
+  }
+}

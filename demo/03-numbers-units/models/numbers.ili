@@ -1,0 +1,35 @@
+INTERLIS 2.4;
+
+MODEL NumberDemo (en)
+  AT "https://demo.ilinexus.ch" VERSION "2026-06-22" =
+
+  UNIT
+    Meter [m] EXTENDS INTERLIS.LENGTH;
+
+  DOMAIN
+    Laenge_m = 0.000 .. 100000.000 [m];
+
+  TOPIC Messungen =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Rohmessung =
+      LageGenCm: 0 .. 100000;
+      HoeheGenCm: 0 .. 100000;
+      Offset: -1000 .. 1000;
+      FaktorText: TEXT*20;
+    END Rohmessung;
+
+    CLASS Resultat =
+      LageGenM: Laenge_m;
+      HoeheGenM: Laenge_m;
+      Summe: 0 .. 200000;
+      Differenz: -100000 .. 100000;
+      AbsOffset: 0 .. 1000;
+      MinWert: 0 .. 100000;
+      MaxWert: 0 .. 100000;
+      Skaliert: 0.000 .. 1000000.000;
+    END Resultat;
+
+  END Messungen;
+END NumberDemo.

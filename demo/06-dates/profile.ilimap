@@ -1,0 +1,38 @@
+mapping v2 "demo-06-dates" {
+  job {
+    description "Datums-/Zeitfunktionen: toXmlDateTime, toDate, toInterlis1Date, now (in defaults)";
+    compileMode compatible;
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "DateDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "DateDemo";
+  }
+
+  oid {
+    strategy uuid;
+  }
+
+  defaults {
+    Verarbeitet = now();
+  }
+
+  rule ereignis {
+    target tgt class "DateDemo.Daten.Ereignis";
+    source s from src class "DateDemo.Daten.RohDatum";
+
+    assign {
+      Bezeichnung = s.Bezeichnung;
+      Erfasst = toXmlDateTime(s.Datum);
+      DatumKopie = s.Datum;
+      DatumKompakt = toDate(s.Datum);
+      DatumI1 = toInterlis1Date(s.Datum);
+    }
+  }
+}

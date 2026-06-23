@@ -1,0 +1,44 @@
+INTERLIS 2.4;
+
+MODEL EnumDemo (en)
+  AT "https://demo.ilinexus.ch" VERSION "2026-06-22" =
+
+  DOMAIN
+    Status = (aktiv, inaktiv, projektiert);
+    Groesse = (klein, mittel, gross);
+    Prioritaet = (hoch, mittel, tief);
+    Art = (
+      befestigt (
+        Strasse,
+        Trottoir
+      ),
+      humusiert (
+        Acker,
+        Wiese
+      ),
+      Gewaesser
+    );
+
+  TOPIC Objekte =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS RohObjekt =
+      ArtText: MANDATORY TEXT*40;
+      GroesseText: TEXT*20;
+      AktivText: MANDATORY TEXT*10;
+      Prio: MANDATORY Prioritaet;
+      StatusEnum: Status;
+    END RohObjekt;
+
+    CLASS Objekt =
+      Art: Art;
+      Groesse: Groesse;
+      Aktiv: BOOLEAN;
+      PrioName: TEXT*20;
+      Status: Status;
+      IstHoch: BOOLEAN;
+    END Objekt;
+
+  END Objekte;
+END EnumDemo.

@@ -1,0 +1,36 @@
+mapping v2 "demo-03-numbers-units" {
+  job {
+    description "Numerische Funktionen: div, mul, add, sub, round, abs, min, max, toNumber";
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "NumberDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "NumberDemo";
+  }
+
+  oid {
+    strategy uuid;
+  }
+
+  rule rechnen {
+    target tgt class "NumberDemo.Messungen.Resultat";
+    source s from src class "NumberDemo.Messungen.Rohmessung";
+
+    assign {
+      LageGenM = div(s.LageGenCm, 100.0);
+      HoeheGenM = round(div(s.HoeheGenCm, 100.0), 2);
+      Summe = add(s.LageGenCm, s.HoeheGenCm);
+      Differenz = sub(s.LageGenCm, s.HoeheGenCm);
+      AbsOffset = abs(s.Offset);
+      MinWert = min(s.LageGenCm, s.HoeheGenCm);
+      MaxWert = max(s.LageGenCm, s.HoeheGenCm);
+      Skaliert = mul(div(s.LageGenCm, 100.0), toNumber(s.FaktorText));
+    }
+  }
+}

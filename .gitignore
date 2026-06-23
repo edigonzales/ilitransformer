@@ -24,3 +24,6 @@ build/
 
 # OS
 Thumbs.db
+
+# Demo: generated transformation outputs
+demo/**/output.xtf

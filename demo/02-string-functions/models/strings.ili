@@ -1,0 +1,25 @@
+INTERLIS 2.4;
+
+MODEL StringDemo (en)
+  AT "https://demo.ilinexus.ch" VERSION "2026-06-22" =
+  TOPIC Texts =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS RawText =
+      Code: MANDATORY TEXT*40;
+      Bemerkung: TEXT*200;
+      Telefon: TEXT*30;
+    END RawText;
+
+    CLASS CleanText =
+      CodeUpper: MANDATORY TEXT*40;
+      CodeLower: TEXT*40;
+      Praefix: TEXT*10;
+      Kurz: TEXT*20;
+      TelefonNormalisiert: TEXT*30;
+      Bemerkung: TEXT*200;
+    END CleanText;
+
+  END Texts;
+END StringDemo.

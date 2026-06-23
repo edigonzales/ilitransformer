@@ -1,0 +1,34 @@
+INTERLIS 2.4;
+
+MODEL OidDemo (en)
+  AT "https://demo.ilinexus.ch" VERSION "2026-06-22" =
+
+  TOPIC Quelle =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Punkt =
+      Nummer: MANDATORY TEXT*20;
+      Typ: MANDATORY (haupt, neben);
+      AltAttribut: TEXT*50;
+      Wert: 0 .. 1000;
+    END Punkt;
+
+  END Quelle;
+
+  TOPIC Ziel =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Zielpunkt =
+      Nummer: MANDATORY TEXT*20;
+      Wert: 0 .. 1000;
+    END Zielpunkt;
+
+    CLASS Protokoll =
+      Meldung: MANDATORY TEXT*100;
+    END Protokoll;
+
+  END Ziel;
+
+END OidDemo.

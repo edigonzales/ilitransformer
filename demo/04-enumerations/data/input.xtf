@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS" xmlns:EnumDemo="http://www.interlis.ch/xtf/2.4/EnumDemo">
+<ili:headersection><ili:models><ili:model>EnumDemo</ili:model></ili:models><ili:sender>demo</ili:sender></ili:headersection>
+<ili:datasection>
+<EnumDemo:Objekte ili:bid="00000000-0000-0000-0000-0000000000e1">
+<EnumDemo:RohObjekt ili:tid="00000000-0000-0000-0000-000000000001"><EnumDemo:ArtText>strasse</EnumDemo:ArtText><EnumDemo:GroesseText>g</EnumDemo:GroesseText><EnumDemo:AktivText>ja</EnumDemo:AktivText><EnumDemo:Prio>hoch</EnumDemo:Prio><EnumDemo:StatusEnum>aktiv</EnumDemo:StatusEnum></EnumDemo:RohObjekt>
+<EnumDemo:RohObjekt ili:tid="00000000-0000-0000-0000-000000000002"><EnumDemo:ArtText>acker</EnumDemo:ArtText><EnumDemo:AktivText>nein</EnumDemo:AktivText><EnumDemo:Prio>mittel</EnumDemo:Prio></EnumDemo:RohObjekt>
+<EnumDemo:RohObjekt ili:tid="00000000-0000-0000-0000-000000000003"><EnumDemo:ArtText>gewaesser</EnumDemo:ArtText><EnumDemo:GroesseText>k</EnumDemo:GroesseText><EnumDemo:AktivText>ja</EnumDemo:AktivText><EnumDemo:Prio>tief</EnumDemo:Prio></EnumDemo:RohObjekt>
+</EnumDemo:Objekte>
+</ili:datasection>
+</ili:transfer>

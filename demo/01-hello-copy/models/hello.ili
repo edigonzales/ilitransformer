@@ -1,0 +1,23 @@
+INTERLIS 2.4;
+
+MODEL HelloDemo (en)
+  AT "https://demo.ilinexus.ch" VERSION "2026-06-22" =
+  TOPIC Persons =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Source =
+      Name: MANDATORY TEXT*60;
+      Anzahl: 0 .. 9999;
+      Aktiv: BOOLEAN;
+    END Source;
+
+    CLASS Target =
+      Label: MANDATORY TEXT*60;
+      LabelGross: TEXT*60;
+      Anzahl: 0 .. 9999;
+      Aktiv: BOOLEAN;
+    END Target;
+
+  END Persons;
+END HelloDemo.

@@ -1,0 +1,32 @@
+mapping v2 "demo-01-hello-copy" {
+  job {
+    description "1:1-Kopie mit skalaren Attributen und einfachen String-Expressions";
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "HelloDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "HelloDemo";
+  }
+
+  oid {
+    strategy uuid;
+  }
+
+  rule copy {
+    target tgt class "HelloDemo.Persons.Target";
+    source s from src class "HelloDemo.Persons.Source";
+
+    assign {
+      Label = trim(s.Name);
+      LabelGross = upper(trim(s.Name));
+      Anzahl = s.Anzahl;
+      Aktiv = s.Aktiv;
+    }
+  }
+}

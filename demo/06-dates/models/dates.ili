@@ -1,0 +1,24 @@
+INTERLIS 2.4;
+
+MODEL DateDemo (en)
+  AT "https://demo.ilinexus.ch" VERSION "2026-06-22" =
+  TOPIC Daten =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS RohDatum =
+      Bezeichnung: MANDATORY TEXT*40;
+      Datum: MANDATORY INTERLIS.XMLDate;
+    END RohDatum;
+
+    CLASS Ereignis =
+      Bezeichnung: TEXT*40;
+      Erfasst: INTERLIS.XMLDateTime;
+      DatumKopie: INTERLIS.XMLDate;
+      DatumKompakt: TEXT*8;
+      DatumI1: TEXT*8;
+      Verarbeitet: TEXT*40;
+    END Ereignis;
+
+  END Daten;
+END DateDemo.

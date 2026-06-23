@@ -1,0 +1,34 @@
+mapping v2 "demo-02-string-functions" {
+  job {
+    description "String-Funktionen: upper, lower, substring, truncate, replace, trim, default";
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "StringDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "StringDemo";
+  }
+
+  oid {
+    strategy uuid;
+  }
+
+  rule clean {
+    target tgt class "StringDemo.Texts.CleanText";
+    source s from src class "StringDemo.Texts.RawText";
+
+    assign {
+      CodeUpper = upper(s.Code);
+      CodeLower = lower(s.Code);
+      Praefix = substring(s.Code, 0, 3);
+      Kurz = truncate(trim(s.Bemerkung), 20);
+      TelefonNormalisiert = replace(s.Telefon, "-", " ");
+      Bemerkung = default(trim(s.Bemerkung), "keine Bemerkung");
+    }
+  }
+}

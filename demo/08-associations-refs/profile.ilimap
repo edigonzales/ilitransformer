@@ -1,0 +1,56 @@
+mapping v2 "demo-08-associations-refs" {
+  job {
+    description "Associations/ref-Bloecke, Joins und Lookup-Funktionen";
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "AssocDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "AssocDemo";
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "demo-08";
+  }
+
+  rule ziel-mutation {
+    target tgt class "AssocDemo.Mutationen.ZielMutation";
+    source m from src class "AssocDemo.Mutationen.Mutation";
+    identity m.MutNummer;
+
+    assign {
+      MutNummer = m.MutNummer;
+      Beschreibung = m.Beschreibung;
+    }
+  }
+
+  rule ziel-gebaeude {
+    target tgt class "AssocDemo.Mutationen.ZielGebaeude";
+    source g from src class "AssocDemo.Mutationen.Gebaeude";
+    source q from src class "AssocDemo.Mutationen.Qualitaet";
+    join inner g to q on eq(g.QualNummer, q.QNummer);
+    identity g.EGID;
+
+    assign {
+      EGID = g.EGID;
+      Qualitaetsstandard = q.Standard;
+      QualitaetGelookt = lookup("AssocDemo.Mutationen.Qualitaet", "QNummer", g.QualNummer, "Standard");
+      QualitaetScoped = lookupIn("src", "AssocDemo.Mutationen.Qualitaet", "QNummer", g.QualNummer, "Standard");
+      HatQualitaet = existsIn("src", "AssocDemo.Mutationen.Qualitaet", "QNummer", g.QualNummer);
+      QuellOid = oid(g);
+    }
+
+    ref Mutation {
+      association "Gebaeude_Mutation";
+      role "Mutation";
+      required;
+      target rule ziel-mutation sourceRef g.MutationRef;
+    }
+  }
+}

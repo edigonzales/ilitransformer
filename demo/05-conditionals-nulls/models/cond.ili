@@ -1,0 +1,30 @@
+INTERLIS 2.4;
+
+MODEL CondDemo (en)
+  AT "https://demo.ilinexus.ch" VERSION "2026-06-22" =
+  TOPIC Eingaenge =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Eingang =
+      Wert: MANDATORY 0 .. 1000;
+      Schwelle: 0 .. 1000;
+      Notiz: TEXT*100;
+      Alt: TEXT*100;
+      Kategorie: MANDATORY TEXT*20;
+    END Eingang;
+
+    CLASS Ausgang =
+      Klasse: TEXT*20;
+      HatNotiz: BOOLEAN;
+      KeineNotiz: BOOLEAN;
+      Text: TEXT*100;
+      TextOrDefault: TEXT*100;
+      Bewertung: TEXT*20;
+      Spezial: BOOLEAN;
+      Relevant: BOOLEAN;
+      NichtA: BOOLEAN;
+    END Ausgang;
+
+  END Eingaenge;
+END CondDemo.

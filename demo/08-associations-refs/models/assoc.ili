@@ -1,0 +1,45 @@
+INTERLIS 2.4;
+
+MODEL AssocDemo (en)
+  AT "https://demo.ilinexus.ch" VERSION "2026-06-22" =
+  TOPIC Mutationen =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Mutation =
+      MutNummer: MANDATORY TEXT*20;
+      Beschreibung: TEXT*100;
+    END Mutation;
+
+    CLASS Gebaeude =
+      EGID: MANDATORY TEXT*20;
+      MutationRef: MANDATORY TEXT*40;
+      QualNummer: MANDATORY TEXT*20;
+    END Gebaeude;
+
+    CLASS Qualitaet =
+      QNummer: MANDATORY TEXT*20;
+      Standard: MANDATORY TEXT*20;
+    END Qualitaet;
+
+    CLASS ZielMutation =
+      MutNummer: MANDATORY TEXT*20;
+      Beschreibung: TEXT*100;
+    END ZielMutation;
+
+    CLASS ZielGebaeude =
+      EGID: MANDATORY TEXT*20;
+      Qualitaetsstandard: TEXT*20;
+      QualitaetGelookt: TEXT*20;
+      QualitaetScoped: TEXT*20;
+      HatQualitaet: BOOLEAN;
+      QuellOid: TEXT*40;
+    END ZielGebaeude;
+
+    ASSOCIATION Gebaeude_Mutation =
+      Mutation -- {1} ZielMutation;
+      betroffenes_Gebaeude -- {0..*} ZielGebaeude;
+    END Gebaeude_Mutation;
+
+  END Mutationen;
+END AssocDemo.
