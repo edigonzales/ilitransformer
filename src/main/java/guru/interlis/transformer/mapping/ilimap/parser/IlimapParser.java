@@ -8,6 +8,10 @@ import java.util.List;
 
 public final class IlimapParser {
 
+    private static final String JOB_FIELDS = "name, description, direction, failPolicy, compileMode, modeldir";
+    private static final String TRANSFER_FIELDS = "path, model, format";
+    private static final String OID_FIELDS = "strategy, namespace";
+
     private final String source;
     private final IlimapLexer lexer;
     private final IlimapExpressionReader expressionReader;
@@ -103,7 +107,8 @@ public final class IlimapParser {
                 case "failPolicy" -> failPolicy = expectStringOrIdentifier();
                 case "compileMode" -> compileMode = expectStringOrIdentifier();
                 case "modeldir" -> modeldirs.add(expectString());
-                default -> throw parseError("unexpected job field '" + field + "'", fieldToken);
+                default ->
+                    throw parseError("unexpected job field '" + field + "'. Allowed fields: " + JOB_FIELDS, fieldToken);
             }
             expectToken(IlimapTokenType.SEMICOLON);
         }
@@ -132,7 +137,10 @@ public final class IlimapParser {
                 case "path" -> path = expectString();
                 case "model" -> model = expectString();
                 case "format" -> format = expectStringOrIdentifier();
-                default -> throw parseError("unexpected field '" + field + "' in input block", fieldToken);
+                default ->
+                    throw parseError(
+                            "unexpected field '" + field + "' in input block. Allowed fields: " + TRANSFER_FIELDS,
+                            fieldToken);
             }
             expectToken(IlimapTokenType.SEMICOLON);
         }
@@ -161,7 +169,10 @@ public final class IlimapParser {
                 case "path" -> path = expectString();
                 case "model" -> model = expectString();
                 case "format" -> format = expectStringOrIdentifier();
-                default -> throw parseError("unexpected field '" + field + "' in output block", fieldToken);
+                default ->
+                    throw parseError(
+                            "unexpected field '" + field + "' in output block. Allowed fields: " + TRANSFER_FIELDS,
+                            fieldToken);
             }
             expectToken(IlimapTokenType.SEMICOLON);
         }
@@ -187,7 +198,9 @@ public final class IlimapParser {
             switch (field) {
                 case "strategy" -> strategy = expectStringOrIdentifier();
                 case "namespace" -> namespace = expectString();
-                default -> throw parseError("unexpected field '" + field + "' in oid block", fieldToken);
+                default ->
+                    throw parseError(
+                            "unexpected field '" + field + "' in oid block. Allowed fields: " + OID_FIELDS, fieldToken);
             }
             expectToken(IlimapTokenType.SEMICOLON);
         }

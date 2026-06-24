@@ -1,9 +1,12 @@
 import type {
+  IlimapCoverageAttributeSummary,
+  IlimapCoverageClassSummary,
   IlimapDiagnosticSummary,
   IlimapEnumMapSummary,
   IlimapMappingInputSummary,
   IlimapMappingOutputSummary,
   IlimapMappingSummary,
+  IlimapRuleCoverageSummary,
   IlimapRuleSummary
 } from './mappingOverviewMessages';
 
@@ -15,7 +18,7 @@ export function renderMappingOverviewHtml(summary: IlimapMappingSummary, nonce: 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${escapeAttribute(nonce)}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${escapeAttribute(nonce)}'; script-src 'nonce-${escapeAttribute(nonce)}';">
   <title>ilimap Mapping Overview</title>
   <style nonce="${escapeAttribute(nonce)}">
     :root {
@@ -126,6 +129,15 @@ export function renderMappingOverviewHtml(summary: IlimapMappingSummary, nonce: 
       font-weight: 600;
     }
 
+    a.name {
+      color: var(--vscode-textLink-foreground);
+      text-decoration: none;
+    }
+
+    a.name:hover {
+      text-decoration: underline;
+    }
+
     .detail {
       margin-top: 2px;
       color: var(--vscode-descriptionForeground);
@@ -176,6 +188,21 @@ export function renderMappingOverviewHtml(summary: IlimapMappingSummary, nonce: 
     </div>
     ${summary.available ? renderAvailableSummary(summary) : renderUnavailable(summary)}
   </main>
+  <script nonce="${escapeAttribute(nonce)}">
+    const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
+    document.addEventListener('click', event => {
+      const target = event.target instanceof Element ? event.target.closest('[data-nav-line]') : null;
+      if (!target || !vscode) {
+        return;
+      }
+      event.preventDefault();
+      vscode.postMessage({
+        type: 'navigate',
+        line: Number(target.getAttribute('data-nav-line')),
+        character: Number(target.getAttribute('data-nav-character'))
+      });
+    });
+  </script>
 </body>
 </html>`;
 }
@@ -201,6 +228,7 @@ function renderAvailableSummary(summary: IlimapMappingSummary): string {
       ${renderEnumMaps(summary.enumMaps)}
       ${renderRules(summary.rules)}
       ${renderDiagnostics(summary.diagnostics)}
+      ${renderCoverage(summary)}
     </div>`;
 }
 
@@ -237,7 +265,7 @@ function renderInputs(inputs: IlimapMappingInputSummary[]): string {
   return renderSection(
     'Inputs',
     inputs,
-    input => input.id,
+    input => escapeHtml(input.id),
     input => [input.path, input.model, input.format].filter(Boolean).join(' · '),
     () => ''
   );
@@ -247,7 +275,7 @@ function renderOutputs(outputs: IlimapMappingOutputSummary[]): string {
   return renderSection(
     'Outputs',
     outputs,
-    output => output.id,
+    output => escapeHtml(output.id),
     output => [output.path, output.model, output.format].filter(Boolean).join(' · '),
     () => ''
   );
@@ -257,7 +285,7 @@ function renderEnumMaps(enumMaps: IlimapEnumMapSummary[]): string {
   return renderSection(
     'Enum Maps',
     enumMaps,
-    enumMap => enumMap.id,
+    enumMap => escapeHtml(enumMap.id),
     enumMap => `${enumMap.entryCount} entries`,
     () => ''
   );
@@ -267,7 +295,7 @@ function renderRules(rules: IlimapRuleSummary[]): string {
   return renderSection(
     'Rules',
     rules,
-    rule => rule.id,
+    rule => escapeHtml(rule.id),
     rule =>
       [
         rule.targetClass ? `target ${rule.targetClass}` : '',
@@ -286,10 +314,91 @@ function renderDiagnostics(diagnostics: IlimapDiagnosticSummary[]): string {
   return renderSection(
     'Diagnostics',
     diagnostics,
-    diagnostic => diagnostic.message,
+    diagnostic => renderNavName(diagnostic.message, diagnostic.line, diagnostic.character),
     diagnostic => `${diagnostic.code} · ${diagnostic.severity} · ${diagnostic.line + 1}:${diagnostic.character + 1}`,
     diagnostic => `<span class="tag ${statusClass(diagnostic.severity)}">${escapeHtml(diagnostic.severity)}</span>`
   );
+}
+
+function renderCoverage(summary: IlimapMappingSummary): string {
+  if (!summary.coverageAvailable) {
+    return `<section>
+      <h2>Coverage</h2>
+      <p class="empty">${escapeHtml(summary.coverageMessage || 'Model coverage unavailable.')}</p>
+    </section>`;
+  }
+  return `${renderClassCoverage(summary.classCoverage ?? [])}
+      ${renderRuleCoverage(summary.ruleCoverage ?? [])}`;
+}
+
+function renderClassCoverage(classes: IlimapCoverageClassSummary[]): string {
+  return renderSection(
+    'Class Coverage',
+    classes,
+    item => renderNavName(item.className, item.line, item.character),
+    item =>
+      [
+        item.outputId,
+        item.targeted ? `rules ${item.ruleIds.join(', ')}` : 'not targeted',
+        `${item.assignedAttributeCount}/${item.attributeCount} attributes`,
+        item.mandatoryMissingCount > 0 ? `${item.mandatoryMissingCount} mandatory missing` : ''
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    item => `<span class="tag ${item.mandatoryMissingCount > 0 ? 'warning' : ''}">${item.targeted ? 'mapped' : 'open'}</span>`
+  );
+}
+
+function renderRuleCoverage(rules: IlimapRuleCoverageSummary[]): string {
+  return `<section>
+      <h2>Rule Coverage</h2>
+      ${
+        rules.length === 0
+          ? '<p class="empty">None</p>'
+          : `<ul>${rules.map(renderRuleCoverageItem).join('')}</ul>`
+      }
+    </section>`;
+}
+
+function renderRuleCoverageItem(rule: IlimapRuleCoverageSummary): string {
+  const missing = rule.attributes.filter(attribute => attribute.mandatory && !attribute.assigned);
+  const assigned = rule.attributes.filter(attribute => attribute.assigned);
+  const unassigned = rule.attributes.filter(attribute => !attribute.assigned);
+  const sourceDetails = rule.sources
+    .map(source => {
+      const members = [...source.usedAttributes, ...source.usedRoles.map(role => `${role} (role)`)];
+      return `${source.alias}: ${members.length === 0 ? 'no members used' : members.join(', ')}`;
+    })
+    .join(' · ');
+  return `<li>
+        <div>
+          <div class="name">${renderNavName(rule.ruleId, rule.line, rule.character)}</div>
+          <div class="detail">${escapeHtml([
+            rule.targetClass,
+            `${rule.directAssignmentCount} direct assignments`,
+            `${rule.bagAssignmentCount} bag assignments`,
+            rule.refs.length > 0 ? `refs ${rule.refs.join(', ')}` : ''
+          ].filter(Boolean).join(' · '))}</div>
+          <div class="detail">Assigned: ${renderAttributeList(assigned)}</div>
+          <div class="detail">Unassigned: ${renderAttributeList(unassigned)}</div>
+          ${missing.length > 0 ? `<div class="detail">Missing mandatory: ${renderAttributeList(missing)}</div>` : ''}
+          ${sourceDetails ? `<div class="detail">Sources: ${escapeHtml(sourceDetails)}</div>` : ''}
+        </div>
+        <span class="tag ${missing.length > 0 ? 'warning' : ''}">${missing.length > 0 ? 'gaps' : 'ok'}</span>
+      </li>`;
+}
+
+function renderAttributeList(attributes: IlimapCoverageAttributeSummary[]): string {
+  if (attributes.length === 0) {
+    return 'none';
+  }
+  return attributes
+    .map(attribute =>
+      attribute.assigned
+        ? renderNavName(attribute.name, attribute.line, attribute.character)
+        : escapeHtml(attribute.name)
+    )
+    .join(', ');
 }
 
 function renderSection<T>(
@@ -308,7 +417,7 @@ function renderSection<T>(
               .map(
                 item => `<li>
         <div>
-          <div class="name">${escapeHtml(name(item))}</div>
+          <div class="name">${name(item)}</div>
           <div class="detail">${escapeHtml(detail(item))}</div>
         </div>
         ${tag(item)}
@@ -317,6 +426,13 @@ function renderSection<T>(
               .join('')}</ul>`
       }
     </section>`;
+}
+
+function renderNavName(label: string, line: number, character: number): string {
+  if (line < 0 || character < 0) {
+    return escapeHtml(label);
+  }
+  return `<a href="#" class="name" data-nav-line="${escapeAttribute(line)}" data-nav-character="${escapeAttribute(character)}">${escapeHtml(label)}</a>`;
 }
 
 function diagnosticsLabel(summary: IlimapMappingSummary): string {

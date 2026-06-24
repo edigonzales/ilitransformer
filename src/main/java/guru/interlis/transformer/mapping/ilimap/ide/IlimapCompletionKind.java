@@ -2,6 +2,7 @@ package guru.interlis.transformer.mapping.ilimap.ide;
 
 public enum IlimapCompletionKind {
     KEYWORD,
+    SNIPPET,
     INPUT,
     OUTPUT,
     RULE,

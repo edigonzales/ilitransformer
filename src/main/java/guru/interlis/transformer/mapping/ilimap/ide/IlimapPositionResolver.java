@@ -151,6 +151,12 @@ public final class IlimapPositionResolver {
                 best = output;
             }
         }
+        if (document.oid() != null && contains(document.oid().range(), offset)) {
+            best = document.oid();
+        }
+        if (document.basket() != null && contains(document.basket().range(), offset)) {
+            best = document.basket();
+        }
         for (var enumBlock : document.enums()) {
             if (contains(enumBlock.range(), offset)) {
                 best = enumBlock;

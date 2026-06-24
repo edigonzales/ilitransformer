@@ -54,6 +54,8 @@ class IlimapMappingSummaryLspTest {
             assertThat(rule.id()).isEqualTo("r1");
             assertThat(rule.status()).isEqualTo("ok");
         });
+        assertThat(summary.coverageAvailable()).isFalse();
+        assertThat(summary.coverageMessage()).contains("Save or Validate Mapping");
     }
 
     @Test
@@ -78,6 +80,45 @@ class IlimapMappingSummaryLspTest {
                 .singleElement()
                 .extracting(rule -> rule.status())
                 .isEqualTo("error");
+    }
+
+    @Test
+    void summaryUsesCachedModelAwareCoverageAfterValidation() {
+        IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
+        IlimapLanguageServer server = new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
+        String source = modelAwareMappingWithPartialAssignments();
+        textDocumentService.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));
+
+        var fastSummary =
+                server.mappingSummary(new IlimapMappingSummaryParams(URI)).join();
+        server.validateMapping(new IlimapValidateMappingParams(URI, source, 1)).join();
+        var cachedModelAwareSummary =
+                server.mappingSummary(new IlimapMappingSummaryParams(URI)).join();
+
+        assertThat(fastSummary.coverageAvailable()).isFalse();
+        assertThat(cachedModelAwareSummary.coverageAvailable()).isTrue();
+        assertThat(cachedModelAwareSummary.classCoverage()).anySatisfy(coverage -> {
+            assertThat(coverage.outputId()).isEqualTo("out");
+            assertThat(coverage.className()).isEqualTo("TestModel.TestTopic.TestClass");
+            assertThat(coverage.targeted()).isTrue();
+            assertThat(coverage.assignedAttributeCount()).isEqualTo(1);
+            assertThat(coverage.mandatoryMissingCount()).isZero();
+        });
+        assertThat(cachedModelAwareSummary.ruleCoverage()).singleElement().satisfies(ruleCoverage -> {
+            assertThat(ruleCoverage.ruleId()).isEqualTo("r1");
+            assertThat(ruleCoverage.directAssignmentCount()).isEqualTo(1);
+            assertThat(ruleCoverage.attributes())
+                    .filteredOn(attribute -> attribute.name().equals("Name"))
+                    .singleElement()
+                    .satisfies(attribute -> assertThat(attribute.assigned()).isTrue());
+            assertThat(ruleCoverage.attributes())
+                    .filteredOn(attribute -> attribute.name().equals("Beschreibung"))
+                    .singleElement()
+                    .satisfies(attribute -> assertThat(attribute.assigned()).isFalse());
+            assertThat(ruleCoverage.sources()).singleElement().satisfies(sourceUsage -> assertThat(
+                            sourceUsage.usedAttributes())
+                    .contains("Name"));
+        });
     }
 
     @Test
@@ -132,6 +173,25 @@ class IlimapMappingSummaryLspTest {
                     source s from src class "TestModel.TestTopic.TestClass";
                     assign {
                       Name = s.Missing;
+                    }
+                  }
+                }
+                """;
+    }
+
+    private static String modelAwareMappingWithPartialAssignments() {
+        return """
+                mapping v2 "Profile" {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "TestModel"; }
+                  output out { path "out.xtf"; model "TestModel"; }
+                  rule r1 {
+                    target out class "TestModel.TestTopic.TestClass";
+                    source s from src class "TestModel.TestTopic.TestClass";
+                    assign {
+                      Name = s.Name;
                     }
                   }
                 }

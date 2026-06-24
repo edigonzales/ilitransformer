@@ -8,11 +8,28 @@ public record IlimapCompletionItem(
         String detail,
         String documentation,
         String insertText,
-        IlimapIdeRange replacementRange) {
+        IlimapIdeRange replacementRange,
+        boolean snippet) {
 
     public IlimapCompletionItem(
             String label, IlimapCompletionKind kind, String detail, String documentation, String insertText) {
-        this(label, kind, detail, documentation, insertText, null);
+        this(label, kind, detail, documentation, insertText, null, false);
+    }
+
+    public IlimapCompletionItem(
+            String label,
+            IlimapCompletionKind kind,
+            String detail,
+            String documentation,
+            String insertText,
+            IlimapIdeRange replacementRange) {
+        this(label, kind, detail, documentation, insertText, replacementRange, false);
+    }
+
+    public static IlimapCompletionItem snippet(
+            String label, String detail, String documentation, String insertText, IlimapIdeRange replacementRange) {
+        return new IlimapCompletionItem(
+                label, IlimapCompletionKind.SNIPPET, detail, documentation, insertText, replacementRange, true);
     }
 
     public IlimapCompletionItem {

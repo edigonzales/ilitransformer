@@ -45,7 +45,8 @@ class IlimapHoverServiceTest {
                 .contains("**input `src`**")
                 .contains("Path: `in.xtf`")
                 .contains("Model: `M`")
-                .contains("Format: `xtf`");
+                .contains("Format: `xtf`")
+                .contains("Allowed fields: `path`, `model`, `format`");
     }
 
     @Test
@@ -60,7 +61,22 @@ class IlimapHoverServiceTest {
                 .contains("**output `out`**")
                 .contains("Path: `out.xtf`")
                 .contains("Model: `M`")
-                .contains("Format: `xtf`");
+                .contains("Format: `xtf`")
+                .contains("Allowed fields: `path`, `model`, `format`");
+    }
+
+    @Test
+    void hoverShowsJobAllowedFields() {
+        IlimapAnalysis analysis = analyze(mappingWithJob());
+
+        Optional<IlimapHover> hover = hoverService.hoverAt(analysis, positionAt(analysis, "job {", "job".length()));
+
+        assertThat(hover).isPresent();
+        assertThat(hover.get().markdown())
+                .contains("**job**")
+                .contains("Fail Policy: `strict`")
+                .contains("Allowed fields:")
+                .contains("`modeldir`");
     }
 
     @Test
@@ -153,6 +169,23 @@ class IlimapHoverServiceTest {
                     ref Parent {
                       target rule r1 sourceRef s.Parent;
                     }
+                  }
+                }
+                """;
+    }
+
+    private static String mappingWithJob() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "models";
+                    failPolicy strict;
+                  }
+                  input src { path "in.xtf"; model "M"; format xtf; }
+                  output out { path "out.xtf"; model "M"; format xtf; }
+                  rule r1 {
+                    target out class "M.A";
+                    source s from src class "M.A";
                   }
                 }
                 """;

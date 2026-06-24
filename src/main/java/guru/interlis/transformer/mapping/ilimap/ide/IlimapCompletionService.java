@@ -20,7 +20,7 @@ public final class IlimapCompletionService {
     private static final List<String> TOP_LEVEL_KEYWORDS =
             List.of("job", "input", "output", "oid", "basket", "enum", "defaults", "rule");
     private static final List<String> JOB_KEYWORDS =
-            List.of("description", "direction", "failPolicy", "compileMode", "modeldir");
+            List.of("name", "description", "direction", "failPolicy", "compileMode", "modeldir");
     private static final List<String> RULE_KEYWORDS = List.of(
             "target",
             "source",
@@ -51,9 +51,14 @@ public final class IlimapCompletionService {
 
         IlimapCompletionContext context = contextResolver.resolve(analysis, position);
         return switch (context.kind()) {
-            case TOP_LEVEL -> keywordItems(TOP_LEVEL_KEYWORDS, context.prefix());
-            case JOB_BLOCK -> keywordItems(JOB_KEYWORDS, context.prefix());
-            case RULE_BLOCK -> keywordItems(RULE_KEYWORDS, context.prefix());
+            case TOP_LEVEL -> topLevelItems(context);
+            case JOB_BLOCK -> fieldItems(jobFields(), context);
+            case INPUT_BLOCK -> fieldItems(inputOutputFields(), context);
+            case OUTPUT_BLOCK -> fieldItems(inputOutputFields(), context);
+            case OID_BLOCK -> fieldItems(oidFields(), context);
+            case BASKET_VALUE -> valueItems(basketStrategies(), context);
+            case BLOCK_FIELD_VALUE -> blockFieldValueItems(context);
+            case RULE_BLOCK -> concat(keywordItems(RULE_KEYWORDS, context.prefix()), ruleSnippetItems(context));
             case TARGET_OUTPUT ->
                 symbolItems(analysis, IlimapSymbolKind.OUTPUT, IlimapCompletionKind.OUTPUT, "output", context.prefix());
             case TARGET_CLASS -> targetClassItems(analysis, context);
@@ -72,8 +77,15 @@ public final class IlimapCompletionService {
                         IlimapCompletionKind.ENUM_MAP,
                         "enum map",
                         context.prefix());
-            case INPUT_BLOCK, OUTPUT_BLOCK, EXPRESSION, UNKNOWN -> List.of();
+            case EXPRESSION, UNKNOWN -> List.of();
         };
+    }
+
+    private static List<IlimapCompletionItem> topLevelItems(IlimapCompletionContext context) {
+        List<IlimapCompletionItem> result = new ArrayList<>();
+        result.addAll(keywordItems(TOP_LEVEL_KEYWORDS, context.prefix()));
+        result.addAll(topLevelSnippetItems(context));
+        return result;
     }
 
     private static List<IlimapCompletionItem> keywordItems(List<String> keywords, String prefix) {
@@ -82,6 +94,196 @@ public final class IlimapCompletionService {
                 .map(keyword -> new IlimapCompletionItem(
                         keyword, IlimapCompletionKind.KEYWORD, "ILIMAP keyword", null, keyword))
                 .toList();
+    }
+
+    private static List<IlimapCompletionItem> topLevelSnippetItems(IlimapCompletionContext context) {
+        return List.of(
+                        snippet(
+                                "mapping block",
+                                "ILIMAP mapping skeleton",
+                                "Creates a complete mapping v2 document skeleton.",
+                                "mapping v2 \"${1:name}\" {\n  job {\n    modeldir \"${2:models}\";\n  }\n\n  input ${3:src} {\n    path \"${4:input.xtf}\";\n    model \"${5:ModelName}\";\n  }\n\n  output ${6:out} {\n    path \"${7:output.xtf}\";\n    model \"${8:ModelName}\";\n  }\n\n  rule ${9:ruleId} {\n    target ${6:out} class \"${10:TargetClass}\";\n    source ${11:s} from ${3:src} class \"${12:SourceClass}\";\n    assign {\n      $0\n    }\n  }\n}",
+                                context),
+                        snippet(
+                                "job block",
+                                "ILIMAP job block",
+                                "Declares mapping execution options and model directories.",
+                                "job {\n  modeldir \"${1:models}\";\n  failPolicy ${2|strict,lenient,reportOnly|};\n  compileMode ${3|strict,compatible,report|};\n  $0\n}",
+                                context),
+                        snippet(
+                                "input block",
+                                "ILIMAP input block",
+                                "Declares one input transfer and its INTERLIS model.",
+                                "input ${1:src} {\n  path \"${2:input.xtf}\";\n  model \"${3:ModelName}\";\n  $0\n}",
+                                context),
+                        snippet(
+                                "output block",
+                                "ILIMAP output block",
+                                "Declares one output transfer and its INTERLIS model.",
+                                "output ${1:out} {\n  path \"${2:output.xtf}\";\n  model \"${3:ModelName}\";\n  $0\n}",
+                                context),
+                        snippet(
+                                "oid block",
+                                "ILIMAP oid block",
+                                "Configures target object ID strategy.",
+                                "oid {\n  strategy ${1|preserve,integer,uuid,deterministicUuid|};\n  $0\n}",
+                                context),
+                        snippet(
+                                "enum block",
+                                "ILIMAP enum map",
+                                "Declares source-to-target enum value mapping.",
+                                "enum ${1:EnumMap} {\n  \"${2:source}\" -> \"${3:target}\";\n  $0\n}",
+                                context),
+                        snippet(
+                                "defaults block",
+                                "ILIMAP defaults block",
+                                "Declares mapping-wide default assignments.",
+                                "defaults {\n  ${1:Attribute} = ${2:value};\n  $0\n}",
+                                context),
+                        snippet(
+                                "rule block",
+                                "ILIMAP rule block",
+                                "Declares one target object mapping rule.",
+                                "rule ${1:ruleId} {\n  target ${2:out} class \"${3:TargetClass}\";\n  source ${4:s} from ${5:src} class \"${6:SourceClass}\";\n  assign {\n    $0\n  }\n}",
+                                context))
+                .stream()
+                .filter(item -> item.label().startsWith(context.prefix()))
+                .toList();
+    }
+
+    private static List<IlimapCompletionItem> ruleSnippetItems(IlimapCompletionContext context) {
+        return List.of(
+                        snippet(
+                                "target statement",
+                                "ILIMAP target statement",
+                                "Selects the output and target INTERLIS class for the rule.",
+                                "target ${1:out} class \"${2:Model.Topic.Class}\";",
+                                context),
+                        snippet(
+                                "source statement",
+                                "ILIMAP source statement",
+                                "Declares a source alias, input, source class, and optional filter.",
+                                "source ${1:s} from ${2:src} class \"${3:Model.Topic.Class}\";",
+                                context),
+                        snippet(
+                                "assign block",
+                                "ILIMAP assign block",
+                                "Assigns target attributes from source expressions.",
+                                "assign {\n  ${1:TargetAttribute} = ${2:s.SourceAttribute};\n  $0\n}",
+                                context),
+                        snippet(
+                                "ref block",
+                                "ILIMAP ref block",
+                                "Maps a target reference to an existing target rule via a source reference.",
+                                "ref ${1:RoleName} {\n  target rule ${2:ruleId} sourceRef ${3:s.Role};\n}",
+                                context),
+                        snippet(
+                                "bag block",
+                                "ILIMAP bag block",
+                                "Maps a BAG/structure target attribute from a nested source.",
+                                "bag ${1:TargetBag} {\n  from ${2:s} in ${3:src} class \"${4:Model.Topic.Class}\";\n  assign {\n    ${5:TargetAttribute} = ${6:s.SourceAttribute};\n    $0\n  }\n}",
+                                context))
+                .stream()
+                .filter(item -> item.label().startsWith(context.prefix()))
+                .toList();
+    }
+
+    private static IlimapCompletionItem snippet(
+            String label, String detail, String documentation, String insertText, IlimapCompletionContext context) {
+        return IlimapCompletionItem.snippet(label, detail, documentation, insertText, context.replacementRange());
+    }
+
+    private static List<IlimapCompletionItem> fieldItems(List<FieldSpec> fields, IlimapCompletionContext context) {
+        return fields.stream()
+                .filter(field -> field.name().startsWith(context.prefix()))
+                .map(field -> IlimapCompletionItem.snippet(
+                        field.name(),
+                        field.detail(),
+                        field.documentation(),
+                        field.insertText(),
+                        context.replacementRange()))
+                .toList();
+    }
+
+    private static List<IlimapCompletionItem> blockFieldValueItems(IlimapCompletionContext context) {
+        return switch (context.qualifier()) {
+            case "input.format", "output.format" -> valueItems(List.of("itf", "xtf"), context);
+            case "job.failPolicy" -> valueItems(List.of("strict", "lenient", "reportOnly"), context);
+            case "job.compileMode" -> valueItems(List.of("strict", "compatible", "report"), context);
+            case "oid.strategy" -> valueItems(List.of("preserve", "integer", "uuid", "deterministicUuid"), context);
+            default -> List.of();
+        };
+    }
+
+    private static List<IlimapCompletionItem> valueItems(List<String> values, IlimapCompletionContext context) {
+        return values.stream()
+                .filter(value -> value.startsWith(context.prefix()))
+                .map(value -> new IlimapCompletionItem(
+                        value, IlimapCompletionKind.VALUE, "ILIMAP value", null, value, context.replacementRange()))
+                .toList();
+    }
+
+    private static List<String> basketStrategies() {
+        return List.of("preserve", "generateUuid", "preserveOrGenerateUuid", "byTopic");
+    }
+
+    private static List<FieldSpec> jobFields() {
+        return List.of(
+                new FieldSpec("name", "job field", "Optional internal job name.", "name ${1:name};"),
+                new FieldSpec(
+                        "description",
+                        "job field",
+                        "Optional human-readable job description.",
+                        "description \"${1:description}\";"),
+                new FieldSpec(
+                        "direction",
+                        "job field",
+                        "Optional transformation direction label.",
+                        "direction ${1:direction};"),
+                new FieldSpec(
+                        "failPolicy",
+                        "job field",
+                        "Error handling policy.",
+                        "failPolicy ${1|strict,lenient,reportOnly|};"),
+                new FieldSpec(
+                        "compileMode",
+                        "job field",
+                        "Mapping compiler strictness.",
+                        "compileMode ${1|strict,compatible,report|};"),
+                new FieldSpec(
+                        "modeldir",
+                        "job field",
+                        "INTERLIS model repository or local model directory.",
+                        "modeldir \"${1:models}\";"));
+    }
+
+    private static List<FieldSpec> inputOutputFields() {
+        return List.of(
+                new FieldSpec("path", "transfer field", "Required transfer file path.", "path \"${1:transfer.xtf}\";"),
+                new FieldSpec("model", "transfer field", "Required INTERLIS model name.", "model \"${1:ModelName}\";"),
+                new FieldSpec("format", "transfer field", "Optional transfer format.", "format ${1|xtf,itf|};"));
+    }
+
+    private static List<FieldSpec> oidFields() {
+        return List.of(
+                new FieldSpec(
+                        "strategy",
+                        "oid field",
+                        "Target object ID strategy.",
+                        "strategy ${1|preserve,integer,uuid,deterministicUuid|};"),
+                new FieldSpec(
+                        "namespace",
+                        "oid field",
+                        "Namespace used by deterministic UUID generation.",
+                        "namespace \"${1:namespace}\";"));
+    }
+
+    private static List<IlimapCompletionItem> concat(
+            List<IlimapCompletionItem> first, List<IlimapCompletionItem> second) {
+        List<IlimapCompletionItem> result = new ArrayList<>(first.size() + second.size());
+        result.addAll(first);
+        result.addAll(second);
+        return result;
     }
 
     private static List<IlimapCompletionItem> symbolItems(
@@ -294,6 +496,8 @@ public final class IlimapCompletionService {
         }
         return parts.isEmpty() ? null : String.join(", ", parts);
     }
+
+    private record FieldSpec(String name, String detail, String documentation, String insertText) {}
 
     private record SourceBinding(String alias, List<String> inputIds, String sourceClass) {}
 }

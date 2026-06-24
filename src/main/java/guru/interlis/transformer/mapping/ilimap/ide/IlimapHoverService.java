@@ -7,7 +7,9 @@ import guru.interlis.transformer.mapping.ilimap.ast.IlimapDefaultsBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapEnumBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapExpressionText;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapInputBlock;
+import guru.interlis.transformer.mapping.ilimap.ast.IlimapJobBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapLiteral;
+import guru.interlis.transformer.mapping.ilimap.ast.IlimapOidBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapOutputBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRefBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleBlock;
@@ -46,7 +48,11 @@ public final class IlimapHoverService {
         if (symbolHover.isPresent()) {
             return symbolHover;
         }
-        return sourceMemberHover(analysis, position);
+        Optional<IlimapHover> sourceMemberHover = sourceMemberHover(analysis, position);
+        if (sourceMemberHover.isPresent()) {
+            return sourceMemberHover;
+        }
+        return blockHover(analysis, position);
     }
 
     private Optional<String> markdown(IlimapAnalysis analysis, IlimapResolvedSymbol resolved) {
@@ -90,6 +96,7 @@ public final class IlimapHoverService {
         appendOptional(markdown, "Path", input.path());
         appendOptional(markdown, "Model", input.model());
         appendOptional(markdown, "Format", input.format());
+        appendAllowedFields(markdown, "path", "model", "format");
         return markdown.toString().stripTrailing();
     }
 
@@ -99,6 +106,33 @@ public final class IlimapHoverService {
         appendOptional(markdown, "Path", output.path());
         appendOptional(markdown, "Model", output.model());
         appendOptional(markdown, "Format", output.format());
+        appendAllowedFields(markdown, "path", "model", "format");
+        return markdown.toString().stripTrailing();
+    }
+
+    private String jobMarkdown(IlimapJobBlock job) {
+        StringBuilder markdown = new StringBuilder();
+        markdown.append("**job**\n");
+        appendOptional(markdown, "Name", job.name());
+        appendOptional(markdown, "Description", job.description());
+        appendOptional(markdown, "Direction", job.direction());
+        appendOptional(markdown, "Fail Policy", job.failPolicy());
+        appendOptional(markdown, "Compile Mode", job.compileMode());
+        if (!job.modeldirs().isEmpty()) {
+            markdown.append("Modeldirs: `")
+                    .append(String.join("`, `", job.modeldirs()))
+                    .append("`\n");
+        }
+        appendAllowedFields(markdown, "name", "description", "direction", "failPolicy", "compileMode", "modeldir");
+        return markdown.toString().stripTrailing();
+    }
+
+    private String oidMarkdown(IlimapOidBlock oid) {
+        StringBuilder markdown = new StringBuilder();
+        markdown.append("**oid**\n");
+        appendOptional(markdown, "Strategy", oid.strategy());
+        appendOptional(markdown, "Namespace", oid.namespace());
+        appendAllowedFields(markdown, "strategy", "namespace");
         return markdown.toString().stripTrailing();
     }
 
@@ -211,6 +245,25 @@ public final class IlimapHoverService {
             return Optional.of(markdown.toString().stripTrailing());
         }
         return Optional.empty();
+    }
+
+    private Optional<IlimapHover> blockHover(IlimapAnalysis analysis, IlimapIdePosition position) {
+        return positionResolver.smallestNodeAt(analysis, position).flatMap(node -> {
+            if (node instanceof IlimapJobBlock job) {
+                return Optional.of(new IlimapHover(analysis.lineMap().toIdeRange(job.range()), jobMarkdown(job)));
+            }
+            if (node instanceof IlimapInputBlock input) {
+                return Optional.of(new IlimapHover(analysis.lineMap().toIdeRange(input.range()), inputMarkdown(input)));
+            }
+            if (node instanceof IlimapOutputBlock output) {
+                return Optional.of(
+                        new IlimapHover(analysis.lineMap().toIdeRange(output.range()), outputMarkdown(output)));
+            }
+            if (node instanceof IlimapOidBlock oid) {
+                return Optional.of(new IlimapHover(analysis.lineMap().toIdeRange(oid.range()), oidMarkdown(oid)));
+            }
+            return Optional.empty();
+        });
     }
 
     private Optional<IlimapRuleBlock> currentRuleAt(IlimapAnalysis analysis, IlimapTokenAtPosition token) {
@@ -332,6 +385,10 @@ public final class IlimapHoverService {
         if (value != null && !value.isBlank()) {
             markdown.append(label).append(": `").append(value).append("`\n");
         }
+    }
+
+    private static void appendAllowedFields(StringBuilder markdown, String... fields) {
+        markdown.append("Allowed fields: `").append(String.join("`, `", fields)).append("`\n");
     }
 
     private static List<SourceBinding> sources(IlimapRuleBlock rule) {

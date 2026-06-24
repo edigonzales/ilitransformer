@@ -18,6 +18,7 @@ import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.InitializeParams;
+import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
@@ -62,6 +63,22 @@ class IlimapCompletionLspTest {
                         CompletionItem::getDetail,
                         CompletionItem::getInsertText)
                 .containsExactly(tuple("Quality", CompletionItemKind.Enum, "enum map", "Quality"));
+    }
+
+    @Test
+    void lspMapsSnippetCompletionItems() {
+        String source = "mapping v2 {\n  input\n";
+        open(source);
+
+        CompletionItem item =
+                service.completion(completionParams(source, "input", "input".length())).join().getLeft().stream()
+                        .filter(candidate -> candidate.getLabel().equals("input block"))
+                        .findFirst()
+                        .orElseThrow();
+
+        assertThat(item.getKind()).isEqualTo(CompletionItemKind.Snippet);
+        assertThat(item.getInsertTextFormat()).isEqualTo(InsertTextFormat.Snippet);
+        assertThat(item.getTextEdit().getLeft().getNewText()).contains("input ${1:src}");
     }
 
     @Test

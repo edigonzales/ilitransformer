@@ -48,6 +48,7 @@ export async function openMappingOverview(
   }
 
   const panel = createOrRevealPanel(context);
+  registerNavigationHandler(panel, uri, outputChannel);
   panel.webview.html = renderMappingOverviewHtml(summary, nonce());
 }
 
@@ -62,7 +63,7 @@ function createOrRevealPanel(context: vscode.ExtensionContext): vscode.WebviewPa
     'ilimap Mapping Overview',
     vscode.ViewColumn.Beside,
     {
-      enableScripts: false,
+      enableScripts: true,
       retainContextWhenHidden: false,
       localResourceRoots: [context.extensionUri]
     }
@@ -71,6 +72,42 @@ function createOrRevealPanel(context: vscode.ExtensionContext): vscode.WebviewPa
     currentPanel = undefined;
   });
   return currentPanel;
+}
+
+function registerNavigationHandler(
+  panel: vscode.WebviewPanel,
+  uri: string,
+  outputChannel: vscode.OutputChannel
+): void {
+  panel.webview.onDidReceiveMessage(async message => {
+    if (!isNavigationMessage(message)) {
+      return;
+    }
+    try {
+      const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
+      const editor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One, false);
+      const position = new vscode.Position(message.line, message.character);
+      editor.selection = new vscode.Selection(position, position);
+      editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+    } catch (error) {
+      outputChannel.appendLine(`Failed to navigate from ilimap mapping overview: ${errorMessage(error)}`);
+      vscode.window.showErrorMessage('Failed to navigate from ilimap mapping overview.');
+    }
+  });
+}
+
+function isNavigationMessage(message: unknown): message is { type: 'navigate'; line: number; character: number } {
+  if (!message || typeof message !== 'object') {
+    return false;
+  }
+  const candidate = message as { type?: unknown; line?: unknown; character?: unknown };
+  return candidate.type === 'navigate'
+    && typeof candidate.line === 'number'
+    && Number.isInteger(candidate.line)
+    && candidate.line >= 0
+    && typeof candidate.character === 'number'
+    && Number.isInteger(candidate.character)
+    && candidate.character >= 0;
 }
 
 function isIlimapDocument(document: vscode.TextDocument): boolean {

@@ -12,13 +12,49 @@ test('openMappingOverview requests active document summary and renders webview',
   const messages = [];
   const outputLines = [];
   const progressTitles = [];
+  const openedDocuments = [];
+  const selections = [];
+  const revealedRanges = [];
 
   const vscodeMock = {
     ViewColumn: {
+      One: 1,
       Beside: 2
     },
     ProgressLocation: {
       Notification: 15
+    },
+    TextEditorRevealType: {
+      InCenterIfOutsideViewport: 2
+    },
+    Position: class Position {
+      constructor(line, character) {
+        this.line = line;
+        this.character = character;
+      }
+    },
+    Range: class Range {
+      constructor(start, end) {
+        this.start = start;
+        this.end = end;
+      }
+    },
+    Selection: class Selection {
+      constructor(anchor, active) {
+        this.anchor = anchor;
+        this.active = active;
+      }
+    },
+    Uri: {
+      parse(value) {
+        return { value };
+      }
+    },
+    workspace: {
+      async openTextDocument(uri) {
+        openedDocuments.push(uri.value);
+        return { uri };
+      }
     },
     window: {
       activeTextEditor: {
@@ -39,7 +75,10 @@ test('openMappingOverview requests active document summary and renders webview',
           column,
           options,
           webview: {
-            html: ''
+            html: '',
+            onDidReceiveMessage(callback) {
+              panel.messageCallback = callback;
+            }
           },
           reveal(nextColumn) {
             panel.revealed = nextColumn;
@@ -60,6 +99,19 @@ test('openMappingOverview requests active document summary and renders webview',
       withProgress(options, task) {
         progressTitles.push(options.title);
         return task();
+      },
+      async showTextDocument(document, column, preserveFocus) {
+        return {
+          document,
+          column,
+          preserveFocus,
+          set selection(value) {
+            selections.push(value);
+          },
+          revealRange(range, revealType) {
+            revealedRanges.push({ range, revealType });
+          }
+        };
       }
     }
   };
@@ -96,7 +148,11 @@ test('openMappingOverview requests active document summary and renders webview',
             status: 'ok'
           }
         ],
-        diagnostics: []
+        diagnostics: [],
+        coverageAvailable: true,
+        coverageMessage: '',
+        classCoverage: [],
+        ruleCoverage: []
       };
     }
   };
@@ -144,7 +200,14 @@ test('openMappingOverview requests active document summary and renders webview',
   assert.equal(messages.length, 0);
   assert.equal(outputLines.length, 0);
   assert.equal(panels.length, 1);
-  assert.equal(panels[0].options.enableScripts, false);
+  assert.equal(panels[0].options.enableScripts, true);
   assert.match(panels[0].webview.html, /ilimap Mapping Overview/);
   assert.match(panels[0].webview.html, /Profile/);
+
+  await panels[0].messageCallback({ type: 'navigate', line: 7, character: 3 });
+  assert.deepEqual(openedDocuments, ['file:///tmp/profile.ilimap']);
+  assert.equal(selections.length, 1);
+  assert.equal(selections[0].anchor.line, 7);
+  assert.equal(selections[0].anchor.character, 3);
+  assert.equal(revealedRanges.length, 1);
 });

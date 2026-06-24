@@ -15,7 +15,7 @@ public final class IlimapCompletionContextResolver {
         int offset = analysis.lineMap().positionToOffset(position.line(), position.character());
         String prefix = identifierPrefixAt(analysis.text(), offset);
         if (!analysis.hasDocument()) {
-            return new IlimapCompletionContext(IlimapCompletionContextKind.UNKNOWN, prefix, null, null);
+            return fallbackContext(analysis, offset, prefix);
         }
 
         IlimapRuleBlock currentRule = currentRuleAt(analysis.document(), offset).orElse(null);
@@ -91,7 +91,83 @@ public final class IlimapCompletionContextResolver {
                     identifierRangeAt(analysis, offset));
         }
         if (currentNode instanceof IlimapJobBlock) {
+            if (isBeforeBlockBody(currentNode, analysis.text(), offset)) {
+                return new IlimapCompletionContext(
+                        IlimapCompletionContextKind.TOP_LEVEL,
+                        prefix,
+                        null,
+                        currentNode,
+                        null,
+                        identifierRangeAt(analysis, offset));
+            }
+            Optional<IlimapCompletionContext> valueContext =
+                    blockFieldValueContext(analysis, offset, prefix, currentRule, currentNode, "job");
+            if (valueContext.isPresent()) {
+                return valueContext.get();
+            }
             return new IlimapCompletionContext(IlimapCompletionContextKind.JOB_BLOCK, prefix, currentRule, currentNode);
+        }
+        if (currentNode instanceof IlimapInputBlock) {
+            if (isBeforeBlockBody(currentNode, analysis.text(), offset)) {
+                return new IlimapCompletionContext(
+                        IlimapCompletionContextKind.TOP_LEVEL,
+                        prefix,
+                        null,
+                        currentNode,
+                        null,
+                        identifierRangeAt(analysis, offset));
+            }
+            Optional<IlimapCompletionContext> valueContext =
+                    blockFieldValueContext(analysis, offset, prefix, currentRule, currentNode, "input");
+            if (valueContext.isPresent()) {
+                return valueContext.get();
+            }
+            return new IlimapCompletionContext(
+                    IlimapCompletionContextKind.INPUT_BLOCK, prefix, currentRule, currentNode);
+        }
+        if (currentNode instanceof IlimapOutputBlock) {
+            if (isBeforeBlockBody(currentNode, analysis.text(), offset)) {
+                return new IlimapCompletionContext(
+                        IlimapCompletionContextKind.TOP_LEVEL,
+                        prefix,
+                        null,
+                        currentNode,
+                        null,
+                        identifierRangeAt(analysis, offset));
+            }
+            Optional<IlimapCompletionContext> valueContext =
+                    blockFieldValueContext(analysis, offset, prefix, currentRule, currentNode, "output");
+            if (valueContext.isPresent()) {
+                return valueContext.get();
+            }
+            return new IlimapCompletionContext(
+                    IlimapCompletionContextKind.OUTPUT_BLOCK, prefix, currentRule, currentNode);
+        }
+        if (currentNode instanceof IlimapOidBlock) {
+            if (isBeforeBlockBody(currentNode, analysis.text(), offset)) {
+                return new IlimapCompletionContext(
+                        IlimapCompletionContextKind.TOP_LEVEL,
+                        prefix,
+                        null,
+                        currentNode,
+                        null,
+                        identifierRangeAt(analysis, offset));
+            }
+            Optional<IlimapCompletionContext> valueContext =
+                    blockFieldValueContext(analysis, offset, prefix, currentRule, currentNode, "oid");
+            if (valueContext.isPresent()) {
+                return valueContext.get();
+            }
+            return new IlimapCompletionContext(IlimapCompletionContextKind.OID_BLOCK, prefix, currentRule, currentNode);
+        }
+        if (currentNode instanceof IlimapBasketStmt) {
+            return new IlimapCompletionContext(
+                    IlimapCompletionContextKind.BASKET_VALUE,
+                    prefix,
+                    currentRule,
+                    currentNode,
+                    "basket.strategy",
+                    identifierRangeAt(analysis, offset));
         }
         if (currentRule != null) {
             return new IlimapCompletionContext(
@@ -127,6 +203,12 @@ public final class IlimapCompletionContextResolver {
             if (contains(output.range(), offset)) {
                 best = output;
             }
+        }
+        if (document.oid() != null && contains(document.oid().range(), offset)) {
+            best = document.oid();
+        }
+        if (document.basket() != null && contains(document.basket().range(), offset)) {
+            best = document.basket();
         }
         for (IlimapEnumBlock enumBlock : document.enums()) {
             if (contains(enumBlock.range(), offset)) {
@@ -322,6 +404,104 @@ public final class IlimapCompletionContextResolver {
         }
         return new IlimapIdeRange(
                 analysis.lineMap().toIdePosition(start), analysis.lineMap().toIdePosition(end));
+    }
+
+    private static Optional<IlimapCompletionContext> blockFieldValueContext(
+            IlimapAnalysis analysis,
+            int offset,
+            String prefix,
+            IlimapRuleBlock currentRule,
+            IlimapAstNode currentNode,
+            String blockName) {
+        String text = analysis.text();
+        int blockStart = currentNode.range().start().offset();
+        int clamped =
+                Math.max(blockStart, Math.min(offset, currentNode.range().end().offset()));
+        String beforeCursor = text.substring(blockStart, clamped);
+        int semicolon = beforeCursor.lastIndexOf(';');
+        int brace = beforeCursor.lastIndexOf('{');
+        int lineStart = Math.max(Math.max(semicolon, brace), beforeCursor.lastIndexOf('\n'));
+        String segment = beforeCursor.substring(lineStart + 1);
+        java.util.regex.Matcher matcher =
+                java.util.regex.Pattern.compile("\\b([A-Za-z][A-Za-z0-9_]*)\\b").matcher(segment);
+        if (!matcher.find()) {
+            return Optional.empty();
+        }
+        String fieldName = matcher.group(1);
+        int fieldEnd = blockStart + lineStart + 1 + matcher.end(1);
+        if (clamped <= fieldEnd) {
+            return Optional.empty();
+        }
+        return Optional.of(new IlimapCompletionContext(
+                IlimapCompletionContextKind.BLOCK_FIELD_VALUE,
+                quotedOrIdentifierPrefix(text, clamped),
+                currentRule,
+                currentNode,
+                blockName + "." + fieldName,
+                quotedOrIdentifierRangeAt(analysis, clamped)));
+    }
+
+    private static boolean isBeforeBlockBody(IlimapAstNode node, String text, int offset) {
+        int start = node.range().start().offset();
+        int end = Math.min(node.range().end().offset(), text.length());
+        int lbrace = text.indexOf('{', start);
+        return lbrace < 0 || lbrace >= end || offset <= lbrace;
+    }
+
+    private static IlimapCompletionContext fallbackContext(IlimapAnalysis analysis, int offset, String prefix) {
+        String beforeCursor = analysis.text()
+                .substring(0, Math.max(0, Math.min(offset, analysis.text().length())));
+        int lastBrace = beforeCursor.lastIndexOf('{');
+        int lastCloseBrace = beforeCursor.lastIndexOf('}');
+        if (lastBrace > lastCloseBrace) {
+            String header = beforeCursor.substring(0, lastBrace).stripTrailing();
+            String lastWord = lastWord(header);
+            IlimapCompletionContextKind kind =
+                    switch (lastWord) {
+                        case "job" -> IlimapCompletionContextKind.JOB_BLOCK;
+                        case "input" -> IlimapCompletionContextKind.INPUT_BLOCK;
+                        case "output" -> IlimapCompletionContextKind.OUTPUT_BLOCK;
+                        case "oid" -> IlimapCompletionContextKind.OID_BLOCK;
+                        default -> IlimapCompletionContextKind.UNKNOWN;
+                    };
+            if (kind != IlimapCompletionContextKind.UNKNOWN) {
+                return new IlimapCompletionContext(kind, prefix, null, null);
+            }
+        }
+        return new IlimapCompletionContext(
+                IlimapCompletionContextKind.TOP_LEVEL, prefix, null, null, null, identifierRangeAt(analysis, offset));
+    }
+
+    private static String lastWord(String text) {
+        java.util.regex.Matcher matcher =
+                java.util.regex.Pattern.compile("([A-Za-z][A-Za-z0-9_]*)$").matcher(text);
+        return matcher.find() ? matcher.group(1) : "";
+    }
+
+    private static String quotedOrIdentifierPrefix(String text, int offset) {
+        int clamped = Math.max(0, Math.min(offset, text.length()));
+        int quoteStart = text.lastIndexOf('"', clamped - 1);
+        int quoteEnd = quoteStart >= 0 ? text.indexOf('"', quoteStart + 1) : -1;
+        int lineStart = text.lastIndexOf('\n', clamped - 1);
+        if (quoteStart > lineStart && (quoteEnd < 0 || quoteEnd >= clamped)) {
+            return text.substring(quoteStart + 1, clamped);
+        }
+        return identifierPrefixAt(text, clamped);
+    }
+
+    private static IlimapIdeRange quotedOrIdentifierRangeAt(IlimapAnalysis analysis, int offset) {
+        String text = analysis.text();
+        int clamped = Math.max(0, Math.min(offset, text.length()));
+        int quoteStart = text.lastIndexOf('"', clamped - 1);
+        int quoteEnd = quoteStart >= 0 ? text.indexOf('"', quoteStart + 1) : -1;
+        int lineStart = text.lastIndexOf('\n', clamped - 1);
+        if (quoteStart > lineStart && (quoteEnd < 0 || quoteEnd >= clamped)) {
+            int end = quoteEnd >= 0 ? quoteEnd : clamped;
+            return new IlimapIdeRange(
+                    analysis.lineMap().toIdePosition(quoteStart + 1),
+                    analysis.lineMap().toIdePosition(end));
+        }
+        return identifierRangeAt(analysis, clamped);
     }
 
     private static boolean isBetweenRefTargetRuleAndSourceRef(IlimapRefBlock ref, String text, int offset) {

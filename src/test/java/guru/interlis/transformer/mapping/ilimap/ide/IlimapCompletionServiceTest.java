@@ -20,8 +20,15 @@ class IlimapCompletionServiceTest {
 
         assertThat(items)
                 .extracting(IlimapCompletionItem::label)
-                .containsExactly("job", "input", "output", "oid", "basket", "enum", "defaults", "rule");
-        assertThat(items).allSatisfy(item -> assertThat(item.kind()).isEqualTo(IlimapCompletionKind.KEYWORD));
+                .contains("job", "input", "output", "oid", "basket", "enum", "defaults", "rule", "input block");
+        assertThat(items)
+                .filteredOn(item -> item.label().equals("input block"))
+                .singleElement()
+                .satisfies(item -> {
+                    assertThat(item.kind()).isEqualTo(IlimapCompletionKind.SNIPPET);
+                    assertThat(item.snippet()).isTrue();
+                    assertThat(item.insertText()).contains("input ${1:src}");
+                });
     }
 
     @Test
@@ -30,7 +37,7 @@ class IlimapCompletionServiceTest {
 
         assertThat(items)
                 .extracting(IlimapCompletionItem::label)
-                .containsExactly(
+                .contains(
                         "target",
                         "source",
                         "where",
@@ -42,8 +49,10 @@ class IlimapCompletionServiceTest {
                         "ref",
                         "create",
                         "loss",
-                        "metadata");
-        assertThat(items).allSatisfy(item -> assertThat(item.kind()).isEqualTo(IlimapCompletionKind.KEYWORD));
+                        "metadata",
+                        "target statement",
+                        "source statement",
+                        "assign block");
     }
 
     @Test
@@ -52,8 +61,54 @@ class IlimapCompletionServiceTest {
 
         assertThat(items)
                 .extracting(IlimapCompletionItem::label)
-                .contains("description", "direction", "failPolicy", "compileMode", "modeldir");
-        assertThat(items).allSatisfy(item -> assertThat(item.kind()).isEqualTo(IlimapCompletionKind.KEYWORD));
+                .contains("name", "description", "direction", "failPolicy", "compileMode", "modeldir");
+        assertThat(items)
+                .filteredOn(item -> item.label().equals("modeldir"))
+                .singleElement()
+                .satisfies(item -> {
+                    assertThat(item.snippet()).isTrue();
+                    assertThat(item.documentation()).contains("model");
+                });
+    }
+
+    @Test
+    void completesInputFields() {
+        List<IlimapCompletionItem> items =
+                complete(mappingWithEmptyInput(), "input src {\n  }", "input src {\n  ".length());
+
+        assertThat(items).extracting(IlimapCompletionItem::label).containsExactly("path", "model", "format");
+        assertThat(items).allSatisfy(item -> assertThat(item.snippet()).isTrue());
+    }
+
+    @Test
+    void completesFiniteFieldValues() {
+        List<IlimapCompletionItem> formatItems =
+                complete(mappingWithInputFormatPrefix(), "format x", "format x".length());
+        List<IlimapCompletionItem> failPolicyItems =
+                complete(mappingWithJobFailPolicyPrefix(), "failPolicy l", "failPolicy l".length());
+
+        assertThat(formatItems).extracting(IlimapCompletionItem::label).containsExactly("xtf");
+        assertThat(failPolicyItems).extracting(IlimapCompletionItem::label).containsExactly("lenient");
+    }
+
+    @Test
+    void completesTopLevelSnippetInPartiallyInvalidDocument() {
+        String source = """
+                mapping v2 {
+                  input
+                """;
+
+        IlimapAnalysis analysis = analysisService.analyze("file:///test.ilimap", source, OPTIONS);
+        List<IlimapCompletionItem> items = completionService.complete(
+                analysis, analysis.lineMap().toIdePosition(source.indexOf("input") + "input".length()));
+
+        assertThat(items)
+                .filteredOn(item -> item.label().equals("input block"))
+                .singleElement()
+                .satisfies(item -> {
+                    assertThat(item.snippet()).isTrue();
+                    assertThat(item.replacementRange()).isNotNull();
+                });
     }
 
     @Test
@@ -159,6 +214,53 @@ class IlimapCompletionServiceTest {
                   job {
                   }
                   input src { path "in.xtf"; model "M"; }
+                }
+                """;
+    }
+
+    private static String mappingWithEmptyInput() {
+        return """
+                mapping v2 {
+                  input src {
+                  }
+                  output out { path "out.xtf"; model "M"; }
+                  rule r1 {
+                    target out class "M.A";
+                    source s from src class "M.A";
+                  }
+                }
+                """;
+    }
+
+    private static String mappingWithInputFormatPrefix() {
+        return """
+                mapping v2 {
+                  input src {
+                    path "in.xtf";
+                    model "M";
+                    format x;
+                  }
+                  output out { path "out.xtf"; model "M"; }
+                  rule r1 {
+                    target out class "M.A";
+                    source s from src class "M.A";
+                  }
+                }
+                """;
+    }
+
+    private static String mappingWithJobFailPolicyPrefix() {
+        return """
+                mapping v2 {
+                  job {
+                    failPolicy l;
+                  }
+                  input src { path "in.xtf"; model "M"; }
+                  output out { path "out.xtf"; model "M"; }
+                  rule r1 {
+                    target out class "M.A";
+                    source s from src class "M.A";
+                  }
                 }
                 """;
     }

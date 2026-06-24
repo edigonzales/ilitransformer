@@ -86,6 +86,26 @@ class IlimapParserErrorTest {
     }
 
     @Test
+    void reportsAllowedFieldsForUnknownInputField() {
+        var parser = new IlimapParser("""
+                mapping v2 {
+                  input s {
+                    wrong "in.xtf";
+                  }
+                  output o { path "out.xtf"; model "M"; }
+                  rule r1 {
+                    target o class "M.A";
+                    source p from s class "M.A";
+                  }
+                }
+                """);
+
+        assertThatThrownBy(parser::parseDocument)
+                .isInstanceOf(ParseException.class)
+                .hasMessageContaining("Allowed fields: path, model, format");
+    }
+
+    @Test
     void rejectsNonV2Mapping() {
         var parser = new IlimapParser("""
                 mapping v1 {
