@@ -51,6 +51,20 @@ class IlimapModelAwareCompletionTest {
         assertThat(items).allSatisfy(item -> assertThat(item.replacementRange()).isNotNull());
     }
 
+    @Test
+    void completesSourceAliasRolesWithAttributes() {
+        List<IlimapCompletionItem> items =
+                complete(associationMapping(), "sourceRef c.ChildRole", "sourceRef c.".length());
+
+        assertThat(items).anySatisfy(item -> {
+            assertThat(item.label()).isEqualTo("ChildRole");
+            assertThat(item.kind()).isEqualTo(IlimapCompletionKind.ROLE);
+            assertThat(item.detail()).contains("role");
+            assertThat(item.replacementRange()).isNotNull();
+        });
+        assertThat(items).extracting(IlimapCompletionItem::label).contains("Name", "Wert", "ChildRole");
+    }
+
     private List<IlimapCompletionItem> complete(String source, String needle) {
         return complete(source, needle, needle.length());
     }
@@ -97,5 +111,28 @@ class IlimapModelAwareCompletionTest {
                 .replace(
                         "source s from src class \"TestModel.TestTopic.TestClass\"",
                         "source s from src class \"" + sourceClass + "\"");
+    }
+
+    private static String associationMapping() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "AssocModel"; }
+                  output out { path "out.xtf"; model "AssocModel"; }
+                  rule rParent {
+                    target out class "AssocModel.AssocTopic.Parent";
+                    source p from src class "AssocModel.AssocTopic.Parent";
+                  }
+                  rule rChild {
+                    target out class "AssocModel.AssocTopic.Child";
+                    source c from src class "AssocModel.AssocTopic.Child";
+                    ref ParentRole {
+                      target rule rParent sourceRef c.ChildRole;
+                    }
+                  }
+                }
+                """;
     }
 }

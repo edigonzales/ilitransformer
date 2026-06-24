@@ -53,6 +53,22 @@ class IlimapModelDiagnosticTest {
     }
 
     @Test
+    void acceptsSourceRolesInSourceRefJoinAndExpressions() {
+        IlimapAnalysis analysis = analyze(associationRoleMapping());
+
+        assertThat(analysis.diagnostics()).noneSatisfy(diagnostic -> assertThat(diagnostic.code())
+                .isEqualTo(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE));
+    }
+
+    @Test
+    void acceptsIli1ReferenceRolesAsSourceMembers() {
+        IlimapAnalysis analysis = analyze(ili1ReferenceRoleMapping());
+
+        assertThat(analysis.diagnostics()).noneSatisfy(diagnostic -> assertThat(diagnostic.code())
+                .isEqualTo(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE));
+    }
+
+    @Test
     void reportsInvalidModelWithoutCrash() {
         IlimapAnalysis analysis = analyze(validMapping().replace("model \"TestModel\"", "model \"MissingModel\""));
 
@@ -77,6 +93,62 @@ class IlimapModelDiagnosticTest {
                     source s from src class "TestModel.TestTopic.TestClass";
                     assign {
                       Name = s.Name;
+                    }
+                  }
+                }
+                """;
+    }
+
+    private static String associationRoleMapping() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "AssocModel"; }
+                  output out { path "out.xtf"; model "AssocModel"; }
+                  rule rParent {
+                    target out class "AssocModel.AssocTopic.Parent";
+                    source p from src class "AssocModel.AssocTopic.Parent";
+                    assign {
+                      Name = p.Name;
+                    }
+                  }
+                  rule rChild {
+                    target out class "AssocModel.AssocTopic.Child";
+                    source c from src class "AssocModel.AssocTopic.Child" where defined(c.ChildRole);
+                    source p from src class "AssocModel.AssocTopic.Parent";
+                    join inner c to p on eq(c.ChildRole, p);
+                    assign {
+                      Name = c.ChildRole;
+                    }
+                    ref ParentRole {
+                      target rule rParent sourceRef c.ChildRole;
+                    }
+                  }
+                }
+                """;
+    }
+
+    private static String ili1ReferenceRoleMapping() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "src/test/data/av/models/";
+                  }
+                  input src { path "in.itf"; model "DM01AVCH24LV95D"; }
+                  output out { path "out.itf"; model "DM01AVCH24LV95D"; }
+                  rule rNf {
+                    target out class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Nachfuehrung";
+                    source nf from src class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Nachfuehrung";
+                    assign {}
+                  }
+                  rule rLfp3 {
+                    target out class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3";
+                    source p from src class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3";
+                    assign {}
+                    ref Entstehung {
+                      target rule rNf sourceRef p.Entstehung;
                     }
                   }
                 }

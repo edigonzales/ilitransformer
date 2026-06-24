@@ -47,6 +47,16 @@ class IlimapCompletionServiceTest {
     }
 
     @Test
+    void completesJobKeywords() {
+        List<IlimapCompletionItem> items = complete(mappingWithEmptyJob(), "job {\n  }", "job {\n  ".length());
+
+        assertThat(items)
+                .extracting(IlimapCompletionItem::label)
+                .contains("description", "direction", "failPolicy", "compileMode", "modeldir");
+        assertThat(items).allSatisfy(item -> assertThat(item.kind()).isEqualTo(IlimapCompletionKind.KEYWORD));
+    }
+
+    @Test
     void completesOutputIdsAfterTarget() {
         List<IlimapCompletionItem> items = complete(validMapping(), "target out class", "target ou".length());
 
@@ -102,6 +112,17 @@ class IlimapCompletionServiceTest {
         assertThat(items).isEmpty();
     }
 
+    @Test
+    void completesSourceAliasesInExpressionContext() {
+        List<IlimapCompletionItem> items = complete(mappingWithExpression("X = s;"), "X = s", "X = s".length());
+
+        assertThat(items).singleElement().satisfies(item -> {
+            assertThat(item.label()).isEqualTo("s");
+            assertThat(item.kind()).isEqualTo(IlimapCompletionKind.SOURCE_ALIAS);
+            assertThat(item.detail()).isEqualTo("source alias");
+        });
+    }
+
     private List<IlimapCompletionItem> complete(String source, String needle, int cursorDelta) {
         IlimapAnalysis analysis = analysisService.analyze("file:///test.ilimap", source, OPTIONS);
         int offset = source.indexOf(needle);
@@ -130,5 +151,31 @@ class IlimapCompletionServiceTest {
                   }
                 }
                 """;
+    }
+
+    private static String mappingWithEmptyJob() {
+        return """
+                mapping v2 {
+                  job {
+                  }
+                  input src { path "in.xtf"; model "M"; }
+                }
+                """;
+    }
+
+    private static String mappingWithExpression(String expressionLine) {
+        return """
+                mapping v2 {
+                  input src { path "in.xtf"; model "M"; }
+                  output out { path "out.xtf"; model "M"; }
+                  rule r1 {
+                    target out class "M.A";
+                    source s from src class "M.A";
+                    assign {
+                      %s
+                    }
+                  }
+                }
+                """.formatted(expressionLine);
     }
 }

@@ -142,7 +142,7 @@ public final class IlimapModelDiagnosticService {
                 if (sourceClass == null) {
                     continue;
                 }
-                if (sourceClass.findAttribute(occurrence.attribute()).isEmpty()) {
+                if (!sourceClass.hasSourceMember(occurrence.attribute())) {
                     diagnostics.add(new IlimapIdeDiagnostic(
                             DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE,
                             IlimapIdeSeverity.ERROR,

@@ -35,7 +35,11 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
     private int shutdown;
 
     public IlimapLanguageServer() {
-        this(new IlimapTextDocumentService(), new IlimapWorkspaceService());
+        this(new IlimapTextDocumentService());
+    }
+
+    private IlimapLanguageServer(IlimapTextDocumentService textDocumentService) {
+        this(textDocumentService, new IlimapWorkspaceService(textDocumentService::invalidateModelCache));
     }
 
     IlimapLanguageServer(IlimapTextDocumentService textDocumentService, IlimapWorkspaceService workspaceService) {

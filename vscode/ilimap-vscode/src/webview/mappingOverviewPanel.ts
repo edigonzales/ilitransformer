@@ -30,9 +30,16 @@ export async function openMappingOverview(
   const uri = editor.document.uri.toString();
   let summary: IlimapMappingSummary;
   try {
-    summary = await client.sendRequest<IlimapMappingSummary>(
-      mappingSummaryRequest,
-      { uri } satisfies IlimapMappingSummaryParams
+    summary = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Opening ilimap mapping overview'
+      },
+      () =>
+        client.sendRequest<IlimapMappingSummary>(
+          mappingSummaryRequest,
+          { uri } satisfies IlimapMappingSummaryParams
+        )
     );
   } catch (error) {
     outputChannel.appendLine(`Failed to load ilimap mapping overview: ${errorMessage(error)}`);

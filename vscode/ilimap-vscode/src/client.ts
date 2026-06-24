@@ -56,7 +56,10 @@ async function doStartLanguageClient(
     ],
     outputChannel,
     synchronize: {
-      fileEvents: vscode.workspace.createFileSystemWatcher('**/*.ilimap')
+      fileEvents: [
+        vscode.workspace.createFileSystemWatcher('**/*.ilimap'),
+        vscode.workspace.createFileSystemWatcher('**/*.ili')
+      ]
     }
   };
 

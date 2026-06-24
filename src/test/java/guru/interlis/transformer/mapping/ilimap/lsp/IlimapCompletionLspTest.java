@@ -7,6 +7,7 @@ import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapFormattingService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapIdePosition;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapLineMap;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -79,6 +80,9 @@ class IlimapCompletionLspTest {
 
         String source = modelAwareMapping();
         modelAwareService.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));
+        modelAwareService
+                .validateMapping(new IlimapValidateMappingParams(URI, source, 1))
+                .join();
 
         CompletionItem item = modelAwareService
                 .completion(completionParams(source, "TestModel.Test", "TestModel.Test".length()))

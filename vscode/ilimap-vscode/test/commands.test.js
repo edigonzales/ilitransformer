@@ -11,6 +11,7 @@ test('validate command requests validation for active ilimap document and focuse
   const executed = [];
   const messages = [];
   const outputLines = [];
+  const progressTitles = [];
   const { commandsModule, registered, restore } = loadCommandsModule({
     client: {
       async sendRequest(method, params) {
@@ -34,6 +35,10 @@ test('validate command requests validation for active ilimap document and focuse
         },
         showErrorMessage(message) {
           messages.push({ kind: 'error', message });
+        },
+        withProgress(options, task) {
+          progressTitles.push(options.title);
+          return task();
         }
       }
     }
@@ -54,8 +59,55 @@ test('validate command requests validation for active ilimap document and focuse
     }
   ]);
   assert.deepEqual(executed, ['workbench.action.problems.focus']);
+  assert.deepEqual(progressTitles, ['Validating ilimap mapping']);
   assert.equal(messages.length, 0);
-  assert.equal(outputLines.length, 0);
+  assert.deepEqual(outputLines, ['ilimap validation completed with 0 diagnostics.']);
+});
+
+test('validate command reports unavailable validation result', async (t) => {
+  const requested = [];
+  const executed = [];
+  const messages = [];
+  const outputLines = [];
+  const { commandsModule, registered, restore } = loadCommandsModule({
+    client: {
+      async sendRequest(method, params) {
+        requested.push({ method, params });
+        return { available: false, message: 'No open ILIMAP document.', diagnosticCount: 0 };
+      }
+    },
+    vscodeOverrides: {
+      commands: {
+        executeCommand(command) {
+          executed.push(command);
+          return Promise.resolve();
+        }
+      },
+      window: {
+        activeTextEditor: {
+          document: ilimapDocument()
+        },
+        showInformationMessage(message) {
+          messages.push({ kind: 'info', message });
+        },
+        showErrorMessage(message) {
+          messages.push({ kind: 'error', message });
+        },
+        withProgress(_options, task) {
+          return task();
+        }
+      }
+    }
+  });
+  t.after(restore);
+
+  commandsModule.registerCommands(context(), outputChannel(outputLines));
+  await registered.get('ilimap.validate')();
+
+  assert.equal(requested.length, 1);
+  assert.deepEqual(executed, []);
+  assert.deepEqual(messages, [{ kind: 'error', message: 'No open ILIMAP document.' }]);
+  assert.deepEqual(outputLines, ['ilimap validation unavailable: No open ILIMAP document.']);
 });
 
 test('validate command shows information message without active ilimap editor', async (t) => {
@@ -81,6 +133,9 @@ test('validate command shows information message without active ilimap editor', 
         },
         showErrorMessage(message) {
           messages.push({ kind: 'error', message });
+        },
+        withProgress(_options, task) {
+          return task();
         }
       }
     }
@@ -120,6 +175,9 @@ test('validate command shows error message without language client', async (t) =
         },
         showErrorMessage(message) {
           messages.push({ kind: 'error', message });
+        },
+        withProgress(_options, task) {
+          return task();
         }
       }
     }
@@ -141,6 +199,9 @@ test('validate command shows error message without language client', async (t) =
 function loadCommandsModule({ client, vscodeOverrides }) {
   const registered = new Map();
   const vscodeMock = {
+    ProgressLocation: {
+      Notification: 15
+    },
     commands: {
       registerCommand(command, callback) {
         registered.set(command, callback);

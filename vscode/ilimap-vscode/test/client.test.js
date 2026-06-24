@@ -14,6 +14,7 @@ test('restartLanguageClient stops the current client and starts a new one', asyn
   ]);
   const outputLines = [];
   const clients = [];
+  const watcherPatterns = [];
 
   class FakeLanguageClient {
     constructor(id, name, serverOptions, clientOptions) {
@@ -46,7 +47,7 @@ test('restartLanguageClient stops the current client and starts a new one', asyn
         };
       },
       createFileSystemWatcher(pattern) {
-        assert.equal(pattern, '**/*.ilimap');
+        watcherPatterns.push(pattern);
         return {
           dispose() {}
         };
@@ -93,6 +94,7 @@ test('restartLanguageClient stops the current client and starts a new one', asyn
   await clientModule.startLanguageClient(context, outputChannel);
 
   assert.equal(clients.length, 1);
+  assert.deepEqual(watcherPatterns, ['**/*.ilimap', '**/*.ili']);
   assert.equal(clients[0].serverOptions.command, '/usr/bin/java');
   assert.deepEqual(clients[0].serverOptions.args, [
     '-Xmx1g',

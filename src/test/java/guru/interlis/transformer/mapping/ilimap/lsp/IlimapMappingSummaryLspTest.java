@@ -57,6 +57,30 @@ class IlimapMappingSummaryLspTest {
     }
 
     @Test
+    void summaryUsesCachedModelAwareDiagnosticsAfterValidation() {
+        IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
+        IlimapLanguageServer server = new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
+        String source = modelAwareMappingWithMissingSourceAttribute();
+        textDocumentService.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));
+
+        var fastSummary =
+                server.mappingSummary(new IlimapMappingSummaryParams(URI)).join();
+        var validation = server.validateMapping(new IlimapValidateMappingParams(URI, source, 1))
+                .join();
+        var cachedModelAwareSummary =
+                server.mappingSummary(new IlimapMappingSummaryParams(URI)).join();
+
+        assertThat(fastSummary.errorCount()).isZero();
+        assertThat(validation.available()).isTrue();
+        assertThat(validation.diagnosticCount()).isGreaterThan(0);
+        assertThat(cachedModelAwareSummary.errorCount()).isGreaterThan(0);
+        assertThat(cachedModelAwareSummary.rules())
+                .singleElement()
+                .extracting(rule -> rule.status())
+                .isEqualTo("error");
+    }
+
+    @Test
     void returnsUnavailableSummaryForUnopenedDocument() {
         IlimapLanguageServer server =
                 new IlimapLanguageServer(new IlimapTextDocumentService(), new IlimapWorkspaceService());
@@ -90,6 +114,25 @@ class IlimapMappingSummaryLspTest {
                   rule r1 {
                     target out class "M.A";
                     source s from src class "M.A";
+                  }
+                }
+                """;
+    }
+
+    private static String modelAwareMappingWithMissingSourceAttribute() {
+        return """
+                mapping v2 "Profile" {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "TestModel"; }
+                  output out { path "out.xtf"; model "TestModel"; }
+                  rule r1 {
+                    target out class "TestModel.TestTopic.TestClass";
+                    source s from src class "TestModel.TestTopic.TestClass";
+                    assign {
+                      Name = s.Missing;
+                    }
                   }
                 }
                 """;

@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
@@ -79,6 +80,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     private final IlimapMappingSummaryService mappingSummaryService;
     private final IlimapLspRangeMapper rangeMapper;
     private final IlimapCodeActionService codeActionService;
+    private final Map<String, CompletableFuture<IlimapAnalysis>> runningModelAnalyses = new ConcurrentHashMap<>();
     private IlimapAnalysisOptions analysisOptions;
     private LanguageClient client;
 
@@ -182,7 +184,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     public void didOpen(DidOpenTextDocumentParams params) {
         var textDocument = params.getTextDocument();
         documentStore.open(textDocument.getUri(), textDocument.getText(), textDocument.getVersion());
-        analyzeAndPublish(textDocument.getUri());
+        analyzeAndPublishFast(textDocument.getUri());
     }
 
     @Override
@@ -190,12 +192,13 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         String uri = params.getTextDocument().getUri();
         String text = latestText(params.getContentChanges());
         documentStore.updateFull(uri, text, params.getTextDocument().getVersion());
-        analyzeAndPublish(uri);
+        analyzeAndPublishFast(uri);
     }
 
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
         String uri = params.getTextDocument().getUri();
+        runningModelAnalyses.remove(uri);
         documentStore.close(uri);
         publish(uri, null, List.of());
     }
@@ -208,7 +211,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                     documentStore.get(uri).map(IlimapDocumentSnapshot::version).orElse(0);
             documentStore.updateFull(uri, params.getText(), version);
         }
-        analyzeAndPublish(uri);
+        analyzeAndPublishFast(uri);
+        analyzeModelAwareAndPublish(uri);
     }
 
     @Override
@@ -229,7 +233,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(List.of());
         }
 
-        IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
+        IlimapAnalysis analysis = analysisForCompletion(uri);
         CodeActionContext context = params.getContext();
         IlimapIdeRange requestedRange = toIdeRange(params.getRange());
         List<Either<Command, CodeAction>> actions = codeActionService.codeActions(analysis, requestedRange).stream()
@@ -245,7 +249,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         String uri = params.getTextDocument().getUri();
         return CompletableFuture.completedFuture(documentStore
                 .get(uri)
-                .map(snapshot -> documentStore.analyze(uri, analysisOptions))
+                .map(snapshot -> documentStore.analyze(snapshot, fastOptions()))
                 .map(documentSymbolService::symbols)
                 .map(symbols ->
                         symbols.stream().map(this::toLspDocumentSymbolEither).toList())
@@ -257,7 +261,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         String uri = params.getTextDocument().getUri();
         return CompletableFuture.completedFuture(documentStore
                 .get(uri)
-                .map(snapshot -> documentStore.analyze(uri, analysisOptions))
+                .map(snapshot -> documentStore.analyze(snapshot, fastOptions()))
                 .map(foldingService::foldingRanges)
                 .map(ranges -> ranges.stream().map(this::toLspFoldingRange).toList())
                 .orElseGet(List::of));
@@ -270,7 +274,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(Either.forLeft(List.of()));
         }
 
-        IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
+        IlimapAnalysis analysis = analysisForCompletion(uri);
         IlimapIdePosition position = new IlimapIdePosition(
                 params.getPosition().getLine(), params.getPosition().getCharacter());
         List<CompletionItem> items = completionService.complete(analysis, position).stream()
@@ -287,7 +291,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(Either.forLeft(List.of()));
         }
 
-        IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
+        IlimapAnalysis analysis = analysisForCompletion(uri);
         IlimapIdePosition position = new IlimapIdePosition(
                 params.getPosition().getLine(), params.getPosition().getCharacter());
         List<Location> locations = definitionService.definitionAt(analysis, position).stream()
@@ -303,7 +307,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(null);
         }
 
-        IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
+        IlimapAnalysis analysis = documentStore.analyze(uri, fastOptions());
         IlimapIdePosition position = new IlimapIdePosition(
                 params.getPosition().getLine(), params.getPosition().getCharacter());
         return CompletableFuture.completedFuture(
@@ -321,7 +325,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                     IlimapMappingSummary.unavailable("No open ILIMAP document for URI: " + uri));
         }
 
-        IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
+        IlimapAnalysis analysis = analysisForCompletion(uri);
         return CompletableFuture.completedFuture(mappingSummaryService.summarize(analysis));
     }
 
@@ -339,17 +343,65 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                     IlimapValidateMappingResult.unavailable("No open ILIMAP document for URI: " + uri));
         }
 
-        IlimapAnalysis analysis = analyzeAndPublish(uri);
-        return CompletableFuture.completedFuture(
-                IlimapValidateMappingResult.available(analysis.diagnostics().size()));
+        return analyzeModelAwareAndPublish(uri)
+                .thenApply(analysis -> IlimapValidateMappingResult.available(
+                        analysis.diagnostics().size()))
+                .exceptionally(error -> IlimapValidateMappingResult.unavailable(
+                        "Failed to validate ILIMAP document: " + errorMessage(error)));
     }
 
-    private IlimapAnalysis analyzeAndPublish(String uri) {
-        IlimapAnalysis analysis = documentStore.analyze(uri, analysisOptions);
+    public void invalidateModelCache() {
+        runningModelAnalyses.clear();
+        documentStore.invalidateModelCache();
+    }
+
+    private IlimapAnalysis analyzeAndPublishFast(String uri) {
+        IlimapAnalysis analysis = documentStore.analyze(uri, fastOptions());
         Integer version =
                 documentStore.get(uri).map(IlimapDocumentSnapshot::version).orElse(null);
         publish(uri, version, diagnosticMapper.map(analysis.diagnostics()));
         return analysis;
+    }
+
+    private CompletableFuture<IlimapAnalysis> analyzeModelAwareAndPublish(String uri) {
+        return documentStore
+                .get(uri)
+                .map(snapshot -> {
+                    CompletableFuture<IlimapAnalysis> previous = runningModelAnalyses.remove(uri);
+                    if (previous != null) {
+                        previous.cancel(true);
+                    }
+                    CompletableFuture<IlimapAnalysis> future =
+                            CompletableFuture.supplyAsync(() -> documentStore.analyze(snapshot, modelAwareOptions()));
+                    runningModelAnalyses.put(uri, future);
+                    future.whenComplete((analysis, error) -> {
+                        runningModelAnalyses.remove(uri, future);
+                        if (error == null
+                                && documentStore
+                                        .get(uri)
+                                        .filter(snapshot::equals)
+                                        .isPresent()) {
+                            publish(uri, snapshot.version(), diagnosticMapper.map(analysis.diagnostics()));
+                        }
+                    });
+                    return future;
+                })
+                .orElseGet(() -> CompletableFuture.failedFuture(
+                        new IllegalArgumentException("No open ILIMAP document for URI: " + uri)));
+    }
+
+    private IlimapAnalysis analysisForCompletion(String uri) {
+        return documentStore
+                .cachedAnalysis(uri, modelAwareOptions())
+                .orElseGet(() -> documentStore.analyze(uri, fastOptions()));
+    }
+
+    private IlimapAnalysisOptions fastOptions() {
+        return IlimapAnalysisOptions.defaults(analysisOptions.baseDirectory());
+    }
+
+    private IlimapAnalysisOptions modelAwareOptions() {
+        return IlimapAnalysisOptions.modelAware(analysisOptions.baseDirectory());
     }
 
     private TextEdit toLspTextEdit(IlimapTextEdit edit) {
@@ -464,5 +516,15 @@ public final class IlimapTextDocumentService implements TextDocumentService {
             return "";
         }
         return contentChanges.get(contentChanges.size() - 1).getText();
+    }
+
+    private static String errorMessage(Throwable error) {
+        Throwable current = error;
+        while (current.getCause() != null) {
+            current = current.getCause();
+        }
+        return current.getMessage() != null
+                ? current.getMessage()
+                : current.getClass().getSimpleName();
     }
 }

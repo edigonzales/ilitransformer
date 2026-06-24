@@ -2,6 +2,8 @@ package guru.interlis.transformer.model;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.jupiter.api.Test;
 
 class IliModelServiceTest {
@@ -91,10 +93,27 @@ class IliModelServiceTest {
 
         // Find Child class
         ModelInventory.ClassInventory child = findClass(inv, "Child");
-        assertThat(child.roles()).hasSize(1);
-        assertThat(child.roles().get(0).name()).isEqualTo("ChildRole");
-        assertThat(child.roles().get(0).association()).isEqualTo("ParentChild");
-        assertThat(child.roles().get(0).cardinality()).isEqualTo("0..*");
+        assertThat(child.roles()).extracting(ModelInventory.RoleInventory::name).contains("ParentRole", "ChildRole");
+        assertThat(child.roles()).anySatisfy(role -> {
+            assertThat(role.name()).isEqualTo("ChildRole");
+            assertThat(role.association()).isEqualTo("ParentChild");
+            assertThat(role.cardinality()).isEqualTo("0..*");
+        });
+    }
+
+    @Test
+    void inventoryIncludesTransferRolesFromIli1References() {
+        IliModelCompileResult result = service.compileModel("DM01AVCH24LV95D", "src/test/data/av/models/");
+        assertThat(result.hasErrors()).isFalse();
+
+        ModelInventory inv = service.buildInventory(result.transferDescription(), "DM01AVCH24LV95D");
+        ModelInventory.ClassInventory lfp3 = inv.topics().stream()
+                .flatMap(topic -> topic.classes().stream())
+                .filter(cls -> cls.path().equals("DM01AVCH24LV95D.FixpunkteKategorie3.LFP3"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(lfp3.roles()).extracting(ModelInventory.RoleInventory::name).contains("Entstehung");
     }
 
     @Test
@@ -126,6 +145,21 @@ class IliModelServiceTest {
         assertThat(result.hasErrors()).isTrue();
         assertThat(result.transferDescription()).isNull();
         assertThat(result.diagnostics().all()).isNotEmpty();
+    }
+
+    @Test
+    void cachesCompileResultsForSameNormalizedModeldir() {
+        AtomicInteger compileCalls = new AtomicInteger();
+        IliModelService cachedService = new IliModelService((modelName, modelDirectories) -> {
+            compileCalls.incrementAndGet();
+            assertThat(modelDirectories).isEqualTo("https://models.geo.admin.ch");
+            return null;
+        });
+
+        cachedService.compileModel("TestModel", "https://models.geo.admin.ch/");
+        cachedService.compileModel("TestModel", " https://models.geo.admin.ch ");
+
+        assertThat(compileCalls).hasValue(1);
     }
 
     @Test

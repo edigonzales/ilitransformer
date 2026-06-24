@@ -68,6 +68,10 @@ public final class IlimapAnalysisService {
         return new IlimapAnalysis(uri, text, document, semanticResult.symbols(), diagnostics, lineMap, modelIndex);
     }
 
+    public void invalidateModelCache() {
+        modelIndexService.invalidateModelCache();
+    }
+
     private IlimapAnalysis syntaxErrorAnalysis(
             String uri,
             String text,

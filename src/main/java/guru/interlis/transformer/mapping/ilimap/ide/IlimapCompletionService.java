@@ -1,12 +1,13 @@
 package guru.interlis.transformer.mapping.ilimap.ide;
 
+import guru.interlis.transformer.mapping.ilimap.ast.IlimapBagBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleElement;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapSourceStmt;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapTargetStmt;
-import guru.interlis.transformer.mapping.ilimap.semantic.IlimapSymbol;
 import guru.interlis.transformer.mapping.ilimap.semantic.IlimapSymbolKind;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,6 +19,8 @@ public final class IlimapCompletionService {
 
     private static final List<String> TOP_LEVEL_KEYWORDS =
             List.of("job", "input", "output", "oid", "basket", "enum", "defaults", "rule");
+    private static final List<String> JOB_KEYWORDS =
+            List.of("description", "direction", "failPolicy", "compileMode", "modeldir");
     private static final List<String> RULE_KEYWORDS = List.of(
             "target",
             "source",
@@ -49,6 +52,7 @@ public final class IlimapCompletionService {
         IlimapCompletionContext context = contextResolver.resolve(analysis, position);
         return switch (context.kind()) {
             case TOP_LEVEL -> keywordItems(TOP_LEVEL_KEYWORDS, context.prefix());
+            case JOB_BLOCK -> keywordItems(JOB_KEYWORDS, context.prefix());
             case RULE_BLOCK -> keywordItems(RULE_KEYWORDS, context.prefix());
             case TARGET_OUTPUT ->
                 symbolItems(analysis, IlimapSymbolKind.OUTPUT, IlimapCompletionKind.OUTPUT, "output", context.prefix());
@@ -57,6 +61,7 @@ public final class IlimapCompletionService {
                 symbolItems(analysis, IlimapSymbolKind.INPUT, IlimapCompletionKind.INPUT, "input", context.prefix());
             case SOURCE_CLASS -> sourceClassItems(analysis, context);
             case ASSIGN_TARGET_ATTRIBUTE -> targetAttributeItems(analysis, context);
+            case SOURCE_ALIAS -> sourceAliasItems(context);
             case SOURCE_ALIAS_ATTRIBUTE -> sourceAliasAttributeItems(analysis, context);
             case REF_TARGET_RULE ->
                 symbolItems(analysis, IlimapSymbolKind.RULE, IlimapCompletionKind.RULE, "rule", context.prefix());
@@ -67,7 +72,7 @@ public final class IlimapCompletionService {
                         IlimapCompletionKind.ENUM_MAP,
                         "enum map",
                         context.prefix());
-            case JOB_BLOCK, INPUT_BLOCK, OUTPUT_BLOCK, EXPRESSION, UNKNOWN -> List.of();
+            case INPUT_BLOCK, OUTPUT_BLOCK, EXPRESSION, UNKNOWN -> List.of();
         };
     }
 
@@ -90,15 +95,10 @@ public final class IlimapCompletionService {
         }
         return analysis.symbols().topLevelScope().allLocal().values().stream()
                 .filter(symbol -> symbol.kind() == symbolKind)
-                .map(symbol -> toCompletionItem(symbol, completionKind, detail))
+                .map(symbol -> new IlimapCompletionItem(symbol.name(), completionKind, detail, null, symbol.name()))
                 .filter(item -> item.label().startsWith(prefix))
                 .sorted(Comparator.comparing(IlimapCompletionItem::label))
                 .toList();
-    }
-
-    private static IlimapCompletionItem toCompletionItem(
-            IlimapSymbol symbol, IlimapCompletionKind completionKind, String detail) {
-        return new IlimapCompletionItem(symbol.name(), completionKind, detail, null, symbol.name());
     }
 
     private static List<IlimapCompletionItem> targetClassItems(
@@ -151,7 +151,7 @@ public final class IlimapCompletionService {
             return List.of();
         }
         return sourceClassForAlias(analysis, context.currentRule(), context.qualifier())
-                .map(classInfo -> attributeItems(classInfo.attributes(), context))
+                .map(classInfo -> memberItems(classInfo, context))
                 .orElseGet(List::of);
     }
 
@@ -166,6 +166,48 @@ public final class IlimapCompletionService {
                         attribute.type(),
                         attributeDocumentation(attribute),
                         attribute.name(),
+                        context.replacementRange()))
+                .toList();
+    }
+
+    private static List<IlimapCompletionItem> roleItems(List<IlimapRoleInfo> roles, IlimapCompletionContext context) {
+        return roles.stream()
+                .filter(role -> role.name().startsWith(context.prefix()))
+                .sorted(Comparator.comparing(IlimapRoleInfo::name))
+                .map(role -> new IlimapCompletionItem(
+                        role.name(),
+                        IlimapCompletionKind.ROLE,
+                        roleDetail(role),
+                        roleDocumentation(role),
+                        role.name(),
+                        context.replacementRange()))
+                .toList();
+    }
+
+    private static List<IlimapCompletionItem> memberItems(IlimapClassInfo classInfo, IlimapCompletionContext context) {
+        List<IlimapCompletionItem> result = new ArrayList<>();
+        result.addAll(attributeItems(classInfo.attributes(), context));
+        result.addAll(roleItems(classInfo.roles(), context));
+        result.sort(Comparator.comparing(IlimapCompletionItem::label)
+                .thenComparing(item -> item.kind().name()));
+        return result;
+    }
+
+    private static List<IlimapCompletionItem> sourceAliasItems(IlimapCompletionContext context) {
+        if (context.currentRule() == null) {
+            return List.of();
+        }
+        return sources(context.currentRule()).stream()
+                .map(SourceBinding::alias)
+                .distinct()
+                .filter(alias -> alias.startsWith(context.prefix()))
+                .sorted()
+                .map(alias -> new IlimapCompletionItem(
+                        alias,
+                        IlimapCompletionKind.SOURCE_ALIAS,
+                        "source alias",
+                        null,
+                        alias,
                         context.replacementRange()))
                 .toList();
     }
@@ -187,8 +229,8 @@ public final class IlimapCompletionService {
 
     private static Optional<IlimapClassInfo> sourceClassForAlias(
             IlimapAnalysis analysis, IlimapRuleBlock rule, String alias) {
-        for (IlimapRuleElement element : rule.elements()) {
-            if (element instanceof IlimapSourceStmt source && source.alias().equals(alias)) {
+        for (SourceBinding source : sources(rule)) {
+            if (source.alias().equals(alias)) {
                 for (String inputId : source.inputIds()) {
                     Optional<IlimapClassInfo> classInfo = analysis.modelIndex()
                             .modelNameForInput(inputId)
@@ -205,8 +247,53 @@ public final class IlimapCompletionService {
         return Optional.empty();
     }
 
+    private static List<SourceBinding> sources(IlimapRuleBlock rule) {
+        List<SourceBinding> result = new ArrayList<>();
+        for (IlimapRuleElement element : rule.elements()) {
+            collectSources(element, result);
+        }
+        return result;
+    }
+
+    private static void collectSources(IlimapRuleElement element, List<SourceBinding> result) {
+        if (element instanceof IlimapSourceStmt source) {
+            result.add(new SourceBinding(source.alias(), source.inputIds(), source.sourceClass()));
+        } else if (element instanceof IlimapBagBlock bag) {
+            collectSources(bag, result);
+        }
+    }
+
+    private static void collectSources(IlimapBagBlock bag, List<SourceBinding> result) {
+        if (bag.from() != null) {
+            result.add(new SourceBinding(
+                    bag.from().alias(),
+                    List.of(bag.from().inputId()),
+                    bag.from().sourceClass()));
+        }
+        for (IlimapBagBlock nested : bag.nestedBags()) {
+            collectSources(nested, result);
+        }
+    }
+
     private static String attributeDocumentation(IlimapAttributeInfo attribute) {
         String mandatory = attribute.mandatory() ? "mandatory" : "optional";
         return mandatory + ", cardinality " + attribute.cardinality();
     }
+
+    private static String roleDetail(IlimapRoleInfo role) {
+        return role.targetClass() == null || role.targetClass().isBlank() ? "role" : "role -> " + role.targetClass();
+    }
+
+    private static String roleDocumentation(IlimapRoleInfo role) {
+        List<String> parts = new ArrayList<>();
+        if (role.association() != null && !role.association().isBlank()) {
+            parts.add("association " + role.association());
+        }
+        if (!role.cardinality().isBlank()) {
+            parts.add("cardinality " + role.cardinality());
+        }
+        return parts.isEmpty() ? null : String.join(", ", parts);
+    }
+
+    private record SourceBinding(String alias, List<String> inputIds, String sourceClass) {}
 }

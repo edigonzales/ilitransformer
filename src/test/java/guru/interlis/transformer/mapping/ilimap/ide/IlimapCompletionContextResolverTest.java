@@ -74,7 +74,7 @@ class IlimapCompletionContextResolverTest {
         IlimapCompletionContext context =
                 resolve(validMapping(), "coalesce(s.Y, Quality)", "coalesce(s.Y, Qual".length());
 
-        assertThat(context.kind()).isEqualTo(IlimapCompletionContextKind.EXPRESSION);
+        assertThat(context.kind()).isEqualTo(IlimapCompletionContextKind.SOURCE_ALIAS);
         assertThat(context.prefix()).isEqualTo("Qual");
     }
 

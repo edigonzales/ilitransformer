@@ -19,23 +19,56 @@ import ch.interlis.ili2c.metamodel.RoleDef;
 import ch.interlis.ili2c.metamodel.Table;
 import ch.interlis.ili2c.metamodel.Topic;
 import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.ili2c.metamodel.ViewableTransferElement;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class IliModelService {
 
-    private final InterlisModelLoader modelLoader = new InterlisModelLoader();
+    @FunctionalInterface
+    interface ModelCompiler {
+        TransferDescription compileModel(String modelName, String modelDirectories) throws Ili2cFailure;
+    }
+
+    private final ModelCompiler modelCompiler;
+    private final Map<CompileCacheKey, IliModelCompileResult> compileCache = new ConcurrentHashMap<>();
+
+    public IliModelService() {
+        this(new InterlisModelLoader()::compileModel);
+    }
+
+    IliModelService(ModelCompiler modelCompiler) {
+        this.modelCompiler = Objects.requireNonNull(modelCompiler, "modelCompiler");
+    }
 
     public IliModelCompileResult compileModel(String modelName, String modelDirectories) {
+        String normalizedModelDirectories = InterlisModelLoader.normalizeModelDirectoryString(modelDirectories);
+        CompileCacheKey cacheKey = new CompileCacheKey(
+                modelName.trim(), normalizedModelDirectories, fingerprintModelDirectories(normalizedModelDirectories));
+        return compileCache.computeIfAbsent(
+                cacheKey, ignored -> compileModelUncached(modelName, normalizedModelDirectories));
+    }
+
+    public void clearCompileCache() {
+        compileCache.clear();
+    }
+
+    private IliModelCompileResult compileModelUncached(String modelName, String normalizedModelDirectories) {
         DiagnosticCollector diagnostics = new DiagnosticCollector();
         TransferDescription td;
         try {
-            td = modelLoader.compileModel(modelName, modelDirectories);
+            td = modelCompiler.compileModel(modelName, normalizedModelDirectories);
             if (td == null) {
                 diagnostics.add(new Diagnostic(
                         DiagnosticCode.MODEL_COMPILE_FAILED,
@@ -63,6 +96,61 @@ public final class IliModelService {
             return new IliModelCompileResult(null, diagnostics);
         }
         return new IliModelCompileResult(td, diagnostics);
+    }
+
+    private static String fingerprintModelDirectories(String normalizedModelDirectories) {
+        if (normalizedModelDirectories == null || normalizedModelDirectories.isBlank()) {
+            return "";
+        }
+        List<String> fingerprints = new ArrayList<>();
+        for (String part : normalizedModelDirectories.split(";")) {
+            if (isRemoteModelDirectory(part)) {
+                fingerprints.add("remote:" + part);
+            } else {
+                fingerprints.add("local:" + part + ":" + fingerprintLocalModelDirectory(part));
+            }
+        }
+        return String.join("|", fingerprints);
+    }
+
+    private static String fingerprintLocalModelDirectory(String modelDirectory) {
+        try {
+            Path path = Path.of(modelDirectory);
+            if (!Files.isDirectory(path)) {
+                return "missing";
+            }
+            try (var stream = Files.walk(path)) {
+                LocalModelDirectoryFingerprint fingerprint = stream.filter(Files::isRegularFile)
+                        .filter(file -> file.getFileName().toString().endsWith(".ili"))
+                        .map(IliModelService::fileFingerprint)
+                        .reduce(new LocalModelDirectoryFingerprint(0, 0), LocalModelDirectoryFingerprint::plus);
+                return fingerprint.count() + ":" + fingerprint.latestModifiedMillis();
+            }
+        } catch (IOException | InvalidPathException e) {
+            return "unavailable:" + e.getClass().getSimpleName();
+        }
+    }
+
+    private static LocalModelDirectoryFingerprint fileFingerprint(Path path) {
+        try {
+            return new LocalModelDirectoryFingerprint(
+                    1, Files.getLastModifiedTime(path).toMillis());
+        } catch (IOException e) {
+            return new LocalModelDirectoryFingerprint(1, 0);
+        }
+    }
+
+    private static boolean isRemoteModelDirectory(String modelDirectory) {
+        return modelDirectory.startsWith("http://") || modelDirectory.startsWith("https://");
+    }
+
+    private record CompileCacheKey(String modelName, String normalizedModelDirectories, String modeldirFingerprint) {}
+
+    private record LocalModelDirectoryFingerprint(long count, long latestModifiedMillis) {
+        LocalModelDirectoryFingerprint plus(LocalModelDirectoryFingerprint other) {
+            return new LocalModelDirectoryFingerprint(
+                    count + other.count, Math.max(latestModifiedMillis, other.latestModifiedMillis));
+        }
     }
 
     public ModelInventory buildInventory(TransferDescription td, String modelName) {
@@ -153,41 +241,65 @@ public final class IliModelService {
     }
 
     private List<ModelInventory.AttributeInventory> buildAttributes(Table table) {
-        List<ModelInventory.AttributeInventory> result = new ArrayList<>();
+        Map<String, ModelInventory.AttributeInventory> result = new LinkedHashMap<>();
         Iterator<Extendable> it = table.getAttributes();
         while (it.hasNext()) {
             Extendable ext = it.next();
             if (ext instanceof AttributeDef attr) {
-                String name = attr.getName();
-                if (name == null) continue;
-
-                String typeString = buildTypeString(attr);
-                String cardinality = buildCardinalityString(attr);
-                boolean mandatory = isMandatory(attr);
-
-                result.add(new ModelInventory.AttributeInventory(name, typeString, cardinality, mandatory));
+                putAttribute(result, attr);
             }
         }
-        return result;
+        Iterator<ViewableTransferElement> transferElements = table.getAttributesAndRoles2();
+        while (transferElements.hasNext()) {
+            ViewableTransferElement element = transferElements.next();
+            if (element.obj instanceof AttributeDef attr) {
+                putAttribute(result, attr);
+            }
+        }
+        return List.copyOf(result.values());
+    }
+
+    private void putAttribute(Map<String, ModelInventory.AttributeInventory> result, AttributeDef attr) {
+        String name = attr.getName();
+        if (name == null) return;
+
+        String typeString = buildTypeString(attr);
+        String cardinality = buildCardinalityString(attr);
+        boolean mandatory = isMandatory(attr);
+
+        result.putIfAbsent(name, new ModelInventory.AttributeInventory(name, typeString, cardinality, mandatory));
     }
 
     private List<ModelInventory.RoleInventory> buildRoles(Table table, Map<String, AssociationDef> associations) {
-        List<ModelInventory.RoleInventory> result = new ArrayList<>();
+        Map<String, ModelInventory.RoleInventory> result = new LinkedHashMap<>();
+        Iterator<ViewableTransferElement> transferElements = table.getAttributesAndRoles2();
+        while (transferElements.hasNext()) {
+            ViewableTransferElement element = transferElements.next();
+            if (element.obj instanceof RoleDef role) {
+                putRole(result, role, associations);
+            }
+        }
+
         @SuppressWarnings("unchecked")
         Iterator<RoleDef> it = table.getTargetForRoles();
-        if (it == null) return result;
-        while (it.hasNext()) {
-            RoleDef role = it.next();
-            String name = role.getName();
-            if (name == null) continue;
-
-            String assocName = findAssociationName(role, associations);
-            String targetClass = findRoleTargetClass(role);
-            String cardinality = buildRoleCardinalityString(role);
-
-            result.add(new ModelInventory.RoleInventory(name, assocName, targetClass, cardinality));
+        if (it != null) {
+            while (it.hasNext()) {
+                putRole(result, it.next(), associations);
+            }
         }
-        return result;
+        return List.copyOf(result.values());
+    }
+
+    private void putRole(
+            Map<String, ModelInventory.RoleInventory> result, RoleDef role, Map<String, AssociationDef> associations) {
+        String name = role.getName();
+        if (name == null) return;
+
+        String assocName = findAssociationName(role, associations);
+        String targetClass = findRoleTargetClass(role);
+        String cardinality = buildRoleCardinalityString(role);
+
+        result.putIfAbsent(name, new ModelInventory.RoleInventory(name, assocName, targetClass, cardinality));
     }
 
     private String buildTypeString(AttributeDef attr) {

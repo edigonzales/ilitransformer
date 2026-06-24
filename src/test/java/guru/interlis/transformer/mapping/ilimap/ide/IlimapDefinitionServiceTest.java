@@ -65,6 +65,18 @@ class IlimapDefinitionServiceTest {
     }
 
     @Test
+    void findsDefinitionOfSourceAliasInExpressionPath() {
+        IlimapAnalysis analysis = analyze(validMapping());
+
+        Optional<IlimapDefinition> definition = definitionService.definitionAt(
+                analysis, positionAt(analysis, "sourceRef s.Parent", "sourceRef s".length()));
+
+        assertThat(definition).isPresent();
+        assertThat(definition.get().label()).isEqualTo("source s");
+        assertThat(textAt(analysis, definition.get().range())).isEqualTo("s");
+    }
+
+    @Test
     void findsDefinitionWhenHoveringDeclarationIdentifier() {
         IlimapAnalysis analysis = analyze(validMapping());
 

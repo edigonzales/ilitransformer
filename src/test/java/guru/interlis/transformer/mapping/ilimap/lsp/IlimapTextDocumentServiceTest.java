@@ -7,9 +7,9 @@ import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapFormattingService;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
@@ -94,7 +94,7 @@ class IlimapTextDocumentServiceTest {
                 IlimapAnalysisOptions.modelAware(Path.of(".")));
         modelAwareService.connect(client);
         modelAwareService.didOpen(new DidOpenTextDocumentParams(
-                new TextDocumentItem("file:///mapping.ilimap", "ilimap", 1, missingModeldirOnlyMapping())));
+                new TextDocumentItem("file:///mapping.ilimap", "ilimap", 1, missingModeldirMapping())));
 
         var result = modelAwareService
                 .validateMapping(new guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams(
@@ -103,14 +103,31 @@ class IlimapTextDocumentServiceTest {
 
         assertThat(result.available()).isTrue();
         assertThat(result.diagnosticCount()).isZero();
-        assertThat(client.publishedDiagnostics()).hasSize(2);
-        assertThat(client.publishedDiagnostics().get(0).getDiagnostics())
-                .anySatisfy(diagnostic -> assertThat(diagnostic.getMessage().getLeft())
-                        .contains("Model directory does not exist: models/"));
+        waitForPublishedDiagnosticCount(2);
+        assertThat(client.publishedDiagnostics().get(0).getDiagnostics()).isEmpty();
         PublishDiagnosticsParams params = client.publishedDiagnostics().get(1);
         assertThat(params.getUri()).isEqualTo("file:///mapping.ilimap");
         assertThat(params.getVersion()).isEqualTo(2);
         assertThat(params.getDiagnostics()).isEmpty();
+    }
+
+    @Test
+    void didOpenUsesFastDiagnosticsWithoutModelCompile() {
+        IlimapTextDocumentService modelAwareService = new IlimapTextDocumentService(
+                new IlimapDocumentStore(),
+                new IlimapLspDiagnosticMapper(),
+                new IlimapFormattingService(),
+                new IlimapLspRangeMapper(),
+                IlimapAnalysisOptions.modelAware(Path.of(".")));
+        modelAwareService.connect(client);
+
+        modelAwareService.didOpen(new DidOpenTextDocumentParams(
+                new TextDocumentItem("file:///mapping.ilimap", "ilimap", 1, missingModeldirMapping())));
+
+        assertThat(client.publishedDiagnostics()).singleElement().satisfies(params -> {
+            assertThat(params.getUri()).isEqualTo("file:///mapping.ilimap");
+            assertThat(params.getDiagnostics()).isEmpty();
+        });
     }
 
     @Test
@@ -128,8 +145,8 @@ class IlimapTextDocumentServiceTest {
         modelAwareService.didSave(new DidSaveTextDocumentParams(
                 new TextDocumentIdentifier("file:///mapping.ilimap"), validModelAwareMapping()));
 
-        assertThat(client.publishedDiagnostics()).hasSize(2);
-        PublishDiagnosticsParams params = client.publishedDiagnostics().get(1);
+        waitForPublishedDiagnosticCount(3);
+        PublishDiagnosticsParams params = client.publishedDiagnostics().get(2);
         assertThat(params.getUri()).isEqualTo("file:///mapping.ilimap");
         assertThat(params.getVersion()).isEqualTo(1);
         assertThat(params.getDiagnostics()).isEmpty();
@@ -174,6 +191,22 @@ class IlimapTextDocumentServiceTest {
                 """;
     }
 
+    private static String missingModeldirMapping() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "models/";
+                  }
+                  input src { path "in.xtf"; model "TestModel"; }
+                  output out { path "out.xtf"; model "TestModel"; }
+                  rule r1 {
+                    target out class "TestModel.TestTopic.TestClass";
+                    source s from src class "TestModel.TestTopic.TestClass";
+                  }
+                }
+                """;
+    }
+
     private static String missingSemicolonMapping() {
         return """
                 mapping v2 {
@@ -192,7 +225,7 @@ class IlimapTextDocumentServiceTest {
 
     private static final class CapturingLanguageClient implements LanguageClient {
 
-        private final List<PublishDiagnosticsParams> publishedDiagnostics = new ArrayList<>();
+        private final List<PublishDiagnosticsParams> publishedDiagnostics = new CopyOnWriteArrayList<>();
 
         List<PublishDiagnosticsParams> publishedDiagnostics() {
             return publishedDiagnostics;
@@ -216,5 +249,18 @@ class IlimapTextDocumentServiceTest {
 
         @Override
         public void logMessage(MessageParams message) {}
+    }
+
+    private void waitForPublishedDiagnosticCount(int count) {
+        long deadline = System.nanoTime() + 5_000_000_000L;
+        while (client.publishedDiagnostics().size() < count && System.nanoTime() < deadline) {
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        assertThat(client.publishedDiagnostics()).hasSizeGreaterThanOrEqualTo(count);
     }
 }

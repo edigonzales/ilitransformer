@@ -29,6 +29,10 @@ public final class IlimapModelIndexService {
         this.modelService = Objects.requireNonNull(modelService, "modelService");
     }
 
+    public void invalidateModelCache() {
+        modelService.clearCompileCache();
+    }
+
     public IlimapModelIndex buildIndex(IlimapAnalysis analysis, Path workspaceRoot) {
         Objects.requireNonNull(analysis, "analysis");
         Objects.requireNonNull(workspaceRoot, "workspaceRoot");
@@ -130,7 +134,11 @@ public final class IlimapModelIndexService {
                 .map(attribute -> new IlimapAttributeInfo(
                         attribute.name(), attribute.typeString(), attribute.mandatory(), attribute.cardinality()))
                 .toList();
-        return new IlimapClassInfo(classInventory.path(), classKind(classInventory), attributes);
+        List<IlimapRoleInfo> roles = classInventory.roles().stream()
+                .map(role ->
+                        new IlimapRoleInfo(role.name(), role.association(), role.targetClass(), role.cardinality()))
+                .toList();
+        return new IlimapClassInfo(classInventory.path(), classKind(classInventory), attributes, roles);
     }
 
     private static String classKind(ModelInventory.ClassInventory classInventory) {

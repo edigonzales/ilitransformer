@@ -9,6 +9,7 @@ import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapSourceStmt;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapTargetStmt;
 import guru.interlis.transformer.mapping.ilimap.semantic.IlimapSymbol;
+import guru.interlis.transformer.mapping.ilimap.semantic.IlimapSymbolKind;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -88,12 +89,41 @@ final class IlimapSymbolReferenceResolver {
                     .resolveRule(token.text())
                     .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
         }
+        if (isSourceAliasExpressionToken(analysis, token)) {
+            return currentRuleAt(analysis, token)
+                    .flatMap(rule -> analysis.symbols().scopeFor(rule).resolve(token.text()))
+                    .filter(symbol -> symbol.kind() == IlimapSymbolKind.SOURCE_ALIAS)
+                    .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
+        }
         if (isEnumMapSecondArgument(analysis, token)) {
             return analysis.symbols()
                     .resolveEnumMap(token.text())
                     .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
         }
         return Optional.empty();
+    }
+
+    private Optional<IlimapRuleBlock> currentRuleAt(IlimapAnalysis analysis, IlimapTokenAtPosition token) {
+        int tokenStart = positionResolver.rangeStartOffset(analysis, token.range());
+        return analysis.document().rules().stream()
+                .filter(rule -> rule.range().start().offset() <= tokenStart
+                        && tokenStart <= rule.range().end().offset())
+                .findFirst();
+    }
+
+    private boolean isSourceAliasExpressionToken(IlimapAnalysis analysis, IlimapTokenAtPosition token) {
+        Optional<IlimapExpressionText> expression = positionResolver.expressionAt(analysis, token.range());
+        if (expression.isEmpty()) {
+            return false;
+        }
+        int expressionStart = expression.get().range().start().offset();
+        int tokenStart = positionResolver.rangeStartOffset(analysis, token.range()) - expressionStart;
+        int tokenEnd = positionResolver.rangeEndOffset(analysis, token.range()) - expressionStart;
+        String text = expression.get().text();
+        return tokenStart >= 0
+                && tokenEnd < text.length()
+                && text.charAt(tokenEnd) == '.'
+                && (tokenStart == 0 || text.charAt(tokenStart - 1) != '.');
     }
 
     private boolean isDefinitionToken(

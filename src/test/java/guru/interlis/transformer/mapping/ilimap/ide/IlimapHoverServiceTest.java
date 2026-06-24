@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 class IlimapHoverServiceTest {
 
     private static final IlimapAnalysisOptions OPTIONS = IlimapAnalysisOptions.defaults(Path.of("."));
+    private static final IlimapAnalysisOptions MODEL_AWARE_OPTIONS = IlimapAnalysisOptions.modelAware(Path.of("."));
 
     private final IlimapAnalysisService analysisService = new IlimapAnalysisService();
     private final IlimapHoverService hoverService = new IlimapHoverService();
@@ -78,6 +79,39 @@ class IlimapHoverServiceTest {
     }
 
     @Test
+    void hoverShowsSourceAliasClassAndMembers() {
+        IlimapAnalysis analysis =
+                analysisService.analyze("file:///test.ilimap", associationMapping(), MODEL_AWARE_OPTIONS);
+
+        Optional<IlimapHover> hover =
+                hoverService.hoverAt(analysis, positionAt(analysis, "sourceRef c.ChildRole", "sourceRef c".length()));
+
+        assertThat(hover).isPresent();
+        assertThat(hover.get().markdown())
+                .contains("**source `c`**")
+                .contains("Input: `src`")
+                .contains("Class: `AssocModel.AssocTopic.Child`")
+                .contains("Attributes: `Name`, `Wert`")
+                .contains("Roles:")
+                .contains("`ChildRole`");
+    }
+
+    @Test
+    void hoverShowsSourceRoleMember() {
+        IlimapAnalysis analysis =
+                analysisService.analyze("file:///test.ilimap", associationMapping(), MODEL_AWARE_OPTIONS);
+
+        Optional<IlimapHover> hover = hoverService.hoverAt(
+                analysis, positionAt(analysis, "sourceRef c.ChildRole", "sourceRef c.Child".length()));
+
+        assertThat(hover).isPresent();
+        assertThat(hover.get().markdown())
+                .contains("**role `c.ChildRole`**")
+                .contains("Association: `ParentChild`")
+                .contains("Cardinality: `0..*`");
+    }
+
+    @Test
     void returnsEmptyForUnknownSymbol() {
         String source = validMapping().replace("enumMap(s.X, Quality)", "coalesce(s.X, Quality)");
         IlimapAnalysis analysis = analyze(source);
@@ -118,6 +152,29 @@ class IlimapHoverServiceTest {
                     }
                     ref Parent {
                       target rule r1 sourceRef s.Parent;
+                    }
+                  }
+                }
+                """;
+    }
+
+    private static String associationMapping() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "AssocModel"; format xtf; }
+                  output out { path "out.xtf"; model "AssocModel"; format xtf; }
+                  rule rParent {
+                    target out class "AssocModel.AssocTopic.Parent";
+                    source p from src class "AssocModel.AssocTopic.Parent";
+                  }
+                  rule rChild {
+                    target out class "AssocModel.AssocTopic.Child";
+                    source c from src class "AssocModel.AssocTopic.Child";
+                    ref ParentRole {
+                      target rule rParent sourceRef c.ChildRole;
                     }
                   }
                 }

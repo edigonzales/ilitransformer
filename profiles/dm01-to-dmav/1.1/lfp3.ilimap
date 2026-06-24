@@ -4,8 +4,7 @@ mapping v2 "dm01-to-dmav-lfp3" {
     direction dm01-to-dmav;
     failPolicy strict;
     compileMode strict;
-    modeldir "https://models.geo.admin.ch/";
-    modeldir "models/";
+    modeldir "https://models.geo.admin.ch";
   }
 
   input dm01 {

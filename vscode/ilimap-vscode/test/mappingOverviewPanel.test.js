@@ -11,10 +11,14 @@ test('openMappingOverview requests active document summary and renders webview',
   const panels = [];
   const messages = [];
   const outputLines = [];
+  const progressTitles = [];
 
   const vscodeMock = {
     ViewColumn: {
       Beside: 2
+    },
+    ProgressLocation: {
+      Notification: 15
     },
     window: {
       activeTextEditor: {
@@ -52,6 +56,10 @@ test('openMappingOverview requests active document summary and renders webview',
       },
       showErrorMessage(message) {
         messages.push({ kind: 'error', message });
+      },
+      withProgress(options, task) {
+        progressTitles.push(options.title);
+        return task();
       }
     }
   };
@@ -132,6 +140,7 @@ test('openMappingOverview requests active document summary and renders webview',
       }
     }
   ]);
+  assert.deepEqual(progressTitles, ['Opening ilimap mapping overview']);
   assert.equal(messages.length, 0);
   assert.equal(outputLines.length, 0);
   assert.equal(panels.length, 1);

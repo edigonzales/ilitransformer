@@ -83,7 +83,15 @@ public final class IlimapCompletionContextResolver {
         }
         if (isExpressionPosition(analysis.document(), offset)) {
             return new IlimapCompletionContext(
-                    IlimapCompletionContextKind.EXPRESSION, prefix, currentRule, currentNode);
+                    IlimapCompletionContextKind.SOURCE_ALIAS,
+                    prefix,
+                    currentRule,
+                    currentNode,
+                    null,
+                    identifierRangeAt(analysis, offset));
+        }
+        if (currentNode instanceof IlimapJobBlock) {
+            return new IlimapCompletionContext(IlimapCompletionContextKind.JOB_BLOCK, prefix, currentRule, currentNode);
         }
         if (currentRule != null) {
             return new IlimapCompletionContext(

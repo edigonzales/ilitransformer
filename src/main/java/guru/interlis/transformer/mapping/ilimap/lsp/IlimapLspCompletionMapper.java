@@ -37,6 +37,7 @@ public final class IlimapLspCompletionMapper {
             case CLASS -> CompletionItemKind.Class;
             case FUNCTION -> CompletionItemKind.Function;
             case ATTRIBUTE -> CompletionItemKind.Field;
+            case ROLE -> CompletionItemKind.Reference;
             case VALUE -> CompletionItemKind.Value;
         };
     }

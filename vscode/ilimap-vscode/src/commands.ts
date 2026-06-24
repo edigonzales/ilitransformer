@@ -11,6 +11,12 @@ interface IlimapValidateMappingParams {
   version: number;
 }
 
+interface IlimapValidateMappingResult {
+  available: boolean;
+  message: string;
+  diagnosticCount: number;
+}
+
 export function registerCommands(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('ilimap.restartLanguageServer', async () => {
@@ -60,11 +66,25 @@ async function validateActiveMapping(outputChannel: vscode.OutputChannel): Promi
   }
 
   try {
-    await client.sendRequest(validateMappingRequest, {
-      uri: editor.document.uri.toString(),
-      text: editor.document.getText(),
-      version: editor.document.version
-    } satisfies IlimapValidateMappingParams);
+    const result = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Validating ilimap mapping'
+      },
+      () =>
+        client.sendRequest<IlimapValidateMappingResult>(validateMappingRequest, {
+          uri: editor.document.uri.toString(),
+          text: editor.document.getText(),
+          version: editor.document.version
+        } satisfies IlimapValidateMappingParams)
+    );
+    if (!result.available) {
+      const message = result.message || 'No ilimap validation result is available.';
+      outputChannel.appendLine(`ilimap validation unavailable: ${message}`);
+      vscode.window.showErrorMessage(message);
+      return false;
+    }
+    outputChannel.appendLine(`ilimap validation completed with ${result.diagnosticCount} diagnostics.`);
     return true;
   } catch (error) {
     outputChannel.appendLine(`Failed to validate ilimap mapping: ${errorMessage(error)}`);

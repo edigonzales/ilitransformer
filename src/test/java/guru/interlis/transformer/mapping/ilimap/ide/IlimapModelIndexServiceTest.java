@@ -33,6 +33,19 @@ class IlimapModelIndexServiceTest {
     }
 
     @Test
+    void mapsRolesFromModelInventory() {
+        IlimapAnalysis analysis =
+                analysisService.analyze("file:///test.ilimap", associationMapping(), MODEL_AWARE_OPTIONS);
+
+        assertThat(analysis.diagnostics()).isEmpty();
+        assertThat(analysis.modelIndex().findClass("AssocModel.AssocTopic.Parent"))
+                .get()
+                .satisfies(classInfo -> assertThat(classInfo.roles())
+                        .extracting(IlimapRoleInfo::name)
+                        .contains("ParentRole"));
+    }
+
+    @Test
     void missingModeldirProducesDiagnosticWithoutCrash() {
         IlimapAnalysis analysis =
                 analysisService.analyze("file:///test.ilimap", missingModeldirMapping(), MODEL_AWARE_OPTIONS);
@@ -64,5 +77,24 @@ class IlimapModelIndexServiceTest {
 
     private static String missingModeldirMapping() {
         return validMapping().replace("src/test/data/models/", "src/test/data/missing-models/");
+    }
+
+    private static String associationMapping() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "AssocModel"; }
+                  output out { path "out.xtf"; model "AssocModel"; }
+                  rule r1 {
+                    target out class "AssocModel.AssocTopic.Parent";
+                    source p from src class "AssocModel.AssocTopic.Parent";
+                    assign {
+                      Name = p.Name;
+                    }
+                  }
+                }
+                """;
     }
 }

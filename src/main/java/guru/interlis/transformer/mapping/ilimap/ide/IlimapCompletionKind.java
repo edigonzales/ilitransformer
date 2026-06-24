@@ -10,5 +10,6 @@ public enum IlimapCompletionKind {
     CLASS,
     FUNCTION,
     ATTRIBUTE,
+    ROLE,
     VALUE
 }
