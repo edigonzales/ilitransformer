@@ -244,9 +244,9 @@ Das `gpkg`-Format ist ebenfalls als tabellarisches Eingabeformat aktiv und werte
 | `table` | *(Pflicht)* | Tabellenname in der GeoPackage-Datei |
 | `fetchSize` | `10000` | Zeilen pro Datenbank-Roundtrip |
 
-GeoPackage ist in dieser Phase ein bewusst flaches, nur lesbares Eingabeformat ohne Geometrie.
+GeoPackage ist in dieser Phase ein nur lesbares Eingabeformat mit optionaler Punktgeometrie.
 Strukturen und Referenzen kann es nicht ausdruecken. Ein vollstaendiges Beispiel liegt unter
-`examples/gpkg-to-xtf/`.
+`examples/gpkg-to-xtf/`. Ein Beispiel mit Punktgeometrie liegt unter `examples/gpkg-spatial-to-xtf/`.
 
 ### oid
 

@@ -1,0 +1,42 @@
+version: 1
+
+job:
+  name: "gpkg-spatial-to-xtf-demo"
+  description: "Transform a spatial GeoPackage table with point geometry into a valid INTERLIS 2.4 XTF transfer"
+  modeldir:
+    - "models"
+  inputs:
+    - id: gpkg-input
+      path: "input/stations.gpkg"
+      model: "DemoSpatialSource"
+      format: gpkg
+      options:
+        table: "stations"
+        fetchSize: "10000"
+  outputs:
+    - id: xtf-output
+      path: "build/out/stations.xtf"
+      model: "DemoSpatialTarget"
+      format: xtf
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "gpkg-spatial-to-xtf-demo"
+  basketStrategy:
+    default: byTopic
+  rules:
+    - id: station
+      target:
+        output: xtf-output
+        class: "DemoSpatialTarget.Catalog.Station"
+      sources:
+        - alias: src
+          input: gpkg-input
+          class: "DemoSpatialSource.Data.Station"
+      identity:
+        sourceKey: ["src.identifier"]
+      assign:
+        Identifier: "src.identifier"
+        Name: "src.name"
+        Geometry: "src.geom"

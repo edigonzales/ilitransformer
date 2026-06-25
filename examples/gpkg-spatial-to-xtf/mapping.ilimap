@@ -1,0 +1,40 @@
+mapping v2 "gpkg-spatial-to-xtf-demo" {
+  job {
+    description "Transform a spatial GeoPackage table with point geometry into a valid INTERLIS 2.4 XTF transfer";
+    modeldir "models";
+    failPolicy strict;
+  }
+
+  input gpkg-input {
+    path "input/stations.gpkg";
+    model "DemoSpatialSource";
+    format gpkg;
+    option table "stations";
+    option fetchSize 10000;
+  }
+
+  output xtf-output {
+    path "build/out/stations.xtf";
+    model "DemoSpatialTarget";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "gpkg-spatial-to-xtf-demo";
+  }
+
+  basket byTopic;
+
+  rule station {
+    target xtf-output class "DemoSpatialTarget.Catalog.Station";
+    source src from gpkg-input class "DemoSpatialSource.Data.Station";
+    identity src.identifier;
+
+    assign {
+      Identifier = src.identifier;
+      Name = src.name;
+      Geometry = src.geom;
+    }
+  }
+}
