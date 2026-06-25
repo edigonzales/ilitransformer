@@ -23,6 +23,10 @@ public final class EndianByteBuffer {
         return new EndianByteBuffer(ByteBuffer.wrap(array, offset, length).slice());
     }
 
+    public static EndianByteBuffer wrap(ByteBuffer buffer) {
+        return new EndianByteBuffer(buffer);
+    }
+
     public ByteBuffer buffer() {
         return buffer;
     }
