@@ -211,3 +211,187 @@ test('openMappingOverview requests active document summary and renders webview',
   assert.equal(selections[0].anchor.character, 3);
   assert.equal(revealedRanges.length, 1);
 });
+
+test('openMappingOverview reuses panel without registering duplicate message handlers', async (t) => {
+  let createPanelCalls = 0;
+  let handlerRegistrations = 0;
+  const openedDocuments = [];
+  let panel;
+
+  function makeEditor(uriString, fsPath) {
+    return {
+      document: {
+        languageId: 'ilimap',
+        uri: {
+          fsPath,
+          toString() {
+            return uriString;
+          }
+        }
+      }
+    };
+  }
+
+  const firstUri = 'file:///tmp/first.ilimap';
+  const secondUri = 'file:///tmp/second.ilimap';
+
+  const vscodeMock = {
+    ViewColumn: {
+      One: 1,
+      Beside: 2
+    },
+    ProgressLocation: {
+      Notification: 15
+    },
+    TextEditorRevealType: {
+      InCenterIfOutsideViewport: 2
+    },
+    Position: class Position {
+      constructor(line, character) {
+        this.line = line;
+        this.character = character;
+      }
+    },
+    Range: class Range {
+      constructor(start, end) {
+        this.start = start;
+        this.end = end;
+      }
+    },
+    Selection: class Selection {
+      constructor(anchor, active) {
+        this.anchor = anchor;
+        this.active = active;
+      }
+    },
+    Uri: {
+      parse(value) {
+        return { value };
+      }
+    },
+    workspace: {
+      async openTextDocument(uri) {
+        openedDocuments.push(uri.value);
+        return { uri };
+      }
+    },
+    window: {
+      activeTextEditor: makeEditor(firstUri, '/tmp/first.ilimap'),
+      createWebviewPanel(viewType, title, column, options) {
+        createPanelCalls += 1;
+        panel = {
+          viewType,
+          title,
+          column,
+          options,
+          webview: {
+            html: '',
+            onDidReceiveMessage(callback) {
+              handlerRegistrations += 1;
+              panel.messageCallback = callback;
+              return {
+                dispose() {
+                  panel.handlerDisposed = true;
+                }
+              };
+            }
+          },
+          reveal(nextColumn) {
+            panel.revealed = nextColumn;
+          },
+          onDidDispose(callback) {
+            panel.disposeCallback = callback;
+          }
+        };
+        return panel;
+      },
+      showInformationMessage() {},
+      showErrorMessage() {},
+      withProgress(options, task) {
+        return task();
+      },
+      async showTextDocument(document, column, preserveFocus) {
+        return {
+          document,
+          column,
+          preserveFocus,
+          set selection(value) {
+            this._selection = value;
+          },
+          revealRange() {}
+        };
+      }
+    }
+  };
+
+  const clientMock = {
+    async sendRequest(method, params) {
+      const mappingName = params.uri.includes('second') ? 'SecondProfile' : 'FirstProfile';
+      return {
+        available: true,
+        message: '',
+        mappingName,
+        inputCount: 0,
+        outputCount: 0,
+        ruleCount: 0,
+        enumMapCount: 0,
+        bagCount: 0,
+        refCount: 0,
+        errorCount: 0,
+        warningCount: 0,
+        informationCount: 0,
+        hintCount: 0,
+        inputs: [],
+        outputs: [],
+        enumMaps: [],
+        rules: [],
+        diagnostics: [],
+        coverageAvailable: true,
+        coverageMessage: '',
+        classCoverage: [],
+        ruleCoverage: []
+      };
+    }
+  };
+
+  const originalLoad = Module._load;
+  Module._load = function mockedLoad(request, parent, isMain) {
+    if (request === 'vscode') {
+      return vscodeMock;
+    }
+    if (request === '../client') {
+      return {
+        getLanguageClient() {
+          return clientMock;
+        }
+      };
+    }
+    return originalLoad.call(this, request, parent, isMain);
+  };
+
+  delete require.cache[distPanelPath];
+  const panelModule = require(distPanelPath);
+  t.after(() => {
+    delete require.cache[distPanelPath];
+    Module._load = originalLoad;
+  });
+
+  const context = { extensionUri: { fsPath: extensionRoot } };
+  const outputChannel = { appendLine() {} };
+
+  vscodeMock.window.activeTextEditor = makeEditor(firstUri, '/tmp/first.ilimap');
+  await panelModule.openMappingOverview(context, outputChannel);
+
+  vscodeMock.window.activeTextEditor = makeEditor(secondUri, '/tmp/second.ilimap');
+  await panelModule.openMappingOverview(context, outputChannel);
+
+  assert.equal(createPanelCalls, 1);
+  assert.equal(handlerRegistrations, 1);
+  assert.equal(panel.revealed, vscodeMock.ViewColumn.Beside);
+  assert.match(panel.webview.html, /SecondProfile/);
+  assert.doesNotMatch(panel.webview.html, /FirstProfile/);
+
+  await panel.messageCallback({ type: 'navigate', line: 2, character: 4 });
+  assert.equal(openedDocuments.length, 1);
+  assert.equal(openedDocuments[0], secondUri);
+});

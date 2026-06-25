@@ -9,7 +9,13 @@ import {
   type IlimapMappingSummaryParams
 } from './mappingOverviewMessages';
 
-let currentPanel: vscode.WebviewPanel | undefined;
+interface MappingOverviewPanelState {
+  panel: vscode.WebviewPanel;
+  uri: string;
+  disposables: vscode.Disposable[];
+}
+
+let currentPanelState: MappingOverviewPanelState | undefined;
 
 export async function openMappingOverview(
   context: vscode.ExtensionContext,
@@ -47,18 +53,22 @@ export async function openMappingOverview(
     return;
   }
 
-  const panel = createOrRevealPanel(context);
-  registerNavigationHandler(panel, uri, outputChannel);
-  panel.webview.html = renderMappingOverviewHtml(summary, nonce());
+  const state = createOrRevealPanelState(context, uri, outputChannel);
+  state.panel.webview.html = renderMappingOverviewHtml(summary, nonce());
 }
 
-function createOrRevealPanel(context: vscode.ExtensionContext): vscode.WebviewPanel {
-  if (currentPanel) {
-    currentPanel.reveal(vscode.ViewColumn.Beside);
-    return currentPanel;
+function createOrRevealPanelState(
+  context: vscode.ExtensionContext,
+  uri: string,
+  outputChannel: vscode.OutputChannel
+): MappingOverviewPanelState {
+  if (currentPanelState) {
+    currentPanelState.uri = uri;
+    currentPanelState.panel.reveal(vscode.ViewColumn.Beside);
+    return currentPanelState;
   }
 
-  currentPanel = vscode.window.createWebviewPanel(
+  const panel = vscode.window.createWebviewPanel(
     'ilimapMappingOverview',
     'ilimap Mapping Overview',
     vscode.ViewColumn.Beside,
@@ -68,23 +78,31 @@ function createOrRevealPanel(context: vscode.ExtensionContext): vscode.WebviewPa
       localResourceRoots: [context.extensionUri]
     }
   );
-  currentPanel.onDidDispose(() => {
-    currentPanel = undefined;
+
+  const state: MappingOverviewPanelState = { panel, uri, disposables: [] };
+  state.disposables.push(registerNavigationHandler(state, outputChannel));
+  panel.onDidDispose(() => {
+    for (const disposable of state.disposables) {
+      disposable?.dispose?.();
+    }
+    state.disposables.length = 0;
+    currentPanelState = undefined;
   });
-  return currentPanel;
+
+  currentPanelState = state;
+  return state;
 }
 
 function registerNavigationHandler(
-  panel: vscode.WebviewPanel,
-  uri: string,
+  state: MappingOverviewPanelState,
   outputChannel: vscode.OutputChannel
-): void {
-  panel.webview.onDidReceiveMessage(async message => {
+): vscode.Disposable {
+  return state.panel.webview.onDidReceiveMessage(async message => {
     if (!isNavigationMessage(message)) {
       return;
     }
     try {
-      const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
+      const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(state.uri));
       const editor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One, false);
       const position = new vscode.Position(message.line, message.character);
       editor.selection = new vscode.Selection(position, position);

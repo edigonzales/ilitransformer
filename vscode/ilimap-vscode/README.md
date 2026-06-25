@@ -71,16 +71,18 @@ This keeps local development simple while allowing published builds to work with
 
 ## Mapping Overview
 
-Run `ilimap: Open Mapping Overview` while an `.ilimap` editor is active to open a read-only summary beside the editor. The webview shows counts and lists for:
+Run `ilimap: Open Mapping Overview` while an `.ilimap` editor is active to open a read-only summary beside the editor. The webview shows:
 
-- inputs
-- outputs
-- enum maps
-- rules
-- bags and refs
+- a summary with counts and lists for inputs, outputs, enum maps, rules, bags and refs
 - diagnostics
+- class coverage
+- rule coverage
 
-The overview does not edit mappings and does not calculate coverage values.
+The overview is read-only: it does not edit mappings. It does compute and display class coverage and rule coverage.
+
+## Developer notes
+
+Further DX roadmap: see `./docs/ilimap-vscode-mapping-overview-dx-spec.md`.
 
 ## Local Development
 
