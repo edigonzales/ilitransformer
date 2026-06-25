@@ -65,6 +65,7 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
                 new CodeActionOptions(List.of(CodeActionKind.QuickFix, CodeActionKind.Source)));
         CompletionOptions completionOptions = new CompletionOptions();
         completionOptions.setResolveProvider(false);
+        completionOptions.setTriggerCharacters(List.of(".", "\""));
         capabilities.setCompletionProvider(completionOptions);
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }

@@ -368,9 +368,23 @@ public final class IlimapCompletionService {
         if (context.currentRule() == null || context.qualifier() == null) {
             return List.of();
         }
-        return sourceClassForAlias(analysis, context.currentRule(), context.qualifier())
-                .map(classInfo -> memberItems(classInfo, context))
-                .orElseGet(List::of);
+        Optional<IlimapClassInfo> classInfo = sourceClassForAlias(analysis, context.currentRule(), context.qualifier());
+        if (classInfo.isEmpty() && "t".equals(context.qualifier())) {
+            classInfo = targetClassForRule(analysis, context.currentRule());
+        }
+        if (classInfo.isEmpty()) {
+            return modelUnavailableHint(context);
+        }
+        return memberItems(classInfo.get(), context);
+    }
+
+    private static List<IlimapCompletionItem> modelUnavailableHint(IlimapCompletionContext context) {
+        return List.of(new IlimapCompletionItem(
+                "Validate or save to load models",
+                IlimapCompletionKind.VALUE,
+                "Models not loaded",
+                "Run Validate Mapping or save the file to load INTERLIS models and enable attribute completions.",
+                "Validate or save to load models"));
     }
 
     private static List<IlimapCompletionItem> attributeItems(

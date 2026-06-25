@@ -180,6 +180,17 @@ class IlimapCompletionServiceTest {
         });
     }
 
+    @Test
+    void showsModelUnavailableHintForUnknownAlias() {
+        List<IlimapCompletionItem> items = complete(mappingWithExpression("X = q.;"), "q.", "q.".length());
+
+        assertThat(items).singleElement().satisfies(item -> {
+            assertThat(item.label()).isEqualTo("Validate or save to load models");
+            assertThat(item.kind()).isEqualTo(IlimapCompletionKind.VALUE);
+            assertThat(item.documentation()).contains("INTERLIS models");
+        });
+    }
+
     private List<IlimapCompletionItem> complete(String source, String needle, int cursorDelta) {
         IlimapAnalysis analysis = analysisService.analyze("file:///test.ilimap", source, OPTIONS);
         int offset = source.indexOf(needle);

@@ -65,6 +65,29 @@ class IlimapModelAwareCompletionTest {
         assertThat(items).extracting(IlimapCompletionItem::label).contains("Name", "Wert", "ChildRole");
     }
 
+    @Test
+    void completesTargetAttributesViaTDot() {
+        List<IlimapCompletionItem> items = complete(mappingWithExpression("Beschreibung = t.;"), "= t.", "= t.".length());
+
+        assertThat(items).extracting(IlimapCompletionItem::label).contains("Name", "Beschreibung", "Anzahl", "Aktiv");
+        assertThat(items).allSatisfy(item -> {
+            assertThat(List.of(IlimapCompletionKind.ATTRIBUTE, IlimapCompletionKind.ROLE))
+                    .contains(item.kind());
+            assertThat(item.replacementRange()).isNotNull();
+        });
+    }
+
+    @Test
+    void completesTargetAttributesViaTDotWithPrefix() {
+        List<IlimapCompletionItem> items = complete(mappingWithExpression("X = t.Na;"), "= t.Na", "= t.Na".length());
+
+        assertThat(items).extracting(IlimapCompletionItem::label).contains("Name");
+        assertThat(items).allSatisfy(item -> {
+            assertThat(item.kind()).isEqualTo(IlimapCompletionKind.ATTRIBUTE);
+            assertThat(item.label()).startsWith("Na");
+        });
+    }
+
     private List<IlimapCompletionItem> complete(String source, String needle) {
         return complete(source, needle, needle.length());
     }

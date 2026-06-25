@@ -44,6 +44,8 @@ class IlimapCompletionLspTest {
         assertThat(result.getCapabilities().getCompletionProvider()).isNotNull();
         assertThat(result.getCapabilities().getCompletionProvider().getResolveProvider())
                 .isFalse();
+        assertThat(result.getCapabilities().getCompletionProvider().getTriggerCharacters())
+                .containsExactly(".", "\"");
     }
 
     @Test
