@@ -177,7 +177,10 @@ class ExamplesContractTest {
                 "gpkg-to-xtf",
                 "gpkg-spatial-to-xtf",
                 "jdbc-to-xtf",
-                "jdbc-spatial-to-xtf");
+                "jdbc-spatial-to-xtf",
+                "shp-to-xtf",
+                "shp-polyline-to-xtf",
+                "shp-polygon-to-xtf");
     }
 
     private static List<Arguments> exampleMappings() {
@@ -193,7 +196,11 @@ class ExamplesContractTest {
                 Arguments.of("jdbc-to-xtf", "mapping.yaml"),
                 Arguments.of("jdbc-to-xtf", "mapping.ilimap"),
                 Arguments.of("jdbc-spatial-to-xtf", "mapping.yaml"),
-                Arguments.of("jdbc-spatial-to-xtf", "mapping.ilimap"));
+                Arguments.of("jdbc-spatial-to-xtf", "mapping.ilimap"),
+                Arguments.of("shp-to-xtf", "mapping.yaml"),
+                Arguments.of("shp-to-xtf", "mapping.ilimap"),
+                Arguments.of("shp-polyline-to-xtf", "mapping.yaml"),
+                Arguments.of("shp-polygon-to-xtf", "mapping.yaml"));
     }
 
     private static String readFile(Path path) {

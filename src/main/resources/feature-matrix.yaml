@@ -242,6 +242,33 @@ entries:
     description: "Parse DM01/DMAV correlation workbook"
     testReferences:
       - "CorrelationWorkbookImporterTest"
+  - feature: "Shapefile Input (Reader)"
+    phase: "Phases 1-6"
+    status: SUPPORTED
+    description: "Read Point, MultiPoint, PolyLine, Polygon 2D Shapefiles with DBF attribute mapping, encoding detection, sidecar validation and ZIP input; one Shapefile = one flat source class"
+    testReferences:
+      - "ShapefileFormatProviderTest"
+      - "ShapefileOptionsTest"
+      - "ShpReaderTest"
+      - "DbfReaderTest"
+      - "DbfToIomMapperTest"
+      - "ShpGeometryDecoderTest"
+      - "ShpPointToXtfIntegrationTest"
+      - "ShpPolylineToXtfIntegrationTest"
+      - "ShpPolygonToXtfIntegrationTest"
+  - feature: "Shapefile Output (Writer)"
+    phase: "Phases 7-8"
+    status: SUPPORTED
+    description: "Write one class / one geometry type per Shapefile dataset (.shp/.shx/.dbf/.cpg); streaming low-level writer with header patching, model-driven DBF schema, field name strategies, and .iliattr.json sidecar"
+    testReferences:
+      - "ShapefileFormatProviderTest"
+      - "ShapefileDatasetWriterTest"
+      - "DbfWriterTest"
+      - "ShpGeometryEncoderTest"
+      - "ShapefileIoxWriterTest"
+      - "DbfNameMapperTest"
+      - "ShapefileWriterPerformanceGuardTest"
+      - "NoGeoToolsImportTest"
   - feature: "DM01→DMAV LFP3 pilot"
     phase: "10"
     status: SUPPORTED
@@ -260,11 +287,19 @@ entries:
     description: "Pos tables to BAG OF Textposition in both directions"
     testReferences:
       - "Dm01ToDmavLfp3IntegrationTest"
-  - feature: "enumMap()"
+  - feature: "enumMap(), enumMapDefault(), enumMapStrict()"
     phase: "15"
-    status: STUB
-    description: "Enum mapping pass-through with diagnostic warning"
-    testReferences: []
+    status: SUPPORTED
+    description: "Enum mapping with configurable missing-value policies: warn+null, fallback, strict error"
+    testReferences:
+      - "BuiltinFunctionsTest"
+      - "EnumTargetValidationTest"
+  - feature: "lookup(), lookupIn()"
+    phase: "16"
+    status: PARTIAL
+    description: "SourceLookupIndex queries: unscoped lookup() searches all inputs; lookupIn() restricts to inputId. Return type UNKNOWN at compile time."
+    testReferences:
+      - "LookupFunctionsTest"
   - feature: "Joins / Splits / Merge"
     phase: "22"
     status: EXPERIMENTAL

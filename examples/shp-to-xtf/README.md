@@ -2,9 +2,10 @@
 
 This example transforms a **Point Shapefile** into a valid **INTERLIS 2.4 XTF** transfer file.
 
-Shapefile is a read-only source format. It reads a single Shapefile dataset (`*.shp` + `*.dbf`)
+Shapefile is an input and output format. The Reader reads a single Shapefile dataset (`*.shp` + `*.dbf`)
 and maps DBF columns and SHP geometry to the attributes of one class of the source model.
-Support is now available for Point (shape type 1), PolyLine (3) and Polygon (5) 2D geometries.
+The Writer supports one class / one geometry type per shapefile dataset (see `docs/formats.md`).
+Supported geometry types: Point (1), MultiPoint (8), PolyLine (3) and Polygon (5) 2D.
 
 ## Files
 

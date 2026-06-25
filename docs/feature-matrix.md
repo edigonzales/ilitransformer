@@ -40,10 +40,13 @@
 | validate-mapping mit compileTyped und modeldirs | 25 | ✅ SUPPORTED | validate-mapping fuehrt compileTyped mit CLI-modeldirs aus | ValidateMappingTypedCliTest |
 | ITF/XTF I/O via iox-ili | 5 | ✅ SUPPORTED | Read and write INTERLIS transfer files | SurfaceAreaItfIntegrationTest, GeometryIntegrationTest |
 | XLSX correlation import | 8 | ✅ SUPPORTED | Parse DM01/DMAV correlation workbook | CorrelationWorkbookImporterTest |
+| Shapefile Input (Reader) | Phases 1-6 | ✅ SUPPORTED | Read Point, MultiPoint, PolyLine, Polygon 2D Shapefiles with DBF attribute mapping, encoding detection, sidecar validation and ZIP input; one Shapefile = one flat source class | ShapefileFormatProviderTest, ShapefileOptionsTest, ShpReaderTest, DbfReaderTest, DbfToIomMapperTest, ShpGeometryDecoderTest, ShpPointToXtfIntegrationTest, ShpPolylineToXtfIntegrationTest, ShpPolygonToXtfIntegrationTest |
+| Shapefile Output (Writer) | Phases 7-8 | ✅ SUPPORTED | Write one class / one geometry type per Shapefile dataset (.shp/.shx/.dbf/.cpg); streaming low-level writer with header patching, model-driven DBF schema, field name strategies, and .iliattr.json sidecar | ShapefileFormatProviderTest, ShapefileDatasetWriterTest, DbfWriterTest, ShpGeometryEncoderTest, ShapefileIoxWriterTest, DbfNameMapperTest, ShapefileWriterPerformanceGuardTest, NoGeoToolsImportTest |
 | DM01→DMAV LFP3 pilot | 10 | ✅ SUPPORTED | LFP3 transformation DM01 to DMAV with golden test | Dm01ToDmavLfp3IntegrationTest |
 | DMAV→DM01 LFP3 pilot | 11 | ✅ SUPPORTED | LFP3 transformation DMAV to DM01 with golden test | DmavToDm01Lfp3IntegrationTest |
 | BAG OF STRUCTURE (Textpositionen) | 12 | ✅ SUPPORTED | Pos tables to BAG OF Textposition in both directions | Dm01ToDmavLfp3IntegrationTest |
-| enumMap() | 15 | 📌 STUB | Enum mapping pass-through with diagnostic warning |  |
+| enumMap(), enumMapDefault(), enumMapStrict() | 15 | ✅ SUPPORTED | Enum mapping with configurable missing-value policies: warn+null, fallback, strict error | BuiltinFunctionsTest, EnumTargetValidationTest |
+| lookup(), lookupIn() | 16 | 🟡 PARTIAL | SourceLookupIndex queries: unscoped lookup() searches all inputs; lookupIn() restricts to inputId. Return type UNKNOWN at compile time. | LookupFunctionsTest |
 | Joins / Splits / Merge | 22 | 🔬 EXPERIMENTAL | Multi-source equi-joins (max 1 join per rule), create directives, rule dependency ordering | JoinCompilationTest, CreateCompilationTest, CreateAdditionalObjectIntegrationTest |
 | RuleDispatchIndex | 26 | ✅ SUPPORTED | Pre-computed O(1) rule dispatch per (inputId, sourceClass); eliminates SourceRecord x Rule full scan | RuleDispatchIndexTest |
 | ExecutionMetrics und Performance-Report | 26 | ✅ SUPPORTED | Laufzeitmessung, Join-/BAG-Lookup-Zähler, Targets-by-Class; integriert in JSON/Markdown-Report | ExecutionMetricsTest |

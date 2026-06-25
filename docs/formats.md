@@ -471,7 +471,7 @@ Unbekannte Formate oder fehlerhafte Optionen werden mit praezisen Diagnostics ab
 
 ```
 [ERROR] IO_FORMAT_UNKNOWN: Unknown input format 'xyz' for input 'source'.
-Available input formats: itf, xtf, xml, csv, gpkg, jdbc.
+Available input formats: itf, xtf, xml, csv, gpkg, jdbc, shp.
 
 [ERROR] IO_OPTION_INVALID: Invalid option 'separator' for input 'source':
 expected a single character, got '::'.
