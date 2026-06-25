@@ -57,7 +57,8 @@ class ShapefileFormatProviderTest {
 
     @Test
     void openReaderReportsControlledNotImplemented() {
-        InputBinding binding = new InputBinding("parcels", Path.of("parcels.shp"), "DemoShpSource", "shp", null, null, null);
+        InputBinding binding =
+                new InputBinding("parcels", Path.of("parcels.shp"), "DemoShpSource", "shp", null, null, null);
         FormatOpenContext context = new FormatOpenContext(null, null, new DiagnosticCollector());
         assertThatThrownBy(() -> provider.openReader(binding, context))
                 .isInstanceOf(ShapefileMappingException.class)
