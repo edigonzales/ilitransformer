@@ -87,6 +87,30 @@ public final class JobConfig {
 
         /** Optional column-label -&gt; attribute-name overrides. */
         public Map<String, String> columns = new LinkedHashMap<>();
+
+        /** Optional spatial geometry column mappings (Phase 7). */
+        public List<JdbcGeometrySpec> geometry = new ArrayList<>();
+    }
+
+    /**
+     * Maps a JDBC result-set column containing encoded geometry (WKT or WKB) to a source model
+     * geometry attribute (Phase 7).
+     */
+    public static final class JdbcGeometrySpec {
+        /** The INTERLIS source attribute name this geometry maps to. */
+        public String attribute;
+
+        /** The result-set column label that holds the encoded geometry. */
+        public String column;
+
+        /** Geometry encoding: {@code wkt}, {@code wkb}, or {@code ewkb}. */
+        public String encoding;
+
+        /** Geometry type: {@code coord}, {@code polyline}, or {@code surface}. Auto-detect from model if absent. */
+        public String type;
+
+        /** SRID override (optional). */
+        public Integer srid;
     }
 
     // -- OutputSpec --------------------------------------------------------

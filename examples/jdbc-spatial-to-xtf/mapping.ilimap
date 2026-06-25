@@ -1,0 +1,48 @@
+mapping v2 "jdbc-spatial-to-xtf-demo" {
+  job {
+    description "Transform a JDBC query result with WKT point geometry into a valid INTERLIS 2.4 XTF transfer";
+    modeldir "models";
+    failPolicy strict;
+  }
+
+  input jdbc-input {
+    model "DemoJdbcSpatialSource";
+    format jdbc;
+    connection {
+      driver "org.sqlite.JDBC";
+      url "jdbc:sqlite:build/demo.sqlite";
+    }
+    query stations {
+      topic "DemoJdbcSpatialSource.Data";
+      class "DemoJdbcSpatialSource.Data.Station";
+      basketId "b1";
+      oidColumn "id";
+      sql "select id, identifier, name, geom_wkt from stations";
+    }
+  }
+
+  output xtf-output {
+    path "build/out/stations.xtf";
+    model "DemoJdbcSpatialTarget";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "jdbc-spatial-to-xtf-demo";
+  }
+
+  basket byTopic;
+
+  rule station {
+    target xtf-output class "DemoJdbcSpatialTarget.Catalog.Station";
+    source src from jdbc-input class "DemoJdbcSpatialSource.Data.Station";
+    identity src.identifier;
+
+    assign {
+      Identifier = src.identifier;
+      Name = src.name;
+      Geometry = src.geom;
+    }
+  }
+}

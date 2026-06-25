@@ -8,18 +8,24 @@ import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.IoxWriter;
 
 /**
- * Provider for generic, tabular JDBC input. Each configured query maps to one flat source class and
- * becomes one basket in the produced IOX event stream.
+ * Provider for generic JDBC input. Each configured query maps to one source class and
+ * becomes one basket in the produced IOX event stream. Scalar columns are mapped by
+ * {@link guru.interlis.transformer.io.jdbc.JdbcValueMapper}; geometry columns declared
+ * via {@link guru.interlis.transformer.mapping.model.JobConfig.JdbcGeometrySpec} are
+ * processed by {@link guru.interlis.transformer.io.jdbc.JdbcGeometryConverter} and
+ * attached as sub-objects.
  *
  * <p>JDBC is read-only and has no file path; the connection and queries are declared on the input
- * binding ({@code connection} / {@code queries}). The declared source model describes the flat query
- * result classes. Geometry is not handled in this phase.
+ * binding ({@code connection} / {@code queries}). The declared source model describes the query
+ * result classes.
  *
  * <p>Supported options:
  *
  * <ul>
  *   <li>{@code blobEncoding} — {@code base64} to encode {@code byte[]} columns; otherwise binary
  *       columns are rejected.
+ *   <li>{@code dialect} — optional dialect identifier ({@code default}, {@code postgis}, {@code duckdb}).
+ *       Defaults to {@code default} which supports {@code wkt} and {@code wkb} geometry encodings.
  * </ul>
  */
 public final class JdbcFormatProvider implements IoxFormatProvider {

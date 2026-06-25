@@ -29,7 +29,9 @@ import java.util.List;
 /**
  * Reads a generic JDBC input as an IOX event stream. Each configured query becomes one basket; each
  * result row becomes one {@link ObjectEvent} carrying a flat {@link Iom_jObject} tagged with the
- * query's source class.
+ * query's source class. Scalar columns are mapped via {@link JdbcValueMapper}; geometry columns
+ * declared in {@link JobConfig.JdbcGeometrySpec} are processed by {@link JdbcGeometryConverter} and
+ * attached as sub-objects.
  *
  * <p>Event order:
  *
@@ -56,6 +58,7 @@ public final class JdbcIoxReader implements IoxReader {
     private final List<JobConfig.JdbcQuerySpec> queries;
     private final List<PreparedStatement> statements;
     private final JdbcValueMapper valueMapper;
+    private final JdbcGeometryConverter geometryConverter;
 
     private State state = State.START;
     private int queryIndex = 0;
@@ -65,21 +68,36 @@ public final class JdbcIoxReader implements IoxReader {
     private int oidColumnIndex = -1;
     private final List<int[]> attributeColumns = new ArrayList<>();
     private final List<String> attributeNames = new ArrayList<>();
+    private final List<GeomColumn> currentGeomColumns = new ArrayList<>();
     private long currentRowNumber = 0;
     private String currentBid;
     private String currentOidPrefix;
 
     private IoxFactoryCollection factory;
 
+    private static final class GeomColumn {
+        final int columnIndex;
+        final String attributeName;
+        final JobConfig.JdbcGeometrySpec spec;
+
+        GeomColumn(int columnIndex, String attributeName, JobConfig.JdbcGeometrySpec spec) {
+            this.columnIndex = columnIndex;
+            this.attributeName = attributeName;
+            this.spec = spec;
+        }
+    }
+
     private JdbcIoxReader(
             Connection connection,
             List<JobConfig.JdbcQuerySpec> queries,
             List<PreparedStatement> statements,
-            JdbcValueMapper valueMapper) {
+            JdbcValueMapper valueMapper,
+            JdbcGeometryConverter geometryConverter) {
         this.connection = connection;
         this.queries = queries;
         this.statements = statements;
         this.valueMapper = valueMapper;
+        this.geometryConverter = geometryConverter;
     }
 
     /** Validates the configuration, opens the connection and prepares every query statement. */
@@ -127,7 +145,8 @@ public final class JdbcIoxReader implements IoxReader {
             throw e;
         }
 
-        return new JdbcIoxReader(connection, queries, statements, new JdbcValueMapper(allowBase64Blob));
+        return new JdbcIoxReader(
+                connection, queries, statements, new JdbcValueMapper(allowBase64Blob), new JdbcGeometryConverter());
     }
 
     @Override
@@ -175,14 +194,26 @@ public final class JdbcIoxReader implements IoxReader {
         attributeColumns.clear();
         attributeNames.clear();
         oidColumnIndex = -1;
+        currentGeomColumns.clear();
         try {
             ResultSetMetaData metaData = currentResultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
+
+            List<JobConfig.JdbcGeometrySpec> geometrySpecs =
+                    (currentQuery.geometry != null && !currentQuery.geometry.isEmpty())
+                            ? currentQuery.geometry
+                            : List.of();
+
             String oidColumn = currentQuery.oidColumn;
             for (int i = 1; i <= columnCount; i++) {
                 String label = metaData.getColumnLabel(i);
                 if (oidColumn != null && oidColumn.equalsIgnoreCase(label)) {
                     oidColumnIndex = i;
+                    continue;
+                }
+                JobConfig.JdbcGeometrySpec geomSpec = findGeometrySpec(geometrySpecs, label);
+                if (geomSpec != null) {
+                    currentGeomColumns.add(new GeomColumn(i, geomSpec.attribute, geomSpec));
                     continue;
                 }
                 String attrName =
@@ -200,6 +231,16 @@ public final class JdbcIoxReader implements IoxReader {
                             + e.getMessage(),
                     e);
         }
+    }
+
+    private static JobConfig.JdbcGeometrySpec findGeometrySpec(
+            List<JobConfig.JdbcGeometrySpec> specs, String columnLabel) {
+        for (JobConfig.JdbcGeometrySpec spec : specs) {
+            if (spec.column != null && spec.column.equalsIgnoreCase(columnLabel)) {
+                return spec;
+            }
+        }
+        return null;
     }
 
     private IoxEvent readRowOrEndBasket() throws IoxException {
@@ -228,6 +269,15 @@ public final class JdbcIoxReader implements IoxReader {
                 int column = attributeColumns.get(idx)[0];
                 Object value = currentResultSet.getObject(column);
                 valueMapper.applyScalarValue(object, attributeNames.get(idx), value);
+            }
+            for (GeomColumn geomCol : currentGeomColumns) {
+                Object rawValue = currentResultSet.getObject(geomCol.columnIndex);
+                if (rawValue != null) {
+                    IomObject geom = geometryConverter.convertToGeometry(rawValue, geomCol.spec);
+                    if (geom != null) {
+                        object.addattrobj(geomCol.attributeName, geom);
+                    }
+                }
             }
             return object;
         } catch (SQLException e) {

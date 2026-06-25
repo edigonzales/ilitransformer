@@ -1,0 +1,56 @@
+version: 1
+
+job:
+  name: "jdbc-spatial-to-xtf-demo"
+  description: "Transform a JDBC query result with WKT point geometry into a valid INTERLIS 2.4 XTF transfer"
+  modeldir:
+    - "models"
+  inputs:
+    - id: jdbc-input
+      model: "DemoJdbcSpatialSource"
+      format: jdbc
+      connection:
+        driver: org.sqlite.JDBC
+        url: "jdbc:sqlite:build/demo.sqlite"
+      queries:
+        - id: stations
+          topic: "DemoJdbcSpatialSource.Data"
+          class: "DemoJdbcSpatialSource.Data.Station"
+          basketId: b1
+          oidColumn: id
+          sql: |
+            select id, identifier, name, geom_wkt
+            from stations
+          geometry:
+            - attribute: geom
+              column: geom_wkt
+              encoding: wkt
+              type: coord
+              srid: 2056
+  outputs:
+    - id: xtf-output
+      path: "build/out/stations.xtf"
+      model: "DemoJdbcSpatialTarget"
+      format: xtf
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "jdbc-spatial-to-xtf-demo"
+  basketStrategy:
+    default: byTopic
+  rules:
+    - id: station
+      target:
+        output: xtf-output
+        class: "DemoJdbcSpatialTarget.Catalog.Station"
+      sources:
+        - alias: src
+          input: jdbc-input
+          class: "DemoJdbcSpatialSource.Data.Station"
+      identity:
+        sourceKey: ["src.identifier"]
+      assign:
+        Identifier: "src.identifier"
+        Name: "src.name"
+        Geometry: "src.geom"
