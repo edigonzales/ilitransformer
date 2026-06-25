@@ -189,11 +189,11 @@ class ShapefileDatasetWriterTest {
     @Test
     void rejectsUnsupportedShapeTypeOnOpen() {
         Path shp = tempDir.resolve("bad.shp");
-        ShapefileSchema schema = new ShapefileSchema(ShapeType.MULTIPOINT, nameField);
+        ShapefileSchema schema = new ShapefileSchema(ShapeType.MULTIPATCH, nameField);
 
         assertThatThrownBy(() -> ShapefileDatasetWriter.open(shp, schema, ShapefileWriteOptions.defaults()))
                 .isInstanceOf(ShapefileMappingException.class)
-                .hasMessageContaining("MULTIPOINT");
+                .hasMessageContaining("MULTIPATCH");
     }
 
     @Test

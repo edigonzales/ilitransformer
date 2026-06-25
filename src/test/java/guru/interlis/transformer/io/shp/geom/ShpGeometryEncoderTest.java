@@ -110,6 +110,22 @@ class ShpGeometryEncoderTest {
     }
 
     @Test
+    void encodesMultiPointRoundtrips() throws Exception {
+        Geometry multiPoint = gf.createMultiPoint(
+                new Coordinate[] {new Coordinate(7.5, 47.2), new Coordinate(8.0, 47.5), new Coordinate(8.4, 47.0)});
+        EncodedShape encoded = encoder.encode(multiPoint);
+
+        // 4 (type) + 32 (bbox) + 4 (numPoints) + 3 * 16 (points)
+        assertThat(encoded.contentLengthBytes()).isEqualTo(88);
+        assertThat(encoded.bounds()).isEqualTo(new Bounds(7.5, 47.0, 8.4, 47.5));
+
+        Geometry decoded = decode(encoded);
+        assertThat(decoded.getGeometryType()).isEqualTo("MultiPoint");
+        assertThat(decoded.getNumGeometries()).isEqualTo(3);
+        assertThat(decoded.equalsTopo(multiPoint)).isTrue();
+    }
+
+    @Test
     void rejectsUnsupportedGeometry() {
         Geometry collection = gf.createGeometryCollection(new Geometry[] {gf.createPoint(new Coordinate(0, 0))});
         assertThatThrownBy(() -> encoder.encode(collection))

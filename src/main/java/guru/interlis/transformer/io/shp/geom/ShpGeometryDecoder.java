@@ -34,6 +34,7 @@ public final class ShpGeometryDecoder {
         return switch (shapeType) {
             case NULL -> null;
             case POINT -> decodePoint(buf);
+            case MULTIPOINT -> decodeMultiPoint(buf);
             case POLYLINE -> decodePolyLine(buf);
             case POLYGON -> decodePolygon(buf);
             default ->
@@ -45,6 +46,21 @@ public final class ShpGeometryDecoder {
         double x = buf.getLittleDouble();
         double y = buf.getLittleDouble();
         return geometryFactory.createPoint(new Coordinate(x, y));
+    }
+
+    private Geometry decodeMultiPoint(EndianByteBuffer buf) throws ShapefileMappingException {
+        Bounds.read(buf);
+        int numPoints = buf.getLittleInt();
+        if (numPoints < 1) {
+            throw new ShapefileMappingException("MultiPoint has " + numPoints + " points, need at least 1");
+        }
+        Coordinate[] coords = new Coordinate[numPoints];
+        for (int i = 0; i < numPoints; i++) {
+            double x = buf.getLittleDouble();
+            double y = buf.getLittleDouble();
+            coords[i] = new Coordinate(x, y);
+        }
+        return geometryFactory.createMultiPoint(coords);
     }
 
     private Geometry decodePolyLine(EndianByteBuffer buf) throws ShapefileMappingException {

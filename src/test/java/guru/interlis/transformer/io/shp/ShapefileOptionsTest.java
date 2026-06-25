@@ -244,4 +244,92 @@ class ShapefileOptionsTest {
 
         assertThat(opts.requireShx()).isTrue();
     }
+
+    // --- output options (phase 8) ---
+
+    @Test
+    void outputDbfCharsetDefaultsToUtf8() throws ShapefileMappingException {
+        ShapefileOptions opts = ShapefileOptions.output(FormatOptions.of(Map.of()));
+
+        assertThat(opts.dbfCharset(Optional.empty())).isEqualTo(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void shapeTypeOverrideParsesValues() throws ShapefileMappingException {
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of("shapeType", "point")))
+                        .shapeTypeOverride())
+                .hasValue(guru.interlis.transformer.io.shp.core.ShapeType.POINT);
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of("shapeType", "POLYLINE")))
+                        .shapeTypeOverride())
+                .hasValue(guru.interlis.transformer.io.shp.core.ShapeType.POLYLINE);
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of("shapeType", "polygon")))
+                        .shapeTypeOverride())
+                .hasValue(guru.interlis.transformer.io.shp.core.ShapeType.POLYGON);
+    }
+
+    @Test
+    void shapeTypeOverrideEmptyWhenMissing() throws ShapefileMappingException {
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of())).shapeTypeOverride())
+                .isEmpty();
+    }
+
+    @Test
+    void shapeTypeOverrideInvalidThrows() {
+        ShapefileOptions opts = ShapefileOptions.output(FormatOptions.of(Map.of("shapeType", "nonsense")));
+
+        assertThatThrownBy(opts::shapeTypeOverride)
+                .isInstanceOf(ShapefileMappingException.class)
+                .hasMessageContaining("shapeType");
+    }
+
+    @Test
+    void fieldNameStrategyDefaultsToStrict() throws ShapefileMappingException {
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of())).fieldNameStrategy())
+                .isEqualTo(ShapefileOptions.FieldNameStrategy.STRICT);
+    }
+
+    @Test
+    void fieldNameStrategyParsed() throws ShapefileMappingException {
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of("fieldNameStrategy", "stable")))
+                        .fieldNameStrategy())
+                .isEqualTo(ShapefileOptions.FieldNameStrategy.STABLE);
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of("fieldNameStrategy", "TRUNCATE")))
+                        .fieldNameStrategy())
+                .isEqualTo(ShapefileOptions.FieldNameStrategy.TRUNCATE);
+    }
+
+    @Test
+    void fieldNameStrategyInvalidThrows() {
+        ShapefileOptions opts = ShapefileOptions.output(FormatOptions.of(Map.of("fieldNameStrategy", "weird")));
+
+        assertThatThrownBy(opts::fieldNameStrategy)
+                .isInstanceOf(ShapefileMappingException.class)
+                .hasMessageContaining("fieldNameStrategy");
+    }
+
+    @Test
+    void failOnMultipleBasketsDefaultsTrue() {
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of())).failOnMultipleBaskets())
+                .isTrue();
+    }
+
+    @Test
+    void failOnMultipleBasketsConfigured() {
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of("failOnMultipleBaskets", "false")))
+                        .failOnMultipleBaskets())
+                .isFalse();
+    }
+
+    @Test
+    void writeSidecarMappingDefaultsTrue() {
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of())).writeSidecarMapping())
+                .isTrue();
+    }
+
+    @Test
+    void prjReadsConfiguredValue() {
+        ShapefileOptions opts = ShapefileOptions.output(FormatOptions.of(Map.of("prj", "PROJCS[...]")));
+
+        assertThat(opts.prj()).hasValue("PROJCS[...]");
+    }
 }

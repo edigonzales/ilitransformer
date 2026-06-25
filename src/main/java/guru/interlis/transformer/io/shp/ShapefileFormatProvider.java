@@ -13,15 +13,11 @@ import ch.interlis.iox.IoxWriter;
 import java.util.Set;
 
 /**
- * Provider for ESRI Shapefile input via the format ids {@code shp} and {@code shapefile}.
+ * Provider for ESRI Shapefile input and output via the format ids {@code shp} and {@code shapefile}.
  *
- * <p>This is the phase&nbsp;1 skeleton: the provider is a <em>known</em> input provider so that
- * Shapefile bindings are routed here instead of failing as an unknown format, but the actual reader
- * is not implemented yet and reports a controlled {@link ShapefileMappingException}. Later phases add
- * the GeoTools-free Shapefile core, the geometry decoder and the IOX reader/writer adapters.
- *
- * <p>This implementation deliberately carries no GeoTools dependency and no binary Shapefile parsing
- * logic. The generic transformation engine never depends on this class; it only ever sees
+ * <p>The reader maps one flat Shapefile dataset to a single source class; the writer serialises a
+ * single IOX class with one geometry type into one Shapefile dataset. Both sides are GeoTools-free
+ * and carry no binary parsing logic in the engine: the generic transformation engine only ever sees
  * {@link IoxReader}/{@link IoxWriter}.
  */
 public final class ShapefileFormatProvider implements IoxFormatProvider {
@@ -40,7 +36,7 @@ public final class ShapefileFormatProvider implements IoxFormatProvider {
 
     @Override
     public FormatCapabilities capabilities() {
-        return FormatCapabilities.readPathModelWithOptions();
+        return FormatCapabilities.readWritePathModelWithOptions();
     }
 
     @Override
@@ -53,7 +49,10 @@ public final class ShapefileFormatProvider implements IoxFormatProvider {
 
     @Override
     public boolean supportsOutput(OutputBinding binding) {
-        return false;
+        if (binding.format() == null) {
+            return false;
+        }
+        return FORMAT_IDS.stream().anyMatch(f -> f.equalsIgnoreCase(binding.format()));
     }
 
     @Override
@@ -62,7 +61,7 @@ public final class ShapefileFormatProvider implements IoxFormatProvider {
     }
 
     @Override
-    public IoxWriter openWriter(OutputBinding binding, FormatOpenContext context) {
-        throw new UnsupportedOperationException("Shapefile output is not supported yet");
+    public IoxWriter openWriter(OutputBinding binding, FormatOpenContext context) throws Exception {
+        return ShapefileIoxWriter.open(binding, context);
     }
 }

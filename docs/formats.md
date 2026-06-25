@@ -25,7 +25,7 @@ jeweiligen Provider durchgereicht. Sie sind nicht als globale CLI-Flags verfuegb
 | CSV | ja | nein | nein | nein | nein | Nur flache Tabellen |
 | GPKG | ja | nein | ja (Simple Features) | nein | nein | Tabellarisch oder Simple Features |
 | JDBC | ja | nein | ja (WKT/WKB POINT) | nein | nein | Eine Query je Quellklasse, tabellarisch |
-| SHP | ja | nein | ja (Point/Polyline/Polygon 2D) | nein | nein | Eine Shapefile-Datei → eine flache Quellklasse |
+| SHP | ja | ja | ja (Point/MultiPoint/Polyline/Polygon 2D) | nein | nein | Eine Klasse / ein Geometrietyp pro Shapefile |
 
 ### Legende
 
@@ -345,12 +345,13 @@ SELECT id, identifier, name, ST_AsText(geom) AS geom_wkt FROM stations;
 
 ## Shapefile
 
-Shapefile (`shp` / `shapefile`) ist ein **nur lesbares** Eingabeformat fuer Simple Features.
-Unterstuetzt werden 2D Point-, PolyLine- und Polygon-Shapefiles.
+Shapefile (`shp` / `shapefile`) ist ein Eingabe- **und Ausgabeformat** fuer Simple Features.
+Unterstuetzt werden 2D Point-, MultiPoint-, PolyLine- und Polygon-Shapefiles.
 
-Jedes Shapefile entspricht genau einer flachen Quellklasse. Strukturen, Referenzen und
-Assoziationen koennen nicht direkt aus einem Shapefile ausgedrueckt werden; sie muessen durch
-Mapping-Regeln konstruiert werden.
+Beim Lesen entspricht jedes Shapefile genau einer flachen Quellklasse. Beim Schreiben wird genau
+eine IOX-Klasse mit genau einem Geometrietyp in ein Shapefile-Dataset serialisiert. Strukturen,
+Referenzen und Assoziationen koennen nicht direkt in einem Shapefile ausgedrueckt werden; sie
+muessen durch Mapping-Regeln konstruiert werden.
 
 ### Optionen
 
@@ -388,11 +389,56 @@ inputs:
 
 ### Einschraenkungen
 
-- Keine Ausgabe in Shapefile (nur lesbar).
-- Nur 2D Point (1), PolyLine (3) und Polygon (5). Z/M/MultiPatch werden mit Fehler abgelehnt.
+- Nur 2D Point (1), MultiPoint (8), PolyLine (3) und Polygon (5). Z/M/MultiPatch werden mit Fehler abgelehnt.
 - Eine Shapefile-Datei = eine Quellklasse.
 - `.prj` wird nur als Metadatum erkannt, keine Reprojektion.
 - MULTISURFACE/MULTIPOLYLINE-Attribute im Zielmodell erfordern Mapping-Regeln zur Strukturierung.
+
+### Ausgabe (Writer)
+
+Der Writer schreibt genau **eine Klasse** mit genau **einem Geometrietyp** in ein Shapefile-Dataset
+(`.shp`, `.shx`, `.dbf`, `.cpg`, optional `.prj`). Mehrdeutige Situationen werden strikt abgelehnt:
+
+- Objekte einer anderen als der konfigurierten/ersten Klasse werden mit Fehler abgewiesen.
+- Eine Geometrie, die nicht zum ermittelten Shape-Typ passt, wird mit Fehler abgewiesen.
+- Mehrere Baskets werden abgelehnt, ausser `failOnMultipleBaskets=false`.
+
+Das DBF-Schema wird **modellbewusst** aus der INTERLIS-Zielklasse abgeleitet (Feldnamen, -typen und
+-laengen). Kann die Klasse nicht im Modell aufgeloest werden, dient das erste Objekt als Fallback
+(alle Skalarattribute als Character-Felder; `geometryAttribute` und `shapeType` sind dann Pflicht).
+Nicht-skalare Attribute (Strukturen, Referenzen, weitere Geometrieattribute) werden nicht
+geschrieben, sondern als Warnung gemeldet.
+
+| Option | Default | Bedeutung |
+|---|---|---|
+| `class` | erste geschriebene Objektklasse | Welche IOX-Klasse geschrieben wird |
+| `geometryAttribute` | inferiert (genau ein Geometrieattribut) | Attribut, das als `.shp`-Geometrie geschrieben wird |
+| `shapeType` | aus Geometrieattribut abgeleitet | `point`, `multipoint`, `polyline`, `polygon` |
+| `dbfEncoding` | `UTF-8` | DBF-Encoding und `.cpg` |
+| `fieldNameStrategy` | `strict` | `strict`, `truncate` oder `stable` (DBF-Feldnamen max. 10 Zeichen) |
+| `writeSidecarMapping` | `true` | Schreibt `*.iliattr.json` bei gekuerzten/umbenannten Feldnamen |
+| `prj` | *(leer)* | Statischer WKT-Inhalt fuer die `.prj`-Datei |
+| `failOnMultipleBaskets` | `true` | Mehrere Baskets ablehnen |
+
+DBF-Feldnamen sind auf 10 Zeichen begrenzt. `strict` lehnt zu lange oder kollidierende Namen ab;
+`truncate` kuerzt auf 10 Zeichen (Kollision = Fehler); `stable` kuerzt und nummeriert deterministisch
+(`ATTRIBUT`, `ATTRIBU_1`) und schreibt ein `*.iliattr.json`-Sidecar mit der Namenszuordnung.
+
+#### Mapping (YAML)
+
+```yaml
+outputs:
+  - id: out
+    path: "output/parcels.shp"
+    model: "DemoShpTarget"
+    format: shp
+    options:
+      class: "DemoShpTarget.Data.Parcel"
+      geometryAttribute: "geometry"
+      shapeType: "polygon"
+      dbfEncoding: "UTF-8"
+      fieldNameStrategy: "stable"
+```
 
 ### Beispiele
 

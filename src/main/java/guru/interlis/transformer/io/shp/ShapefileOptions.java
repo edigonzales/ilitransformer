@@ -1,6 +1,7 @@
 package guru.interlis.transformer.io.shp;
 
 import guru.interlis.transformer.io.FormatOptions;
+import guru.interlis.transformer.io.shp.core.ShapeType;
 import guru.interlis.transformer.io.shp.geom.GeometryKind;
 
 import java.nio.charset.Charset;
@@ -29,18 +30,30 @@ public final class ShapefileOptions {
     private static final String COLUMN_PREFIX = "column.";
     private static final String DELETED_RECORD_POLICY_KEY = "deletedRecordPolicy";
     private static final String REQUIRE_SHX_KEY = "requireShx";
+    private static final String SHAPE_TYPE_KEY = "shapeType";
+    private static final String FIELD_NAME_STRATEGY_KEY = "fieldNameStrategy";
+    private static final String WRITE_SIDECAR_MAPPING_KEY = "writeSidecarMapping";
+    private static final String PRJ_KEY = "prj";
+    private static final String FAIL_ON_MULTIPLE_BASKETS_KEY = "failOnMultipleBaskets";
 
     private static final String DEFAULT_BASKET_ID = "b1";
-    private static final Charset DEFAULT_DBF_CHARSET = StandardCharsets.ISO_8859_1;
+    private static final Charset DEFAULT_INPUT_DBF_CHARSET = StandardCharsets.ISO_8859_1;
+    private static final Charset DEFAULT_OUTPUT_DBF_CHARSET = StandardCharsets.UTF_8;
 
     private final FormatOptions options;
+    private final boolean output;
 
-    private ShapefileOptions(FormatOptions options) {
+    private ShapefileOptions(FormatOptions options, boolean output) {
         this.options = options;
+        this.output = output;
     }
 
     public static ShapefileOptions input(FormatOptions options) {
-        return new ShapefileOptions(options);
+        return new ShapefileOptions(options, false);
+    }
+
+    public static ShapefileOptions output(FormatOptions options) {
+        return new ShapefileOptions(options, true);
     }
 
     public Optional<String> className() {
@@ -80,7 +93,7 @@ public final class ShapefileOptions {
                 throw new ShapefileMappingException("SHP option 'dbfEncoding': unsupported charset '" + encoding + "'");
             }
         }
-        return cpgCharset.orElse(DEFAULT_DBF_CHARSET);
+        return cpgCharset.orElse(output ? DEFAULT_OUTPUT_DBF_CHARSET : DEFAULT_INPUT_DBF_CHARSET);
     }
 
     public Optional<String> zipMember() {
@@ -122,6 +135,61 @@ public final class ShapefileOptions {
 
     public boolean requireShx() {
         return options.getBoolean(REQUIRE_SHX_KEY, false);
+    }
+
+    public Optional<ShapeType> shapeTypeOverride() throws ShapefileMappingException {
+        String value = options.get(SHAPE_TYPE_KEY);
+        if (value == null || value.isBlank()) {
+            return Optional.empty();
+        }
+        String lower = value.trim().toLowerCase(Locale.ROOT);
+        return Optional.of(
+                switch (lower) {
+                    case "point" -> ShapeType.POINT;
+                    case "polyline", "line" -> ShapeType.POLYLINE;
+                    case "polygon", "surface", "area" -> ShapeType.POLYGON;
+                    default ->
+                        throw new ShapefileMappingException(
+                                "SHP option 'shapeType': expected 'point', 'polyline' or 'polygon', got '" + value
+                                        + "'");
+                });
+    }
+
+    public FieldNameStrategy fieldNameStrategy() throws ShapefileMappingException {
+        String value = options.get(FIELD_NAME_STRATEGY_KEY);
+        if (value == null || value.isBlank()) {
+            return FieldNameStrategy.STRICT;
+        }
+        return FieldNameStrategy.fromOptionValue(value.trim());
+    }
+
+    public boolean writeSidecarMapping() {
+        return options.getBoolean(WRITE_SIDECAR_MAPPING_KEY, true);
+    }
+
+    public Optional<String> prj() {
+        return Optional.ofNullable(options.get(PRJ_KEY)).filter(s -> !s.isBlank());
+    }
+
+    public boolean failOnMultipleBaskets() {
+        return options.getBoolean(FAIL_ON_MULTIPLE_BASKETS_KEY, true);
+    }
+
+    public enum FieldNameStrategy {
+        STRICT,
+        TRUNCATE,
+        STABLE;
+
+        static FieldNameStrategy fromOptionValue(String value) throws ShapefileMappingException {
+            return switch (value.toLowerCase(Locale.ROOT)) {
+                case "strict" -> STRICT;
+                case "truncate" -> TRUNCATE;
+                case "stable" -> STABLE;
+                default ->
+                    throw new ShapefileMappingException("SHP option 'fieldNameStrategy': expected 'strict', 'truncate'"
+                            + " or 'stable', got '" + value + "'");
+            };
+        }
     }
 
     public enum DeletedRecordPolicy {

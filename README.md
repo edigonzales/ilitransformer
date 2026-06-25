@@ -85,9 +85,10 @@ Zusätzliche Eingabeformate werden über `format:` deklariert und pro Input mit 
   `path` ein `connection`-Block und ein oder mehrere `queries` (eine Query → eine Quellklasse).
   Punktgeometrie über WKT/WKB-Spalten. Passwörter werden nie geloggt; auch als `.ilimap` unterstützt.
 
-Shapefile (`shp`) ist als Eingabeformat implementiert (Point, PolyLine, Polygon 2D). Siehe Beispiele
-`examples/shp-to-xtf/`, `examples/shp-polyline-to-xtf/`, `examples/shp-polygon-to-xtf/`. Schreibzugriff
-ist noch nicht unterstützt.
+Shapefile (`shp` / `shapefile`) ist als Eingabe- und Ausgabeformat implementiert (Point, MultiPoint,
+PolyLine, Polygon 2D). Siehe Beispiele `examples/shp-to-xtf/`, `examples/shp-polyline-to-xtf/`,
+`examples/shp-polygon-to-xtf/`. Der Writer schreibt genau eine Klasse mit einem Geometrietyp pro
+Shapefile-Dataset und lehnt mehrdeutige Situationen strikt ab.
 
 Die vollständige Format-Matrix mit Einschränkungen ist in [docs/formats.md](docs/formats.md) dokumentiert.
 

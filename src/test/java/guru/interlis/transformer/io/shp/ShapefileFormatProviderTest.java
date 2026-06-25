@@ -17,13 +17,13 @@ class ShapefileFormatProviderTest {
     private final ShapefileFormatProvider provider = new ShapefileFormatProvider();
 
     @Test
-    void exposesShapefileIdentityAndReadOnlyCapabilities() {
+    void exposesShapefileIdentityAndReadWriteCapabilities() {
         assertThat(provider.id()).isEqualTo("shp");
         assertThat(provider.formatIds()).containsExactlyInAnyOrder("shp", "shapefile");
 
         FormatCapabilities caps = provider.capabilities();
         assertThat(caps.canRead()).isTrue();
-        assertThat(caps.canWrite()).isFalse();
+        assertThat(caps.canWrite()).isTrue();
         assertThat(caps.requiresPath()).isTrue();
         assertThat(caps.requiresModel()).isTrue();
         assertThat(caps.supportsOptions()).isTrue();
@@ -41,18 +41,20 @@ class ShapefileFormatProviderTest {
     }
 
     @Test
-    void doesNotSupportOutput() {
-        assertThat(provider.supportsOutput(new OutputBinding(null, Path.of("a.shp"), null, "shp", null, null, null)))
-                .isFalse();
+    void supportsShpAndShapefileOutputByFormatId() {
+        assertThat(provider.supportsOutput(outputWithFormat("shp"))).isTrue();
+        assertThat(provider.supportsOutput(outputWithFormat("SHAPEFILE"))).isTrue();
+        assertThat(provider.supportsOutput(outputWithFormat("xtf"))).isFalse();
+        assertThat(provider.supportsOutput(outputWithFormat(null))).isFalse();
     }
 
     @Test
-    void openWriterIsUnsupported() {
+    void openWriterReturnsShapefileWriter() throws Exception {
         FormatOpenContext context = new FormatOpenContext(null, null, new DiagnosticCollector());
-        OutputBinding binding = new OutputBinding(null, Path.of("a.shp"), null, "shp", null, null, null);
-        assertThatThrownBy(() -> provider.openWriter(binding, context))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("Shapefile output is not supported");
+        OutputBinding binding = new OutputBinding(
+                "out", Path.of("out.shp"), null, "shp", java.util.Map.of("class", "Demo.Topic.Cls"), null, null);
+
+        assertThat(provider.openWriter(binding, context)).isNotNull();
     }
 
     @Test
@@ -67,5 +69,9 @@ class ShapefileFormatProviderTest {
 
     private static InputBinding inputWithFormat(String format) {
         return new InputBinding(null, Path.of("a.shp"), null, format, null, null, null);
+    }
+
+    private static OutputBinding outputWithFormat(String format) {
+        return new OutputBinding(null, Path.of("a.shp"), null, format, null, null, null);
     }
 }

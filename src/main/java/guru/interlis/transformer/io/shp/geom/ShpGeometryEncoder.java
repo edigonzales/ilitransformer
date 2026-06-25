@@ -13,6 +13,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
+import com.vividsolutions.jts.geom.MultiPoint;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
@@ -49,6 +50,9 @@ public final class ShpGeometryEncoder {
         if (geometry instanceof Point point) {
             return encodePoint(point);
         }
+        if (geometry instanceof MultiPoint multiPoint) {
+            return encodeMultiPoint(multiPoint);
+        }
         if (geometry instanceof LineString || geometry instanceof MultiLineString) {
             return encodePolyLine(geometry);
         }
@@ -56,8 +60,8 @@ public final class ShpGeometryEncoder {
             return encodePolygon(geometry);
         }
         throw new ShapefileMappingException("Cannot encode geometry of type '"
-                + geometry.getGeometryType() + "'. Supported: Point, LineString, MultiLineString, Polygon, "
-                + "MultiPolygon.");
+                + geometry.getGeometryType() + "'. Supported: Point, MultiPoint, LineString, MultiLineString, "
+                + "Polygon, MultiPolygon.");
     }
 
     private EncodedShape encodeNull() {
@@ -76,6 +80,28 @@ public final class ShpGeometryEncoder {
         buf.putLittleDouble(c.y);
         buf.flip();
         return new EncodedShape(buf.buffer(), size, new Bounds(c.x, c.y, c.x, c.y));
+    }
+
+    private EncodedShape encodeMultiPoint(MultiPoint multiPoint) {
+        Coordinate[] points = multiPoint.getCoordinates();
+        int numPoints = points.length;
+        int size = SHAPE_TYPE_BYTES + BBOX_BYTES + 4 + numPoints * POINT_XY_BYTES;
+        EndianByteBuffer buf = EndianByteBuffer.allocate(size);
+
+        Bounds bounds = computeBounds(List.<Coordinate[]>of(points));
+
+        buf.putLittleInt(ShapeType.MULTIPOINT.code());
+        buf.putLittleDouble(bounds.xmin());
+        buf.putLittleDouble(bounds.ymin());
+        buf.putLittleDouble(bounds.xmax());
+        buf.putLittleDouble(bounds.ymax());
+        buf.putLittleInt(numPoints);
+        for (Coordinate c : points) {
+            buf.putLittleDouble(c.x);
+            buf.putLittleDouble(c.y);
+        }
+        buf.flip();
+        return new EncodedShape(buf.buffer(), size, bounds);
     }
 
     private EncodedShape encodePolyLine(Geometry geometry) {

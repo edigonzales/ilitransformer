@@ -41,6 +41,7 @@ import java.util.Optional;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
+import com.vividsolutions.jts.geom.MultiPoint;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
@@ -246,6 +247,9 @@ public final class ShapefileIoxReader implements IoxReader {
         if (jtsGeometry instanceof Point point) {
             return Jts2iox.JTS2coord(point.getCoordinate());
         }
+        if (jtsGeometry instanceof MultiPoint mpt) {
+            return Jts2iox.JTS2multicoord(mpt.getCoordinates());
+        }
         if (jtsGeometry instanceof LineString ls) {
             return Jts2iox.JTS2polyline(ls);
         }
@@ -260,7 +264,7 @@ public final class ShapefileIoxReader implements IoxReader {
         }
         throw new ShapefileMappingException("SHP input '" + inputId + "', record " + recordNumber
                 + ": unsupported geometry type '" + jtsGeometry.getGeometryType()
-                + "'. Supported: Point, LineString, MultiLineString, Polygon, MultiPolygon.");
+                + "'. Supported: Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon.");
     }
 
     @Override

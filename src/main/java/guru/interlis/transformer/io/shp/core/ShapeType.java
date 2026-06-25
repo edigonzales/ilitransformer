@@ -44,17 +44,18 @@ public enum ShapeType {
     }
 
     public boolean isSupported2dMvp() {
-        return this == NULL || this == POINT || this == POLYLINE || this == POLYGON;
+        return this == NULL || this == POINT || this == POLYLINE || this == POLYGON || this == MULTIPOINT;
     }
 
     public GeometryKind defaultGeometryKind() throws ShapefileMappingException {
         return switch (this) {
             case POINT -> GeometryKind.COORD;
+            case MULTIPOINT -> GeometryKind.MULTICOORD;
             case POLYLINE -> GeometryKind.POLYLINE;
             case POLYGON -> GeometryKind.SURFACE;
             default ->
                 throw new ShapefileMappingException("Shape type " + this
-                        + " has no default geometry kind. Only POINT, POLYLINE and POLYGON are supported.");
+                        + " has no default geometry kind. Only POINT, MULTIPOINT, POLYLINE and POLYGON are supported.");
         };
     }
 }

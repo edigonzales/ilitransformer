@@ -58,6 +58,12 @@ public final class DiagnosticCode {
     public static final String IO_SHP_ZIP_MEMBER_NOT_FOUND = "ILITRF-IO-SHP-ZIP-MEMBER-NOT-FOUND";
     public static final String IO_SHP_SHX_MISMATCH = "ILITRF-IO-SHP-SHX-MISMATCH";
 
+    // Shapefile output (format support phase 8 – writer adapter)
+    public static final String IO_SHP_ATTRIBUTE_SKIPPED = "ILITRF-IO-SHP-ATTRIBUTE-SKIPPED";
+    public static final String IO_SHP_FIELD_NAME_MAPPED = "ILITRF-IO-SHP-FIELD-NAME-MAPPED";
+    public static final String IO_SHP_SIDECAR_WRITTEN = "ILITRF-IO-SHP-SIDECAR-WRITTEN";
+    public static final String IO_SHP_NO_OBJECTS = "ILITRF-IO-SHP-NO-OBJECTS";
+
     // JDBC input (format support phase 6)
     public static final String IO_JDBC_CONNECTION_FAILED = "ILITRF-IO-JDBC-CONNECTION-FAILED";
     public static final String IO_JDBC_QUERY_FAILED = "ILITRF-IO-JDBC-QUERY-FAILED";
