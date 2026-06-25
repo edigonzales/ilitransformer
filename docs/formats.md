@@ -25,7 +25,7 @@ jeweiligen Provider durchgereicht. Sie sind nicht als globale CLI-Flags verfuegb
 | CSV | ja | nein | nein | nein | nein | Nur flache Tabellen |
 | GPKG | ja | nein | ja (Simple Features) | nein | nein | Tabellarisch oder Simple Features |
 | JDBC | ja | nein | ja (WKT/WKB POINT) | nein | nein | Eine Query je Quellklasse, tabellarisch |
-| SHP | reserviert | nein | — | — | — | Noch nicht implementiert |
+| SHP | ja | nein | ja (Point/Polyline/Polygon 2D) | nein | nein | Eine Shapefile-Datei → eine flache Quellklasse |
 
 ### Legende
 
@@ -343,11 +343,69 @@ SELECT id, identifier, name, ST_AsBinary(geom) AS geom_wkb FROM stations;
 SELECT id, identifier, name, ST_AsText(geom) AS geom_wkt FROM stations;
 ```
 
-## Shapefile (reserviert, nicht implementiert)
+## Shapefile
 
-Die Format-ID `shp` / `shapefile` ist im `FormatIdResolver` fuer die Dateiendung `.shp`
-vorbereitet. Es existiert derzeit **kein Provider und keine Implementierung**. Shapefiles
-koennen aktuell nicht als Eingabeformat verwendet werden.
+Shapefile (`shp` / `shapefile`) ist ein **nur lesbares** Eingabeformat fuer Simple Features.
+Unterstuetzt werden 2D Point-, PolyLine- und Polygon-Shapefiles.
+
+Jedes Shapefile entspricht genau einer flachen Quellklasse. Strukturen, Referenzen und
+Assoziationen koennen nicht direkt aus einem Shapefile ausgedrueckt werden; sie muessen durch
+Mapping-Regeln konstruiert werden.
+
+### Optionen
+
+| Option | Default | Bedeutung |
+|---|---|---|
+| `class` | *(Pflicht)* | Voll qualifizierte Quellklasse, z.B. `Model.Topic.Class` |
+| `topic` | aus `class` | Basket-Topic |
+| `basketId` | `b1` | Basket-ID |
+| `oidField` | `shp.<recordNumber>` | DBF-Feld als Objekt-OID |
+| `geometryAttribute` | inferiert | Quellattribut fuer Geometrie |
+| `geometryType` | aus Shape-Typ | `coord`, `polyline`, `surface` |
+| `dbfEncoding` | `ISO-8859-1` | Charset fuer DBF-Zeichenfelder |
+| `column.<DBF>` | DBF-Feldname | DBF-Feldname → INTERLIS-Attribut |
+| `deletedRecordPolicy` | `error` | `error` oder `skip` fuer geloeschte DBF-Records |
+| `requireShx` | `false` | Erzwingt `.shx`-Sidecar-Datei |
+
+### Mapping (YAML)
+
+```yaml
+inputs:
+  - id: parcels
+    path: "input/parcels.shp"
+    model: "DemoShpSource"
+    format: shp
+    options:
+      class: "DemoShpSource.Data.Parcel"
+      topic: "DemoShpSource.Data"
+      oidField: "TID"
+      geometryAttribute: "geometry"
+      geometryType: "surface"
+      dbfEncoding: "UTF-8"
+      column.BFS_NR: "bfsnr"
+      column.NAME: "name"
+```
+
+### Einschraenkungen
+
+- Keine Ausgabe in Shapefile (nur lesbar).
+- Nur 2D Point (1), PolyLine (3) und Polygon (5). Z/M/MultiPatch werden mit Fehler abgelehnt.
+- Eine Shapefile-Datei = eine Quellklasse.
+- `.prj` wird nur als Metadatum erkannt, keine Reprojektion.
+- MULTISURFACE/MULTIPOLYLINE-Attribute im Zielmodell erfordern Mapping-Regeln zur Strukturierung.
+
+### Beispiele
+
+```bash
+# Point
+ilitransformer transform -m examples/shp-to-xtf/mapping.yaml --modeldir examples/shp-to-xtf/models --validate --report build/reports/shp-point
+
+# PolyLine
+ilitransformer transform -m examples/shp-polyline-to-xtf/mapping.yaml --modeldir examples/shp-polyline-to-xtf/models --validate --report build/reports/shp-polyline
+
+# Polygon
+ilitransformer transform -m examples/shp-polygon-to-xtf/mapping.yaml --modeldir examples/shp-polygon-to-xtf/models --validate --report build/reports/shp-polygon
+```
 
 ## Validierung
 

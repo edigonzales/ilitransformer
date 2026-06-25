@@ -1,0 +1,17 @@
+INTERLIS 2.4;
+
+MODEL DemoShpPolygonSource AT "https://example.org/ilitransformer" VERSION "2026-06-25" =
+  DOMAIN
+    Coord = COORD 0.0 .. 100.0,
+            0.0 .. 100.0;
+
+    Area = SURFACE WITH (STRAIGHTS) VERTEX Coord WITHOUT OVERLAPS > 0.001;
+
+  TOPIC Data =
+    CLASS Parcel =
+      id : 0 .. 999999;
+      label : TEXT*80;
+      geometry : Area;
+    END Parcel;
+  END Data;
+END DemoShpPolygonSource.

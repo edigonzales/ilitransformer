@@ -1,0 +1,48 @@
+version: 1
+
+job:
+  name: "shp-polygon-to-xtf-demo"
+  description: "Transform a Polygon Shapefile into a valid INTERLIS 2.4 XTF transfer"
+  modeldir:
+    - "models"
+  inputs:
+    - id: shp-input
+      path: "input/parcels.shp"
+      model: "DemoShpPolygonSource"
+      format: shp
+      options:
+        class: "DemoShpPolygonSource.Data.Parcel"
+        topic: "DemoShpPolygonSource.Data"
+        oidField: "ID"
+        geometryAttribute: "geometry"
+        geometryType: "surface"
+        dbfEncoding: "UTF-8"
+        column.ID: "id"
+        column.LABEL: "label"
+  outputs:
+    - id: xtf-output
+      path: "build/out/parcels.xtf"
+      model: "DemoPolygonTarget"
+      format: xtf
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "shp-polygon-demo"
+  basketStrategy:
+    default: byTopic
+  rules:
+    - id: parcel
+      target:
+        output: xtf-output
+        class: "DemoPolygonTarget.Catalog.Parcel"
+      sources:
+        - alias: src
+          input: shp-input
+          class: "DemoShpPolygonSource.Data.Parcel"
+      identity:
+        sourceKey: ["src.id"]
+      assign:
+        Id: "src.id"
+        Label: "src.label"
+        Geometry: "src.geometry"

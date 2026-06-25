@@ -28,9 +28,12 @@ import ch.interlis.iox_j.jts.Jts2iox;
 import java.io.IOException;
 import java.util.Optional;
 
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiLineString;
+import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.Polygon;
 
 public final class ShapefileIoxReader implements IoxReader {
 
@@ -166,17 +169,31 @@ public final class ShapefileIoxReader implements IoxReader {
             return object;
         }
 
-        if (!(jtsGeometry instanceof Point)) {
-            throw new ShapefileMappingException("SHP input '" + inputId + "', record " + recordNumber
-                    + ": expected Point geometry but got " + jtsGeometry.getGeometryType()
-                    + ". This phase only supports Point shapefiles.");
-        }
-        Point point = (Point) jtsGeometry;
-        Coordinate coord = point.getCoordinate();
-        IomObject ioxGeom = Jts2iox.JTS2coord(coord);
+        IomObject ioxGeom = toIoxGeometry(jtsGeometry, recordNumber);
         object.addattrobj(plan.geometry().attributeName(), ioxGeom);
 
         return object;
+    }
+
+    private IomObject toIoxGeometry(Geometry jtsGeometry, long recordNumber) throws ShapefileMappingException {
+        if (jtsGeometry instanceof Point point) {
+            return Jts2iox.JTS2coord(point.getCoordinate());
+        }
+        if (jtsGeometry instanceof LineString ls) {
+            return Jts2iox.JTS2polyline(ls);
+        }
+        if (jtsGeometry instanceof MultiLineString mls) {
+            return Jts2iox.JTS2multipolyline(mls);
+        }
+        if (jtsGeometry instanceof Polygon polygon) {
+            return Jts2iox.JTS2surface(polygon);
+        }
+        if (jtsGeometry instanceof MultiPolygon mp) {
+            return Jts2iox.JTS2multisurface(mp);
+        }
+        throw new ShapefileMappingException("SHP input '" + inputId + "', record " + recordNumber
+                + ": unsupported geometry type '" + jtsGeometry.getGeometryType()
+                + "'. Supported: Point, LineString, MultiLineString, Polygon, MultiPolygon.");
     }
 
     @Override

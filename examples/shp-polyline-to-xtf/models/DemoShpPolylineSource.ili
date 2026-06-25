@@ -1,0 +1,17 @@
+INTERLIS 2.4;
+
+MODEL DemoShpPolylineSource AT "https://example.org/ilitransformer" VERSION "2026-06-25" =
+  DOMAIN
+    Coord = COORD 0.0 .. 100.0,
+            0.0 .. 100.0;
+
+    Line = POLYLINE WITH (STRAIGHTS) VERTEX Coord;
+
+  TOPIC Data =
+    CLASS Road =
+      id : 0 .. 999999;
+      name : TEXT*80;
+      geometry : Line;
+    END Road;
+  END Data;
+END DemoShpPolylineSource.

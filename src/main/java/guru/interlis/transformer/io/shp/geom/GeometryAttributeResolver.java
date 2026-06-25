@@ -34,11 +34,8 @@ public final class GeometryAttributeResolver {
         GeometryKind kind = configuredKind.isPresent() ? configuredKind.get() : supportedKind;
         if (kind != supportedKind && kind != GeometryKind.COORD) {
             throw new ShapefileMappingException(
-                    "geometryType '" + kind + "' is not yet supported. Only 'coord' is supported in this phase.");
-        }
-        if (kind != GeometryKind.COORD) {
-            throw new ShapefileMappingException("geometryType '" + kindToOptionValue(kind) + "' is not yet supported. "
-                    + "Only 'coord' is supported in this phase.");
+                    "geometryType '" + kindToOptionValue(kind) + "' does not match the shapefile shape type '"
+                            + supportedKind + "'. Use 'coord', 'polyline' or 'surface'.");
         }
 
         if (configuredAttribute.isPresent()) {

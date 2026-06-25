@@ -1,0 +1,48 @@
+version: 1
+
+job:
+  name: "shp-polyline-to-xtf-demo"
+  description: "Transform a PolyLine Shapefile into a valid INTERLIS 2.4 XTF transfer"
+  modeldir:
+    - "models"
+  inputs:
+    - id: shp-input
+      path: "input/roads.shp"
+      model: "DemoShpPolylineSource"
+      format: shp
+      options:
+        class: "DemoShpPolylineSource.Data.Road"
+        topic: "DemoShpPolylineSource.Data"
+        oidField: "ID"
+        geometryAttribute: "geometry"
+        geometryType: "polyline"
+        dbfEncoding: "UTF-8"
+        column.ID: "id"
+        column.NAME: "name"
+  outputs:
+    - id: xtf-output
+      path: "build/out/roads.xtf"
+      model: "DemoPolylineTarget"
+      format: xtf
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "shp-polyline-demo"
+  basketStrategy:
+    default: byTopic
+  rules:
+    - id: road
+      target:
+        output: xtf-output
+        class: "DemoPolylineTarget.Catalog.Road"
+      sources:
+        - alias: src
+          input: shp-input
+          class: "DemoShpPolylineSource.Data.Road"
+      identity:
+        sourceKey: ["src.id"]
+      assign:
+        Id: "src.id"
+        Name: "src.name"
+        Geometry: "src.geometry"

@@ -138,24 +138,51 @@ public final class ShpGeometryDecoder {
 
         List<LinearRing> shells = new ArrayList<>();
         List<LinearRing> holes = new ArrayList<>();
-        List<List<LinearRing>> shellHoles = new ArrayList<>();
 
         for (LinearRing ring : allRings) {
             double area = signedArea(ring);
             if (area < 0.0) {
                 shells.add(ring);
-                shellHoles.add(new ArrayList<>());
             } else {
-                if (shells.isEmpty()) {
-                    throw new ShapefileMappingException("Polygon hole ring appears before any shell ring");
-                }
-                shellHoles.get(shells.size() - 1).add(ring);
                 holes.add(ring);
             }
         }
 
         if (shells.isEmpty()) {
             throw new ShapefileMappingException("Polygon has no shell rings");
+        }
+
+        List<List<LinearRing>> shellHoles = new ArrayList<>(shells.size());
+        for (int i = 0; i < shells.size(); i++) {
+            shellHoles.add(new ArrayList<>());
+        }
+
+        Polygon[] shellPolygons = new Polygon[shells.size()];
+        for (int i = 0; i < shells.size(); i++) {
+            shellPolygons[i] = geometryFactory.createPolygon(shells.get(i));
+        }
+
+        for (int h = 0; h < holes.size(); h++) {
+            LinearRing holeRing = holes.get(h);
+            Coordinate holePoint = holeRing.getCoordinateN(0);
+            Point holeTestPoint = geometryFactory.createPoint(holePoint);
+
+            int bestShell = -1;
+            double bestArea = Double.MAX_VALUE;
+            for (int s = 0; s < shells.size(); s++) {
+                if (shellPolygons[s].contains(holeTestPoint)) {
+                    double shellArea = Math.abs(signedArea(shells.get(s)));
+                    if (shellArea < bestArea) {
+                        bestArea = shellArea;
+                        bestShell = s;
+                    }
+                }
+            }
+
+            if (bestShell < 0) {
+                throw new ShapefileMappingException("Polygon hole ring " + h + " is not contained by any shell ring");
+            }
+            shellHoles.get(bestShell).add(holeRing);
         }
 
         if (shells.size() == 1) {

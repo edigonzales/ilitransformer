@@ -222,7 +222,7 @@ Reports geschrieben. Ein vollständiges Beispiel inklusive `.ilimap`-Variante li
 | CSV | ja | nein | nein | nein | nein | Nur flache Tabellen |
 | GPKG | ja | nein | ja (Simple Features) | nein | nein | Tabellen und Punktgeometrie |
 | JDBC | ja | nein | ja (WKT/WKB POINT) | nein | nein | Eine Query je Quellklasse, tabellarisch |
-| SHP | reserviert | nein | — | — | — | Noch nicht implementiert |
+| SHP | ja | nein | ja (Point/Polyline/Polygon 2D) | nein | nein | Eine Shapefile-Datei → eine flache Quellklasse |
 
 ## Mapping-Sektion
 

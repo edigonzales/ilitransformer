@@ -53,10 +53,6 @@ public final class ShapefileReadPlan {
             throws ShapefileMappingException {
 
         GeometryKind supportedKind = shapeType.defaultGeometryKind();
-        if (supportedKind != GeometryKind.COORD) {
-            throw new ShapefileMappingException("SHP input '" + inputId + "': shape type " + shapeType
-                    + " is not supported yet. Only Point shapefiles are supported in this phase.");
-        }
 
         String className = resolveClassName(options, typeSystem, inputId);
 

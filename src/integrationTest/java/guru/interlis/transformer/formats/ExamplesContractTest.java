@@ -115,10 +115,11 @@ class ExamplesContractTest {
     }
 
     @Test
-    void docsFormatsMdDocumentsShapefileAsNotYetImplemented() {
+    void docsFormatsMdDocumentsShapefileAsImplemented() {
         Path path = Path.of("docs/formats.md");
         String content = readFile(path);
-        assertThat(content).contains("nicht implementiert");
+        assertThat(content).contains("Shapefile");
+        assertThat(content).contains("Point/Polyline/Polygon");
     }
 
     @Test
@@ -140,10 +141,10 @@ class ExamplesContractTest {
     }
 
     @Test
-    void readmeNotesShapefileAsNotYetImplemented() {
+    void readmeNotesShapefileAsImplemented() {
         Path path = Path.of("README.md");
         String content = readFile(path);
-        assertThat(content).contains("noch nicht implementiert");
+        assertThat(content).contains("implementiert");
     }
 
     @Test
@@ -166,7 +167,6 @@ class ExamplesContractTest {
         Path path = Path.of("docs/mapping-dsl.md");
         String content = readFile(path);
         assertThat(content).contains("WKT/WKB POINT");
-        assertThat(content).contains("Noch nicht implementiert");
     }
 
     private static List<String> exampleDirectories() {

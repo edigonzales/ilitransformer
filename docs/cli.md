@@ -78,6 +78,15 @@ ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.ilimap --modeldir "sr
 # Transform a flat CSV file into a validated XTF (input-only format)
 ilitransformer transform -m examples/csv-to-xtf/mapping.yaml --modeldir examples/csv-to-xtf/models --validate --report build/reports/csv
 
+# Transform a Point Shapefile into a validated XTF (input-only format)
+ilitransformer transform -m examples/shp-to-xtf/mapping.yaml --modeldir examples/shp-to-xtf/models --validate --report build/reports/shp-point
+
+# Transform a PolyLine Shapefile into a validated XTF (input-only format)
+ilitransformer transform -m examples/shp-polyline-to-xtf/mapping.yaml --modeldir examples/shp-polyline-to-xtf/models --validate --report build/reports/shp-polyline
+
+# Transform a Polygon Shapefile into a validated XTF (input-only format)
+ilitransformer transform -m examples/shp-polygon-to-xtf/mapping.yaml --modeldir examples/shp-polygon-to-xtf/models --validate --report build/reports/shp-polygon
+
 # Transform a tabular GeoPackage into a validated XTF (input-only format)
 ilitransformer transform -m examples/gpkg-to-xtf/mapping.yaml --modeldir examples/gpkg-to-xtf/models --validate --report build/reports/gpkg
 
@@ -96,8 +105,8 @@ input formats such as `csv`, `gpkg` and `jdbc` are declared with `format:` and c
 `options` (or, for `jdbc`, a `connection` block and `queries`; see [mapping-dsl.md](mapping-dsl.md)).
 CSV, GeoPackage and JDBC are deliberately flat, input-only formats. GeoPackage and JDBC support
 simple point geometry (COORD). `jdbc` has no path and must be declared explicitly; passwords are
-never written to logs, diagnostics or reports. Shapefile (`shp`) is reserved but not yet
-implemented. See [formats.md](formats.md) for the complete format matrix.
+never written to logs, diagnostics or reports. Shapefile (`shp`) supports Point, PolyLine and
+Polygon 2D geometries. See [formats.md](formats.md) for the complete format matrix.
 
 Exit codes:
 - `0` — Transformation successful, no errors

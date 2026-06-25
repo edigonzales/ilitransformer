@@ -1,0 +1,20 @@
+INTERLIS 2.4;
+
+MODEL DemoPolylineTarget AT "https://example.org/ilitransformer" VERSION "2026-06-25" =
+  DOMAIN
+    Coord = COORD 0.0 .. 100.0,
+            0.0 .. 100.0;
+
+    Line = POLYLINE WITH (STRAIGHTS) VERTEX Coord;
+
+  TOPIC Catalog =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Road =
+      Id : 0 .. 999999;
+      Name : TEXT*80;
+      Geometry : Line;
+    END Road;
+  END Catalog;
+END DemoPolylineTarget.

@@ -165,6 +165,58 @@ class ShpGeometryDecoderTest {
     }
 
     @Test
+    void rejectsHoleNotContainedByAnyShell() throws Exception {
+        ShapeRecord record = buildPolygonRecord(
+                new double[][] {
+                    {0.0, 0.0}, {0.0, 5.0}, {5.0, 5.0}, {5.0, 0.0}, {0.0, 0.0},
+                    {10.0, 10.0}, {12.0, 10.0}, {12.0, 12.0}, {10.0, 12.0}, {10.0, 10.0}
+                },
+                new int[] {0, 5});
+
+        assertThatThrownBy(() -> decoder.decode(record))
+                .isInstanceOf(ShapefileMappingException.class)
+                .hasMessageContaining("not contained by any shell");
+    }
+
+    @Test
+    void decodesPolygonWithHoleBeforeShellInRingOrder() throws Exception {
+        ShapeRecord record = buildPolygonRecord(
+                new double[][] {
+                    {4.0, 4.0}, {6.0, 4.0}, {6.0, 6.0}, {4.0, 6.0}, {4.0, 4.0},
+                    {0.0, 0.0}, {0.0, 10.0}, {10.0, 10.0}, {10.0, 0.0}, {0.0, 0.0}
+                },
+                new int[] {0, 5});
+
+        Geometry geom = decoder.decode(record);
+
+        assertThat(geom).isInstanceOf(Polygon.class);
+        Polygon poly = (Polygon) geom;
+        assertThat(poly.getExteriorRing().getNumPoints()).isEqualTo(5);
+        assertThat(poly.getNumInteriorRing()).isEqualTo(1);
+    }
+
+    @Test
+    void decodesHoleAssignedToSmallestContainingShell() throws Exception {
+        ShapeRecord record = buildPolygonRecord(
+                new double[][] {
+                    {0.0, 0.0}, {0.0, 20.0}, {20.0, 20.0}, {20.0, 0.0}, {0.0, 0.0},
+                    {2.0, 2.0}, {2.0, 10.0}, {10.0, 10.0}, {10.0, 2.0}, {2.0, 2.0},
+                    {4.0, 4.0}, {6.0, 4.0}, {6.0, 6.0}, {4.0, 6.0}, {4.0, 4.0}
+                },
+                new int[] {0, 5, 10});
+
+        Geometry geom = decoder.decode(record);
+
+        assertThat(geom).isInstanceOf(MultiPolygon.class);
+        MultiPolygon mp = (MultiPolygon) geom;
+        assertThat(mp.getNumGeometries()).isEqualTo(2);
+        Polygon first = (Polygon) mp.getGeometryN(0);
+        assertThat(first.getNumInteriorRing()).isEqualTo(0);
+        Polygon second = (Polygon) mp.getGeometryN(1);
+        assertThat(second.getNumInteriorRing()).isEqualTo(1);
+    }
+
+    @Test
     void signedAreaPositiveForCounterClockwiseRing() {
         Coordinate[] ccw = {
             new Coordinate(0, 0),

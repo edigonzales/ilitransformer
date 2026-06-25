@@ -85,7 +85,9 @@ Zusätzliche Eingabeformate werden über `format:` deklariert und pro Input mit 
   `path` ein `connection`-Block und ein oder mehrere `queries` (eine Query → eine Quellklasse).
   Punktgeometrie über WKT/WKB-Spalten. Passwörter werden nie geloggt; auch als `.ilimap` unterstützt.
 
-Shapefile (`shp`) ist als Format-ID reserviert, aber noch nicht implementiert.
+Shapefile (`shp`) ist als Eingabeformat implementiert (Point, PolyLine, Polygon 2D). Siehe Beispiele
+`examples/shp-to-xtf/`, `examples/shp-polyline-to-xtf/`, `examples/shp-polygon-to-xtf/`. Schreibzugriff
+ist noch nicht unterstützt.
 
 Die vollständige Format-Matrix mit Einschränkungen ist in [docs/formats.md](docs/formats.md) dokumentiert.
 
@@ -122,6 +124,12 @@ Räumliches JDBC (WKT Point) unter `examples/jdbc-spatial-to-xtf/`:
 
 ```bash
 ilitransformer transform -m examples/jdbc-spatial-to-xtf/mapping.yaml --modeldir examples/jdbc-spatial-to-xtf/models --validate --report build/reports/jdbc-spatial
+```
+
+Shapefile (Point, PolyLine, Polygon) unter `examples/shp-to-xtf/`:
+
+```bash
+ilitransformer transform -m examples/shp-to-xtf/mapping.yaml --modeldir examples/shp-to-xtf/models --validate --report build/reports/shp-point
 ```
 
 ## Aktive Dokumentation

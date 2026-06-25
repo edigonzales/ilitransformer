@@ -1,0 +1,20 @@
+INTERLIS 2.4;
+
+MODEL DemoPolygonTarget AT "https://example.org/ilitransformer" VERSION "2026-06-25" =
+  DOMAIN
+    Coord = COORD 0.0 .. 100.0,
+            0.0 .. 100.0;
+
+    Area = SURFACE WITH (STRAIGHTS) VERTEX Coord WITHOUT OVERLAPS > 0.001;
+
+  TOPIC Catalog =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Parcel =
+      Id : 0 .. 999999;
+      Label : TEXT*80;
+      Geometry : Area;
+    END Parcel;
+  END Catalog;
+END DemoPolygonTarget.
