@@ -4,12 +4,14 @@ import guru.interlis.transformer.mapping.ilimap.ast.*;
 import guru.interlis.transformer.mapping.ilimap.lexer.*;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class IlimapParser {
 
     private static final String JOB_FIELDS = "name, description, direction, failPolicy, compileMode, modeldir";
-    private static final String TRANSFER_FIELDS = "path, model, format";
+    private static final String TRANSFER_FIELDS = "path, model, format, option";
     private static final String OID_FIELDS = "strategy, namespace";
 
     private final String source;
@@ -126,6 +128,7 @@ public final class IlimapParser {
         String path = null;
         String model = null;
         String format = null;
+        Map<String, String> options = new LinkedHashMap<>();
 
         while (!peekType(IlimapTokenType.RBRACE)) {
             IlimapToken fieldToken = next();
@@ -137,6 +140,7 @@ public final class IlimapParser {
                 case "path" -> path = expectString();
                 case "model" -> model = expectString();
                 case "format" -> format = expectStringOrIdentifier();
+                case "option" -> parseOption(options);
                 default ->
                     throw parseError(
                             "unexpected field '" + field + "' in input block. Allowed fields: " + TRANSFER_FIELDS,
@@ -147,7 +151,7 @@ public final class IlimapParser {
 
         IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
         IlimapSourceRange range = new IlimapSourceRange(inputKeyword.range().start(), end);
-        return new IlimapInputBlock(id, path, model, format, range);
+        return new IlimapInputBlock(id, path, model, format, options, range);
     }
 
     private IlimapOutputBlock parseOutputBlock() {
@@ -158,6 +162,7 @@ public final class IlimapParser {
         String path = null;
         String model = null;
         String format = null;
+        Map<String, String> options = new LinkedHashMap<>();
 
         while (!peekType(IlimapTokenType.RBRACE)) {
             IlimapToken fieldToken = next();
@@ -169,6 +174,7 @@ public final class IlimapParser {
                 case "path" -> path = expectString();
                 case "model" -> model = expectString();
                 case "format" -> format = expectStringOrIdentifier();
+                case "option" -> parseOption(options);
                 default ->
                     throw parseError(
                             "unexpected field '" + field + "' in output block. Allowed fields: " + TRANSFER_FIELDS,
@@ -179,7 +185,23 @@ public final class IlimapParser {
 
         IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
         IlimapSourceRange range = new IlimapSourceRange(outputKeyword.range().start(), end);
-        return new IlimapOutputBlock(id, path, model, format, range);
+        return new IlimapOutputBlock(id, path, model, format, options, range);
+    }
+
+    private void parseOption(Map<String, String> options) {
+        String key = expectStringOrIdentifier();
+        String value = parseOptionValue();
+        options.put(key, value);
+    }
+
+    private String parseOptionValue() {
+        IlimapToken token = next();
+        return switch (token.type()) {
+            case STRING, NUMBER, BOOLEAN -> token.text();
+            default ->
+                throw parseError(
+                        "expected string, number or boolean option value but got '" + token.text() + "'", token);
+        };
     }
 
     private IlimapOidBlock parseOidBlock() {

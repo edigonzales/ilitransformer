@@ -19,11 +19,11 @@ class IlimapSymbolTableTest {
             new IlimapSourceRange(new IlimapSourcePosition(0, 1, 1), new IlimapSourcePosition(1, 1, 2));
 
     private static IlimapInputBlock dummyInput(String id) {
-        return new IlimapInputBlock(id, "in.xtf", "M", "xtf", DUMMY_RANGE);
+        return new IlimapInputBlock(id, "in.xtf", "M", "xtf", null, DUMMY_RANGE);
     }
 
     private static IlimapOutputBlock dummyOutput(String id) {
-        return new IlimapOutputBlock(id, "out.xtf", "M", "xtf", DUMMY_RANGE);
+        return new IlimapOutputBlock(id, "out.xtf", "M", "xtf", null, DUMMY_RANGE);
     }
 
     private static IlimapRuleBlock dummyRule(String id) {

@@ -53,6 +53,7 @@ public final class IlimapToJobConfigMapper {
             spec.path = input.path();
             spec.model = input.model();
             spec.format = input.format();
+            spec.options = new LinkedHashMap<>(input.options());
             config.job.inputs.add(spec);
         }
     }
@@ -65,6 +66,7 @@ public final class IlimapToJobConfigMapper {
             spec.path = output.path();
             spec.model = output.model();
             spec.format = output.format();
+            spec.options = new LinkedHashMap<>(output.options());
             config.job.outputs.add(spec);
         }
     }

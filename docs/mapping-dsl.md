@@ -68,6 +68,8 @@ mapping:
   path: "in.xtf"   # Pflicht: Pfad zur Eingabedatei
   model: "Model"   # Pflicht: INTERLIS-Modellname
   format: "xtf"    # Optional: "itf" oder "xtf" (wird aus Dateiendung erkannt)
+  options:         # Optional: generische Formatoptionen (siehe unten)
+    encoding: UTF-8
 ```
 
 ### OutputSpec
@@ -77,7 +79,22 @@ mapping:
   path: "out.xtf"  # Pflicht: Pfad zur Ausgabedatei
   model: "Model"   # Pflicht: INTERLIS-Modellname
   format: "xtf"    # Optional: "itf" oder "xtf"
+  options:         # Optional: generische Formatoptionen (siehe unten)
+    pretty: true
 ```
+
+#### Formatoptionen (`options`)
+
+`options` ist ein generischer Schlüssel-Wert-Block pro Input bzw. Output. Er ist optional;
+fehlt er, gilt eine leere Optionsmenge. Bestehende Mappings ohne `options` bleiben unverändert
+gültig.
+
+- Schlüssel und Werte werden intern als Strings normalisiert. YAML-Booleans (`true`) und
+  -Zahlen (`10000`) werden dabei zu `"true"` bzw. `"10000"`.
+- Die Werte werden an den jeweiligen Formatprovider durchgereicht. Die nativen
+  INTERLIS-Formate (`itf`, `xtf`, `xml`) werten derzeit keine Optionen aus und ignorieren sie.
+- Es werden noch keine zusätzlichen Eingabeformate aktiviert; der Block bildet lediglich die
+  Konfigurationsbasis für künftige Provider.
 
 ## Mapping-Sektion
 

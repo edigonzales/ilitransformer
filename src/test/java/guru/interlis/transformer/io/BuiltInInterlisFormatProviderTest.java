@@ -28,7 +28,7 @@ class BuiltInInterlisFormatProviderTest {
         assertThat(provider.supportsInput(inputWithPath("a.xtf"))).isTrue();
         assertThat(provider.supportsInput(inputWithPath("a.xml"))).isTrue();
         assertThat(provider.supportsInput(inputWithPath("a.csv"))).isFalse();
-        assertThat(provider.supportsInput(new InputBinding(null, null, null, null, null, null)))
+        assertThat(provider.supportsInput(new InputBinding(null, null, null, null, null, null, null)))
                 .isFalse();
     }
 
@@ -57,10 +57,10 @@ class BuiltInInterlisFormatProviderTest {
     }
 
     private static InputBinding inputWithPath(String name) {
-        return new InputBinding(null, Path.of(name), null, null, null, null);
+        return new InputBinding(null, Path.of(name), null, null, null, null, null);
     }
 
     private static OutputBinding outputWithPath(String name) {
-        return new OutputBinding(null, Path.of(name), null, null, null, null);
+        return new OutputBinding(null, Path.of(name), null, null, null, null, null);
     }
 }

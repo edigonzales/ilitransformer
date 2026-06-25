@@ -58,6 +58,7 @@ public final class IlimapReservedWords {
             "path",
             "model",
             "format",
+            "option",
             "namespace",
             "failPolicy",
             "compileMode",

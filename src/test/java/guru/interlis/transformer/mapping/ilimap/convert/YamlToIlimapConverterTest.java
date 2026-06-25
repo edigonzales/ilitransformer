@@ -234,6 +234,36 @@ class YamlToIlimapConverterTest {
         assertThatCode(() -> new IlimapParser(result).parseDocument()).doesNotThrowAnyException();
     }
 
+    @Test
+    void preservesInputOutputOptionsInConvertedIlimap() {
+        JobConfig config = baseConfig();
+        JobConfig.InputSpec input = config.job.inputs.get(0);
+        input.format = "csv";
+        input.options = new LinkedHashMap<>();
+        input.options.put("firstLineIsHeader", Boolean.TRUE);
+        input.options.put("separator", ";");
+        input.options.put("fetchSize", 10000);
+
+        JobConfig.OutputSpec output = config.job.outputs.get(0);
+        output.options = new LinkedHashMap<>();
+        output.options.put("pretty", Boolean.TRUE);
+
+        String result = converter.convert(config);
+
+        assertThat(result).contains("option firstLineIsHeader \"true\";");
+        assertThat(result).contains("option separator \";\";");
+        assertThat(result).contains("option fetchSize \"10000\";");
+        assertThat(result).contains("option pretty \"true\";");
+        assertThatCode(() -> new IlimapParser(result).parseDocument()).doesNotThrowAnyException();
+
+        JobConfig reloaded = new IlimapLoader().load(result, Path.of("."));
+        assertThat(reloaded.job.inputs.get(0).options)
+                .containsEntry("firstLineIsHeader", "true")
+                .containsEntry("separator", ";")
+                .containsEntry("fetchSize", "10000");
+        assertThat(reloaded.job.outputs.get(0).options).containsEntry("pretty", "true");
+    }
+
     private static JobConfig baseConfig() {
         JobConfig config = new JobConfig();
         config.version = 1;

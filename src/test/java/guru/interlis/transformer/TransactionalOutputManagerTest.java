@@ -21,7 +21,7 @@ class TransactionalOutputManagerTest {
     @Test
     void createTemporaryOutputCreatesTempFile() throws Exception {
         Path target = tempDir.resolve("output.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
             Path tempPath = tx.createTemporaryOutput(binding);
@@ -34,7 +34,7 @@ class TransactionalOutputManagerTest {
     @Test
     void commitMovesTempToTarget() throws Exception {
         Path target = tempDir.resolve("committed.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
             Path tempPath = tx.createTemporaryOutput(binding);
@@ -49,7 +49,7 @@ class TransactionalOutputManagerTest {
     @Test
     void rollbackDeletesTempFiles() throws Exception {
         Path target = tempDir.resolve("rolled-back.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         Path tempPath;
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
@@ -64,7 +64,7 @@ class TransactionalOutputManagerTest {
     @Test
     void closeRollsBackUncommitted() throws Exception {
         Path target = tempDir.resolve("uncommitted.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
             tx.createTemporaryOutput(binding);
@@ -77,7 +77,7 @@ class TransactionalOutputManagerTest {
     @Test
     void keepTemporaryFilesPreservesTempDir() throws Exception {
         Path target = tempDir.resolve("kept.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         Path tempDirPath;
         try (TransactionalOutputManager tx = new TransactionalOutputManager(true)) {
@@ -93,7 +93,7 @@ class TransactionalOutputManagerTest {
 
     @Test
     void commitWithoutTargetPathThrows() throws Exception {
-        OutputBinding binding = new OutputBinding("out1", null, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", null, "TestModel", TransferFormat.XTF, null, null, null);
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
             tx.createTemporaryOutput(binding);
@@ -104,7 +104,7 @@ class TransactionalOutputManagerTest {
     @Test
     void itfExtensionIsPreserved() throws Exception {
         Path target = tempDir.resolve("output.itf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.ITF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.ITF, null, null, null);
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
             Path tempPath = tx.createTemporaryOutput(binding);
@@ -118,8 +118,10 @@ class TransactionalOutputManagerTest {
         Path target2 = tempDir.resolve("out2.itf");
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
-            Path t1 = tx.createTemporaryOutput(new OutputBinding("o1", target1, "M", TransferFormat.XTF, null, null));
-            Path t2 = tx.createTemporaryOutput(new OutputBinding("o2", target2, "M", TransferFormat.ITF, null, null));
+            Path t1 = tx.createTemporaryOutput(
+                    new OutputBinding("o1", target1, "M", TransferFormat.XTF, null, null, null));
+            Path t2 = tx.createTemporaryOutput(
+                    new OutputBinding("o2", target2, "M", TransferFormat.ITF, null, null, null));
 
             Files.writeString(t1, "data1");
             Files.writeString(t2, "data2");
@@ -135,7 +137,7 @@ class TransactionalOutputManagerTest {
     @Test
     void rollbackAllDeletesTempFilesWhenKeepTempFalse() throws Exception {
         Path target = tempDir.resolve("deleted.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         Path captured;
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
@@ -150,7 +152,7 @@ class TransactionalOutputManagerTest {
     @Test
     void rollbackAllKeepsTempFilesWhenKeepTempTrue() throws Exception {
         Path target = tempDir.resolve("kept.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(true)) {
             Path tempPath = tx.createTemporaryOutput(binding);
@@ -165,7 +167,7 @@ class TransactionalOutputManagerTest {
     @Test
     void closeKeepsTempFilesWhenKeepTempTrue() throws Exception {
         Path target = tempDir.resolve("close-kept.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         Path tempPath;
         TransactionalOutputManager tx = new TransactionalOutputManager(true);
@@ -181,7 +183,7 @@ class TransactionalOutputManagerTest {
     @Test
     void retainedFilesAreAccessibleAfterRollback() throws Exception {
         Path target = tempDir.resolve("accessible.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(true)) {
             tx.createTemporaryOutput(binding);
@@ -197,7 +199,7 @@ class TransactionalOutputManagerTest {
     @Test
     void commitSupportsRelativeTargetWithoutParent() throws Exception {
         Path target = tempDir.resolve("flat-out.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
             Path tempPath = tx.createTemporaryOutput(binding);
@@ -212,7 +214,7 @@ class TransactionalOutputManagerTest {
     @Test
     void commitCreatesMissingParentDirectory() throws Exception {
         Path target = tempDir.resolve("nested").resolve("sub").resolve("out.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
             Path tempPath = tx.createTemporaryOutput(binding);
@@ -227,7 +229,7 @@ class TransactionalOutputManagerTest {
     @Test
     void commitRemovesTempPathAfterSuccess() throws Exception {
         Path target = tempDir.resolve("cleaned.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
             Path tempPath = tx.createTemporaryOutput(binding);
@@ -241,7 +243,7 @@ class TransactionalOutputManagerTest {
     @Test
     void tempFileCreatedNearTarget() throws Exception {
         Path target = tempDir.resolve("near-target.xtf");
-        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null);
+        OutputBinding binding = new OutputBinding("out1", target, "TestModel", TransferFormat.XTF, null, null, null);
 
         try (TransactionalOutputManager tx = new TransactionalOutputManager(false)) {
             Path tempPath = tx.createTemporaryOutput(binding);

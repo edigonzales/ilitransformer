@@ -126,6 +126,8 @@ final class IlimapPrinter {
             if (input.format() != null) {
                 line("format " + identifierOrQuoted(input.format()) + ";");
             }
+            input.options()
+                    .forEach((key, value) -> line("option " + identifierOrQuoted(key) + " " + quoted(value) + ";"));
         });
         line("}");
     }
@@ -142,6 +144,8 @@ final class IlimapPrinter {
             if (output.format() != null) {
                 line("format " + identifierOrQuoted(output.format()) + ";");
             }
+            output.options()
+                    .forEach((key, value) -> line("option " + identifierOrQuoted(key) + " " + quoted(value) + ";"));
         });
         line("}");
     }

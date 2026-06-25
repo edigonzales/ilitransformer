@@ -24,7 +24,7 @@ public final class InterlisIoFactory {
     private final BuiltInInterlisFormatProvider provider = new BuiltInInterlisFormatProvider();
 
     public IoxReader createReader(Path path, TransferDescription transferDescription) throws Exception {
-        InputBinding binding = new InputBinding(null, path, null, null, transferDescription, null);
+        InputBinding binding = new InputBinding(null, path, null, null, null, transferDescription, null);
         FormatOpenContext context = new FormatOpenContext(null, transferDescription, null);
         return provider.openReader(binding, context);
     }
@@ -35,7 +35,7 @@ public final class InterlisIoFactory {
 
     public IoxWriter createWriter(Path path, TransferDescription transferDescription, DiagnosticCollector diagnostics)
             throws Exception {
-        OutputBinding binding = new OutputBinding(null, path, null, null, transferDescription, null);
+        OutputBinding binding = new OutputBinding(null, path, null, null, null, transferDescription, null);
         FormatOpenContext context = new FormatOpenContext(null, transferDescription, diagnostics);
         return provider.openWriter(binding, context);
     }

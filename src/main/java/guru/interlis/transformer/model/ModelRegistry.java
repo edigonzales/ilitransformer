@@ -2,6 +2,7 @@ package guru.interlis.transformer.model;
 
 import guru.interlis.transformer.interlis.InterlisModelLoader;
 import guru.interlis.transformer.mapping.model.JobConfig;
+import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
 import guru.interlis.transformer.mapping.plan.TransferFormat;
@@ -122,7 +123,9 @@ public final class ModelRegistry {
                 TypeSystemFacade ts = registry.tsByModel.get(input.model);
                 Path path = input.path != null ? Path.of(input.path) : null;
                 TransferFormat format = parseFormat(input.format);
-                registry.inputsById.put(input.id, new InputBinding(input.id, path, input.model, format, td, ts));
+                Map<String, String> options = JobConfigNormalizer.normalizeOptions(input.options);
+                registry.inputsById.put(
+                        input.id, new InputBinding(input.id, path, input.model, format, options, td, ts));
             }
 
             // Build OutputBindings
@@ -131,7 +134,9 @@ public final class ModelRegistry {
                 TypeSystemFacade ts = registry.tsByModel.get(output.model);
                 Path path = output.path != null ? Path.of(output.path) : null;
                 TransferFormat format = parseFormat(output.format);
-                registry.outputsById.put(output.id, new OutputBinding(output.id, path, output.model, format, td, ts));
+                Map<String, String> options = JobConfigNormalizer.normalizeOptions(output.options);
+                registry.outputsById.put(
+                        output.id, new OutputBinding(output.id, path, output.model, format, options, td, ts));
             }
 
             return registry;
@@ -173,7 +178,9 @@ public final class ModelRegistry {
                 TransferDescription td = ts != null ? ts.getTransferDescription() : null;
                 Path path = input.path != null ? Path.of(input.path) : null;
                 TransferFormat format = parseFormat(input.format);
-                registry.inputsById.put(input.id, new InputBinding(input.id, path, input.model, format, td, ts));
+                Map<String, String> options = JobConfigNormalizer.normalizeOptions(input.options);
+                registry.inputsById.put(
+                        input.id, new InputBinding(input.id, path, input.model, format, options, td, ts));
                 if (td != null) {
                     registry.tdByModel.putIfAbsent(input.model, td);
                     registry.tsByModel.putIfAbsent(input.model, ts);
@@ -186,7 +193,9 @@ public final class ModelRegistry {
                 TransferDescription td = ts != null ? ts.getTransferDescription() : null;
                 Path path = output.path != null ? Path.of(output.path) : null;
                 TransferFormat format = parseFormat(output.format);
-                registry.outputsById.put(output.id, new OutputBinding(output.id, path, output.model, format, td, ts));
+                Map<String, String> options = JobConfigNormalizer.normalizeOptions(output.options);
+                registry.outputsById.put(
+                        output.id, new OutputBinding(output.id, path, output.model, format, options, td, ts));
                 if (td != null) {
                     registry.tdByModel.putIfAbsent(output.model, td);
                     registry.tsByModel.putIfAbsent(output.model, ts);

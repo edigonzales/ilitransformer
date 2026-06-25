@@ -183,6 +183,7 @@ public final class JobRunner {
                             tempPath,
                             binding.declaredModelName(),
                             binding.format(),
+                            binding.options(),
                             binding.transferDescription(),
                             binding.typeSystem());
                     FormatOpenContext context =

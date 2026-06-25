@@ -202,4 +202,54 @@ class ModelRegistryTest {
         // Without pre-supplied ts, findByModelName should be empty
         assertThat(registry.findByModelName("DM01AVCH24LV95")).isEmpty();
     }
+
+    @Test
+    void optionsFlowIntoBindingsAsStrings() {
+        JobConfig config = new JobConfig();
+        config.version = 1;
+
+        JobConfig.InputSpec in = new JobConfig.InputSpec();
+        in.id = "src";
+        in.model = "M";
+        in.path = "in.csv";
+        in.options = new java.util.LinkedHashMap<>();
+        in.options.put("firstLineIsHeader", Boolean.TRUE);
+        in.options.put("fetchSize", 10000);
+        in.options.put("encoding", "UTF-8");
+        config.job.inputs.add(in);
+
+        JobConfig.OutputSpec out = new JobConfig.OutputSpec();
+        out.id = "tgt";
+        out.model = "M";
+        out.path = "out.xtf";
+        config.job.outputs.add(out);
+
+        TypeSystemFacade mockTs = new TypeSystemFacade(null);
+        ModelRegistry registry = ModelRegistry.builder()
+                .config(config)
+                .buildWithSuppliedTypeSystems(java.util.Map.of("M", mockTs), java.util.Map.of("M", mockTs));
+
+        InputBinding binding = registry.requireInput("src");
+        assertThat(binding.options())
+                .containsEntry("firstLineIsHeader", "true")
+                .containsEntry("fetchSize", "10000")
+                .containsEntry("encoding", "UTF-8");
+
+        // Outputs without options expose an empty (non-null) map.
+        assertThat(registry.requireOutput("tgt").options()).isEmpty();
+    }
+
+    @Test
+    void bindingOptionsAreNeverNull() {
+        JobConfig config = twoInputsConfig();
+        TypeSystemFacade mockTs = new TypeSystemFacade(null);
+        ModelRegistry registry = ModelRegistry.builder()
+                .config(config)
+                .buildWithSuppliedTypeSystems(
+                        java.util.Map.of("DM01AVCH24LV95", mockTs),
+                        java.util.Map.of("DMAV_FixpunkteAVKategorie3_V1_1", mockTs));
+
+        assertThat(registry.requireInput("dm01").options()).isNotNull().isEmpty();
+        assertThat(registry.requireOutput("dmav").options()).isNotNull().isEmpty();
+    }
 }

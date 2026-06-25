@@ -139,6 +139,42 @@ class IlimapParserMinimalTest {
     }
 
     @Test
+    void parsesInputOutputOptions() {
+        var parser = new IlimapParser("""
+                mapping v2 {
+                  input src {
+                    path "in.csv";
+                    model "M";
+                    format csv;
+                    option firstLineIsHeader true;
+                    option separator ";";
+                    option encoding "UTF-8";
+                    option fetchSize 10000;
+                  }
+                  output o {
+                    path "out.xtf";
+                    model "M";
+                    option pretty true;
+                  }
+                  rule r1 {
+                    target o class "M.A";
+                    source p from src class "M.A";
+                  }
+                }
+                """);
+
+        IlimapDocument doc = parser.parseDocument();
+
+        IlimapInputBlock input = doc.inputs().get(0);
+        assertThat(input.options())
+                .containsEntry("firstLineIsHeader", "true")
+                .containsEntry("separator", ";")
+                .containsEntry("encoding", "UTF-8")
+                .containsEntry("fetchSize", "10000");
+        assertThat(doc.outputs().get(0).options()).containsEntry("pretty", "true");
+    }
+
+    @Test
     void parsesRuleWithSourceWhereIdentityAssign() {
         var parser = new IlimapParser("""
                 mapping v2 {

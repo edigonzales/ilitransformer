@@ -120,7 +120,7 @@ werden: `mapping`, `job`, `input`, `output`, `oid`, `basket`, `enum`, `rule`,
 `bag`, `ref`, `create`, `loss`, `metadata`, `class`, `inner`, `left`, `mode`,
 `structure`, `maxItems`, `parentRef`, `association`, `role`, `required`,
 `sourcePath`, `reasonCode`, `description`, `when`, `direction`, `roundtrip`,
-`lossiness`, `true`, `false`, `null`.
+`lossiness`, `option`, `true`, `false`, `null`.
 
 ### Literals
 
@@ -203,6 +203,26 @@ output dmav {
 ```
 
 `format` ist optional. Erlaubte Werte: `itf`, `xtf`.
+
+Optional koennen `input`- und `output`-Bloecke generische Formatoptionen deklarieren:
+
+```ilimap
+input source {
+  path "input/municipalities.csv";
+  model "DemoCsvSource";
+  format csv;
+  option firstLineIsHeader true;
+  option separator ";";
+  option encoding "UTF-8";
+}
+```
+
+- Jede `option`-Zeile hat die Form `option <key> <value>;`. Der Schluessel ist ein Identifier
+  oder String, der Wert ein String, eine Zahl oder ein Boolean.
+- Alle Werte werden als Strings gespeichert (`true` wird zu `"true"`, `10000` zu `"10000"`).
+- Die Optionen werden an den jeweiligen Formatprovider durchgereicht. Die nativen
+  INTERLIS-Formate werten sie derzeit nicht aus und ignorieren sie. Es wird noch kein neues
+  Format aktiviert.
 
 ### oid
 
@@ -602,7 +622,11 @@ jobStmt           = ("name" string
 inputDecl         = "input" id ioBlock ;
 outputDecl        = "output" id ioBlock ;
 ioBlock           = "{" ioStmt* "}" ;
-ioStmt            = ("path" string | "model" string | "format" id) ";" ;
+ioStmt            = ("path" string
+                  | "model" string
+                  | "format" id
+                  | "option" (id | string) optionValue) ";" ;
+optionValue       = string | number | boolean ;
 
 oidDecl           = "oid" id (";" | "{" oidStmt* "}") ;
 oidStmt           = "namespace" string ";" ;

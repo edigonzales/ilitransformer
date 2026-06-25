@@ -1,6 +1,7 @@
 package guru.interlis.transformer.mapping.model;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +41,7 @@ public final class JobConfig {
         public String path;
         public String model;
         public String format;
+        public Map<String, Object> options = new LinkedHashMap<>();
     }
 
     // -- OutputSpec --------------------------------------------------------
@@ -49,6 +51,7 @@ public final class JobConfig {
         public String path;
         public String model;
         public String format;
+        public Map<String, Object> options = new LinkedHashMap<>();
     }
 
     // -- MappingSection ----------------------------------------------------

@@ -3,8 +3,12 @@ package guru.interlis.transformer.mapping.model;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.jupiter.api.Test;
 
 class JobConfigNormalizerTest {
@@ -141,5 +145,90 @@ class JobConfigNormalizerTest {
 
         assertThat(src.inputs).containsExactly("in1", "in2");
         assertThat(src.input).isNull();
+    }
+
+    @Test
+    void normalizeOptionsConvertsValuesToStrings() {
+        Map<String, Object> raw = new LinkedHashMap<>();
+        raw.put("firstLineIsHeader", Boolean.TRUE);
+        raw.put("fetchSize", 10000);
+        raw.put("encoding", "UTF-8");
+        raw.put("skip", null);
+
+        Map<String, String> normalized = JobConfigNormalizer.normalizeOptions(raw);
+
+        assertThat(normalized)
+                .containsEntry("firstLineIsHeader", "true")
+                .containsEntry("fetchSize", "10000")
+                .containsEntry("encoding", "UTF-8")
+                .doesNotContainKey("skip");
+    }
+
+    @Test
+    void normalizeOptionsHandlesNullAndEmpty() {
+        assertThat(JobConfigNormalizer.normalizeOptions(null)).isEmpty();
+        assertThat(JobConfigNormalizer.normalizeOptions(new LinkedHashMap<>())).isEmpty();
+    }
+
+    @Test
+    void normalizeEnsuresInputOutputOptionsNonNull() {
+        JobConfig config = new JobConfig();
+        config.version = 1;
+
+        JobConfig.InputSpec input = new JobConfig.InputSpec();
+        input.id = "src";
+        input.options = null;
+        config.job.inputs.add(input);
+
+        JobConfig.OutputSpec output = new JobConfig.OutputSpec();
+        output.id = "tgt";
+        output.options = null;
+        config.job.outputs.add(output);
+
+        JobConfigNormalizer.normalize(config);
+
+        assertThat(config.job.inputs.get(0).options).isNotNull().isEmpty();
+        assertThat(config.job.outputs.get(0).options).isNotNull().isEmpty();
+    }
+
+    @Test
+    void yamlOptionsDeserializeAsObjectsAndNormalizeToStrings() throws Exception {
+        String yaml = """
+                version: 1
+                job:
+                  inputs:
+                    - id: source
+                      path: input/municipalities.csv
+                      model: DemoCsvSource
+                      format: csv
+                      options:
+                        firstLineIsHeader: true
+                        separator: ";"
+                        fetchSize: 10000
+                        encoding: UTF-8
+                  outputs:
+                    - id: target
+                      path: build/out.xtf
+                      model: DemoTarget
+                """;
+
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        JobConfig config = mapper.readValue(yaml, JobConfig.class);
+        JobConfigNormalizer.normalize(config);
+
+        Map<String, Object> raw = config.job.inputs.get(0).options;
+        assertThat(raw).containsKeys("firstLineIsHeader", "separator", "fetchSize", "encoding");
+        assertThat(raw.get("firstLineIsHeader")).isEqualTo(Boolean.TRUE);
+        assertThat(raw.get("fetchSize")).isEqualTo(10000);
+
+        Map<String, String> normalized = JobConfigNormalizer.normalizeOptions(raw);
+        assertThat(normalized)
+                .containsEntry("firstLineIsHeader", "true")
+                .containsEntry("separator", ";")
+                .containsEntry("fetchSize", "10000")
+                .containsEntry("encoding", "UTF-8");
+
+        // Output without options remains usable.
+        assertThat(config.job.outputs.get(0).options).isNotNull().isEmpty();
     }
 }

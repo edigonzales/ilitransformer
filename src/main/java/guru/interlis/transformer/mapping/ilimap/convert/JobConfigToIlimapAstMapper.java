@@ -60,7 +60,13 @@ public final class JobConfigToIlimapAstMapper {
     private List<IlimapInputBlock> mapInputs(JobConfig config) {
         List<IlimapInputBlock> result = new ArrayList<>();
         for (JobConfig.InputSpec spec : config.job.inputs) {
-            result.add(new IlimapInputBlock(spec.id, spec.path, spec.model, spec.format, SYNTHETIC));
+            result.add(new IlimapInputBlock(
+                    spec.id,
+                    spec.path,
+                    spec.model,
+                    spec.format,
+                    JobConfigNormalizer.normalizeOptions(spec.options),
+                    SYNTHETIC));
         }
         return result;
     }
@@ -68,7 +74,13 @@ public final class JobConfigToIlimapAstMapper {
     private List<IlimapOutputBlock> mapOutputs(JobConfig config) {
         List<IlimapOutputBlock> result = new ArrayList<>();
         for (JobConfig.OutputSpec spec : config.job.outputs) {
-            result.add(new IlimapOutputBlock(spec.id, spec.path, spec.model, spec.format, SYNTHETIC));
+            result.add(new IlimapOutputBlock(
+                    spec.id,
+                    spec.path,
+                    spec.model,
+                    spec.format,
+                    JobConfigNormalizer.normalizeOptions(spec.options),
+                    SYNTHETIC));
         }
         return result;
     }

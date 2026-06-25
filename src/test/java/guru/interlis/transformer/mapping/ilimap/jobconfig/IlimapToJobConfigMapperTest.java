@@ -139,6 +139,45 @@ class IlimapToJobConfigMapperTest {
     }
 
     @Test
+    void mapsInputOutputOptions() {
+        String source = """
+                mapping v2 {
+                  input src {
+                    path "in.csv";
+                    model "M";
+                    format csv;
+                    option firstLineIsHeader true;
+                    option separator ";";
+                    option encoding "UTF-8";
+                  }
+                  output tgt {
+                    path "out.xtf";
+                    model "M";
+                    option fetchSize 10000;
+                  }
+                  rule r1 {
+                    target tgt class "M.T.C";
+                    source s from src class "M.T.C";
+                    assign { X = s.X; }
+                  }
+                }
+                """;
+        JobConfig config = mapFromSource(source);
+        assertThat(config.job.inputs.get(0).options)
+                .containsEntry("firstLineIsHeader", "true")
+                .containsEntry("separator", ";")
+                .containsEntry("encoding", "UTF-8");
+        assertThat(config.job.outputs.get(0).options).containsEntry("fetchSize", "10000");
+    }
+
+    @Test
+    void inputOutputOptionsDefaultToEmpty() {
+        JobConfig config = mapFromSource(MINIMAL);
+        assertThat(config.job.inputs.get(0).options).isEmpty();
+        assertThat(config.job.outputs.get(0).options).isEmpty();
+    }
+
+    @Test
     void mapsOidStrategy() {
         String source = """
                 mapping v2 {
