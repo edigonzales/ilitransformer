@@ -15,4 +15,9 @@ public record FormatCapabilities(
     public static FormatCapabilities readConnectionModelWithOptions() {
         return new FormatCapabilities(true, false, false, true, true);
     }
+
+    /** Read/write file format that requires a model and uses options (prepared for the Shapefile writer). */
+    public static FormatCapabilities readWritePathModelWithOptions() {
+        return new FormatCapabilities(true, true, true, true, true);
+    }
 }

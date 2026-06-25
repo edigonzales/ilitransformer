@@ -3,6 +3,7 @@ package guru.interlis.transformer.io;
 import static org.assertj.core.api.Assertions.*;
 
 import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.io.shp.ShapefileFormatProvider;
 import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
 
@@ -32,6 +33,19 @@ class IoxFormatRegistryTest {
     void resolvesXtfInputByPathExtension() {
         InputBinding binding = new InputBinding(null, Path.of("municipalities.xtf"), null, null, null, null, null);
         assertThat(registry.findForInput(binding)).get().isInstanceOf(BuiltInInterlisFormatProvider.class);
+    }
+
+    @Test
+    void defaultRegistryContainsShapefileProvider() {
+        assertThat(registry.find("shp")).get().isInstanceOf(ShapefileFormatProvider.class);
+        assertThat(registry.find("shapefile")).get().isInstanceOf(ShapefileFormatProvider.class);
+        assertThat(registry.find("SHP")).get().isInstanceOf(ShapefileFormatProvider.class);
+    }
+
+    @Test
+    void resolvesShapefileInputByResolvedFormat() {
+        InputBinding binding = new InputBinding(null, Path.of("parcels.shp"), null, "shp", null, null, null);
+        assertThat(registry.findForInput(binding)).get().isInstanceOf(ShapefileFormatProvider.class);
     }
 
     @Test

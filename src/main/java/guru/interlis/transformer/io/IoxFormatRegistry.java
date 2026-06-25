@@ -1,5 +1,6 @@
 package guru.interlis.transformer.io;
 
+import guru.interlis.transformer.io.shp.ShapefileFormatProvider;
 import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
 
@@ -34,7 +35,8 @@ public final class IoxFormatRegistry {
                 new BuiltInInterlisFormatProvider(),
                 new CsvFormatProvider(),
                 new WkfGeoPackageFormatProvider(),
-                new JdbcFormatProvider()));
+                new JdbcFormatProvider(),
+                new ShapefileFormatProvider()));
     }
 
     /** Finds a provider that handles the given format id (e.g. {@code xtf}, {@code itf}). */
