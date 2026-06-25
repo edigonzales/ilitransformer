@@ -142,6 +142,10 @@ distributions {
             from('profiles') { into 'profiles' }
             from('docs/cli.md') { into 'docs' }
             from('docs/mapping-dsl.md') { into 'docs' }
+            from('docs/ilimap-v2.md') { into 'docs' }
+            from('docs/formats.md') { into 'docs' }
+            from('docs/feature-matrix.md') { into 'docs' }
+            from('docs/expressions.md') { into 'docs' }
             from('README.md')
         }
     }

@@ -221,7 +221,8 @@ Reports geschrieben. Ein vollständiges Beispiel inklusive `.ilimap`-Variante li
 | ITF | ja | ja | eingeschränkt | modellabhängig | modellabhängig | INTERLIS 1 |
 | CSV | ja | nein | nein | nein | nein | Nur flache Tabellen |
 | GPKG | ja | nein | ja (Simple Features) | nein | nein | Tabellen und Punktgeometrie |
-| JDBC | ja | nein | nein | nein | nein | Eine Query je Quellklasse, tabellarisch |
+| JDBC | ja | nein | ja (WKT/WKB POINT) | nein | nein | Eine Query je Quellklasse, tabellarisch |
+| SHP | reserviert | nein | — | — | — | Noch nicht implementiert |
 
 ## Mapping-Sektion
 

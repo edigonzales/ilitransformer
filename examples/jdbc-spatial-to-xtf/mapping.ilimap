@@ -18,6 +18,12 @@ mapping v2 "jdbc-spatial-to-xtf-demo" {
       basketId "b1";
       oidColumn "id";
       sql "select id, identifier, name, geom_wkt from stations";
+      geometry {
+        attribute "geom";
+        column "geom_wkt";
+        encoding wkt;
+        type coord;
+      }
     }
   }
 

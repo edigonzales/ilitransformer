@@ -14,7 +14,7 @@ public final class IlimapParser {
     private static final String TRANSFER_FIELDS = "path, model, format, option";
     private static final String INPUT_FIELDS = "path, model, format, option, connection, query";
     private static final String CONNECTION_FIELDS = "driver, url, user, password, userEnv, passwordEnv, property";
-    private static final String QUERY_FIELDS = "topic, class, basketId, oidColumn, sql, column";
+    private static final String QUERY_FIELDS = "topic, class, basketId, oidColumn, sql, column, geometry";
     private static final String OID_FIELDS = "strategy, namespace";
 
     private final String source;
@@ -243,6 +243,7 @@ public final class IlimapParser {
         String oidColumn = null;
         String sql = null;
         Map<String, String> columns = new LinkedHashMap<>();
+        List<IlimapGeometryBlock> geometryBlocks = new ArrayList<>();
 
         while (!peekType(IlimapTokenType.RBRACE)) {
             IlimapToken fieldToken = next();
@@ -276,6 +277,7 @@ public final class IlimapParser {
                     columns.put(dbColumn, attribute);
                     expectToken(IlimapTokenType.SEMICOLON);
                 }
+                case "geometry" -> geometryBlocks.add(parseGeometryBlock(fieldToken));
                 default ->
                     throw parseError(
                             "unexpected field '" + fieldToken.text() + "' in query block. Allowed fields: "
@@ -286,7 +288,61 @@ public final class IlimapParser {
 
         IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
         IlimapSourceRange range = new IlimapSourceRange(queryKeyword.range().start(), end);
-        return new IlimapQueryBlock(id, topic, sourceClass, basketId, oidColumn, sql, columns, range);
+        return new IlimapQueryBlock(id, topic, sourceClass, basketId, oidColumn, sql, columns, geometryBlocks, range);
+    }
+
+    private static final String GEOMETRY_FIELDS = "attribute, column, encoding, type, srid";
+
+    private IlimapGeometryBlock parseGeometryBlock(IlimapToken geometryKeyword) {
+        expectToken(IlimapTokenType.LBRACE);
+
+        String attribute = null;
+        String column = null;
+        String encoding = null;
+        String type = null;
+        Integer srid = null;
+
+        while (!peekType(IlimapTokenType.RBRACE)) {
+            IlimapToken fieldToken = next();
+            if (!isKeywordOrIdentifier(fieldToken)) {
+                throw parseError("expected field name", fieldToken);
+            }
+            switch (fieldToken.text()) {
+                case "attribute" -> {
+                    attribute = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "column" -> {
+                    column = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "encoding" -> {
+                    encoding = expectStringOrIdentifier();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "type" -> {
+                    type = expectStringOrIdentifier();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "srid" -> {
+                    IlimapToken token = next();
+                    if (token.type() != IlimapTokenType.NUMBER) {
+                        throw parseError("expected integer SRID", token);
+                    }
+                    srid = Integer.parseInt(token.text());
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                default ->
+                    throw parseError(
+                            "unexpected field '" + fieldToken.text() + "' in geometry block. Allowed fields: "
+                                    + GEOMETRY_FIELDS,
+                            fieldToken);
+            }
+        }
+
+        IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
+        IlimapSourceRange range = new IlimapSourceRange(geometryKeyword.range().start(), end);
+        return new IlimapGeometryBlock(attribute, column, encoding, type, srid, range);
     }
 
     private IlimapOutputBlock parseOutputBlock() {

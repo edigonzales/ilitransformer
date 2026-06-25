@@ -4,6 +4,9 @@ import guru.interlis.transformer.mapping.ilimap.ast.IlimapAssignmentBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapAstNode;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapBagBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapDocument;
+import guru.interlis.transformer.mapping.ilimap.ast.IlimapGeometryBlock;
+import guru.interlis.transformer.mapping.ilimap.ast.IlimapInputBlock;
+import guru.interlis.transformer.mapping.ilimap.ast.IlimapQueryBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRefBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleElement;
@@ -26,9 +29,7 @@ public final class IlimapDocumentSymbolService {
         if (document.job() != null) {
             children.add(symbol("job", IlimapSymbolDisplayKind.OBJECT, document.job(), analysis, List.of()));
         }
-        document.inputs()
-                .forEach(input -> children.add(
-                        symbol("input " + input.id(), IlimapSymbolDisplayKind.FILE, input, analysis, List.of())));
+        document.inputs().forEach(input -> children.add(inputSymbol(input, analysis)));
         document.outputs()
                 .forEach(output -> children.add(
                         symbol("output " + output.id(), IlimapSymbolDisplayKind.FILE, output, analysis, List.of())));
@@ -38,6 +39,26 @@ public final class IlimapDocumentSymbolService {
         document.rules().forEach(rule -> children.add(ruleSymbol(rule, analysis)));
 
         return List.of(symbol(mappingName(document), IlimapSymbolDisplayKind.MODULE, document, analysis, children));
+    }
+
+    private IlimapDocumentSymbol inputSymbol(IlimapInputBlock input, IlimapAnalysis analysis) {
+        List<IlimapDocumentSymbol> children = new ArrayList<>();
+        if (input.connection() != null) {
+            children.add(symbol("connection", IlimapSymbolDisplayKind.OBJECT, input.connection(), analysis, List.of()));
+        }
+        for (IlimapQueryBlock query : input.queries()) {
+            List<IlimapDocumentSymbol> queryChildren = new ArrayList<>();
+            for (IlimapGeometryBlock geometry : query.geometry()) {
+                queryChildren.add(symbol(
+                        "geometry " + geometry.attribute(),
+                        IlimapSymbolDisplayKind.FIELD,
+                        geometry,
+                        analysis,
+                        List.of()));
+            }
+            children.add(symbol("query " + query.id(), IlimapSymbolDisplayKind.CLASS, query, analysis, queryChildren));
+        }
+        return symbol("input " + input.id(), IlimapSymbolDisplayKind.FILE, input, analysis, children);
     }
 
     private IlimapDocumentSymbol ruleSymbol(IlimapRuleBlock rule, IlimapAnalysis analysis) {

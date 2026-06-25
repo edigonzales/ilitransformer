@@ -207,7 +207,7 @@ public final class IlimapCompletionService {
 
     private static List<IlimapCompletionItem> blockFieldValueItems(IlimapCompletionContext context) {
         return switch (context.qualifier()) {
-            case "input.format", "output.format" -> valueItems(List.of("itf", "xtf"), context);
+            case "input.format", "output.format" -> valueItems(List.of("itf", "xtf", "csv", "gpkg", "jdbc"), context);
             case "job.failPolicy" -> valueItems(List.of("strict", "lenient", "reportOnly"), context);
             case "job.compileMode" -> valueItems(List.of("strict", "compatible", "report"), context);
             case "oid.strategy" -> valueItems(List.of("preserve", "integer", "uuid", "deterministicUuid"), context);
@@ -261,7 +261,23 @@ public final class IlimapCompletionService {
         return List.of(
                 new FieldSpec("path", "transfer field", "Required transfer file path.", "path \"${1:transfer.xtf}\";"),
                 new FieldSpec("model", "transfer field", "Required INTERLIS model name.", "model \"${1:ModelName}\";"),
-                new FieldSpec("format", "transfer field", "Optional transfer format.", "format ${1|xtf,itf|};"));
+                new FieldSpec(
+                        "format", "transfer field", "Optional transfer format.", "format ${1|xtf,itf,csv,gpkg,jdbc|};"),
+                new FieldSpec(
+                        "option",
+                        "transfer field",
+                        "Format-specific option (key-value pair).",
+                        "option ${1:key} ${2:value};"),
+                new FieldSpec(
+                        "connection",
+                        "JDBC field",
+                        "JDBC connection block (only inside jdbc input).",
+                        "connection {\n  ${1}\n}"),
+                new FieldSpec(
+                        "query",
+                        "JDBC field",
+                        "JDBC query block (only inside jdbc input).",
+                        "query ${1:name} {\n  ${2}\n}"));
     }
 
     private static List<FieldSpec> oidFields() {

@@ -96,6 +96,7 @@ public final class JobConfigToIlimapAstMapper {
         }
         for (JobConfig.JdbcQuerySpec query : queries) {
             Map<String, String> columns = query.columns != null ? query.columns : Map.of();
+            List<IlimapGeometryBlock> geometry = mapGeometry(query.geometry);
             result.add(new IlimapQueryBlock(
                     query.id,
                     query.topic,
@@ -104,7 +105,20 @@ public final class JobConfigToIlimapAstMapper {
                     query.oidColumn,
                     query.sql,
                     columns,
+                    geometry,
                     SYNTHETIC));
+        }
+        return result;
+    }
+
+    private List<IlimapGeometryBlock> mapGeometry(List<JobConfig.JdbcGeometrySpec> specs) {
+        if (specs == null || specs.isEmpty()) {
+            return List.of();
+        }
+        List<IlimapGeometryBlock> result = new ArrayList<>();
+        for (JobConfig.JdbcGeometrySpec spec : specs) {
+            result.add(new IlimapGeometryBlock(
+                    spec.attribute, spec.column, spec.encoding, spec.type, spec.srid, SYNTHETIC));
         }
         return result;
     }

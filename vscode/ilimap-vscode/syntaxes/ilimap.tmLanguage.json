@@ -71,7 +71,7 @@
       "patterns": [
         {
           "name": "keyword.control.ilimap",
-          "match": "\\b(?:mapping|v2|job|input|output|oid|basket|enum|defaults|rule|target|source|from|class|where|join|inner|left|identity|assign|bag|ref|association|role|required|create|loss|metadata)\\b"
+          "match": "\\b(?:mapping|v2|job|input|output|oid|basket|enum|defaults|rule|target|source|from|class|where|join|inner|left|identity|assign|bag|ref|association|role|required|create|loss|metadata|option|connection|query|geometry|driver|url|user|password|userEnv|passwordEnv|property|topic|basketId|oidColumn|sql|columns|column|encoding|type|srid|attribute|structure|mode|embed|expand|maxItems|parentRef|parent|sourcePath|reasonCode|description|when|direction|roundtrip|lossiness|name|modeldir|path|model|format|namespace|failPolicy|compileMode|strategy)\\b"
         }
       ]
     },

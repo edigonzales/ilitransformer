@@ -76,7 +76,9 @@ class IlimapCompletionServiceTest {
         List<IlimapCompletionItem> items =
                 complete(mappingWithEmptyInput(), "input src {\n  }", "input src {\n  ".length());
 
-        assertThat(items).extracting(IlimapCompletionItem::label).containsExactly("path", "model", "format");
+        assertThat(items)
+                .extracting(IlimapCompletionItem::label)
+                .contains("path", "model", "format", "option", "connection", "query");
         assertThat(items).allSatisfy(item -> assertThat(item.snippet()).isTrue());
     }
 

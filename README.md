@@ -78,38 +78,60 @@ Zusätzliche Eingabeformate werden über `format:` deklariert und pro Input mit 
 
 - `csv` — bewusst flaches, nur lesbares Eingabeformat (eine Tabelle → eine Quellklasse). Optionen:
   `firstLineIsHeader`, `separator`, `delimiter`, `encoding`.
-- `gpkg` / `geopackage` — tabellarisches, nur lesbares GeoPackage-Eingabeformat (eine Tabelle → eine Quellklasse). Optionen:
-  `table` (Pflicht), `fetchSize`.
-- `jdbc` — generisches, nur lesbares tabellarisches Eingabeformat ohne Pfad. Statt `path` ein
-  `connection`-Block und ein oder mehrere `queries` (eine Query → eine Quellklasse). Passwörter werden
-  nie geloggt; auch als `.ilimap` unterstützt.
+- `gpkg` / `geopackage` — tabellarisches oder räumliches, nur lesbares GeoPackage-Eingabeformat
+  (eine Tabelle → eine Quellklasse). Optionen: `table` (Pflicht), `fetchSize`. Punktgeometrie (COORD)
+  wird als Simple Feature gelesen.
+- `jdbc` — generisches, nur lesbares tabellarisches oder räumliches Eingabeformat ohne Pfad. Statt
+  `path` ein `connection`-Block und ein oder mehrere `queries` (eine Query → eine Quellklasse).
+  Punktgeometrie über WKT/WKB-Spalten. Passwörter werden nie geloggt; auch als `.ilimap` unterstützt.
 
-Ein vollständiges Beispiel (Source-ILI, Target-ILI, CSV, YAML- und `.ilimap`-Mapping) liegt unter
+Shapefile (`shp`) ist als Format-ID reserviert, aber noch nicht implementiert.
+
+Die vollständige Format-Matrix mit Einschränkungen ist in [docs/formats.md](docs/formats.md) dokumentiert.
+
+### Beispiele
+
+Ein vollständiges CSV-Beispiel (Source-ILI, Target-ILI, CSV, YAML- und `.ilimap`-Mapping) liegt unter
 `examples/csv-to-xtf/`:
 
 ```bash
 ilitransformer transform -m examples/csv-to-xtf/mapping.yaml --modeldir examples/csv-to-xtf/models --validate --report build/reports/csv
 ```
 
-Ein weiteres Beispiel (Source-ILI, Target-ILI, YAML- und `.ilimap`-Mapping) für GeoPackage liegt
-unter `examples/gpkg-to-xtf/`:
+Tabellarisches GeoPackage unter `examples/gpkg-to-xtf/`:
 
 ```bash
 ilitransformer transform -m examples/gpkg-to-xtf/mapping.yaml --modeldir examples/gpkg-to-xtf/models --validate --report build/reports/gpkg
 ```
 
-Ein JDBC-Beispiel (SQLite) liegt unter `examples/jdbc-to-xtf/`. Für Tests gegen eine reale
-PostgreSQL/PostGIS-Datenbank liegt ein Compose-Stack unter `dev/stack/compose.yml`; der zugehörige
-Opt-in-Test läuft mit `./gradlew postgisTest` (überspringt sich selbst, wenn keine DB erreichbar ist):
+Räumliches GeoPackage mit Punktgeometrie unter `examples/gpkg-spatial-to-xtf/`:
+
+```bash
+ilitransformer transform -m examples/gpkg-spatial-to-xtf/mapping.yaml --modeldir examples/gpkg-spatial-to-xtf/models --validate --report build/reports/gpkg-spatial
+```
+
+JDBC (SQLite) unter `examples/jdbc-to-xtf/`. Für Tests gegen eine reale PostgreSQL/PostGIS-Datenbank
+liegt ein Compose-Stack unter `dev/stack/compose.yml`; der zugehörige Opt-in-Test läuft mit
+`./gradlew postgisTest` (überspringt sich selbst, wenn keine DB erreichbar ist):
 
 ```bash
 ilitransformer transform -m examples/jdbc-to-xtf/mapping.yaml --modeldir examples/jdbc-to-xtf/models --validate --report build/reports/jdbc
 ```
 
+Räumliches JDBC (WKT Point) unter `examples/jdbc-spatial-to-xtf/`:
+
+```bash
+ilitransformer transform -m examples/jdbc-spatial-to-xtf/mapping.yaml --modeldir examples/jdbc-spatial-to-xtf/models --validate --report build/reports/jdbc-spatial
+```
+
 ## Aktive Dokumentation
 
-- `docs/testing.md`
 - `docs/cli.md`
 - `docs/mapping-dsl.md`
+- `docs/ilimap-v2.md`
+- `docs/formats.md`
+- `docs/expressions.md`
+- `docs/feature-matrix.md`
+- `docs/testing.md`
 - `docs/dm01-dmav/README.md`
 - `docs/dm01-dmav/status-matrix.md`

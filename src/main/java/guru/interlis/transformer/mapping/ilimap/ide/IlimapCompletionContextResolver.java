@@ -160,6 +160,33 @@ public final class IlimapCompletionContextResolver {
             }
             return new IlimapCompletionContext(IlimapCompletionContextKind.OID_BLOCK, prefix, currentRule, currentNode);
         }
+        if (currentNode instanceof IlimapConnectionBlock) {
+            Optional<IlimapCompletionContext> valueContext =
+                    blockFieldValueContext(analysis, offset, prefix, currentRule, currentNode, "connection");
+            if (valueContext.isPresent()) {
+                return valueContext.get();
+            }
+            return new IlimapCompletionContext(
+                    IlimapCompletionContextKind.INPUT_BLOCK, prefix, currentRule, currentNode);
+        }
+        if (currentNode instanceof IlimapQueryBlock) {
+            Optional<IlimapCompletionContext> valueContext =
+                    blockFieldValueContext(analysis, offset, prefix, currentRule, currentNode, "query");
+            if (valueContext.isPresent()) {
+                return valueContext.get();
+            }
+            return new IlimapCompletionContext(
+                    IlimapCompletionContextKind.INPUT_BLOCK, prefix, currentRule, currentNode);
+        }
+        if (currentNode instanceof IlimapGeometryBlock) {
+            Optional<IlimapCompletionContext> valueContext =
+                    blockFieldValueContext(analysis, offset, prefix, currentRule, currentNode, "geometry");
+            if (valueContext.isPresent()) {
+                return valueContext.get();
+            }
+            return new IlimapCompletionContext(
+                    IlimapCompletionContextKind.INPUT_BLOCK, prefix, currentRule, currentNode);
+        }
         if (currentNode instanceof IlimapBasketStmt) {
             return new IlimapCompletionContext(
                     IlimapCompletionContextKind.BASKET_VALUE,
@@ -196,7 +223,7 @@ public final class IlimapCompletionContextResolver {
         }
         for (IlimapInputBlock input : document.inputs()) {
             if (contains(input.range(), offset)) {
-                best = input;
+                best = smallestNodeInInput(input, offset);
             }
         }
         for (IlimapOutputBlock output : document.outputs()) {
@@ -224,6 +251,29 @@ public final class IlimapCompletionContextResolver {
             }
         }
         return Optional.of(best);
+    }
+
+    private static IlimapAstNode smallestNodeInInput(IlimapInputBlock input, int offset) {
+        IlimapAstNode best = input;
+        if (input.connection() != null && contains(input.connection().range(), offset)) {
+            best = input.connection();
+        }
+        for (IlimapQueryBlock query : input.queries()) {
+            if (contains(query.range(), offset)) {
+                best = smallestNodeInQuery(query, offset);
+            }
+        }
+        return best;
+    }
+
+    private static IlimapAstNode smallestNodeInQuery(IlimapQueryBlock query, int offset) {
+        IlimapAstNode best = query;
+        for (IlimapGeometryBlock geometry : query.geometry()) {
+            if (contains(geometry.range(), offset)) {
+                best = geometry;
+            }
+        }
+        return best;
     }
 
     private static IlimapAstNode smallestNodeInRule(IlimapRuleBlock rule, int offset) {

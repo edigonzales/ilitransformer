@@ -108,6 +108,118 @@ class JdbcGeometryConverterTest {
         assertThat(result.getattrvalue("C2")).isEqualTo("2.0");
     }
 
+    @Test
+    void convertsWktLineStringToPolyline() throws IoxException {
+        JobConfig.JdbcGeometrySpec spec = spec("geom", "geom_wkt", "wkt", "polyline");
+
+        IomObject result = converter.convertToGeometry("LINESTRING (2607600 1228500, 2635000 1242000)", spec);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getobjecttag()).isEqualTo("POLYLINE");
+        assertThat(result.getattrcount()).isEqualTo(1);
+        IomObject sequence = result.getattrobj("sequence", 0);
+        assertThat(sequence).isNotNull();
+        assertThat(sequence.getobjecttag()).isEqualTo("SEGMENTS");
+    }
+
+    @Test
+    void convertsWktLineStringToPolylineWithAutoInference() throws IoxException {
+        JobConfig.JdbcGeometrySpec spec = spec("geom", "geom_wkt", "wkt", null);
+
+        IomObject result = converter.convertToGeometry("LINESTRING (0 0, 1 1, 2 2)", spec);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getobjecttag()).isEqualTo("POLYLINE");
+    }
+
+    @Test
+    void convertsWktMultiLineStringToMultiPolyline() throws IoxException {
+        JobConfig.JdbcGeometrySpec spec = spec("geom", "geom_wkt", "wkt", "polyline");
+
+        IomObject result = converter.convertToGeometry("MULTILINESTRING ((0 0, 1 1), (2 2, 3 3))", spec);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getobjecttag()).isEqualTo("MULTIPOLYLINE");
+    }
+
+    @Test
+    void convertsWktPolygonToSurface() throws IoxException {
+        JobConfig.JdbcGeometrySpec spec = spec("geom", "geom_wkt", "wkt", "surface");
+
+        IomObject result = converter.convertToGeometry("POLYGON ((0 0, 0 10, 10 10, 10 0, 0 0))", spec);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getobjecttag()).isEqualTo("MULTISURFACE");
+    }
+
+    @Test
+    void convertsWktPolygonToSurfaceWithAutoInference() throws IoxException {
+        JobConfig.JdbcGeometrySpec spec = spec("geom", "geom_wkt", "wkt", null);
+
+        IomObject result = converter.convertToGeometry("POLYGON ((0 0, 0 5, 5 5, 5 0, 0 0))", spec);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getobjecttag()).isEqualTo("MULTISURFACE");
+    }
+
+    @Test
+    void convertsWktMultiPolygonToMultiSurface() throws IoxException {
+        JobConfig.JdbcGeometrySpec spec = spec("geom", "geom_wkt", "wkt", "surface");
+
+        IomObject result = converter.convertToGeometry(
+                "MULTIPOLYGON (((0 0, 0 5, 5 5, 5 0, 0 0)), ((10 10, 10 15, 15 15, 15 10, 10 10)))", spec);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getobjecttag()).isEqualTo("MULTISURFACE");
+    }
+
+    @Test
+    void returnsNullForEmptyPolylineGeometry() throws IoxException {
+        JobConfig.JdbcGeometrySpec spec = spec("geom", "geom_wkt", "wkt", "polyline");
+
+        IomObject result = converter.convertToGeometry("LINESTRING EMPTY", spec);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void returnsNullForEmptySurfaceGeometry() throws IoxException {
+        JobConfig.JdbcGeometrySpec spec = spec("geom", "geom_wkt", "wkt", "surface");
+
+        IomObject result = converter.convertToGeometry("POLYGON EMPTY", spec);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void rejectsNonLineStringGeometryForPolylineType() {
+        JobConfig.JdbcGeometrySpec spec = spec("geom", "geom_wkt", "wkt", "polyline");
+
+        assertThatThrownBy(() -> converter.convertToGeometry("POINT (1 2)", spec))
+                .isInstanceOf(JdbcMappingException.class)
+                .hasMessageContaining("LINESTRING or MULTILINESTRING")
+                .hasMessageContaining("polyline");
+    }
+
+    @Test
+    void rejectsNonPolygonGeometryForSurfaceType() {
+        JobConfig.JdbcGeometrySpec spec = spec("geom", "geom_wkt", "wkt", "surface");
+
+        assertThatThrownBy(() -> converter.convertToGeometry("POINT (1 2)", spec))
+                .isInstanceOf(JdbcMappingException.class)
+                .hasMessageContaining("POLYGON or MULTIPOLYGON")
+                .hasMessageContaining("surface");
+    }
+
+    @Test
+    void rejectsUnexpectedExplicitType() {
+        JobConfig.JdbcGeometrySpec spec = spec("geom", "geom_wkt", "wkt", "tin");
+
+        assertThatThrownBy(() -> converter.convertToGeometry("POINT (1 2)", spec))
+                .isInstanceOf(JdbcMappingException.class)
+                .hasMessageContaining("coord, polyline, surface");
+    }
+
     private static JobConfig.JdbcGeometrySpec spec(String attribute, String column, String encoding, String type) {
         JobConfig.JdbcGeometrySpec spec = new JobConfig.JdbcGeometrySpec();
         spec.attribute = attribute;

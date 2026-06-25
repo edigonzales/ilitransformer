@@ -58,6 +58,67 @@ class IlimapDocumentSymbolServiceTest {
         assertThat(symbolService.symbols(analyze(missingSemicolonMapping()))).isEmpty();
     }
 
+    @Test
+    void createsInputWithJdbcConnectionQueryAndGeometryChildren() {
+        IlimapDocumentSymbol mapping =
+                symbolService.symbols(analyze(jdbcInputMapping())).get(0);
+        IlimapDocumentSymbol input = childNamed(mapping, "input db");
+
+        assertThat(input.children())
+                .extracting(IlimapDocumentSymbol::name)
+                .containsExactly("connection", "query stations");
+
+        IlimapDocumentSymbol connection = childNamed(input, "connection");
+        assertThat(connection.kind()).isEqualTo(IlimapSymbolDisplayKind.OBJECT);
+        assertThat(connection.children()).isEmpty();
+
+        IlimapDocumentSymbol query = childNamed(input, "query stations");
+        assertThat(query.kind()).isEqualTo(IlimapSymbolDisplayKind.CLASS);
+        assertThat(query.children()).extracting(IlimapDocumentSymbol::name).containsExactly("geometry geom");
+
+        IlimapDocumentSymbol geometry = childNamed(query, "geometry geom");
+        assertThat(geometry.kind()).isEqualTo(IlimapSymbolDisplayKind.FIELD);
+        assertThat(geometry.children()).isEmpty();
+    }
+
+    @Test
+    void createsInputWithoutJdbcHasNoExtraChildren() {
+        IlimapDocumentSymbol mapping =
+                symbolService.symbols(analyze(validMapping())).get(0);
+        IlimapDocumentSymbol input = childNamed(mapping, "input src");
+
+        assertThat(input.children()).isEmpty();
+    }
+
+    private static String jdbcInputMapping() {
+        return """
+                mapping v2 "jdbc-demo" {
+                  input db {
+                    model "S";
+                    format jdbc;
+                    connection {
+                      url "jdbc:sqlite:demo.sqlite";
+                    }
+                    query stations {
+                      class "S.Data.Station";
+                      sql "select id, name, geom_wkt from stations";
+                      geometry {
+                        attribute "geom";
+                        column "geom_wkt";
+                        encoding wkt;
+                        type coord;
+                      }
+                    }
+                  }
+                  output o { path "out.xtf"; model "S"; }
+                  rule r1 {
+                    target o class "S.Data.Station";
+                    source s from db class "S.Data.Station";
+                  }
+                }
+                """;
+    }
+
     private IlimapAnalysis analyze(String source) {
         return analysisService.analyze("file:///test.ilimap", source, OPTIONS);
     }

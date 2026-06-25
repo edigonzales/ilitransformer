@@ -9,8 +9,10 @@ import guru.interlis.transformer.mapping.ilimap.ast.IlimapDefaultsBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapDocument;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapExpressionText;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapIdentityStmt;
+import guru.interlis.transformer.mapping.ilimap.ast.IlimapInputBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapJoinStmt;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapLossBlock;
+import guru.interlis.transformer.mapping.ilimap.ast.IlimapQueryBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRefBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleElement;
@@ -143,7 +145,7 @@ public final class IlimapPositionResolver {
         }
         for (var input : document.inputs()) {
             if (contains(input.range(), offset)) {
-                best = input;
+                best = smallestNodeInInput(input, offset);
             }
         }
         for (var output : document.outputs()) {
@@ -171,6 +173,29 @@ public final class IlimapPositionResolver {
             }
         }
         return Optional.of(best);
+    }
+
+    private IlimapAstNode smallestNodeInInput(IlimapInputBlock input, int offset) {
+        IlimapAstNode best = input;
+        if (input.connection() != null && contains(input.connection().range(), offset)) {
+            best = input.connection();
+        }
+        for (var query : input.queries()) {
+            if (contains(query.range(), offset)) {
+                best = smallestNodeInQuery(query, offset);
+            }
+        }
+        return best;
+    }
+
+    private IlimapAstNode smallestNodeInQuery(IlimapQueryBlock query, int offset) {
+        IlimapAstNode best = query;
+        for (var geometry : query.geometry()) {
+            if (contains(geometry.range(), offset)) {
+                best = geometry;
+            }
+        }
+        return best;
     }
 
     private IlimapAstNode smallestNodeInRule(IlimapRuleBlock rule, int offset) {

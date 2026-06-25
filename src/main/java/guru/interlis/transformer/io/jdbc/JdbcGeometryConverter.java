@@ -8,7 +8,11 @@ import ch.interlis.iox_j.jts.Jts2iox;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiLineString;
+import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.io.WKTReader;
@@ -66,9 +70,11 @@ public final class JdbcGeometryConverter {
         String type = (spec.type != null) ? spec.type.toLowerCase().trim() : inferType(geom);
         return switch (type) {
             case "coord" -> pointToCoord(geom, spec.attribute);
+            case "polyline" -> lineToPolyline(geom, spec.attribute);
+            case "surface" -> polygonToSurface(geom, spec.attribute);
             default ->
                 throw new JdbcMappingException("Unsupported geometry type '" + spec.type + "' for attribute '"
-                        + spec.attribute + "'. Supported: coord.");
+                        + spec.attribute + "'. Supported: coord, polyline, surface.");
         };
     }
 
@@ -83,6 +89,35 @@ public final class JdbcGeometryConverter {
         Point point = (Point) geom;
         Coordinate coordinate = point.getCoordinate();
         return Jts2iox.JTS2coord(coordinate);
+    }
+
+    private IomObject lineToPolyline(Geometry geom, String attribute) {
+        if (geom.isEmpty()) {
+            return null;
+        }
+        if (geom instanceof LineString ls) {
+            return Jts2iox.JTS2polyline(ls);
+        }
+        if (geom instanceof MultiLineString mls) {
+            return Jts2iox.JTS2multipolyline(mls);
+        }
+        throw new JdbcMappingException(
+                "Expected LINESTRING or MULTILINESTRING geometry for polyline type on attribute '" + attribute
+                        + "', got " + geom.getGeometryType());
+    }
+
+    private IomObject polygonToSurface(Geometry geom, String attribute) {
+        if (geom.isEmpty()) {
+            return null;
+        }
+        if (geom instanceof Polygon p) {
+            return Jts2iox.JTS2surface(p);
+        }
+        if (geom instanceof MultiPolygon mp) {
+            return Jts2iox.JTS2multisurface(mp);
+        }
+        throw new JdbcMappingException("Expected POLYGON or MULTIPOLYGON geometry for surface type on attribute '"
+                + attribute + "', got " + geom.getGeometryType());
     }
 
     private static String inferType(Geometry geom) {

@@ -46,7 +46,7 @@ class IlimapHoverServiceTest {
                 .contains("Path: `in.xtf`")
                 .contains("Model: `M`")
                 .contains("Format: `xtf`")
-                .contains("Allowed fields: `path`, `model`, `format`");
+                .contains("Allowed fields: `path`, `model`, `format`, `option`, `connection`, `query`");
     }
 
     @Test
@@ -62,7 +62,7 @@ class IlimapHoverServiceTest {
                 .contains("Path: `out.xtf`")
                 .contains("Model: `M`")
                 .contains("Format: `xtf`")
-                .contains("Allowed fields: `path`, `model`, `format`");
+                .contains("Allowed fields: `path`, `model`, `format`, `option`");
     }
 
     @Test

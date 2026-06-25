@@ -183,6 +183,29 @@ final class IlimapPrinter {
                 line("sql " + quoted(query.sql()) + ";");
             }
             query.columns().forEach((key, value) -> line("column " + quoted(key) + " " + quoted(value) + ";"));
+            query.geometry().forEach(this::printGeometry);
+        });
+        line("}");
+    }
+
+    private void printGeometry(IlimapGeometryBlock geometry) {
+        line("geometry {");
+        indent(() -> {
+            if (geometry.attribute() != null) {
+                line("attribute " + quoted(geometry.attribute()) + ";");
+            }
+            if (geometry.column() != null) {
+                line("column " + quoted(geometry.column()) + ";");
+            }
+            if (geometry.encoding() != null) {
+                line("encoding " + identifierOrQuoted(geometry.encoding()) + ";");
+            }
+            if (geometry.type() != null) {
+                line("type " + identifierOrQuoted(geometry.type()) + ";");
+            }
+            if (geometry.srid() != null) {
+                line("srid " + geometry.srid() + ";");
+            }
         });
         line("}");
     }

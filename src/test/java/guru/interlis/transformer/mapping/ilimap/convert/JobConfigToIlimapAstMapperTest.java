@@ -474,4 +474,44 @@ class JobConfigToIlimapAstMapperTest {
         assertThat(JobConfigToIlimapAstMapper.rewriteExpression("'on switch'", renames))
                 .isEqualTo("\"on switch\"");
     }
+
+    @Test
+    void mapsJdbcGeometryToAst() {
+        JobConfig config = minimalConfig();
+        JobConfig.InputSpec input = config.job.inputs.get(0);
+        input.path = null;
+        input.format = "jdbc";
+
+        input.connection = new JobConfig.JdbcConnectionSpec();
+        input.connection.url = "jdbc:sqlite:demo.sqlite";
+
+        JobConfig.JdbcQuerySpec query = new JobConfig.JdbcQuerySpec();
+        query.id = "stations";
+        query.clazz = "SrcModel.Topic.Station";
+        query.sql = "select id, name, geom_wkt from stations";
+
+        JobConfig.JdbcGeometrySpec geometry = new JobConfig.JdbcGeometrySpec();
+        geometry.attribute = "geom";
+        geometry.column = "geom_wkt";
+        geometry.encoding = "wkt";
+        geometry.type = "coord";
+        geometry.srid = 2056;
+        query.geometry.add(geometry);
+        input.queries.add(query);
+
+        IlimapDocument document = mapper.map(config);
+
+        IlimapInputBlock inputBlock = document.inputs().get(0);
+        assertThat(inputBlock.queries()).hasSize(1);
+
+        IlimapQueryBlock queryBlock = inputBlock.queries().get(0);
+        assertThat(queryBlock.geometry()).hasSize(1);
+
+        IlimapGeometryBlock geometryBlock = queryBlock.geometry().get(0);
+        assertThat(geometryBlock.attribute()).isEqualTo("geom");
+        assertThat(geometryBlock.column()).isEqualTo("geom_wkt");
+        assertThat(geometryBlock.encoding()).isEqualTo("wkt");
+        assertThat(geometryBlock.type()).isEqualTo("coord");
+        assertThat(geometryBlock.srid()).isEqualTo(2056);
+    }
 }

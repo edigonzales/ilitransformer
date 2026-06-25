@@ -86,6 +86,21 @@ public final class IlimapToJobConfigMapper {
             spec.oidColumn = query.oidColumn();
             spec.sql = query.sql();
             spec.columns = new LinkedHashMap<>(query.columns());
+            spec.geometry = mapGeometry(query.geometry());
+            result.add(spec);
+        }
+        return result;
+    }
+
+    private java.util.List<JobConfig.JdbcGeometrySpec> mapGeometry(java.util.List<IlimapGeometryBlock> geometryBlocks) {
+        java.util.List<JobConfig.JdbcGeometrySpec> result = new ArrayList<>();
+        for (IlimapGeometryBlock block : geometryBlocks) {
+            JobConfig.JdbcGeometrySpec spec = new JobConfig.JdbcGeometrySpec();
+            spec.attribute = block.attribute();
+            spec.column = block.column();
+            spec.encoding = block.encoding();
+            spec.type = block.type();
+            spec.srid = block.srid();
             result.add(spec);
         }
         return result;

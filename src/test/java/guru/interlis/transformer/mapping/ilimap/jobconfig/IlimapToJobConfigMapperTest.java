@@ -409,4 +409,54 @@ class IlimapToJobConfigMapperTest {
         JobConfig config = mapFromSource(source);
         assertThat(config.mapping.rules.get(0).assign.get("Status")).isEqualTo("enumMap(s.Type, \"StatusMap\")");
     }
+
+    @Test
+    void mapsJdbcQueryWithGeometryBlock() {
+        String source = """
+                mapping v2 "jdbc-geom-mapping" {
+                  input db {
+                    model "SrcModel";
+                    format jdbc;
+                    connection {
+                      driver "org.sqlite.JDBC";
+                      url "jdbc:sqlite:demo.sqlite";
+                    }
+                    query stations {
+                      class "SrcModel.Topic.Station";
+                      sql "select id, name, geom_wkt from stations";
+                      geometry {
+                        attribute "geom";
+                        column "geom_wkt";
+                        encoding wkt;
+                        type coord;
+                        srid 2056;
+                      }
+                    }
+                  }
+                  output tgt { path "out.xtf"; model "TgtModel"; }
+                  rule r1 {
+                    target tgt class "TgtModel.Topic.TgtClass";
+                    source s from db class "SrcModel.Topic.Station";
+                    assign { Name = s.name; }
+                  }
+                }
+                """;
+
+        JobConfig config = mapFromSource(source);
+
+        assertThat(config.job.inputs).hasSize(1);
+        JobConfig.InputSpec input = config.job.inputs.get(0);
+        assertThat(input.format).isEqualTo("jdbc");
+        assertThat(input.queries).hasSize(1);
+
+        JobConfig.JdbcQuerySpec query = input.queries.get(0);
+        assertThat(query.geometry).hasSize(1);
+
+        JobConfig.JdbcGeometrySpec geometry = query.geometry.get(0);
+        assertThat(geometry.attribute).isEqualTo("geom");
+        assertThat(geometry.column).isEqualTo("geom_wkt");
+        assertThat(geometry.encoding).isEqualTo("wkt");
+        assertThat(geometry.type).isEqualTo("coord");
+        assertThat(geometry.srid).isEqualTo(2056);
+    }
 }

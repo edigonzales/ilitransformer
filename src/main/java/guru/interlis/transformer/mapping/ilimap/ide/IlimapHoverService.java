@@ -2,15 +2,18 @@ package guru.interlis.transformer.mapping.ilimap.ide;
 
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapAssignmentBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapBagBlock;
+import guru.interlis.transformer.mapping.ilimap.ast.IlimapConnectionBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapCreateBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapDefaultsBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapEnumBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapExpressionText;
+import guru.interlis.transformer.mapping.ilimap.ast.IlimapGeometryBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapInputBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapJobBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapLiteral;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapOidBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapOutputBlock;
+import guru.interlis.transformer.mapping.ilimap.ast.IlimapQueryBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRefBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleElement;
@@ -96,7 +99,16 @@ public final class IlimapHoverService {
         appendOptional(markdown, "Path", input.path());
         appendOptional(markdown, "Model", input.model());
         appendOptional(markdown, "Format", input.format());
-        appendAllowedFields(markdown, "path", "model", "format");
+        if (!input.options().isEmpty()) {
+            markdown.append("Options: `").append(input.options().keySet()).append("`\n");
+        }
+        if (input.connection() != null) {
+            markdown.append("Connection: `").append(input.connection().url()).append("`\n");
+        }
+        if (!input.queries().isEmpty()) {
+            markdown.append("Queries: `").append(input.queries().size()).append("`\n");
+        }
+        appendAllowedFields(markdown, "path", "model", "format", "option", "connection", "query");
         return markdown.toString().stripTrailing();
     }
 
@@ -106,7 +118,10 @@ public final class IlimapHoverService {
         appendOptional(markdown, "Path", output.path());
         appendOptional(markdown, "Model", output.model());
         appendOptional(markdown, "Format", output.format());
-        appendAllowedFields(markdown, "path", "model", "format");
+        if (!output.options().isEmpty()) {
+            markdown.append("Options: `").append(output.options().keySet()).append("`\n");
+        }
+        appendAllowedFields(markdown, "path", "model", "format", "option");
         return markdown.toString().stripTrailing();
     }
 
@@ -133,6 +148,50 @@ public final class IlimapHoverService {
         appendOptional(markdown, "Strategy", oid.strategy());
         appendOptional(markdown, "Namespace", oid.namespace());
         appendAllowedFields(markdown, "strategy", "namespace");
+        return markdown.toString().stripTrailing();
+    }
+
+    private String connectionMarkdown(IlimapConnectionBlock connection) {
+        StringBuilder markdown = new StringBuilder();
+        markdown.append("**JDBC connection**\n");
+        appendOptional(markdown, "Driver", connection.driver());
+        appendOptional(markdown, "URL", connection.url());
+        appendOptional(markdown, "User", connection.user());
+        appendOptional(markdown, "User Env", connection.userEnv());
+        appendOptional(markdown, "Password Env", connection.passwordEnv());
+        appendAllowedFields(markdown, "driver", "url", "user", "password", "userEnv", "passwordEnv", "property");
+        return markdown.toString().stripTrailing();
+    }
+
+    private String queryMarkdown(IlimapQueryBlock query) {
+        StringBuilder markdown = new StringBuilder();
+        markdown.append("**JDBC query `").append(query.id()).append("`**\n");
+        appendOptional(markdown, "Topic", query.topic());
+        appendOptional(markdown, "Class", query.sourceClass());
+        appendOptional(markdown, "Basket ID", query.basketId());
+        appendOptional(markdown, "OID Column", query.oidColumn());
+        appendOptional(markdown, "SQL", query.sql());
+        if (!query.columns().isEmpty()) {
+            markdown.append("Column mappings: `").append(query.columns().size()).append("`\n");
+        }
+        if (!query.geometry().isEmpty()) {
+            markdown.append("Geometry mappings: `")
+                    .append(query.geometry().size())
+                    .append("`\n");
+        }
+        appendAllowedFields(markdown, "topic", "class", "basketId", "oidColumn", "sql", "column", "geometry");
+        return markdown.toString().stripTrailing();
+    }
+
+    private String geometryMarkdown(IlimapGeometryBlock geometry) {
+        StringBuilder markdown = new StringBuilder();
+        markdown.append("**JDBC geometry mapping**\n");
+        appendOptional(markdown, "Attribute", geometry.attribute());
+        appendOptional(markdown, "Column", geometry.column());
+        appendOptional(markdown, "Encoding", geometry.encoding());
+        appendOptional(markdown, "Type", geometry.type());
+        appendOptional(markdown, "SRID", geometry.srid() != null ? String.valueOf(geometry.srid()) : null);
+        appendAllowedFields(markdown, "attribute", "column", "encoding", "type", "srid");
         return markdown.toString().stripTrailing();
     }
 
@@ -261,6 +320,17 @@ public final class IlimapHoverService {
             }
             if (node instanceof IlimapOidBlock oid) {
                 return Optional.of(new IlimapHover(analysis.lineMap().toIdeRange(oid.range()), oidMarkdown(oid)));
+            }
+            if (node instanceof IlimapConnectionBlock conn) {
+                return Optional.of(
+                        new IlimapHover(analysis.lineMap().toIdeRange(conn.range()), connectionMarkdown(conn)));
+            }
+            if (node instanceof IlimapQueryBlock query) {
+                return Optional.of(new IlimapHover(analysis.lineMap().toIdeRange(query.range()), queryMarkdown(query)));
+            }
+            if (node instanceof IlimapGeometryBlock geometry) {
+                return Optional.of(
+                        new IlimapHover(analysis.lineMap().toIdeRange(geometry.range()), geometryMarkdown(geometry)));
             }
             return Optional.empty();
         });

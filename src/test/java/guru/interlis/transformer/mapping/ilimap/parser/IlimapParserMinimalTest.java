@@ -432,4 +432,51 @@ class IlimapParserMinimalTest {
         IlimapAssignmentBlock assign = (IlimapAssignmentBlock) rule.elements().get(4);
         assertThat(assign.assignments()).hasSize(3);
     }
+
+    @Test
+    void parsesJdbcQueryWithGeometryBlock() {
+        var parser = new IlimapParser("""
+                mapping v2 {
+                  input db {
+                    model "S";
+                    format jdbc;
+                    connection {
+                      url "jdbc:sqlite:demo.sqlite";
+                    }
+                    query stations {
+                      class "S.Data.Station";
+                      sql "select id, name, geom_wkt from stations";
+                      geometry {
+                        attribute "geom";
+                        column "geom_wkt";
+                        encoding wkt;
+                        type coord;
+                        srid 2056;
+                      }
+                    }
+                  }
+                  output o { path "out.xtf"; model "S"; }
+                  rule r1 {
+                    target o class "S.Data.Station";
+                    source t from db class "S.Data.Station";
+                  }
+                }
+                """);
+
+        IlimapDocument doc = parser.parseDocument();
+
+        IlimapInputBlock input = doc.inputs().get(0);
+        assertThat(input.queries()).hasSize(1);
+
+        IlimapQueryBlock query = input.queries().get(0);
+        assertThat(query.id()).isEqualTo("stations");
+        assertThat(query.geometry()).hasSize(1);
+
+        IlimapGeometryBlock geometry = query.geometry().get(0);
+        assertThat(geometry.attribute()).isEqualTo("geom");
+        assertThat(geometry.column()).isEqualTo("geom_wkt");
+        assertThat(geometry.encoding()).isEqualTo("wkt");
+        assertThat(geometry.type()).isEqualTo("coord");
+        assertThat(geometry.srid()).isEqualTo(2056);
+    }
 }
