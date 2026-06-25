@@ -11,7 +11,9 @@ public record IlimapCoverageClassSummary(
         int assignedAttributeCount,
         int mandatoryMissingCount,
         int line,
-        int character) {
+        int character,
+        String nodeId,
+        IlimapOverviewLocation location) {
 
     public IlimapCoverageClassSummary {
         ruleIds = List.copyOf(ruleIds);

@@ -12,7 +12,9 @@ public record IlimapRuleCoverageSummary(
         int directAssignmentCount,
         int bagAssignmentCount,
         int line,
-        int character) {
+        int character,
+        String nodeId,
+        IlimapOverviewLocation location) {
 
     public IlimapRuleCoverageSummary {
         attributes = List.copyOf(attributes);

@@ -395,3 +395,496 @@ test('openMappingOverview reuses panel without registering duplicate message han
   assert.equal(openedDocuments.length, 1);
   assert.equal(openedDocuments[0], secondUri);
 });
+
+test('navigateToLocation with end positions creates range selection', async (t) => {
+  const selections = [];
+  const revealedRanges = [];
+  const openedDocuments = [];
+
+  const vscodeMock = {
+    ViewColumn: {
+      One: 1,
+      Beside: 2
+    },
+    ProgressLocation: {
+      Notification: 15
+    },
+    TextEditorRevealType: {
+      InCenterIfOutsideViewport: 2
+    },
+    Position: class Position {
+      constructor(line, character) {
+        this.line = line;
+        this.character = character;
+      }
+    },
+    Range: class Range {
+      constructor(start, end) {
+        this.start = start;
+        this.end = end;
+      }
+    },
+    Selection: class Selection {
+      constructor(anchor, active) {
+        this.anchor = anchor;
+        this.active = active;
+      }
+    },
+    Uri: {
+      parse(value) {
+        return { value };
+      }
+    },
+    workspace: {
+      async openTextDocument(uri) {
+        openedDocuments.push(uri.value);
+        return { uri };
+      }
+    },
+    window: {
+      activeTextEditor: {
+        document: {
+          languageId: 'ilimap',
+          uri: {
+            fsPath: '/tmp/profile.ilimap',
+            toString() {
+              return 'file:///tmp/profile.ilimap';
+            }
+          }
+        }
+      },
+      createWebviewPanel(viewType, title, column, options) {
+        const panel = {
+          webview: {
+            html: '',
+            onDidReceiveMessage(callback) {
+              panel.messageCallback = callback;
+            }
+          },
+          reveal() {},
+          onDidDispose() {}
+        };
+        return panel;
+      },
+      showInformationMessage() {},
+      showErrorMessage() {},
+      withProgress(options, task) {
+        return task();
+      },
+      async showTextDocument(document, column, preserveFocus) {
+        return {
+          document,
+          column,
+          preserveFocus,
+          set selection(value) {
+            selections.push(value);
+          },
+          revealRange(range, revealType) {
+            revealedRanges.push({ range, revealType });
+          }
+        };
+      }
+    }
+  };
+
+  const clientMock = {
+    async sendRequest() {
+      return {
+        available: true,
+        message: '',
+        mappingName: 'Profile',
+        inputCount: 0,
+        outputCount: 0,
+        ruleCount: 0,
+        enumMapCount: 0,
+        bagCount: 0,
+        refCount: 0,
+        errorCount: 0,
+        warningCount: 0,
+        informationCount: 0,
+        hintCount: 0,
+        inputs: [],
+        outputs: [],
+        enumMaps: [],
+        rules: [],
+        diagnostics: [],
+        coverageAvailable: true,
+        coverageMessage: '',
+        classCoverage: [],
+        ruleCoverage: []
+      };
+    }
+  };
+
+  const originalLoad = Module._load;
+  Module._load = function mockedLoad(request, parent, isMain) {
+    if (request === 'vscode') {
+      return vscodeMock;
+    }
+    if (request === '../client') {
+      return {
+        getLanguageClient() {
+          return clientMock;
+        }
+      };
+    }
+    return originalLoad.call(this, request, parent, isMain);
+  };
+
+  delete require.cache[distPanelPath];
+  const panelModule = require(distPanelPath);
+  t.after(() => {
+    delete require.cache[distPanelPath];
+    Module._load = originalLoad;
+  });
+
+  let panel;
+  vscodeMock.window.createWebviewPanel = (viewType, title, column, options) => {
+    panel = {
+      webview: {
+        html: '',
+        onDidReceiveMessage(callback) {
+          panel.messageCallback = callback;
+        }
+      },
+      reveal() {},
+      onDidDispose() {}
+    };
+    return panel;
+  };
+
+  await panelModule.openMappingOverview(
+    { extensionUri: { fsPath: extensionRoot } },
+    { appendLine() {} }
+  );
+
+  await panel.messageCallback({
+    type: 'navigateToLocation',
+    location: { line: 3, character: 5, endLine: 3, endCharacter: 12 }
+  });
+
+  assert.equal(selections.length, 1);
+  assert.equal(selections[0].anchor.line, 3);
+  assert.equal(selections[0].anchor.character, 5);
+  assert.equal(selections[0].active.line, 3);
+  assert.equal(selections[0].active.character, 12);
+  assert.equal(revealedRanges.length, 1);
+  assert.equal(revealedRanges[0].range.start.line, 3);
+  assert.equal(revealedRanges[0].range.end.line, 3);
+  assert.equal(revealedRanges[0].range.end.character, 12);
+});
+
+test('legacy navigate message still works', async (t) => {
+  const selections = [];
+  const openedDocuments = [];
+
+  const vscodeMock = {
+    ViewColumn: { One: 1, Beside: 2 },
+    ProgressLocation: { Notification: 15 },
+    TextEditorRevealType: { InCenterIfOutsideViewport: 2 },
+    Position: class Position {
+      constructor(line, character) { this.line = line; this.character = character; }
+    },
+    Range: class Range {
+      constructor(start, end) { this.start = start; this.end = end; }
+    },
+    Selection: class Selection {
+      constructor(anchor, active) { this.anchor = anchor; this.active = active; }
+    },
+    Uri: { parse(value) { return { value }; } },
+    workspace: {
+      async openTextDocument(uri) {
+        openedDocuments.push(uri.value);
+        return { uri };
+      }
+    },
+    window: {
+      activeTextEditor: {
+        document: {
+          languageId: 'ilimap',
+          uri: { fsPath: '/tmp/profile.ilimap', toString() { return 'file:///tmp/profile.ilimap'; } }
+        }
+      },
+      createWebviewPanel() {
+        const panel = {
+          webview: {
+            html: '',
+            onDidReceiveMessage(callback) { panel.messageCallback = callback; }
+          },
+          reveal() {},
+          onDidDispose() {}
+        };
+        return panel;
+      },
+      showInformationMessage() {},
+      showErrorMessage() {},
+      withProgress(options, task) { return task(); },
+      async showTextDocument(document, column, preserveFocus) {
+        return {
+          document, column, preserveFocus,
+          set selection(value) { selections.push(value); },
+          revealRange() {}
+        };
+      }
+    }
+  };
+
+  const clientMock = {
+    async sendRequest() {
+      return {
+        available: true, message: '', mappingName: 'Profile',
+        inputCount: 0, outputCount: 0, ruleCount: 0, enumMapCount: 0,
+        bagCount: 0, refCount: 0, errorCount: 0, warningCount: 0,
+        informationCount: 0, hintCount: 0,
+        inputs: [], outputs: [], enumMaps: [], rules: [], diagnostics: [],
+        coverageAvailable: true, coverageMessage: '', classCoverage: [], ruleCoverage: []
+      };
+    }
+  };
+
+  const originalLoad = Module._load;
+  Module._load = function mockedLoad(request, parent, isMain) {
+    if (request === 'vscode') return vscodeMock;
+    if (request === '../client') return { getLanguageClient() { return clientMock; } };
+    return originalLoad.call(this, request, parent, isMain);
+  };
+
+  delete require.cache[distPanelPath];
+  const panelModule = require(distPanelPath);
+  t.after(() => { delete require.cache[distPanelPath]; Module._load = originalLoad; });
+
+  let panel;
+  vscodeMock.window.createWebviewPanel = () => {
+    panel = {
+      webview: {
+        html: '',
+        onDidReceiveMessage(callback) { panel.messageCallback = callback; }
+      },
+      reveal() {},
+      onDidDispose() {}
+    };
+    return panel;
+  };
+
+  await panelModule.openMappingOverview(
+    { extensionUri: { fsPath: extensionRoot } },
+    { appendLine() {} }
+  );
+
+  await panel.messageCallback({ type: 'navigate', line: 42, character: 7 });
+
+  assert.equal(selections.length, 1);
+  assert.equal(selections[0].anchor.line, 42);
+  assert.equal(selections[0].anchor.character, 7);
+  assert.equal(selections[0].active.line, 42);
+  assert.equal(selections[0].active.character, 7);
+});
+
+test('malformed messages are ignored', async (t) => {
+  const outputLines = [];
+
+  const vscodeMock = {
+    ViewColumn: { One: 1, Beside: 2 },
+    ProgressLocation: { Notification: 15 },
+    TextEditorRevealType: { InCenterIfOutsideViewport: 2 },
+    Position: class Position { constructor(line, character) { this.line = line; this.character = character; } },
+    Range: class Range { constructor(start, end) { this.start = start; this.end = end; } },
+    Selection: class Selection { constructor(anchor, active) { this.anchor = anchor; this.active = active; } },
+    Uri: { parse(value) { return { value }; } },
+    workspace: {
+      async openTextDocument(uri) { return { uri }; }
+    },
+    window: {
+      activeTextEditor: {
+        document: {
+          languageId: 'ilimap',
+          uri: { fsPath: '/tmp/profile.ilimap', toString() { return 'file:///tmp/profile.ilimap'; } }
+        }
+      },
+      createWebviewPanel() {
+        const panel = {
+          webview: {
+            html: '',
+            onDidReceiveMessage(callback) { panel.messageCallback = callback; }
+          },
+          reveal() {},
+          onDidDispose() {}
+        };
+        return panel;
+      },
+      showInformationMessage() {},
+      showErrorMessage() {},
+      withProgress(options, task) { return task(); },
+      async showTextDocument(document) {
+        return { document, set selection(_value) {}, revealRange() {} };
+      }
+    }
+  };
+
+  const clientMock = {
+    async sendRequest() {
+      return {
+        available: true, message: '', mappingName: 'Profile',
+        inputCount: 0, outputCount: 0, ruleCount: 0, enumMapCount: 0,
+        bagCount: 0, refCount: 0, errorCount: 0, warningCount: 0,
+        informationCount: 0, hintCount: 0,
+        inputs: [], outputs: [], enumMaps: [], rules: [], diagnostics: [],
+        coverageAvailable: true, coverageMessage: '', classCoverage: [], ruleCoverage: []
+      };
+    }
+  };
+
+  const originalLoad = Module._load;
+  Module._load = function mockedLoad(request, parent, isMain) {
+    if (request === 'vscode') return vscodeMock;
+    if (request === '../client') return { getLanguageClient() { return clientMock; } };
+    return originalLoad.call(this, request, parent, isMain);
+  };
+
+  delete require.cache[distPanelPath];
+  const panelModule = require(distPanelPath);
+  t.after(() => { delete require.cache[distPanelPath]; Module._load = originalLoad; });
+
+  let panel;
+  vscodeMock.window.createWebviewPanel = () => {
+    panel = {
+      webview: {
+        html: '',
+        onDidReceiveMessage(callback) { panel.messageCallback = callback; }
+      },
+      reveal() {},
+      onDidDispose() {}
+    };
+    return panel;
+  };
+
+  const outputChannel = {
+    appendLine(line) { outputLines.push(line); }
+  };
+
+  await panelModule.openMappingOverview(
+    { extensionUri: { fsPath: extensionRoot } },
+    outputChannel
+  );
+
+  const beforeLineCount = outputLines.length;
+
+  await panel.messageCallback(null);
+  await panel.messageCallback(undefined);
+  await panel.messageCallback({});
+  await panel.messageCallback({ type: 'navigate' });
+  await panel.messageCallback({ type: 'navigate', line: 'not-a-number', character: 0 });
+  await panel.messageCallback({ type: 'navigate', line: 0, character: -1 });
+  await panel.messageCallback({ type: 'navigate', line: -5, character: 0 });
+  await panel.messageCallback({ type: 'unknown', data: 1 });
+  await panel.messageCallback({ type: 'navigateToLocation', location: null });
+  await panel.messageCallback({ type: 'navigateToLocation', location: {} });
+  await panel.messageCallback({ type: 'navigateToLocation', location: { line: -1, character: 0 } });
+
+  assert.equal(outputLines.length, beforeLineCount);
+});
+
+test('navigateToLocation without end positions creates point selection', async (t) => {
+  const selections = [];
+
+  const vscodeMock = {
+    ViewColumn: { One: 1, Beside: 2 },
+    ProgressLocation: { Notification: 15 },
+    TextEditorRevealType: { InCenterIfOutsideViewport: 2 },
+    Position: class Position {
+      constructor(line, character) { this.line = line; this.character = character; }
+    },
+    Range: class Range {
+      constructor(start, end) { this.start = start; this.end = end; }
+    },
+    Selection: class Selection {
+      constructor(anchor, active) { this.anchor = anchor; this.active = active; }
+    },
+    Uri: { parse(value) { return { value }; } },
+    workspace: {
+      async openTextDocument(uri) { return { uri }; }
+    },
+    window: {
+      activeTextEditor: {
+        document: {
+          languageId: 'ilimap',
+          uri: { fsPath: '/tmp/profile.ilimap', toString() { return 'file:///tmp/profile.ilimap'; } }
+        }
+      },
+      createWebviewPanel() {
+        const panel = {
+          webview: {
+            html: '',
+            onDidReceiveMessage(callback) { panel.messageCallback = callback; }
+          },
+          reveal() {},
+          onDidDispose() {}
+        };
+        return panel;
+      },
+      showInformationMessage() {},
+      showErrorMessage() {},
+      withProgress(options, task) { return task(); },
+      async showTextDocument(document) {
+        return {
+          document,
+          set selection(value) { selections.push(value); },
+          revealRange() {}
+        };
+      }
+    }
+  };
+
+  const clientMock = {
+    async sendRequest() {
+      return {
+        available: true, message: '', mappingName: 'Profile',
+        inputCount: 0, outputCount: 0, ruleCount: 0, enumMapCount: 0,
+        bagCount: 0, refCount: 0, errorCount: 0, warningCount: 0,
+        informationCount: 0, hintCount: 0,
+        inputs: [], outputs: [], enumMaps: [], rules: [], diagnostics: [],
+        coverageAvailable: true, coverageMessage: '', classCoverage: [], ruleCoverage: []
+      };
+    }
+  };
+
+  const originalLoad = Module._load;
+  Module._load = function mockedLoad(request, parent, isMain) {
+    if (request === 'vscode') return vscodeMock;
+    if (request === '../client') return { getLanguageClient() { return clientMock; } };
+    return originalLoad.call(this, request, parent, isMain);
+  };
+
+  delete require.cache[distPanelPath];
+  const panelModule = require(distPanelPath);
+  t.after(() => { delete require.cache[distPanelPath]; Module._load = originalLoad; });
+
+  let panel;
+  vscodeMock.window.createWebviewPanel = () => {
+    panel = {
+      webview: {
+        html: '',
+        onDidReceiveMessage(callback) { panel.messageCallback = callback; }
+      },
+      reveal() {},
+      onDidDispose() {}
+    };
+    return panel;
+  };
+
+  await panelModule.openMappingOverview(
+    { extensionUri: { fsPath: extensionRoot } },
+    { appendLine() {} }
+  );
+
+  await panel.messageCallback({
+    type: 'navigateToLocation',
+    location: { line: 7, character: 3 }
+  });
+
+  assert.equal(selections.length, 1);
+  assert.equal(selections[0].anchor.line, 7);
+  assert.equal(selections[0].anchor.character, 3);
+  assert.equal(selections[0].active.line, 7);
+  assert.equal(selections[0].active.character, 3);
+});

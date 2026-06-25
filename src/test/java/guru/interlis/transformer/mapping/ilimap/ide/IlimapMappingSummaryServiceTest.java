@@ -29,10 +29,22 @@ class IlimapMappingSummaryServiceTest {
         assertThat(summary.errorCount()).isZero();
         assertThat(summary.warningCount()).isZero();
         assertThat(summary.inputs()).extracting(IlimapMappingInputSummary::id).containsExactly("src");
+        assertThat(summary.inputs()).singleElement().satisfies(input -> {
+            assertThat(input.nodeId()).isEqualTo("input:src");
+            assertThat(input.location()).isNotNull();
+            assertThat(input.location().line()).isGreaterThanOrEqualTo(0);
+        });
         assertThat(summary.outputs()).extracting(IlimapMappingOutputSummary::id).containsExactly("out");
+        assertThat(summary.outputs()).singleElement().satisfies(output -> {
+            assertThat(output.nodeId()).isEqualTo("output:out");
+            assertThat(output.location()).isNotNull();
+            assertThat(output.location().line()).isGreaterThanOrEqualTo(0);
+        });
         assertThat(summary.enumMaps()).singleElement().satisfies(enumMap -> {
             assertThat(enumMap.id()).isEqualTo("Quality");
             assertThat(enumMap.entryCount()).isEqualTo(1);
+            assertThat(enumMap.nodeId()).isEqualTo("enum:Quality");
+            assertThat(enumMap.location()).isNotNull();
         });
         assertThat(summary.rules()).singleElement().satisfies(rule -> {
             assertThat(rule.id()).isEqualTo("r1");
@@ -43,6 +55,9 @@ class IlimapMappingSummaryServiceTest {
             assertThat(rule.bagCount()).isEqualTo(2);
             assertThat(rule.refCount()).isEqualTo(1);
             assertThat(rule.status()).isEqualTo("ok");
+            assertThat(rule.nodeId()).isEqualTo("rule:r1");
+            assertThat(rule.location()).isNotNull();
+            assertThat(rule.location().line()).isGreaterThanOrEqualTo(0);
         });
     }
 
@@ -61,6 +76,8 @@ class IlimapMappingSummaryServiceTest {
         assertThat(summary.diagnostics()).singleElement().satisfies(diagnostic -> {
             assertThat(diagnostic.severity()).isEqualTo("error");
             assertThat(diagnostic.message()).contains("SEMICOLON");
+            assertThat(diagnostic.nodeId()).startsWith("diagnostic:");
+            assertThat(diagnostic.location()).isNotNull();
         });
     }
 

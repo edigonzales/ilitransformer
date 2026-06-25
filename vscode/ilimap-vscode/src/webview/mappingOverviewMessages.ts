@@ -1,5 +1,18 @@
 export const mappingSummaryRequest = 'ilimap/mappingSummary';
 
+export interface IlimapLocation {
+  line: number;
+  character: number;
+  endLine?: number;
+  endCharacter?: number;
+}
+
+export interface IlimapWithLocation {
+  line?: number;
+  character?: number;
+  location?: IlimapLocation;
+}
+
 export interface IlimapMappingSummaryParams {
   uri: string;
 }
@@ -34,6 +47,10 @@ export interface IlimapMappingInputSummary {
   path: string;
   model: string;
   format: string;
+  nodeId?: string;
+  location?: IlimapLocation;
+  line?: number;
+  character?: number;
 }
 
 export interface IlimapMappingOutputSummary {
@@ -41,11 +58,19 @@ export interface IlimapMappingOutputSummary {
   path: string;
   model: string;
   format: string;
+  nodeId?: string;
+  location?: IlimapLocation;
+  line?: number;
+  character?: number;
 }
 
 export interface IlimapEnumMapSummary {
   id: string;
   entryCount: number;
+  nodeId?: string;
+  location?: IlimapLocation;
+  line?: number;
+  character?: number;
 }
 
 export interface IlimapRuleSummary {
@@ -57,6 +82,10 @@ export interface IlimapRuleSummary {
   bagCount: number;
   refCount: number;
   status: 'ok' | 'warning' | 'error' | string;
+  nodeId?: string;
+  location?: IlimapLocation;
+  line?: number;
+  character?: number;
 }
 
 export interface IlimapDiagnosticSummary {
@@ -65,6 +94,8 @@ export interface IlimapDiagnosticSummary {
   message: string;
   line: number;
   character: number;
+  nodeId?: string;
+  location?: IlimapLocation;
 }
 
 export interface IlimapCoverageClassSummary {
@@ -77,6 +108,8 @@ export interface IlimapCoverageClassSummary {
   mandatoryMissingCount: number;
   line: number;
   character: number;
+  nodeId?: string;
+  location?: IlimapLocation;
 }
 
 export interface IlimapCoverageAttributeSummary {
@@ -87,6 +120,8 @@ export interface IlimapCoverageAttributeSummary {
   assigned: boolean;
   line: number;
   character: number;
+  nodeId?: string;
+  location?: IlimapLocation;
 }
 
 export interface IlimapSourceUsageSummary {
@@ -97,6 +132,8 @@ export interface IlimapSourceUsageSummary {
   usedRoles: string[];
   line: number;
   character: number;
+  nodeId?: string;
+  location?: IlimapLocation;
 }
 
 export interface IlimapRuleCoverageSummary {
@@ -110,4 +147,6 @@ export interface IlimapRuleCoverageSummary {
   bagAssignmentCount: number;
   line: number;
   character: number;
+  nodeId?: string;
+  location?: IlimapLocation;
 }

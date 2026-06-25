@@ -8,4 +8,6 @@ public record IlimapRuleSummary(
         int assignmentCount,
         int bagCount,
         int refCount,
-        String status) {}
+        String status,
+        String nodeId,
+        IlimapOverviewLocation location) {}

@@ -5,6 +5,7 @@ import { getLanguageClient } from '../client';
 import { renderMappingOverviewHtml } from './mappingOverviewHtml';
 import {
   mappingSummaryRequest,
+  type IlimapLocation,
   type IlimapMappingSummary,
   type IlimapMappingSummaryParams
 } from './mappingOverviewMessages';
@@ -98,15 +99,12 @@ function registerNavigationHandler(
   outputChannel: vscode.OutputChannel
 ): vscode.Disposable {
   return state.panel.webview.onDidReceiveMessage(async message => {
-    if (!isNavigationMessage(message)) {
+    const location = parseNavigationMessage(message);
+    if (!location) {
       return;
     }
     try {
-      const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(state.uri));
-      const editor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One, false);
-      const position = new vscode.Position(message.line, message.character);
-      editor.selection = new vscode.Selection(position, position);
-      editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+      await revealLocation(state.uri, location, outputChannel);
     } catch (error) {
       outputChannel.appendLine(`Failed to navigate from ilimap mapping overview: ${errorMessage(error)}`);
       vscode.window.showErrorMessage('Failed to navigate from ilimap mapping overview.');
@@ -114,18 +112,74 @@ function registerNavigationHandler(
   });
 }
 
-function isNavigationMessage(message: unknown): message is { type: 'navigate'; line: number; character: number } {
+function parseNavigationMessage(message: unknown): IlimapLocation | undefined {
   if (!message || typeof message !== 'object') {
-    return false;
+    return undefined;
   }
-  const candidate = message as { type?: unknown; line?: unknown; character?: unknown };
-  return candidate.type === 'navigate'
-    && typeof candidate.line === 'number'
-    && Number.isInteger(candidate.line)
-    && candidate.line >= 0
-    && typeof candidate.character === 'number'
-    && Number.isInteger(candidate.character)
-    && candidate.character >= 0;
+  const candidate = message as { type?: unknown; line?: unknown; character?: unknown; location?: unknown };
+
+  if (candidate.type === 'navigate') {
+    return parseLegacyNavigate(candidate);
+  }
+
+  if (candidate.type === 'navigateToLocation') {
+    return parseLocationNavigate(candidate);
+  }
+
+  return undefined;
+}
+
+function parseLegacyNavigate(candidate: { line?: unknown; character?: unknown }): IlimapLocation | undefined {
+  if (!isValidLineCharacter(candidate.line, candidate.character)) {
+    return undefined;
+  }
+  return {
+    line: candidate.line as number,
+    character: candidate.character as number
+  };
+}
+
+function parseLocationNavigate(candidate: { location?: unknown }): IlimapLocation | undefined {
+  if (!candidate.location || typeof candidate.location !== 'object') {
+    return undefined;
+  }
+  const loc = candidate.location as { line?: unknown; character?: unknown; endLine?: unknown; endCharacter?: unknown };
+  if (!isValidLineCharacter(loc.line, loc.character)) {
+    return undefined;
+  }
+  const result: IlimapLocation = {
+    line: loc.line as number,
+    character: loc.character as number
+  };
+  if (isValidLineCharacter(loc.endLine, loc.endCharacter)) {
+    result.endLine = loc.endLine as number;
+    result.endCharacter = loc.endCharacter as number;
+  }
+  return result;
+}
+
+function isValidLineCharacter(line: unknown, character: unknown): boolean {
+  return typeof line === 'number'
+    && Number.isInteger(line)
+    && line >= 0
+    && typeof character === 'number'
+    && Number.isInteger(character)
+    && character >= 0;
+}
+
+async function revealLocation(
+  uri: string,
+  location: IlimapLocation,
+  outputChannel: vscode.OutputChannel
+): Promise<void> {
+  const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
+  const editor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One, false);
+  const start = new vscode.Position(location.line, location.character);
+  const end = location.endLine !== undefined && location.endCharacter !== undefined
+    ? new vscode.Position(location.endLine, location.endCharacter)
+    : start;
+  editor.selection = new vscode.Selection(start, end);
+  editor.revealRange(new vscode.Range(start, end), vscode.TextEditorRevealType.InCenterIfOutsideViewport);
 }
 
 function isIlimapDocument(document: vscode.TextDocument): boolean {

@@ -9,7 +9,9 @@ public record IlimapSourceUsageSummary(
         List<String> usedAttributes,
         List<String> usedRoles,
         int line,
-        int character) {
+        int character,
+        String nodeId,
+        IlimapOverviewLocation location) {
 
     public IlimapSourceUsageSummary {
         inputIds = List.copyOf(inputIds);

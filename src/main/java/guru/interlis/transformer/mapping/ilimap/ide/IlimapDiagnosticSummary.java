@@ -1,3 +1,10 @@
 package guru.interlis.transformer.mapping.ilimap.ide;
 
-public record IlimapDiagnosticSummary(String code, String severity, String message, int line, int character) {}
+public record IlimapDiagnosticSummary(
+        String code,
+        String severity,
+        String message,
+        int line,
+        int character,
+        String nodeId,
+        IlimapOverviewLocation location) {}

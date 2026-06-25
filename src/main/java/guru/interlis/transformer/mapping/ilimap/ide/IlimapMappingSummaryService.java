@@ -84,16 +84,22 @@ public final class IlimapMappingSummaryService {
                 diagnosticCount(analysis, IlimapIdeSeverity.INFORMATION),
                 diagnosticCount(analysis, IlimapIdeSeverity.HINT),
                 document.inputs().stream()
-                        .map(input ->
-                                new IlimapMappingInputSummary(input.id(), input.path(), input.model(), input.format()))
+                        .map(input -> new IlimapMappingInputSummary(
+                                input.id(), input.path(), input.model(), input.format(),
+                                IlimapOverviewNodeIds.input(input.id()),
+                                toLocation(analysis, input.range())))
                         .toList(),
                 document.outputs().stream()
                         .map(output -> new IlimapMappingOutputSummary(
-                                output.id(), output.path(), output.model(), output.format()))
+                                output.id(), output.path(), output.model(), output.format(),
+                                IlimapOverviewNodeIds.output(output.id()),
+                                toLocation(analysis, output.range())))
                         .toList(),
                 document.enums().stream()
                         .map(enumBlock -> new IlimapEnumMapSummary(
-                                enumBlock.id(), enumBlock.entries().size()))
+                                enumBlock.id(), enumBlock.entries().size(),
+                                IlimapOverviewNodeIds.enumMap(enumBlock.id()),
+                                toLocation(analysis, enumBlock.range())))
                         .toList(),
                 rules,
                 diagnostics(analysis),
@@ -113,7 +119,9 @@ public final class IlimapMappingSummaryService {
                 assignmentCount(rule),
                 bagCount(rule),
                 refCount(rule),
-                status(analysis, rule));
+                status(analysis, rule),
+                IlimapOverviewNodeIds.rule(rule.id()),
+                toLocation(analysis, rule.range()));
     }
 
     private static IlimapTargetStmt target(IlimapRuleBlock rule) {
@@ -207,12 +215,22 @@ public final class IlimapMappingSummaryService {
 
     private static List<IlimapDiagnosticSummary> diagnostics(IlimapAnalysis analysis) {
         return analysis.diagnostics().stream()
-                .map(diagnostic -> new IlimapDiagnosticSummary(
-                        diagnostic.code(),
-                        diagnostic.severity().name().toLowerCase(),
-                        diagnostic.message(),
-                        diagnostic.range().start().line(),
-                        diagnostic.range().start().character()))
+                .map(diagnostic -> {
+                    IlimapIdeRange range = diagnostic.range();
+                    return new IlimapDiagnosticSummary(
+                            diagnostic.code(),
+                            diagnostic.severity().name().toLowerCase(),
+                            diagnostic.message(),
+                            range.start().line(),
+                            range.start().character(),
+                            "diagnostic:" + diagnostic.code() + ":" + range.start().line() + ":"
+                                    + range.start().character(),
+                            new IlimapOverviewLocation(
+                                    range.start().line(),
+                                    range.start().character(),
+                                    range.end().line(),
+                                    range.end().character()));
+                })
                 .toList();
     }
 
@@ -280,7 +298,9 @@ public final class IlimapMappingSummaryService {
                         assigned.size(),
                         Math.toIntExact(mandatoryMissing),
                         line,
-                        character));
+                        character,
+                        "target:" + output.id() + ":" + classInfo.qualifiedName(),
+                        line >= 0 ? new IlimapOverviewLocation(line, character, null, null) : null));
             }
         }
         classCoverage.sort(Comparator.comparing(IlimapCoverageClassSummary::outputId)
@@ -317,7 +337,13 @@ public final class IlimapMappingSummaryService {
                             attribute.mandatory(),
                             assignment != null,
                             pos.line(),
-                            pos.character());
+                            pos.character(),
+                            assignment != null
+                                    ? "rule:" + rule.id() + ":assign:" + attribute.name()
+                                    : null,
+                            assignment != null
+                                    ? new IlimapOverviewLocation(pos.line(), pos.character(), null, null)
+                                    : null);
                 })
                 .toList();
 
@@ -333,7 +359,9 @@ public final class IlimapMappingSummaryService {
                 directAssignments.size(),
                 bagAssignmentCount(rule),
                 rulePos.line(),
-                rulePos.character());
+                rulePos.character(),
+                IlimapOverviewNodeIds.rule(rule.id()),
+                toLocation(analysis, rule.range()));
     }
 
     private static Map<String, IlimapAssignment> directTargetAssignments(IlimapRuleBlock rule) {
@@ -394,7 +422,9 @@ public final class IlimapMappingSummaryService {
                             sorted(usedAttributes.getOrDefault(source.alias(), Set.of())),
                             sorted(usedRoles.getOrDefault(source.alias(), Set.of())),
                             pos.line(),
-                            pos.character());
+                            pos.character(),
+                            "rule:" + rule.id() + ":source:" + source.alias(),
+                            new IlimapOverviewLocation(pos.line(), pos.character(), null, null));
                 })
                 .toList();
     }
@@ -512,6 +542,15 @@ public final class IlimapMappingSummaryService {
             count += bagAssignmentCount(nested);
         }
         return count;
+    }
+
+    private static IlimapOverviewLocation toLocation(IlimapAnalysis analysis, IlimapSourceRange range) {
+        IlimapIdeRange ideRange = analysis.lineMap().toIdeRange(range);
+        return new IlimapOverviewLocation(
+                ideRange.start().line(),
+                ideRange.start().character(),
+                ideRange.end().line(),
+                ideRange.end().character());
     }
 
     private static final class Coverage {
