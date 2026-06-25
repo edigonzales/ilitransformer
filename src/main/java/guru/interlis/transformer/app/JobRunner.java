@@ -10,7 +10,8 @@ import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.geometry.IoxGeometryAdapter;
-import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.io.FormatOpenContext;
+import guru.interlis.transformer.io.IoxFormatRegistry;
 import guru.interlis.transformer.loss.LossinessCollector;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler.CompileResult;
@@ -168,7 +169,7 @@ public final class JobRunner {
         boolean committed = false;
 
         try (TransactionalOutputManager txManager = new TransactionalOutputManager(options.keepTemporaryFiles())) {
-            InterlisIoFactory ioFactory = new InterlisIoFactory();
+            IoxFormatRegistry ioRegistry = IoxFormatRegistry.defaultRegistry();
 
             Map<String, IoxWriter> writersByOutputId = new LinkedHashMap<>();
             Map<String, OutputBinding> tempBindings = new LinkedHashMap<>();
@@ -177,17 +178,17 @@ public final class JobRunner {
                 OutputBinding binding = entry.getValue();
                 try {
                     Path tempPath = txManager.createTemporaryOutput(binding);
-                    writersByOutputId.put(
-                            outputId, ioFactory.createWriter(tempPath, binding.transferDescription(), engineDiag));
-                    tempBindings.put(
+                    OutputBinding tempBinding = new OutputBinding(
                             outputId,
-                            new OutputBinding(
-                                    outputId,
-                                    tempPath,
-                                    binding.declaredModelName(),
-                                    binding.format(),
-                                    binding.transferDescription(),
-                                    binding.typeSystem()));
+                            tempPath,
+                            binding.declaredModelName(),
+                            binding.format(),
+                            binding.transferDescription(),
+                            binding.typeSystem());
+                    FormatOpenContext context =
+                            new FormatOpenContext(prepared.baseDirectory(), binding.transferDescription(), engineDiag);
+                    writersByOutputId.put(outputId, ioRegistry.createWriter(tempBinding, context));
+                    tempBindings.put(outputId, tempBinding);
                 } catch (Exception e) {
                     engineDiag.add(new Diagnostic(
                             DiagnosticCode.COMMIT_FAILED,
@@ -203,7 +204,9 @@ public final class JobRunner {
                 String inputId = entry.getKey();
                 var binding = entry.getValue();
                 try {
-                    readerByInputId.put(inputId, ioFactory.createReader(binding.path(), binding.transferDescription()));
+                    FormatOpenContext context =
+                            new FormatOpenContext(prepared.baseDirectory(), binding.transferDescription(), engineDiag);
+                    readerByInputId.put(inputId, ioRegistry.createReader(binding, context));
                 } catch (Exception e) {
                     engineDiag.add(new Diagnostic(
                             DiagnosticCode.COMMIT_FAILED,

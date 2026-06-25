@@ -1,40 +1,32 @@
 package guru.interlis.transformer.interlis;
 
 import guru.interlis.transformer.diag.DiagnosticCollector;
-import guru.interlis.transformer.geometry.ItfGeometryWriter;
+import guru.interlis.transformer.io.BuiltInInterlisFormatProvider;
+import guru.interlis.transformer.io.FormatOpenContext;
+import guru.interlis.transformer.mapping.plan.InputBinding;
+import guru.interlis.transformer.mapping.plan.OutputBinding;
 
 import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.itf.ItfReader2;
-import ch.interlis.iom_j.itf.ItfWriter;
-import ch.interlis.iom_j.xtf.Xtf24Reader;
-import ch.interlis.iom_j.xtf.XtfWriter;
-import ch.interlis.iox.EndTransferEvent;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxException;
-import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.IoxWriter;
-import ch.interlis.iox_j.IoxIliReader;
 
 import java.nio.file.Path;
 
+/**
+ * Backward-compatible adapter over the format-provider architecture.
+ *
+ * <p>This class no longer owns any format dispatch logic; it forwards path-based
+ * reader/writer creation to {@link BuiltInInterlisFormatProvider}. Existing callers that only have a
+ * {@link Path} and a {@link TransferDescription} keep working unchanged.
+ */
 public final class InterlisIoFactory {
+
+    private final BuiltInInterlisFormatProvider provider = new BuiltInInterlisFormatProvider();
+
     public IoxReader createReader(Path path, TransferDescription transferDescription) throws Exception {
-        String lowerName = path.getFileName().toString().toLowerCase();
-        IoxReader reader;
-        if (lowerName.endsWith(".itf")) {
-            // ItfReader2 merges AREA/SURFACE helper tables into canonical geometry objects.
-            reader = new ItfReader2(path.toFile(), false);
-        } else if (lowerName.endsWith(".xtf") || lowerName.endsWith(".xml")) {
-            reader = Xtf24Reader.createReader(path.toFile());
-        } else {
-            throw new IllegalArgumentException("Unsupported input file type: " + path);
-        }
-        if (reader instanceof IoxIliReader iliReader) {
-            iliReader.setModel(transferDescription);
-        }
-        return new EndTransferAwareReader(reader);
+        InputBinding binding = new InputBinding(null, path, null, null, transferDescription, null);
+        FormatOpenContext context = new FormatOpenContext(null, transferDescription, null);
+        return provider.openReader(binding, context);
     }
 
     public IoxWriter createWriter(Path path, TransferDescription transferDescription) throws Exception {
@@ -43,55 +35,8 @@ public final class InterlisIoFactory {
 
     public IoxWriter createWriter(Path path, TransferDescription transferDescription, DiagnosticCollector diagnostics)
             throws Exception {
-        String lowerName = path.getFileName().toString().toLowerCase();
-        if (lowerName.endsWith(".itf")) {
-            return new ItfGeometryWriter(
-                    new ItfWriter(path.toFile(), transferDescription), transferDescription, diagnostics);
-        }
-        if (lowerName.endsWith(".xtf") || lowerName.endsWith(".xml")) {
-            return new XtfWriter(path.toFile(), transferDescription);
-        }
-        throw new IllegalArgumentException("Unsupported output file type: " + path);
-    }
-
-    private static final class EndTransferAwareReader implements IoxReader {
-        private final IoxReader delegate;
-        private boolean endTransferSeen;
-
-        private EndTransferAwareReader(IoxReader delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public IoxEvent read() throws IoxException {
-            if (endTransferSeen) {
-                return null;
-            }
-            IoxEvent event = delegate.read();
-            if (event instanceof EndTransferEvent) {
-                endTransferSeen = true;
-            }
-            return event;
-        }
-
-        @Override
-        public void close() throws IoxException {
-            delegate.close();
-        }
-
-        @Override
-        public void setFactory(IoxFactoryCollection factory) throws IoxException {
-            delegate.setFactory(factory);
-        }
-
-        @Override
-        public IoxFactoryCollection getFactory() throws IoxException {
-            return delegate.getFactory();
-        }
-
-        @Override
-        public IomObject createIomObject(String type, String oid) throws IoxException {
-            return delegate.createIomObject(type, oid);
-        }
+        OutputBinding binding = new OutputBinding(null, path, null, null, transferDescription, null);
+        FormatOpenContext context = new FormatOpenContext(null, transferDescription, diagnostics);
+        return provider.openWriter(binding, context);
     }
 }
