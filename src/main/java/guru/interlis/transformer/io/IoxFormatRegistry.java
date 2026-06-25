@@ -30,7 +30,8 @@ public final class IoxFormatRegistry {
 
     /** Default registry containing the built-in INTERLIS provider plus the CSV input provider. */
     public static IoxFormatRegistry defaultRegistry() {
-        return new IoxFormatRegistry(List.of(new BuiltInInterlisFormatProvider(), new CsvFormatProvider()));
+        return new IoxFormatRegistry(List.of(
+                new BuiltInInterlisFormatProvider(), new CsvFormatProvider(), new WkfGeoPackageFormatProvider()));
     }
 
     /** Finds a provider that handles the given format id (e.g. {@code xtf}, {@code itf}). */

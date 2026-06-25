@@ -202,8 +202,8 @@ output dmav {
 }
 ```
 
-`format` ist optional. Erlaubte Werte: `itf`, `xtf`, `csv`. `csv` ist ein bewusst flaches,
-nur lesbares Eingabeformat (siehe unten).
+`format` ist optional. Erlaubte Werte: `itf`, `xtf`, `csv`, `gpkg`. `csv` und `gpkg` sind bewusst
+flache, nur lesbare Eingabeformate (siehe unten).
 
 Optional koennen `input`- und `output`-Bloecke generische Formatoptionen deklarieren:
 
@@ -236,6 +236,17 @@ Das `csv`-Format ist als Eingabeformat aktiv und wertet folgende Optionen aus:
 CSV ist bewusst flach: eine Tabelle, deren Spalten auf die Attribute genau einer Klasse des
 Quellmodells abgebildet werden. Strukturen, Referenzen und Geometrie kann CSV nicht ausdruecken.
 Ein vollstaendiges Beispiel liegt unter `examples/csv-to-xtf/`.
+
+Das `gpkg`-Format ist ebenfalls als tabellarisches Eingabeformat aktiv und wertet folgende Optionen aus:
+
+| Option | Default | Bedeutung |
+|---|---|---|
+| `table` | *(Pflicht)* | Tabellenname in der GeoPackage-Datei |
+| `fetchSize` | `10000` | Zeilen pro Datenbank-Roundtrip |
+
+GeoPackage ist in dieser Phase ein bewusst flaches, nur lesbares Eingabeformat ohne Geometrie.
+Strukturen und Referenzen kann es nicht ausdruecken. Ein vollstaendiges Beispiel liegt unter
+`examples/gpkg-to-xtf/`.
 
 ### oid
 

@@ -1,0 +1,40 @@
+mapping v2 "gpkg-to-xtf-demo" {
+  job {
+    description "Transform a tabular GeoPackage table into a valid INTERLIS 2.4 XTF transfer";
+    modeldir "models";
+    failPolicy strict;
+  }
+
+  input gpkg-input {
+    path "input/municipalities.gpkg";
+    model "DemoGpkgSource";
+    format gpkg;
+    option table "municipalities";
+    option fetchSize 10000;
+  }
+
+  output xtf-output {
+    path "build/out/municipalities.xtf";
+    model "DemoTarget";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "gpkg-to-xtf-demo";
+  }
+
+  basket byTopic;
+
+  rule municipality {
+    target xtf-output class "DemoTarget.Catalog.Municipality";
+    source src from gpkg-input class "DemoGpkgSource.Data.Municipality";
+    identity src.bfsnr;
+
+    assign {
+      BfsNr = src.bfsnr;
+      Name = src.name;
+      Population = src.population;
+    }
+  }
+}

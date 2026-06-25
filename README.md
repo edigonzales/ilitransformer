@@ -78,12 +78,21 @@ Zusätzliche Eingabeformate werden über `format:` deklariert und pro Input mit 
 
 - `csv` — bewusst flaches, nur lesbares Eingabeformat (eine Tabelle → eine Quellklasse). Optionen:
   `firstLineIsHeader`, `separator`, `delimiter`, `encoding`.
+- `gpkg` / `geopackage` — tabellarisches, nur lesbares GeoPackage-Eingabeformat (eine Tabelle → eine Quellklasse). Optionen:
+  `table` (Pflicht), `fetchSize`.
 
 Ein vollständiges Beispiel (Source-ILI, Target-ILI, CSV, YAML- und `.ilimap`-Mapping) liegt unter
 `examples/csv-to-xtf/`:
 
 ```bash
 ilitransformer transform -m examples/csv-to-xtf/mapping.yaml --modeldir examples/csv-to-xtf/models --validate --report build/reports/csv
+```
+
+Ein weiteres Beispiel (Source-ILI, Target-ILI, YAML- und `.ilimap`-Mapping) für GeoPackage liegt
+unter `examples/gpkg-to-xtf/`:
+
+```bash
+ilitransformer transform -m examples/gpkg-to-xtf/mapping.yaml --modeldir examples/gpkg-to-xtf/models --validate --report build/reports/gpkg
 ```
 
 ## Aktive Dokumentation

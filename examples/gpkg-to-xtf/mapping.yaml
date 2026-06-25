@@ -1,0 +1,42 @@
+version: 1
+
+job:
+  name: "gpkg-to-xtf-demo"
+  description: "Transform a tabular GeoPackage table into a valid INTERLIS 2.4 XTF transfer"
+  modeldir:
+    - "models"
+  inputs:
+    - id: gpkg-input
+      path: "input/municipalities.gpkg"
+      model: "DemoGpkgSource"
+      format: gpkg
+      options:
+        table: "municipalities"
+        fetchSize: "10000"
+  outputs:
+    - id: xtf-output
+      path: "build/out/municipalities.xtf"
+      model: "DemoTarget"
+      format: xtf
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "gpkg-to-xtf-demo"
+  basketStrategy:
+    default: byTopic
+  rules:
+    - id: municipality
+      target:
+        output: xtf-output
+        class: "DemoTarget.Catalog.Municipality"
+      sources:
+        - alias: src
+          input: gpkg-input
+          class: "DemoGpkgSource.Data.Municipality"
+      identity:
+        sourceKey: ["src.bfsnr"]
+      assign:
+        BfsNr: "src.bfsnr"
+        Name: "src.name"
+        Population: "src.population"

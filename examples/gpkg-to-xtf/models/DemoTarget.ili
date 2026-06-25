@@ -1,0 +1,14 @@
+INTERLIS 2.4;
+
+MODEL DemoTarget AT "https://example.org/ilitransformer" VERSION "2026-06-24" =
+  TOPIC Catalog =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Municipality =
+      BfsNr : 0 .. 9999;
+      Name : TEXT*80;
+      Population : 0 .. 999999;
+    END Municipality;
+  END Catalog;
+END DemoTarget.

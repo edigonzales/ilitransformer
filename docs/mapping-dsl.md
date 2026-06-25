@@ -67,7 +67,8 @@ mapping:
 - id: in1          # Pflicht: eindeutige ID
   path: "in.xtf"   # Pflicht: Pfad zur Eingabedatei
   model: "Model"   # Pflicht: INTERLIS-Modellname
-  format: "xtf"    # Optional: "itf", "xtf" oder "csv" (wird sonst aus Dateiendung erkannt)
+  format: "xtf"    # Optional: "itf", "xtf", "csv" oder "gpkg" (wird sonst aus Dateiendung
+                   # erkannt). csv und gpkg sind bewusst flache, nur lesbare Formate.
   options:         # Optional: generische Formatoptionen (siehe unten)
     encoding: UTF-8
 ```
@@ -120,6 +121,35 @@ inputs:
 | `encoding` | `UTF-8` | Zeichensatz der Datei |
 
 Ein vollständiges Beispiel inklusive `.ilimap`-Variante liegt unter `examples/csv-to-xtf/`.
+
+#### GeoPackage als Eingabeformat
+
+GeoPackage (`gpkg` / `geopackage`) ist ein tabellarisches, **nur lesbares** Eingabeformat: eine
+Tabelle der GeoPackage-Datei, deren Spalten auf die Attribute genau einer Klasse des Quellmodells
+abgebildet werden. Strukturen, Referenzen und Geometrie werden in dieser Phase nicht ausgedrückt.
+Der Output bleibt ein normales INTERLIS-Modell.
+
+```yaml
+inputs:
+  - id: source
+    path: "input/municipalities.gpkg"
+    model: "DemoGpkgSource"
+    format: gpkg
+    options:
+      table: "municipalities"
+      fetchSize: "10000"
+```
+
+| Option | Default | Bedeutung |
+|---|---|---|
+| `table` | *(Pflicht)* | Tabellenname in der GeoPackage-Datei |
+| `fetchSize` | `10000` | Zeilen pro Datenbank-Roundtrip |
+
+Die GeoPackage-Datei muss mindestens eine `gpkg_contents`-Metadatentabelle und eine zur
+Quellklasse passende Datentabelle enthalten. Für tabellarische Daten wird `data_type: attributes`
+verwendet.
+
+Ein vollständiges Beispiel inklusive `.ilimap`-Variante liegt unter `examples/gpkg-to-xtf/`.
 
 ## Mapping-Sektion
 

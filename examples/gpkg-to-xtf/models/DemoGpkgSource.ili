@@ -1,0 +1,11 @@
+INTERLIS 2.4;
+
+MODEL DemoGpkgSource AT "https://example.org/ilitransformer" VERSION "2026-06-24" =
+  TOPIC Data =
+    CLASS Municipality =
+      bfsnr : 0 .. 9999;
+      name : TEXT*80;
+      population : 0 .. 999999;
+    END Municipality;
+  END Data;
+END DemoGpkgSource.
