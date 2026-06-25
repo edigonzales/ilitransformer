@@ -202,8 +202,8 @@ output dmav {
 }
 ```
 
-`format` ist optional. Erlaubte Werte: `itf`, `xtf`, `csv`, `gpkg`. `csv` und `gpkg` sind bewusst
-flache, nur lesbare Eingabeformate (siehe unten).
+`format` ist optional. Erlaubte Werte: `itf`, `xtf`, `csv`, `gpkg`, `jdbc`. `csv`, `gpkg` und `jdbc`
+sind bewusst flache, nur lesbare Eingabeformate (siehe unten).
 
 Optional koennen `input`- und `output`-Bloecke generische Formatoptionen deklarieren:
 
@@ -247,6 +247,47 @@ Das `gpkg`-Format ist ebenfalls als tabellarisches Eingabeformat aktiv und werte
 GeoPackage ist in dieser Phase ein nur lesbares Eingabeformat mit optionaler Punktgeometrie.
 Strukturen und Referenzen kann es nicht ausdruecken. Ein vollstaendiges Beispiel liegt unter
 `examples/gpkg-to-xtf/`. Ein Beispiel mit Punktgeometrie liegt unter `examples/gpkg-spatial-to-xtf/`.
+
+Das `jdbc`-Format liest tabellarisch aus einer beliebigen JDBC-Datenbank. Es hat keinen `path`,
+sondern einen `connection`-Block und einen oder mehrere `query`-Bloecke. Jede `query` entspricht
+genau einer flachen Quellklasse und wird zu einem Korb (`basket`) im Transferstrom:
+
+```ilimap
+input db {
+  model "DemoJdbcSource";
+  format jdbc;
+  connection {
+    driver "org.sqlite.JDBC";
+    url "jdbc:sqlite:build/demo.sqlite";
+    userEnv "PGUSER";
+    passwordEnv "PGPW";
+    property "ApplicationName" "ilitransformer";
+  }
+  query municipalities {
+    topic "DemoJdbcSource.Data";
+    class "DemoJdbcSource.Data.Municipality";
+    basketId "b1";
+    oidColumn "id";
+    sql "select id, bfsnr, name, population from municipalities";
+    column "gemeinde" "Name";
+  }
+}
+```
+
+- `connection` deklariert `driver` (optional), `url` (Pflicht) sowie Anmeldedaten. Anmeldedaten
+  koennen inline (`user`/`password`) oder – bevorzugt – ueber Umgebungsvariablen (`userEnv`/
+  `passwordEnv`) gesetzt werden. Zusaetzliche Treiber-Properties werden mit
+  `property "key" "value";` (wiederholbar) gesetzt.
+- `query` deklariert `class` (Pflicht, skopierter Klassenname) und `sql` (Pflicht). `topic`,
+  `basketId` und `oidColumn` sind optional. Ohne `oidColumn` werden deterministische OIDs erzeugt.
+  Mit `column "<db-Spalte>" "<Attribut>";` (wiederholbar) wird eine Spalte auf einen abweichenden
+  Attributnamen abgebildet; die `oidColumn` wird nicht als Attribut gesetzt.
+- Treiber ausser dem mitgelieferten SQLite-Treiber muessen auf dem Klassenpfad liegen. Passwoerter
+  werden nie in Logs, Diagnostics oder Reports geschrieben.
+
+JDBC ist bewusst flach (Phase 6, ohne Geometrie). Ein vollstaendiges Beispiel liegt unter
+`examples/jdbc-to-xtf/`. Eine reale PostgreSQL/PostGIS-Instanz fuer Tests liegt unter
+`dev/stack/compose.yml`.
 
 ### oid
 
@@ -646,11 +687,29 @@ jobStmt           = ("name" string
 inputDecl         = "input" id ioBlock ;
 outputDecl        = "output" id ioBlock ;
 ioBlock           = "{" ioStmt* "}" ;
-ioStmt            = ("path" string
+ioStmt            = scalarIoStmt | connectionDecl | queryDecl ;
+scalarIoStmt      = ("path" string
                   | "model" string
                   | "format" id
                   | "option" (id | string) optionValue) ";" ;
 optionValue       = string | number | boolean ;
+
+# connectionDecl and queryDecl are only valid inside input blocks (JDBC).
+connectionDecl    = "connection" "{" connectionStmt* "}" ;
+connectionStmt    = ("driver" string
+                  | "url" string
+                  | "user" string
+                  | "password" string
+                  | "userEnv" string
+                  | "passwordEnv" string
+                  | "property" string string) ";" ;
+queryDecl         = "query" id "{" queryStmt* "}" ;
+queryStmt         = ("topic" string
+                  | "class" string
+                  | "basketId" string
+                  | "oidColumn" string
+                  | "sql" string
+                  | "column" string string) ";" ;
 
 oidDecl           = "oid" id (";" | "{" oidStmt* "}") ;
 oidStmt           = "namespace" string ";" ;

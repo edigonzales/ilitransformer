@@ -53,6 +53,62 @@ class IlimapToJobConfigMapperTest {
     }
 
     @Test
+    void mapsJdbcInputWithConnectionAndQueries() {
+        String source = """
+                mapping v2 "jdbc-mapping" {
+                  input db {
+                    model "SrcModel";
+                    format jdbc;
+                    connection {
+                      driver "org.sqlite.JDBC";
+                      url "jdbc:sqlite:demo.sqlite";
+                      userEnv "PGUSER";
+                      passwordEnv "PGPW";
+                      property "ApplicationName" "ilitransformer";
+                    }
+                    query municipalities {
+                      topic "SrcModel.Topic";
+                      class "SrcModel.Topic.SrcClass";
+                      basketId "b1";
+                      oidColumn "id";
+                      sql "select id, gemeinde from municipalities";
+                      column "gemeinde" "Name";
+                    }
+                  }
+                  output tgt { path "out.xtf"; model "TgtModel"; }
+                  rule r1 {
+                    target tgt class "TgtModel.Topic.TgtClass";
+                    source s from db class "SrcModel.Topic.SrcClass";
+                    assign { Name = s.Name; }
+                  }
+                }
+                """;
+
+        JobConfig config = mapFromSource(source);
+
+        assertThat(config.job.inputs).hasSize(1);
+        JobConfig.InputSpec input = config.job.inputs.get(0);
+        assertThat(input.format).isEqualTo("jdbc");
+
+        assertThat(input.connection).isNotNull();
+        assertThat(input.connection.driver).isEqualTo("org.sqlite.JDBC");
+        assertThat(input.connection.url).isEqualTo("jdbc:sqlite:demo.sqlite");
+        assertThat(input.connection.userEnv).isEqualTo("PGUSER");
+        assertThat(input.connection.passwordEnv).isEqualTo("PGPW");
+        assertThat(input.connection.properties).containsEntry("ApplicationName", "ilitransformer");
+
+        assertThat(input.queries).hasSize(1);
+        JobConfig.JdbcQuerySpec query = input.queries.get(0);
+        assertThat(query.id).isEqualTo("municipalities");
+        assertThat(query.topic).isEqualTo("SrcModel.Topic");
+        assertThat(query.clazz).isEqualTo("SrcModel.Topic.SrcClass");
+        assertThat(query.basketId).isEqualTo("b1");
+        assertThat(query.oidColumn).isEqualTo("id");
+        assertThat(query.sql).isEqualTo("select id, gemeinde from municipalities");
+        assertThat(query.columns).containsEntry("gemeinde", "Name");
+    }
+
+    @Test
     void mapsJobSection() {
         String source = """
                 mapping v2 "my-mapping" {

@@ -12,6 +12,9 @@ public final class IlimapParser {
 
     private static final String JOB_FIELDS = "name, description, direction, failPolicy, compileMode, modeldir";
     private static final String TRANSFER_FIELDS = "path, model, format, option";
+    private static final String INPUT_FIELDS = "path, model, format, option, connection, query";
+    private static final String CONNECTION_FIELDS = "driver, url, user, password, userEnv, passwordEnv, property";
+    private static final String QUERY_FIELDS = "topic, class, basketId, oidColumn, sql, column";
     private static final String OID_FIELDS = "strategy, namespace";
 
     private final String source;
@@ -129,6 +132,8 @@ public final class IlimapParser {
         String model = null;
         String format = null;
         Map<String, String> options = new LinkedHashMap<>();
+        IlimapConnectionBlock connection = null;
+        List<IlimapQueryBlock> queries = new ArrayList<>();
 
         while (!peekType(IlimapTokenType.RBRACE)) {
             IlimapToken fieldToken = next();
@@ -137,21 +142,151 @@ public final class IlimapParser {
             }
             String field = fieldToken.text();
             switch (field) {
-                case "path" -> path = expectString();
-                case "model" -> model = expectString();
-                case "format" -> format = expectStringOrIdentifier();
-                case "option" -> parseOption(options);
+                case "path" -> {
+                    path = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "model" -> {
+                    model = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "format" -> {
+                    format = expectStringOrIdentifier();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "option" -> {
+                    parseOption(options);
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "connection" -> connection = parseConnectionBlock(fieldToken);
+                case "query" -> queries.add(parseQueryBlock(fieldToken));
                 default ->
                     throw parseError(
-                            "unexpected field '" + field + "' in input block. Allowed fields: " + TRANSFER_FIELDS,
+                            "unexpected field '" + field + "' in input block. Allowed fields: " + INPUT_FIELDS,
                             fieldToken);
             }
-            expectToken(IlimapTokenType.SEMICOLON);
         }
 
         IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
         IlimapSourceRange range = new IlimapSourceRange(inputKeyword.range().start(), end);
-        return new IlimapInputBlock(id, path, model, format, options, range);
+        return new IlimapInputBlock(id, path, model, format, options, connection, queries, range);
+    }
+
+    private IlimapConnectionBlock parseConnectionBlock(IlimapToken connectionKeyword) {
+        expectToken(IlimapTokenType.LBRACE);
+
+        String driver = null;
+        String url = null;
+        String user = null;
+        String password = null;
+        String userEnv = null;
+        String passwordEnv = null;
+        Map<String, String> properties = new LinkedHashMap<>();
+
+        while (!peekType(IlimapTokenType.RBRACE)) {
+            IlimapToken fieldToken = next();
+            if (!isKeywordOrIdentifier(fieldToken)) {
+                throw parseError("expected field name", fieldToken);
+            }
+            switch (fieldToken.text()) {
+                case "driver" -> {
+                    driver = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "url" -> {
+                    url = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "user" -> {
+                    user = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "password" -> {
+                    password = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "userEnv" -> {
+                    userEnv = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "passwordEnv" -> {
+                    passwordEnv = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "property" -> {
+                    String key = expectString();
+                    String value = expectString();
+                    properties.put(key, value);
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                default ->
+                    throw parseError(
+                            "unexpected field '" + fieldToken.text() + "' in connection block. Allowed fields: "
+                                    + CONNECTION_FIELDS,
+                            fieldToken);
+            }
+        }
+
+        IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
+        IlimapSourceRange range =
+                new IlimapSourceRange(connectionKeyword.range().start(), end);
+        return new IlimapConnectionBlock(driver, url, user, password, userEnv, passwordEnv, properties, range);
+    }
+
+    private IlimapQueryBlock parseQueryBlock(IlimapToken queryKeyword) {
+        String id = expectIdentifier();
+        expectToken(IlimapTokenType.LBRACE);
+
+        String topic = null;
+        String sourceClass = null;
+        String basketId = null;
+        String oidColumn = null;
+        String sql = null;
+        Map<String, String> columns = new LinkedHashMap<>();
+
+        while (!peekType(IlimapTokenType.RBRACE)) {
+            IlimapToken fieldToken = next();
+            if (!isKeywordOrIdentifier(fieldToken)) {
+                throw parseError("expected field name", fieldToken);
+            }
+            switch (fieldToken.text()) {
+                case "topic" -> {
+                    topic = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "class" -> {
+                    sourceClass = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "basketId" -> {
+                    basketId = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "oidColumn" -> {
+                    oidColumn = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "sql" -> {
+                    sql = expectString();
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                case "column" -> {
+                    String dbColumn = expectString();
+                    String attribute = expectString();
+                    columns.put(dbColumn, attribute);
+                    expectToken(IlimapTokenType.SEMICOLON);
+                }
+                default ->
+                    throw parseError(
+                            "unexpected field '" + fieldToken.text() + "' in query block. Allowed fields: "
+                                    + QUERY_FIELDS,
+                            fieldToken);
+            }
+        }
+
+        IlimapSourcePosition end = expectToken(IlimapTokenType.RBRACE).range().end();
+        IlimapSourceRange range = new IlimapSourceRange(queryKeyword.range().start(), end);
+        return new IlimapQueryBlock(id, topic, sourceClass, basketId, oidColumn, sql, columns, range);
     }
 
     private IlimapOutputBlock parseOutputBlock() {

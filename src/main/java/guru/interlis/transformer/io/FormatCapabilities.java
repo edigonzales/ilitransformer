@@ -10,4 +10,9 @@ public record FormatCapabilities(
     public static FormatCapabilities readPathModelWithOptions() {
         return new FormatCapabilities(true, false, true, true, true);
     }
+
+    /** Read-only source that has no file path (such as JDBC) but requires a model and uses options. */
+    public static FormatCapabilities readConnectionModelWithOptions() {
+        return new FormatCapabilities(true, false, false, true, true);
+    }
 }

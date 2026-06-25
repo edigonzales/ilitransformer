@@ -1,0 +1,48 @@
+mapping v2 "jdbc-to-xtf-demo" {
+  job {
+    description "Transform a flat JDBC query result into a valid INTERLIS 2.4 XTF transfer";
+    modeldir "models";
+    failPolicy strict;
+  }
+
+  input jdbc-input {
+    model "DemoJdbcSource";
+    format jdbc;
+    connection {
+      driver "org.sqlite.JDBC";
+      url "jdbc:sqlite:build/demo.sqlite";
+    }
+    query municipalities {
+      topic "DemoJdbcSource.Data";
+      class "DemoJdbcSource.Data.Municipality";
+      basketId "b1";
+      oidColumn "id";
+      sql "select id, bfsnr, name, population from municipalities";
+    }
+  }
+
+  output xtf-output {
+    path "build/out/municipalities.xtf";
+    model "DemoTarget";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "jdbc-to-xtf-demo";
+  }
+
+  basket byTopic;
+
+  rule municipality {
+    target xtf-output class "DemoTarget.Catalog.Municipality";
+    source src from jdbc-input class "DemoJdbcSource.Data.Municipality";
+    identity src.bfsnr;
+
+    assign {
+      BfsNr = src.bfsnr;
+      Name = src.name;
+      Population = src.population;
+    }
+  }
+}

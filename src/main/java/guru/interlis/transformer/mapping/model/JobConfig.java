@@ -42,6 +42,51 @@ public final class JobConfig {
         public String model;
         public String format;
         public Map<String, Object> options = new LinkedHashMap<>();
+
+        /** Generic JDBC connection. Only used when {@code format} is {@code jdbc}. */
+        @JsonProperty("connection")
+        public JdbcConnectionSpec connection;
+
+        /** One source class per query. Only used when {@code format} is {@code jdbc}. */
+        @JsonProperty("queries")
+        public List<JdbcQuerySpec> queries = new ArrayList<>();
+    }
+
+    // -- JDBC specs (Phase 6) ----------------------------------------------
+
+    /**
+     * Generic JDBC connection settings for a {@code jdbc} input. Credentials may be given inline
+     * ({@code user}/{@code password}) or, preferably, indirected through environment variables
+     * ({@code userEnv}/{@code passwordEnv}). Passwords must never be logged.
+     */
+    public static final class JdbcConnectionSpec {
+        public String driver;
+        public String url;
+        public String user;
+        public String password;
+        public String userEnv;
+        public String passwordEnv;
+        public Map<String, String> properties = new LinkedHashMap<>();
+    }
+
+    /**
+     * A single JDBC query mapped to one flat source class. Each query becomes one basket in the IOX
+     * event stream produced by the reader.
+     */
+    public static final class JdbcQuerySpec {
+        public String id;
+
+        @JsonProperty("class")
+        @JsonAlias("clazz")
+        public String clazz;
+
+        public String topic;
+        public String basketId;
+        public String oidColumn;
+        public String sql;
+
+        /** Optional column-label -&gt; attribute-name overrides. */
+        public Map<String, String> columns = new LinkedHashMap<>();
     }
 
     // -- OutputSpec --------------------------------------------------------

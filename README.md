@@ -80,6 +80,9 @@ Zusätzliche Eingabeformate werden über `format:` deklariert und pro Input mit 
   `firstLineIsHeader`, `separator`, `delimiter`, `encoding`.
 - `gpkg` / `geopackage` — tabellarisches, nur lesbares GeoPackage-Eingabeformat (eine Tabelle → eine Quellklasse). Optionen:
   `table` (Pflicht), `fetchSize`.
+- `jdbc` — generisches, nur lesbares tabellarisches Eingabeformat ohne Pfad. Statt `path` ein
+  `connection`-Block und ein oder mehrere `queries` (eine Query → eine Quellklasse). Passwörter werden
+  nie geloggt; auch als `.ilimap` unterstützt.
 
 Ein vollständiges Beispiel (Source-ILI, Target-ILI, CSV, YAML- und `.ilimap`-Mapping) liegt unter
 `examples/csv-to-xtf/`:
@@ -93,6 +96,14 @@ unter `examples/gpkg-to-xtf/`:
 
 ```bash
 ilitransformer transform -m examples/gpkg-to-xtf/mapping.yaml --modeldir examples/gpkg-to-xtf/models --validate --report build/reports/gpkg
+```
+
+Ein JDBC-Beispiel (SQLite) liegt unter `examples/jdbc-to-xtf/`. Für Tests gegen eine reale
+PostgreSQL/PostGIS-Datenbank liegt ein Compose-Stack unter `dev/stack/compose.yml`; der zugehörige
+Opt-in-Test läuft mit `./gradlew postgisTest` (überspringt sich selbst, wenn keine DB erreichbar ist):
+
+```bash
+ilitransformer transform -m examples/jdbc-to-xtf/mapping.yaml --modeldir examples/jdbc-to-xtf/models --validate --report build/reports/jdbc
 ```
 
 ## Aktive Dokumentation

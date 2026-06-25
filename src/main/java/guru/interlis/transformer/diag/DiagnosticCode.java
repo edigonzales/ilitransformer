@@ -43,9 +43,16 @@ public final class DiagnosticCode {
 
     // I/O format providers (format support phases)
     public static final String IO_FORMAT_UNKNOWN = "ILITRF-IO-FORMAT-UNKNOWN";
+    public static final String IO_FORMAT_UNSUPPORTED_DIRECTION = "ILITRF-IO-FORMAT-UNSUPPORTED-DIRECTION";
     public static final String IO_OPTION_INVALID = "ILITRF-IO-OPTION-INVALID";
     public static final String IO_READER_OPEN_FAILED = "ILITRF-IO-READER-OPEN-FAILED";
     public static final String IO_WRITER_OPEN_FAILED = "ILITRF-IO-WRITER-OPEN-FAILED";
+    public static final String IO_DEPENDENCY_MISSING = "ILITRF-IO-DEPENDENCY-MISSING";
+
+    // JDBC input (format support phase 6)
+    public static final String IO_JDBC_CONNECTION_FAILED = "ILITRF-IO-JDBC-CONNECTION-FAILED";
+    public static final String IO_JDBC_QUERY_FAILED = "ILITRF-IO-JDBC-QUERY-FAILED";
+    public static final String IO_JDBC_MAPPING_INVALID = "ILITRF-IO-JDBC-MAPPING-INVALID";
 
     // Runtime
     public static final String RUN_REF_UNRESOLVED = "ILITRF-RUN-REF-UNRESOLVED";

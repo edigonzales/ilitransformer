@@ -125,7 +125,9 @@ public final class ModelRegistry {
                 String format = FormatIdResolver.resolveInputFormat(input);
                 Map<String, String> options = JobConfigNormalizer.normalizeOptions(input.options);
                 registry.inputsById.put(
-                        input.id, new InputBinding(input.id, path, input.model, format, options, td, ts));
+                        input.id,
+                        new InputBinding(
+                                input.id, path, input.model, format, options, td, ts, input.connection, input.queries));
             }
 
             // Build OutputBindings
@@ -171,7 +173,9 @@ public final class ModelRegistry {
                 String format = FormatIdResolver.resolveInputFormat(input);
                 Map<String, String> options = JobConfigNormalizer.normalizeOptions(input.options);
                 registry.inputsById.put(
-                        input.id, new InputBinding(input.id, path, input.model, format, options, td, ts));
+                        input.id,
+                        new InputBinding(
+                                input.id, path, input.model, format, options, td, ts, input.connection, input.queries));
                 if (td != null) {
                     registry.tdByModel.putIfAbsent(input.model, td);
                     registry.tsByModel.putIfAbsent(input.model, ts);

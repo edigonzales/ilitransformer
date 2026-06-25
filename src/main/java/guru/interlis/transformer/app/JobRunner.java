@@ -12,6 +12,9 @@ import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.geometry.IoxGeometryAdapter;
 import guru.interlis.transformer.io.FormatOpenContext;
 import guru.interlis.transformer.io.IoxFormatRegistry;
+import guru.interlis.transformer.io.jdbc.JdbcConnectionException;
+import guru.interlis.transformer.io.jdbc.JdbcMappingException;
+import guru.interlis.transformer.io.jdbc.JdbcQueryException;
 import guru.interlis.transformer.loss.LossinessCollector;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler.CompileResult;
@@ -386,6 +389,30 @@ public final class JobRunner {
     private static Diagnostic ioOpenDiagnostic(boolean input, String id, Exception e) {
         String detail = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
         String role = input ? "input" : "output";
+        if (e instanceof JdbcMappingException) {
+            return new Diagnostic(
+                    DiagnosticCode.IO_JDBC_MAPPING_INVALID,
+                    Severity.ERROR,
+                    detail,
+                    id,
+                    "Add at least one query with class, topic and sql, and a valid connection.");
+        }
+        if (e instanceof JdbcConnectionException) {
+            return new Diagnostic(
+                    DiagnosticCode.IO_JDBC_CONNECTION_FAILED,
+                    Severity.ERROR,
+                    detail,
+                    id,
+                    "Check the connection url, driver and credentials.");
+        }
+        if (e instanceof JdbcQueryException) {
+            return new Diagnostic(
+                    DiagnosticCode.IO_JDBC_QUERY_FAILED,
+                    Severity.ERROR,
+                    detail,
+                    id,
+                    "Check the SQL statement and that the referenced tables and columns exist.");
+        }
         if (e instanceof IllegalArgumentException && detail.startsWith("Unknown " + role + " format")) {
             return new Diagnostic(
                     DiagnosticCode.IO_FORMAT_UNKNOWN,

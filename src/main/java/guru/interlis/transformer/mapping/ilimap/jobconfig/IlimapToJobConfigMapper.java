@@ -54,8 +54,41 @@ public final class IlimapToJobConfigMapper {
             spec.model = input.model();
             spec.format = input.format();
             spec.options = new LinkedHashMap<>(input.options());
+            spec.connection = mapConnection(input.connection());
+            spec.queries = mapQueries(input.queries());
             config.job.inputs.add(spec);
         }
+    }
+
+    private JobConfig.JdbcConnectionSpec mapConnection(IlimapConnectionBlock connection) {
+        if (connection == null) {
+            return null;
+        }
+        JobConfig.JdbcConnectionSpec spec = new JobConfig.JdbcConnectionSpec();
+        spec.driver = connection.driver();
+        spec.url = connection.url();
+        spec.user = connection.user();
+        spec.password = connection.password();
+        spec.userEnv = connection.userEnv();
+        spec.passwordEnv = connection.passwordEnv();
+        spec.properties = new LinkedHashMap<>(connection.properties());
+        return spec;
+    }
+
+    private java.util.List<JobConfig.JdbcQuerySpec> mapQueries(java.util.List<IlimapQueryBlock> queries) {
+        java.util.List<JobConfig.JdbcQuerySpec> result = new ArrayList<>();
+        for (IlimapQueryBlock query : queries) {
+            JobConfig.JdbcQuerySpec spec = new JobConfig.JdbcQuerySpec();
+            spec.id = query.id();
+            spec.clazz = query.sourceClass();
+            spec.topic = query.topic();
+            spec.basketId = query.basketId();
+            spec.oidColumn = query.oidColumn();
+            spec.sql = query.sql();
+            spec.columns = new LinkedHashMap<>(query.columns());
+            result.add(spec);
+        }
+        return result;
     }
 
     private void mapOutputs(IlimapDocument document, JobConfig config) {

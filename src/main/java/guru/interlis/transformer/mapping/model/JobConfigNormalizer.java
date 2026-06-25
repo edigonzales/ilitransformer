@@ -44,6 +44,17 @@ public final class JobConfigNormalizer {
             if (input.options == null) {
                 input.options = new LinkedHashMap<>();
             }
+            if (input.queries == null) {
+                input.queries = new java.util.ArrayList<>();
+            }
+            for (JobConfig.JdbcQuerySpec query : input.queries) {
+                if (query.columns == null) {
+                    query.columns = new LinkedHashMap<>();
+                }
+            }
+            if (input.connection != null && input.connection.properties == null) {
+                input.connection.properties = new LinkedHashMap<>();
+            }
         }
         for (JobConfig.OutputSpec output : config.job.outputs) {
             if (output.options == null) {

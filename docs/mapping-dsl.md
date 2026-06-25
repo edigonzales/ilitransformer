@@ -65,10 +65,11 @@ mapping:
 
 ```yaml
 - id: in1          # Pflicht: eindeutige ID
-  path: "in.xtf"   # Pflicht: Pfad zur Eingabedatei
+  path: "in.xtf"   # Pflicht ausser bei jdbc: Pfad zur Eingabedatei
   model: "Model"   # Pflicht: INTERLIS-Modellname
-  format: "xtf"    # Optional: "itf", "xtf", "csv" oder "gpkg" (wird sonst aus Dateiendung
-                    # erkannt). csv und gpkg sind bewusst flache, nur lesbare Formate.
+  format: "xtf"    # Optional: "itf", "xtf", "csv", "gpkg" oder "jdbc" (wird sonst aus Dateiendung
+                    # erkannt). csv, gpkg und jdbc sind bewusst flache, nur lesbare Formate.
+                    # jdbc muss explizit gesetzt werden (kein Pfad).
   options:         # Optional: generische Formatoptionen (siehe unten)
     encoding: UTF-8
 ```
@@ -153,6 +154,65 @@ verwendet.
 Ein vollständiges Beispiel inklusive `.ilimap`-Variante liegt unter `examples/gpkg-to-xtf/`.
 Ein räumliches GeoPackage-Beispiel liegt unter `examples/gpkg-spatial-to-xtf/`.
 
+#### JDBC als Eingabeformat
+
+JDBC (`jdbc`) ist ein generisches, **nur lesbares** tabellarisches Eingabeformat ohne Pfad. Statt
+`path` deklariert der Input einen `connection`-Block und einen oder mehrere `queries`. Jede Query
+entspricht genau einer flachen Quellklasse und wird zu einem Korb (`basket`) im Transferstrom.
+
+```yaml
+inputs:
+  - id: db
+    model: "DemoJdbcSource"
+    format: jdbc
+    connection:
+      driver: org.sqlite.JDBC        # optional, sonst per JDBC-SPI geladen
+      url: "jdbc:sqlite:build/demo.sqlite"
+      # Anmeldedaten inline ...
+      user: postgres
+      password: secret
+      # ... oder (bevorzugt) aus Umgebungsvariablen:
+      userEnv: PGUSER
+      passwordEnv: PGPASSWORD
+      properties:
+        ApplicationName: ilitransformer
+    queries:
+      - id: municipalities
+        topic: "DemoJdbcSource.Data"
+        class: "DemoJdbcSource.Data.Municipality"
+        basketId: b1
+        oidColumn: id
+        sql: |
+          select id, bfsnr, name, population
+          from municipalities
+        columns:                     # optional: DB-Spalte -> Attributname
+          gemeinde: Name
+```
+
+| Feld | Pflicht | Bedeutung |
+|---|---|---|
+| `connection.url` | ja | JDBC-URL |
+| `connection.driver` | nein | Treiberklasse (sonst per SPI geladen) |
+| `connection.user` / `password` | nein | Anmeldedaten inline |
+| `connection.userEnv` / `passwordEnv` | nein | Anmeldedaten aus Umgebungsvariablen (bevorzugt) |
+| `connection.properties` | nein | zusätzliche Treiber-Properties |
+| `queries[].class` | ja | skopierter Quellklassenname |
+| `queries[].sql` | ja | SQL-Abfrage |
+| `queries[].topic` | nein | Topic-Name des Korbs |
+| `queries[].basketId` | nein | Korb-ID (sonst `b<n>`) |
+| `queries[].oidColumn` | nein | Spalte als OID (sonst deterministisch erzeugt) |
+| `queries[].columns` | nein | Abbildung DB-Spalte → Attributname |
+
+| Option | Default | Bedeutung |
+|---|---|---|
+| `blobEncoding` | *(keiner)* | `base64`, um `byte[]`-Spalten zu kodieren; sonst werden binäre Spalten abgewiesen |
+
+JDBC ist bewusst flach (Phase 6, ohne Geometrie). Treiber ausser dem mitgelieferten
+SQLite-Treiber müssen auf dem Klassenpfad liegen. Passwörter werden nie in Logs, Diagnostics oder
+Reports geschrieben. Ein vollständiges Beispiel inklusive `.ilimap`-Variante liegt unter
+`examples/jdbc-to-xtf/`. Eine reale PostgreSQL/PostGIS-Instanz für Tests liegt unter
+`dev/stack/compose.yml` (Task `./gradlew postgisTest`).
+
 #### Format-Matrix
 
 | Format | Input | Output | Geometrie | Strukturen | Referenzen | Bemerkungen |
@@ -161,6 +221,7 @@ Ein räumliches GeoPackage-Beispiel liegt unter `examples/gpkg-spatial-to-xtf/`.
 | ITF | ja | ja | eingeschränkt | modellabhängig | modellabhängig | INTERLIS 1 |
 | CSV | ja | nein | nein | nein | nein | Nur flache Tabellen |
 | GPKG | ja | nein | ja (Simple Features) | nein | nein | Tabellen und Punktgeometrie |
+| JDBC | ja | nein | nein | nein | nein | Eine Query je Quellklasse, tabellarisch |
 
 ## Mapping-Sektion
 

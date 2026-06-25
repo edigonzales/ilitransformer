@@ -56,6 +56,50 @@ class JobConfigToIlimapAstMapperTest {
     }
 
     @Test
+    void mapsJdbcConnectionAndQueriesToAst() {
+        JobConfig config = minimalConfig();
+        JobConfig.InputSpec input = config.job.inputs.get(0);
+        input.path = null;
+        input.format = "jdbc";
+
+        input.connection = new JobConfig.JdbcConnectionSpec();
+        input.connection.driver = "org.sqlite.JDBC";
+        input.connection.url = "jdbc:sqlite:demo.sqlite";
+        input.connection.passwordEnv = "PGPW";
+        input.connection.properties.put("ApplicationName", "ilitransformer");
+
+        JobConfig.JdbcQuerySpec query = new JobConfig.JdbcQuerySpec();
+        query.id = "municipalities";
+        query.topic = "SrcModel.Topic";
+        query.clazz = "SrcModel.Topic.SrcClass";
+        query.basketId = "b1";
+        query.oidColumn = "id";
+        query.sql = "select id, gemeinde from municipalities";
+        query.columns.put("gemeinde", "Name");
+        input.queries.add(query);
+
+        IlimapDocument document = mapper.map(config);
+
+        IlimapInputBlock inputBlock = document.inputs().get(0);
+        assertThat(inputBlock.format()).isEqualTo("jdbc");
+        assertThat(inputBlock.connection()).isNotNull();
+        assertThat(inputBlock.connection().driver()).isEqualTo("org.sqlite.JDBC");
+        assertThat(inputBlock.connection().url()).isEqualTo("jdbc:sqlite:demo.sqlite");
+        assertThat(inputBlock.connection().passwordEnv()).isEqualTo("PGPW");
+        assertThat(inputBlock.connection().properties()).containsEntry("ApplicationName", "ilitransformer");
+
+        assertThat(inputBlock.queries()).hasSize(1);
+        IlimapQueryBlock queryBlock = inputBlock.queries().get(0);
+        assertThat(queryBlock.id()).isEqualTo("municipalities");
+        assertThat(queryBlock.topic()).isEqualTo("SrcModel.Topic");
+        assertThat(queryBlock.sourceClass()).isEqualTo("SrcModel.Topic.SrcClass");
+        assertThat(queryBlock.basketId()).isEqualTo("b1");
+        assertThat(queryBlock.oidColumn()).isEqualTo("id");
+        assertThat(queryBlock.sql()).isEqualTo("select id, gemeinde from municipalities");
+        assertThat(queryBlock.columns()).containsEntry("gemeinde", "Name");
+    }
+
+    @Test
     void mapsMinimalJobConfigToDocument() {
         IlimapDocument doc = mapper.map(minimalConfig());
 

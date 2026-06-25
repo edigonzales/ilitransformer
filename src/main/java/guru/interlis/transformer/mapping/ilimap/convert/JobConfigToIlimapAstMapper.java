@@ -66,6 +66,44 @@ public final class JobConfigToIlimapAstMapper {
                     spec.model,
                     spec.format,
                     JobConfigNormalizer.normalizeOptions(spec.options),
+                    mapConnection(spec.connection),
+                    mapQueries(spec.queries),
+                    SYNTHETIC));
+        }
+        return result;
+    }
+
+    private IlimapConnectionBlock mapConnection(JobConfig.JdbcConnectionSpec connection) {
+        if (connection == null) {
+            return null;
+        }
+        Map<String, String> properties = connection.properties != null ? connection.properties : Map.of();
+        return new IlimapConnectionBlock(
+                connection.driver,
+                connection.url,
+                connection.user,
+                connection.password,
+                connection.userEnv,
+                connection.passwordEnv,
+                properties,
+                SYNTHETIC);
+    }
+
+    private List<IlimapQueryBlock> mapQueries(List<JobConfig.JdbcQuerySpec> queries) {
+        List<IlimapQueryBlock> result = new ArrayList<>();
+        if (queries == null) {
+            return result;
+        }
+        for (JobConfig.JdbcQuerySpec query : queries) {
+            Map<String, String> columns = query.columns != null ? query.columns : Map.of();
+            result.add(new IlimapQueryBlock(
+                    query.id,
+                    query.topic,
+                    query.clazz,
+                    query.basketId,
+                    query.oidColumn,
+                    query.sql,
+                    columns,
                     SYNTHETIC));
         }
         return result;

@@ -80,11 +80,16 @@ ilitransformer transform -m examples/csv-to-xtf/mapping.yaml --modeldir examples
 
 # Transform a tabular GeoPackage into a validated XTF (input-only format)
 ilitransformer transform -m examples/gpkg-to-xtf/mapping.yaml --modeldir examples/gpkg-to-xtf/models --validate --report build/reports/gpkg
+
+# Transform a tabular JDBC query result into a validated XTF (input-only format; create the SQLite DB first, see the example README)
+ilitransformer transform -m examples/jdbc-to-xtf/mapping.yaml --modeldir examples/jdbc-to-xtf/models --validate --report build/reports/jdbc
 ```
 
 The native INTERLIS formats (`itf`, `xtf`, `xml`) are selected from the file extension. Additional
-input formats such as `csv` and `gpkg` are declared with `format:` and configured via per-input `options`
-(see [mapping-dsl.md](mapping-dsl.md)). CSV and GeoPackage are deliberately flat, input-only formats.
+input formats such as `csv`, `gpkg` and `jdbc` are declared with `format:` and configured via per-input
+`options` (or, for `jdbc`, a `connection` block and `queries`; see [mapping-dsl.md](mapping-dsl.md)).
+CSV, GeoPackage and JDBC are deliberately flat, input-only formats. `jdbc` has no path and must be
+declared explicitly; passwords are never written to logs, diagnostics or reports.
 
 Exit codes:
 - `0` — Transformation successful, no errors

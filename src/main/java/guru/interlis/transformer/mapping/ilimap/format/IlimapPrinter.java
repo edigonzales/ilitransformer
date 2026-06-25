@@ -128,6 +128,61 @@ final class IlimapPrinter {
             }
             input.options()
                     .forEach((key, value) -> line("option " + identifierOrQuoted(key) + " " + quoted(value) + ";"));
+            if (input.connection() != null) {
+                printConnection(input.connection());
+            }
+            input.queries().forEach(this::printQuery);
+        });
+        line("}");
+    }
+
+    private void printConnection(IlimapConnectionBlock connection) {
+        line("connection {");
+        indent(() -> {
+            if (connection.driver() != null) {
+                line("driver " + quoted(connection.driver()) + ";");
+            }
+            if (connection.url() != null) {
+                line("url " + quoted(connection.url()) + ";");
+            }
+            if (connection.user() != null) {
+                line("user " + quoted(connection.user()) + ";");
+            }
+            if (connection.password() != null) {
+                line("password " + quoted(connection.password()) + ";");
+            }
+            if (connection.userEnv() != null) {
+                line("userEnv " + quoted(connection.userEnv()) + ";");
+            }
+            if (connection.passwordEnv() != null) {
+                line("passwordEnv " + quoted(connection.passwordEnv()) + ";");
+            }
+            connection
+                    .properties()
+                    .forEach((key, value) -> line("property " + quoted(key) + " " + quoted(value) + ";"));
+        });
+        line("}");
+    }
+
+    private void printQuery(IlimapQueryBlock query) {
+        line("query " + query.id() + " {");
+        indent(() -> {
+            if (query.topic() != null) {
+                line("topic " + quoted(query.topic()) + ";");
+            }
+            if (query.sourceClass() != null) {
+                line("class " + quoted(query.sourceClass()) + ";");
+            }
+            if (query.basketId() != null) {
+                line("basketId " + quoted(query.basketId()) + ";");
+            }
+            if (query.oidColumn() != null) {
+                line("oidColumn " + quoted(query.oidColumn()) + ";");
+            }
+            if (query.sql() != null) {
+                line("sql " + quoted(query.sql()) + ";");
+            }
+            query.columns().forEach((key, value) -> line("column " + quoted(key) + " " + quoted(value) + ";"));
         });
         line("}");
     }

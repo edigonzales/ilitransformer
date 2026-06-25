@@ -184,6 +184,16 @@ sourceSets {
         compileClasspath += sourceSets.main.output + sourceSets.test.output + configurations.testRuntimeClasspath
         runtimeClasspath += output + compileClasspath
     }
+    postgisTest {
+        java {
+            srcDir file('src/postgisTest/java')
+        }
+        resources {
+            srcDir file('src/postgisTest/resources')
+        }
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + configurations.testRuntimeClasspath
+        runtimeClasspath += output + compileClasspath
+    }
 }
 
 tasks.withType(Test).configureEach {
@@ -212,6 +222,22 @@ tasks.register('realDataTest', Test) {
     group = 'verification'
     testClassesDirs = sourceSets.realDataTest.output.classesDirs
     classpath = sourceSets.realDataTest.runtimeClasspath
+    useJUnitPlatform()
+}
+
+// -- postgisTest task (opt-in, NOT part of check) --------------------------
+// Exercises the JDBC format provider against a real PostgreSQL/PostGIS database
+// (see dev/stack/compose.yml). Tests skip themselves when the database is unreachable.
+
+dependencies {
+    postgisTestImplementation 'org.postgresql:postgresql:42.7.4'
+}
+
+tasks.register('postgisTest', Test) {
+    description = 'Runs JDBC tests against a real PostgreSQL/PostGIS database (opt-in, not part of check)'
+    group = 'verification'
+    testClassesDirs = sourceSets.postgisTest.output.classesDirs
+    classpath = sourceSets.postgisTest.runtimeClasspath
     useJUnitPlatform()
 }
 

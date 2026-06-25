@@ -1,0 +1,50 @@
+version: 1
+
+job:
+  name: "jdbc-to-xtf-demo"
+  description: "Transform a flat JDBC query result into a valid INTERLIS 2.4 XTF transfer"
+  modeldir:
+    - "models"
+  inputs:
+    - id: jdbc-input
+      model: "DemoJdbcSource"
+      format: jdbc
+      connection:
+        driver: org.sqlite.JDBC
+        url: "jdbc:sqlite:build/demo.sqlite"
+      queries:
+        - id: municipalities
+          topic: "DemoJdbcSource.Data"
+          class: "DemoJdbcSource.Data.Municipality"
+          basketId: b1
+          oidColumn: id
+          sql: |
+            select id, bfsnr, name, population
+            from municipalities
+  outputs:
+    - id: xtf-output
+      path: "build/out/municipalities.xtf"
+      model: "DemoTarget"
+      format: xtf
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "jdbc-to-xtf-demo"
+  basketStrategy:
+    default: byTopic
+  rules:
+    - id: municipality
+      target:
+        output: xtf-output
+        class: "DemoTarget.Catalog.Municipality"
+      sources:
+        - alias: src
+          input: jdbc-input
+          class: "DemoJdbcSource.Data.Municipality"
+      identity:
+        sourceKey: ["src.bfsnr"]
+      assign:
+        BfsNr: "src.bfsnr"
+        Name: "src.name"
+        Population: "src.population"
