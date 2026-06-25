@@ -1,5 +1,9 @@
 package guru.interlis.transformer.io.shp;
 
+import guru.interlis.transformer.diag.Diagnostic;
+import guru.interlis.transformer.diag.DiagnosticCode;
+import guru.interlis.transformer.diag.DiagnosticCollector;
+import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.io.FormatOpenContext;
 import guru.interlis.transformer.io.FormatOptions;
 import guru.interlis.transformer.io.shp.core.DbfReader;
@@ -7,7 +11,10 @@ import guru.interlis.transformer.io.shp.core.DbfRecord;
 import guru.interlis.transformer.io.shp.core.ShapeRecord;
 import guru.interlis.transformer.io.shp.core.ShapeType;
 import guru.interlis.transformer.io.shp.core.ShapefileDataset;
+import guru.interlis.transformer.io.shp.core.ShapefileHeader;
 import guru.interlis.transformer.io.shp.core.ShpReader;
+import guru.interlis.transformer.io.shp.core.ShxReader;
+import guru.interlis.transformer.io.shp.core.ZipShapefileExtractor;
 import guru.interlis.transformer.io.shp.geom.ShpGeometryDecoder;
 import guru.interlis.transformer.io.shp.mapping.DbfToIomMapper;
 import guru.interlis.transformer.mapping.plan.InputBinding;
@@ -26,6 +33,9 @@ import ch.interlis.iox_j.StartTransferEvent;
 import ch.interlis.iox_j.jts.Jts2iox;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import com.vividsolutions.jts.geom.Geometry;
@@ -50,19 +60,29 @@ public final class ShapefileIoxReader implements IoxReader {
     private final DbfToIomMapper mapper;
     private final ShapefileReadPlan plan;
     private final ShpGeometryDecoder geometryDecoder;
+    private final AutoCloseable zipCleanup;
+    private final ShxReader shxReader;
 
     private State state = State.START;
     private long currentRecordNumber = 0;
     private IoxFactoryCollection factory;
 
     private ShapefileIoxReader(
-            String inputId, ShpReader shpReader, DbfReader dbfReader, DbfToIomMapper mapper, ShapefileReadPlan plan) {
+            String inputId,
+            ShpReader shpReader,
+            DbfReader dbfReader,
+            DbfToIomMapper mapper,
+            ShapefileReadPlan plan,
+            AutoCloseable zipCleanup,
+            ShxReader shxReader) {
         this.inputId = inputId;
         this.shpReader = shpReader;
         this.dbfReader = dbfReader;
         this.mapper = mapper;
         this.plan = plan;
         this.geometryDecoder = new ShpGeometryDecoder();
+        this.zipCleanup = zipCleanup;
+        this.shxReader = shxReader;
     }
 
     public static ShapefileIoxReader open(InputBinding binding, FormatOpenContext context)
@@ -72,14 +92,59 @@ public final class ShapefileIoxReader implements IoxReader {
         FormatOptions options = FormatOptions.of(binding.options());
         ShapefileOptions shapeOpts = ShapefileOptions.input(options);
 
-        ShapefileDataset dataset = ShapefileDataset.fromPath(binding.path(), shapeOpts.requireShx());
+        AutoCloseable zipCleanup = null;
+        ShapefileDataset dataset;
+        Path inputPath = binding.path();
+
+        if (inputPath.getFileName().toString().toLowerCase().endsWith(".zip")) {
+            ZipShapefileExtractor extractor = ZipShapefileExtractor.open(inputPath, shapeOpts.zipMember());
+            zipCleanup = extractor;
+            dataset = extractor.dataset();
+        } else {
+            dataset = ShapefileDataset.fromPath(inputPath, shapeOpts.requireShx());
+        }
+
+        Optional<Charset> cpgCharset = readCpgCharset(dataset, inputId);
+
+        if (cpgCharset.isPresent() && context.diagnostics() != null) {
+            context.diagnostics()
+                    .add(new Diagnostic(
+                            DiagnosticCode.IO_SHP_CPG_DETECTED,
+                            Severity.INFO,
+                            "SHP input '" + inputId + "': detected encoding '"
+                                    + cpgCharset.get().name() + "' from .cpg file",
+                            null,
+                            null));
+        }
+
+        Charset charset = shapeOpts.dbfCharset(cpgCharset);
+
+        emitPrjDiagnostic(dataset, inputId, context.diagnostics());
 
         ShpReader shpReader = ShpReader.open(dataset.shp());
-        DbfReader dbfReader = DbfReader.open(dataset.dbf(), shapeOpts.dbfCharset());
+        DbfReader dbfReader = null;
+        ShxReader shxReader = null;
 
         try {
+            dbfReader = DbfReader.open(dataset.dbf(), charset);
+
+            if (shapeOpts.requireShx() && dataset.shx() != null) {
+                shxReader = validateShx(
+                        dataset.shx(), shpReader.header(), dbfReader.header().recordCount(), inputId);
+                if (context.diagnostics() != null) {
+                    context.diagnostics()
+                            .add(new Diagnostic(
+                                    DiagnosticCode.IO_SHP_SHX_VALIDATED,
+                                    Severity.INFO,
+                                    "SHP input '" + inputId + "': SHX index file validated successfully ("
+                                            + shxReader.recordCount() + " entries)",
+                                    null,
+                                    null));
+                }
+            }
+
             ShapefileReadPlan plan = ShapefileReadPlan.create(
-                    shapeOpts, binding.typeSystem(), shpReader.header().shapeType(), inputId);
+                    shapeOpts, binding.typeSystem(), shpReader.header().shapeType(), charset, inputId);
 
             DbfToIomMapper mapper = new DbfToIomMapper(
                     plan.className(),
@@ -88,11 +153,13 @@ public final class ShapefileIoxReader implements IoxReader {
                     dbfReader.fields(),
                     plan.deletedRecordPolicy());
 
-            return new ShapefileIoxReader(inputId, shpReader, dbfReader, mapper, plan);
+            return new ShapefileIoxReader(inputId, shpReader, dbfReader, mapper, plan, zipCleanup, shxReader);
 
         } catch (Exception e) {
             closeQuietly(shpReader);
             closeQuietly(dbfReader);
+            closeQuietly(shxReader);
+            closeQuietly(zipCleanup);
             throw e;
         }
     }
@@ -200,6 +267,8 @@ public final class ShapefileIoxReader implements IoxReader {
     public void close() throws IoxException {
         closeQuietly(shpReader);
         closeQuietly(dbfReader);
+        closeQuietly(shxReader);
+        closeQuietly(zipCleanup);
         state = State.DONE;
     }
 
@@ -219,6 +288,59 @@ public final class ShapefileIoxReader implements IoxReader {
     @Override
     public IomObject createIomObject(String type, String oid) throws IoxException {
         return new Iom_jObject(type, oid);
+    }
+
+    private static Optional<Charset> readCpgCharset(ShapefileDataset dataset, String inputId) {
+        if (dataset.cpg().isEmpty()) {
+            return Optional.empty();
+        }
+        Path cpgPath = dataset.cpg().get();
+        try {
+            String content = Files.readString(cpgPath).trim();
+            if (content.isEmpty()) {
+                return Optional.empty();
+            }
+            return Optional.of(Charset.forName(content));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    private static void emitPrjDiagnostic(ShapefileDataset dataset, String inputId, DiagnosticCollector diagnostics) {
+        if (dataset.prj().isEmpty() || diagnostics == null) {
+            return;
+        }
+        Path prjPath = dataset.prj().get();
+        try {
+            String content = Files.readString(prjPath).trim();
+            String excerpt = content.length() > 200 ? content.substring(0, 200) + "..." : content;
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.IO_SHP_PRJ_FOUND,
+                    Severity.INFO,
+                    "SHP input '" + inputId + "': found .prj file with coordinate reference system: " + excerpt,
+                    null,
+                    "The .prj file is informational only; no reprojection is performed."));
+        } catch (IOException e) {
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.IO_SHP_PRJ_FOUND,
+                    Severity.WARNING,
+                    "SHP input '" + inputId + "': cannot read .prj file: " + e.getMessage(),
+                    null,
+                    null));
+        }
+    }
+
+    private static ShxReader validateShx(Path shxPath, ShapefileHeader shpHeader, int dbfRecordCount, String inputId)
+            throws IOException, ShapefileMappingException {
+        ShxReader shxReader = ShxReader.open(shxPath);
+        try {
+            shxReader.validateAgainstShpHeader(shpHeader);
+            shxReader.validateRecordCountAgainstDbf(dbfRecordCount, inputId);
+            return shxReader;
+        } catch (Exception e) {
+            shxReader.close();
+            throw e;
+        }
     }
 
     private static void closeQuietly(AutoCloseable closeable) {

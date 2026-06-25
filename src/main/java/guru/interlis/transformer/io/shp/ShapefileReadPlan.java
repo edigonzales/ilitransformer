@@ -49,7 +49,7 @@ public final class ShapefileReadPlan {
     public record ResolvedGeometry(String attributeName, GeometryKind kind) {}
 
     public static ShapefileReadPlan create(
-            ShapefileOptions options, TypeSystemFacade typeSystem, ShapeType shapeType, String inputId)
+            ShapefileOptions options, TypeSystemFacade typeSystem, ShapeType shapeType, Charset charset, String inputId)
             throws ShapefileMappingException {
 
         GeometryKind supportedKind = shapeType.defaultGeometryKind();
@@ -68,8 +68,6 @@ public final class ShapefileReadPlan {
         ResolvedGeometry geometry = new ResolvedGeometry(resolved.attributeName(), resolved.kind());
 
         Map<String, String> fieldMapping = buildFieldMapping(options, className, typeSystem, inputId);
-
-        Charset charset = options.dbfCharset();
 
         ShapefileOptions.DeletedRecordPolicy deletedRecordPolicy = options.deletedRecordPolicy();
 

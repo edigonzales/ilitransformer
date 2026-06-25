@@ -8,6 +8,7 @@ import guru.interlis.transformer.io.shp.geom.GeometryKind;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -108,23 +109,65 @@ class ShapefileOptionsTest {
     void dbfCharsetDefaultsToIso88591() throws ShapefileMappingException {
         ShapefileOptions opts = ShapefileOptions.input(FormatOptions.of(Map.of()));
 
-        assertThat(opts.dbfCharset()).isEqualTo(StandardCharsets.ISO_8859_1);
+        assertThat(opts.dbfCharset(Optional.empty())).isEqualTo(StandardCharsets.ISO_8859_1);
     }
 
     @Test
     void dbfCharsetConfigured() throws ShapefileMappingException {
         ShapefileOptions opts = ShapefileOptions.input(FormatOptions.of(Map.of("dbfEncoding", "UTF-8")));
 
-        assertThat(opts.dbfCharset()).isEqualTo(StandardCharsets.UTF_8);
+        assertThat(opts.dbfCharset(Optional.empty())).isEqualTo(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void dbfCharsetConfiguredOverridesCpg() throws ShapefileMappingException {
+        ShapefileOptions opts = ShapefileOptions.input(FormatOptions.of(Map.of("dbfEncoding", "ISO-8859-1")));
+
+        assertThat(opts.dbfCharset(Optional.of(StandardCharsets.UTF_8))).isEqualTo(StandardCharsets.ISO_8859_1);
+    }
+
+    @Test
+    void dbfCharsetUsesCpgWhenNoOptionSet() throws ShapefileMappingException {
+        ShapefileOptions opts = ShapefileOptions.input(FormatOptions.of(Map.of()));
+
+        assertThat(opts.dbfCharset(Optional.of(StandardCharsets.UTF_8))).isEqualTo(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void dbfCharsetUsesCpgWhenDbfEncodingBlank() throws ShapefileMappingException {
+        ShapefileOptions opts = ShapefileOptions.input(FormatOptions.of(Map.of("dbfEncoding", "  ")));
+
+        assertThat(opts.dbfCharset(Optional.of(StandardCharsets.US_ASCII))).isEqualTo(StandardCharsets.US_ASCII);
     }
 
     @Test
     void dbfCharsetInvalidThrows() {
         ShapefileOptions opts = ShapefileOptions.input(FormatOptions.of(Map.of("dbfEncoding", "NOT_A_CHARSET")));
 
-        assertThatThrownBy(() -> opts.dbfCharset())
+        assertThatThrownBy(() -> opts.dbfCharset(Optional.empty()))
                 .isInstanceOf(ShapefileMappingException.class)
                 .hasMessageContaining("dbfEncoding");
+    }
+
+    @Test
+    void zipMemberReturnsConfiguredValue() {
+        ShapefileOptions opts = ShapefileOptions.input(FormatOptions.of(Map.of("member", "parcels.shp")));
+
+        assertThat(opts.zipMember()).hasValue("parcels.shp");
+    }
+
+    @Test
+    void zipMemberEmptyWhenMissing() {
+        ShapefileOptions opts = ShapefileOptions.input(FormatOptions.of(Map.of()));
+
+        assertThat(opts.zipMember()).isEmpty();
+    }
+
+    @Test
+    void zipMemberEmptyWhenBlank() {
+        ShapefileOptions opts = ShapefileOptions.input(FormatOptions.of(Map.of("member", "  ")));
+
+        assertThat(opts.zipMember()).isEmpty();
     }
 
     @Test

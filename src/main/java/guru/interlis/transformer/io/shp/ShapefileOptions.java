@@ -71,7 +71,7 @@ public final class ShapefileOptions {
         return Optional.of(GeometryKind.fromOptionValue(value.trim()));
     }
 
-    public Charset dbfCharset() throws ShapefileMappingException {
+    public Charset dbfCharset(Optional<Charset> cpgCharset) throws ShapefileMappingException {
         String encoding = options.get(DBF_ENCODING_KEY);
         if (encoding != null && !encoding.isBlank()) {
             try {
@@ -80,7 +80,11 @@ public final class ShapefileOptions {
                 throw new ShapefileMappingException("SHP option 'dbfEncoding': unsupported charset '" + encoding + "'");
             }
         }
-        return DEFAULT_DBF_CHARSET;
+        return cpgCharset.orElse(DEFAULT_DBF_CHARSET);
+    }
+
+    public Optional<String> zipMember() {
+        return Optional.ofNullable(options.get("member")).filter(s -> !s.isBlank());
     }
 
     public Map<String, String> columnMappings() throws ShapefileMappingException {

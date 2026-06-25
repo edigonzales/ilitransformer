@@ -49,6 +49,15 @@ public final class DiagnosticCode {
     public static final String IO_WRITER_OPEN_FAILED = "ILITRF-IO-WRITER-OPEN-FAILED";
     public static final String IO_DEPENDENCY_MISSING = "ILITRF-IO-DEPENDENCY-MISSING";
 
+    // Shapefile input (format support phase 6 – encoding, sidecars, ZIP)
+    public static final String IO_SHP_PRJ_FOUND = "ILITRF-IO-SHP-PRJ-FOUND";
+    public static final String IO_SHP_CPG_DETECTED = "ILITRF-IO-SHP-CPG-DETECTED";
+    public static final String IO_SHP_SHX_VALIDATED = "ILITRF-IO-SHP-SHX-VALIDATED";
+    public static final String IO_SHP_ZIP_NO_SHP = "ILITRF-IO-SHP-ZIP-NO-SHP";
+    public static final String IO_SHP_ZIP_MULTIPLE_SHP = "ILITRF-IO-SHP-ZIP-MULTIPLE-SHP";
+    public static final String IO_SHP_ZIP_MEMBER_NOT_FOUND = "ILITRF-IO-SHP-ZIP-MEMBER-NOT-FOUND";
+    public static final String IO_SHP_SHX_MISMATCH = "ILITRF-IO-SHP-SHX-MISMATCH";
+
     // JDBC input (format support phase 6)
     public static final String IO_JDBC_CONNECTION_FAILED = "ILITRF-IO-JDBC-CONNECTION-FAILED";
     public static final String IO_JDBC_QUERY_FAILED = "ILITRF-IO-JDBC-QUERY-FAILED";
