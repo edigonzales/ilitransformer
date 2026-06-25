@@ -80,6 +80,8 @@ Run `ilimap: Open Mapping Overview` while an `.ilimap` editor is active to open 
 
 The overview is read-only: it does not edit mappings. It does compute and display class coverage and rule coverage.
 
+The overview stays bound to the document it was opened for and keeps its summary current: it refreshes automatically when that `.ilimap` document is saved and after a short debounce when it is edited. A non-editing **Refresh** link reloads the summary on demand. A status line reports loading, stale, error and last-updated state without adding any editable controls.
+
 ## Developer notes
 
 Further DX roadmap: see `./docs/ilimap-vscode-mapping-overview-dx-spec.md`.

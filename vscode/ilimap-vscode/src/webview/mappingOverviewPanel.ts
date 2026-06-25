@@ -9,12 +9,13 @@ import {
   type IlimapMappingSummary,
   type IlimapMappingSummaryParams
 } from './mappingOverviewMessages';
+import type {
+  MappingOverviewPanelState,
+  MappingOverviewRefreshOptions,
+  MappingOverviewRenderState
+} from './mappingOverviewState';
 
-interface MappingOverviewPanelState {
-  panel: vscode.WebviewPanel;
-  uri: string;
-  disposables: vscode.Disposable[];
-}
+const CHANGE_DEBOUNCE_MS = 500;
 
 let currentPanelState: MappingOverviewPanelState | undefined;
 
@@ -55,7 +56,11 @@ export async function openMappingOverview(
   }
 
   const state = createOrRevealPanelState(context, uri, outputChannel);
-  state.panel.webview.html = renderMappingOverviewHtml(summary, nonce());
+  state.summary = summary;
+  state.documentVersion = editor.document.version;
+  state.lastUpdated = formatTime(new Date());
+  state.loading = false;
+  renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
 }
 
 function createOrRevealPanelState(
@@ -80,9 +85,21 @@ function createOrRevealPanelState(
     }
   );
 
-  const state: MappingOverviewPanelState = { panel, uri, disposables: [] };
-  state.disposables.push(registerNavigationHandler(state, outputChannel));
+  const state: MappingOverviewPanelState = {
+    panel,
+    uri,
+    loading: false,
+    disposed: false,
+    disposables: []
+  };
+  state.disposables.push(registerMessageHandler(state, outputChannel));
+  registerDocumentListeners(state, outputChannel);
   panel.onDidDispose(() => {
+    state.disposed = true;
+    if (state.refreshTimer) {
+      clearTimeout(state.refreshTimer);
+      state.refreshTimer = undefined;
+    }
     for (const disposable of state.disposables) {
       disposable?.dispose?.();
     }
@@ -94,11 +111,15 @@ function createOrRevealPanelState(
   return state;
 }
 
-function registerNavigationHandler(
+function registerMessageHandler(
   state: MappingOverviewPanelState,
   outputChannel: vscode.OutputChannel
 ): vscode.Disposable {
   return state.panel.webview.onDidReceiveMessage(async message => {
+    if (isRefreshMessage(message)) {
+      await refreshMappingOverview(state, outputChannel, { reason: 'manual' });
+      return;
+    }
     const location = parseNavigationMessage(message);
     if (!location) {
       return;
@@ -110,6 +131,142 @@ function registerNavigationHandler(
       vscode.window.showErrorMessage('Failed to navigate from ilimap mapping overview.');
     }
   });
+}
+
+function registerDocumentListeners(
+  state: MappingOverviewPanelState,
+  outputChannel: vscode.OutputChannel
+): void {
+  const saveDisposable = vscode.workspace.onDidSaveTextDocument?.(document => {
+    if (!matchesPanelDocument(state, document)) {
+      return;
+    }
+    state.documentVersion = document.version;
+    void refreshMappingOverview(state, outputChannel, { reason: 'save' });
+  });
+  if (saveDisposable) {
+    state.disposables.push(saveDisposable);
+  }
+
+  const changeDisposable = vscode.workspace.onDidChangeTextDocument?.(event => {
+    const document = event?.document;
+    if (!matchesPanelDocument(state, document)) {
+      return;
+    }
+    state.documentVersion = document.version;
+    scheduleDebouncedRefresh(state, outputChannel);
+  });
+  if (changeDisposable) {
+    state.disposables.push(changeDisposable);
+  }
+}
+
+function matchesPanelDocument(
+  state: MappingOverviewPanelState,
+  document: vscode.TextDocument | undefined
+): document is vscode.TextDocument {
+  if (!document || !isIlimapDocument(document)) {
+    return false;
+  }
+  return document.uri?.toString() === state.uri;
+}
+
+function scheduleDebouncedRefresh(
+  state: MappingOverviewPanelState,
+  outputChannel: vscode.OutputChannel
+): void {
+  if (state.refreshTimer) {
+    clearTimeout(state.refreshTimer);
+  }
+  state.refreshTimer = setTimeout(() => {
+    state.refreshTimer = undefined;
+    void refreshMappingOverview(state, outputChannel, { reason: 'change' });
+  }, CHANGE_DEBOUNCE_MS);
+}
+
+async function refreshMappingOverview(
+  state: MappingOverviewPanelState,
+  outputChannel: vscode.OutputChannel,
+  _options: MappingOverviewRefreshOptions
+): Promise<void> {
+  if (state.disposed) {
+    return;
+  }
+
+  const client = getLanguageClient();
+  if (!client) {
+    renderPanel(state, {
+      refreshState: 'error',
+      errorMessage: 'ilimap language server is not running.',
+      lastUpdated: state.lastUpdated
+    });
+    return;
+  }
+
+  state.loading = true;
+  renderPanel(state, { refreshState: 'loading', lastUpdated: state.lastUpdated });
+
+  try {
+    const summary = await client.sendRequest<IlimapMappingSummary>(
+      mappingSummaryRequest,
+      { uri: state.uri } satisfies IlimapMappingSummaryParams
+    );
+    if (state.disposed) {
+      return;
+    }
+    state.summary = summary;
+    state.lastUpdated = formatTime(new Date());
+    state.loading = false;
+    renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
+  } catch (error) {
+    state.loading = false;
+    outputChannel.appendLine(`Failed to refresh ilimap mapping overview: ${errorMessage(error)}`);
+    if (state.disposed) {
+      return;
+    }
+    renderPanel(state, {
+      refreshState: 'error',
+      errorMessage: errorMessage(error),
+      lastUpdated: state.lastUpdated
+    });
+  }
+}
+
+function renderPanel(state: MappingOverviewPanelState, renderState: MappingOverviewRenderState): void {
+  if (state.disposed) {
+    return;
+  }
+  const summary = state.summary ?? unavailableSummary('No mapping summary is available.');
+  state.panel.webview.html = renderMappingOverviewHtml(summary, nonce(), renderState);
+}
+
+function unavailableSummary(message: string): IlimapMappingSummary {
+  return {
+    available: false,
+    message,
+    mappingName: '',
+    inputCount: 0,
+    outputCount: 0,
+    ruleCount: 0,
+    enumMapCount: 0,
+    bagCount: 0,
+    refCount: 0,
+    errorCount: 0,
+    warningCount: 0,
+    informationCount: 0,
+    hintCount: 0,
+    inputs: [],
+    outputs: [],
+    enumMaps: [],
+    rules: [],
+    diagnostics: []
+  };
+}
+
+function isRefreshMessage(message: unknown): boolean {
+  return !!message
+    && typeof message === 'object'
+    && (message as { type?: unknown }).type === 'refresh';
 }
 
 function parseNavigationMessage(message: unknown): IlimapLocation | undefined {
@@ -188,6 +345,10 @@ function isIlimapDocument(document: vscode.TextDocument): boolean {
 
 function nonce(): string {
   return crypto.randomBytes(16).toString('base64');
+}
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString();
 }
 
 function errorMessage(error: unknown): string {

@@ -143,6 +143,64 @@ test('renders class coverage with end-range when location has end positions', ()
   assert.match(html, /data-nav-end-character="18"/);
 });
 
+test('renders a refresh action link without inline handlers', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.match(html, /data-action="refresh"/);
+  assert.match(html, />Refresh</);
+  assert.doesNotMatch(html, /onclick=/i);
+  assert.doesNotMatch(html, /<button\b/i);
+  assert.doesNotMatch(html, /<input\b/i);
+  assert.doesNotMatch(html, /<form\b/i);
+});
+
+test('renders loading banner from render state', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', { refreshState: 'loading' });
+
+  assert.match(html, /Loading mapping overview/);
+});
+
+test('renders stale banner from render state', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', { refreshState: 'stale' });
+
+  assert.match(html, /Stale: document changed/);
+});
+
+test('renders last-updated banner from render state', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', {
+    refreshState: 'idle',
+    lastUpdated: '10:42:31'
+  });
+
+  assert.match(html, /Last updated: 10:42:31/);
+});
+
+test('renders error banner with escaped message', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', {
+    refreshState: 'error',
+    errorMessage: '<script>x</script>'
+  });
+
+  assert.match(html, /Failed to refresh: &lt;script&gt;x&lt;\/script&gt;/);
+  assert.doesNotMatch(html, /<script>x<\/script>/);
+});
+
+test('keeps strict CSP and no editable controls with render state', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', {
+    refreshState: 'error',
+    errorMessage: 'boom'
+  });
+
+  assert.match(
+    html,
+    /Content-Security-Policy" content="default-src 'none'; style-src 'nonce-test-nonce'; script-src 'nonce-test-nonce';"/
+  );
+  assert.doesNotMatch(html, /<button\b/i);
+  assert.doesNotMatch(html, /<input\b/i);
+  assert.doesNotMatch(html, /<form\b/i);
+  assert.doesNotMatch(html, /contenteditable/i);
+});
+
 function summary() {
   return {
     available: true,

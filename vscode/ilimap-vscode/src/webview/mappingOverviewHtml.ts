@@ -11,8 +11,13 @@ import type {
   IlimapRuleSummary,
   IlimapWithLocation
 } from './mappingOverviewMessages';
+import type { MappingOverviewRenderState } from './mappingOverviewState';
 
-export function renderMappingOverviewHtml(summary: IlimapMappingSummary, nonce: string): string {
+export function renderMappingOverviewHtml(
+  summary: IlimapMappingSummary,
+  nonce: string,
+  renderState?: MappingOverviewRenderState
+): string {
   const title = summary.available ? summary.mappingName || 'mapping' : 'Mapping unavailable';
   const diagnosticText = diagnosticsLabel(summary);
   return `<!DOCTYPE html>
@@ -177,6 +182,44 @@ export function renderMappingOverviewHtml(summary: IlimapMappingSummary, nonce: 
       margin: 10px 0 0;
       color: var(--vscode-descriptionForeground);
     }
+
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      align-items: baseline;
+      justify-content: space-between;
+      margin: -8px 0 20px;
+    }
+
+    .status {
+      color: var(--vscode-descriptionForeground);
+      font-size: 12px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .status.status-loading {
+      color: var(--vscode-foreground);
+    }
+
+    .status.status-stale {
+      color: var(--vscode-editorWarning-foreground);
+    }
+
+    .status.status-error {
+      color: var(--vscode-editorError-foreground);
+    }
+
+    a.refresh-link {
+      color: var(--vscode-textLink-foreground);
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    a.refresh-link:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -188,13 +231,23 @@ export function renderMappingOverviewHtml(summary: IlimapMappingSummary, nonce: 
       </div>
       <div class="muted">${escapeHtml(diagnosticText)}</div>
     </div>
+    ${renderStatusBar(renderState)}
     ${summary.available ? renderAvailableSummary(summary) : renderUnavailable(summary)}
   </main>
   <script nonce="${escapeAttribute(nonce)}">
     const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
     document.addEventListener('click', event => {
-      const target = event.target instanceof Element ? event.target.closest('[data-nav-line]') : null;
-      if (!target || !vscode) {
+      if (!(event.target instanceof Element) || !vscode) {
+        return;
+      }
+      const refreshTarget = event.target.closest('[data-action="refresh"]');
+      if (refreshTarget) {
+        event.preventDefault();
+        vscode.postMessage({ type: 'refresh' });
+        return;
+      }
+      const target = event.target.closest('[data-nav-line]');
+      if (!target) {
         return;
       }
       event.preventDefault();
@@ -473,6 +526,32 @@ function renderNavName(label: string, target: IlimapWithLocation): string {
     ? ` data-nav-end-line="${escapeAttribute(location.endLine)}" data-nav-end-character="${escapeAttribute(location.endCharacter)}"`
     : '';
   return `<a href="#" class="name" data-nav-line="${escapeAttribute(location.line)}" data-nav-character="${escapeAttribute(location.character)}"${endAttrs}>${escapeHtml(label)}</a>`;
+}
+
+function renderStatusBar(renderState?: MappingOverviewRenderState): string {
+  const state = renderState?.refreshState ?? 'idle';
+  const text = statusText(renderState);
+  return `<div class="status-bar">
+      <span class="status status-${escapeAttribute(state)}">${escapeHtml(text)}</span>
+      <a href="#" class="refresh-link" data-action="refresh">Refresh</a>
+    </div>`;
+}
+
+function statusText(renderState?: MappingOverviewRenderState): string {
+  const state = renderState?.refreshState ?? 'idle';
+  if (state === 'loading') {
+    return 'Loading mapping overview…';
+  }
+  if (state === 'stale') {
+    return 'Stale: document changed; refreshing…';
+  }
+  if (state === 'error') {
+    return `Failed to refresh: ${renderState?.errorMessage || 'unknown error'}`;
+  }
+  if (renderState?.lastUpdated) {
+    return `Last updated: ${renderState.lastUpdated}`;
+  }
+  return '';
 }
 
 function diagnosticsLabel(summary: IlimapMappingSummary): string {

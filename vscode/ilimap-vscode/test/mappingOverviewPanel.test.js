@@ -888,3 +888,279 @@ test('navigateToLocation without end positions creates point selection', async (
   assert.equal(selections[0].active.line, 7);
   assert.equal(selections[0].active.character, 3);
 });
+
+const CHANGE_DEBOUNCE_MS = 500;
+
+test('manual refresh message triggers a new mappingSummary request', async (t) => {
+  const harness = makeHarness();
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+  assert.equal(harness.refs.requested.length, 1);
+
+  await harness.refs.panel.messageCallback({ type: 'refresh' });
+
+  assert.equal(harness.refs.requested.length, 2);
+  assert.deepEqual(harness.refs.requested[1], {
+    method: 'ilimap/mappingSummary',
+    params: { uri: 'file:///tmp/profile.ilimap' }
+  });
+  assert.match(harness.refs.panel.webview.html, /Profile/);
+  assert.match(harness.refs.panel.webview.html, /data-action="refresh"/);
+});
+
+test('saving the bound document triggers a refresh', async (t) => {
+  const harness = makeHarness();
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+  assert.equal(harness.refs.saveHandlers.length, 1);
+
+  await harness.refs.saveHandlers[0](document('file:///tmp/profile.ilimap', '/tmp/profile.ilimap', 2));
+  await flush();
+
+  assert.equal(harness.refs.requested.length, 2);
+  assert.equal(harness.refs.requested[1].params.uri, 'file:///tmp/profile.ilimap');
+});
+
+test('saving an unrelated document does not trigger a refresh', async (t) => {
+  const harness = makeHarness();
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+
+  await harness.refs.saveHandlers[0](document('file:///tmp/other.ilimap', '/tmp/other.ilimap', 1));
+  await harness.refs.saveHandlers[0]({
+    languageId: 'plaintext',
+    version: 1,
+    uri: { fsPath: '/tmp/profile.txt', toString() { return 'file:///tmp/profile.txt'; } }
+  });
+  await flush();
+
+  assert.equal(harness.refs.requested.length, 1);
+});
+
+test('multiple rapid changes debounce into a single refresh', async (t) => {
+  const harness = makeHarness();
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+  assert.equal(harness.refs.changeHandlers.length, 1);
+
+  harness.refs.changeHandlers[0]({ document: document('file:///tmp/profile.ilimap', '/tmp/profile.ilimap', 2) });
+  harness.refs.changeHandlers[0]({ document: document('file:///tmp/profile.ilimap', '/tmp/profile.ilimap', 3) });
+  harness.refs.changeHandlers[0]({ document: document('file:///tmp/profile.ilimap', '/tmp/profile.ilimap', 4) });
+
+  assert.equal(harness.refs.requested.length, 1);
+
+  await delay(CHANGE_DEBOUNCE_MS + 200);
+  await flush();
+
+  assert.equal(harness.refs.requested.length, 2);
+});
+
+test('changes to an unrelated document do not schedule a refresh', async (t) => {
+  const harness = makeHarness();
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+
+  harness.refs.changeHandlers[0]({ document: document('file:///tmp/other.ilimap', '/tmp/other.ilimap', 2) });
+
+  await delay(CHANGE_DEBOUNCE_MS + 200);
+  await flush();
+
+  assert.equal(harness.refs.requested.length, 1);
+});
+
+test('failed refresh logs an error and shows an error banner without losing the summary', async (t) => {
+  let calls = 0;
+  const harness = makeHarness({
+    respond() {
+      calls += 1;
+      if (calls >= 2) {
+        throw new Error('boom');
+      }
+      return baseSummary('Profile');
+    }
+  });
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+  await harness.refs.panel.messageCallback({ type: 'refresh' });
+  await flush();
+
+  assert.ok(
+    harness.refs.outputLines.some(
+      line => line.includes('Failed to refresh ilimap mapping overview') && line.includes('boom')
+    )
+  );
+  assert.match(harness.refs.panel.webview.html, /Failed to refresh: boom/);
+  assert.match(harness.refs.panel.webview.html, /Profile/);
+});
+
+function context() {
+  return { extensionUri: { fsPath: extensionRoot } };
+}
+
+function document(uriString, fsPath, version) {
+  return {
+    languageId: 'ilimap',
+    version,
+    uri: {
+      fsPath,
+      toString() {
+        return uriString;
+      }
+    }
+  };
+}
+
+function flush() {
+  return new Promise(resolve => setImmediate(resolve));
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function baseSummary(name) {
+  return {
+    available: true,
+    message: '',
+    mappingName: name,
+    inputCount: 0,
+    outputCount: 0,
+    ruleCount: 0,
+    enumMapCount: 0,
+    bagCount: 0,
+    refCount: 0,
+    errorCount: 0,
+    warningCount: 0,
+    informationCount: 0,
+    hintCount: 0,
+    inputs: [],
+    outputs: [],
+    enumMaps: [],
+    rules: [],
+    diagnostics: [],
+    coverageAvailable: true,
+    coverageMessage: '',
+    classCoverage: [],
+    ruleCoverage: []
+  };
+}
+
+function makeHarness({ activeUri = 'file:///tmp/profile.ilimap', activeFsPath = '/tmp/profile.ilimap', respond } = {}) {
+  const refs = {
+    requested: [],
+    outputLines: [],
+    saveHandlers: [],
+    changeHandlers: [],
+    panel: null
+  };
+
+  const clientMock = {
+    async sendRequest(method, params) {
+      refs.requested.push({ method, params });
+      if (respond) {
+        return respond(method, params, refs);
+      }
+      return baseSummary('Profile');
+    }
+  };
+
+  const vscodeMock = {
+    ViewColumn: { One: 1, Beside: 2 },
+    ProgressLocation: { Notification: 15 },
+    TextEditorRevealType: { InCenterIfOutsideViewport: 2 },
+    Position: class Position {
+      constructor(line, character) { this.line = line; this.character = character; }
+    },
+    Range: class Range {
+      constructor(start, end) { this.start = start; this.end = end; }
+    },
+    Selection: class Selection {
+      constructor(anchor, active) { this.anchor = anchor; this.active = active; }
+    },
+    Uri: { parse(value) { return { value }; } },
+    workspace: {
+      async openTextDocument(uri) { return { uri }; },
+      onDidSaveTextDocument(callback) {
+        refs.saveHandlers.push(callback);
+        return { dispose() {} };
+      },
+      onDidChangeTextDocument(callback) {
+        refs.changeHandlers.push(callback);
+        return { dispose() {} };
+      }
+    },
+    window: {
+      activeTextEditor: {
+        document: document(activeUri, activeFsPath, 1)
+      },
+      createWebviewPanel(viewType, title, column, options) {
+        const panel = {
+          viewType,
+          title,
+          column,
+          options,
+          webview: {
+            html: '',
+            onDidReceiveMessage(callback) {
+              panel.messageCallback = callback;
+              return { dispose() {} };
+            }
+          },
+          reveal(nextColumn) { panel.revealed = nextColumn; },
+          onDidDispose(callback) { panel.disposeCallback = callback; }
+        };
+        refs.panel = panel;
+        return panel;
+      },
+      showInformationMessage() {},
+      showErrorMessage() {},
+      withProgress(options, task) { return task(); },
+      async showTextDocument(doc, column, preserveFocus) {
+        return {
+          document: doc,
+          column,
+          preserveFocus,
+          set selection(_value) {},
+          revealRange() {}
+        };
+      }
+    }
+  };
+
+  const outputChannel = {
+    appendLine(line) { refs.outputLines.push(line); }
+  };
+
+  return { vscodeMock, clientMock, outputChannel, refs };
+}
+
+function loadPanel(t, harness) {
+  const originalLoad = Module._load;
+  Module._load = function mockedLoad(request, parent, isMain) {
+    if (request === 'vscode') {
+      return harness.vscodeMock;
+    }
+    if (request === '../client') {
+      return {
+        getLanguageClient() {
+          return harness.clientMock;
+        }
+      };
+    }
+    return originalLoad.call(this, request, parent, isMain);
+  };
+
+  delete require.cache[distPanelPath];
+  const panelModule = require(distPanelPath);
+  t.after(() => {
+    delete require.cache[distPanelPath];
+    Module._load = originalLoad;
+  });
+  return panelModule;
+}
