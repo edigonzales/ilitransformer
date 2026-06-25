@@ -1,0 +1,43 @@
+version: 1
+
+job:
+  name: "csv-to-xtf-demo"
+  description: "Transform a flat CSV table into a valid INTERLIS 2.4 XTF transfer"
+  modeldir:
+    - "models"
+  inputs:
+    - id: csv-input
+      path: "input/municipalities.csv"
+      model: "DemoCsvSource"
+      format: csv
+      options:
+        firstLineIsHeader: "true"
+        separator: ";"
+        encoding: "UTF-8"
+  outputs:
+    - id: xtf-output
+      path: "build/out/municipalities.xtf"
+      model: "DemoTarget"
+      format: xtf
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "csv-to-xtf-demo"
+  basketStrategy:
+    default: byTopic
+  rules:
+    - id: municipality
+      target:
+        output: xtf-output
+        class: "DemoTarget.Catalog.Municipality"
+      sources:
+        - alias: src
+          input: csv-input
+          class: "DemoCsvSource.Data.Municipality"
+      identity:
+        sourceKey: ["src.bfsnr"]
+      assign:
+        BfsNr: "src.bfsnr"
+        Name: "src.name"
+        Population: "src.population"

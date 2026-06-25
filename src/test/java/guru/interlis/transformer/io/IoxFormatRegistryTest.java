@@ -24,7 +24,7 @@ class IoxFormatRegistryTest {
     @Test
     void resolvesXtfInputByExplicitFormat() {
         assertThat(registry.find("XTF")).get().isInstanceOf(BuiltInInterlisFormatProvider.class);
-        assertThat(registry.find("csv")).isEmpty();
+        assertThat(registry.find("csv")).get().isInstanceOf(CsvFormatProvider.class);
         assertThat(registry.find(null)).isEmpty();
     }
 

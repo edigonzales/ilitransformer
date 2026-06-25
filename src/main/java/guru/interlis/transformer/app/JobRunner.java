@@ -191,12 +191,7 @@ public final class JobRunner {
                     writersByOutputId.put(outputId, ioRegistry.createWriter(tempBinding, context));
                     tempBindings.put(outputId, tempBinding);
                 } catch (Exception e) {
-                    engineDiag.add(new Diagnostic(
-                            DiagnosticCode.COMMIT_FAILED,
-                            Severity.ERROR,
-                            "Failed to create writer for output " + outputId + ": " + e.getMessage(),
-                            outputId,
-                            null));
+                    engineDiag.add(ioOpenDiagnostic(false, outputId, e));
                 }
             }
 
@@ -209,12 +204,7 @@ public final class JobRunner {
                             new FormatOpenContext(prepared.baseDirectory(), binding.transferDescription(), engineDiag);
                     readerByInputId.put(inputId, ioRegistry.createReader(binding, context));
                 } catch (Exception e) {
-                    engineDiag.add(new Diagnostic(
-                            DiagnosticCode.COMMIT_FAILED,
-                            Severity.ERROR,
-                            "Failed to open input " + inputId + ": " + e.getMessage(),
-                            inputId,
-                            null));
+                    engineDiag.add(ioOpenDiagnostic(true, inputId, e));
                 }
             }
 
@@ -386,6 +376,38 @@ public final class JobRunner {
                                 || NON_DOWNGRADEABLE_CODES.contains(d.code())
                                 || d.code().startsWith("ILITRF-MODEL-")
                                 || d.code().startsWith("ILITRF-MAP-")));
+    }
+
+    /**
+     * Classifies a reader/writer open failure into a precise, solution-oriented diagnostic. Option
+     * parsing errors (thrown as {@link IllegalArgumentException} by the format providers) and unknown
+     * formats get dedicated codes so users see actionable messages.
+     */
+    private static Diagnostic ioOpenDiagnostic(boolean input, String id, Exception e) {
+        String detail = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+        String role = input ? "input" : "output";
+        if (e instanceof IllegalArgumentException && detail.startsWith("Unknown " + role + " format")) {
+            return new Diagnostic(
+                    DiagnosticCode.IO_FORMAT_UNKNOWN,
+                    Severity.ERROR,
+                    detail,
+                    id,
+                    "Use a supported format or declare it explicitly with 'format:'.");
+        }
+        if (e instanceof IllegalArgumentException) {
+            return new Diagnostic(
+                    DiagnosticCode.IO_OPTION_INVALID,
+                    Severity.ERROR,
+                    "Invalid format option for " + role + " '" + id + "': " + detail,
+                    id,
+                    "Check the format option values in your mapping.");
+        }
+        return new Diagnostic(
+                input ? DiagnosticCode.IO_READER_OPEN_FAILED : DiagnosticCode.IO_WRITER_OPEN_FAILED,
+                Severity.ERROR,
+                "Failed to open " + role + " '" + id + "': " + detail,
+                id,
+                null);
     }
 
     // -- Internal helpers ----------------------------------------------------

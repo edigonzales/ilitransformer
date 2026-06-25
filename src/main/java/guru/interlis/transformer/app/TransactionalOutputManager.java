@@ -1,7 +1,6 @@
 package guru.interlis.transformer.app;
 
 import guru.interlis.transformer.mapping.plan.OutputBinding;
-import guru.interlis.transformer.mapping.plan.TransferFormat;
 
 import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -99,11 +98,11 @@ public final class TransactionalOutputManager implements AutoCloseable {
         return tempDir;
     }
 
-    private static String extension(TransferFormat format) {
+    private static String extension(String format) {
         if (format == null) return ".xtf";
-        return switch (format) {
-            case ITF -> ".itf";
-            case XTF, XML -> ".xtf";
+        return switch (format.toLowerCase()) {
+            case "itf" -> ".itf";
+            default -> ".xtf";
         };
     }
 

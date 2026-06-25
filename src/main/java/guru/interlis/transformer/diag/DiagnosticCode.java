@@ -41,6 +41,12 @@ public final class DiagnosticCode {
     // Model
     public static final String MODEL_COMPILE_FAILED = "ILITRF-MODEL-COMPILE-FAILED";
 
+    // I/O format providers (format support phases)
+    public static final String IO_FORMAT_UNKNOWN = "ILITRF-IO-FORMAT-UNKNOWN";
+    public static final String IO_OPTION_INVALID = "ILITRF-IO-OPTION-INVALID";
+    public static final String IO_READER_OPEN_FAILED = "ILITRF-IO-READER-OPEN-FAILED";
+    public static final String IO_WRITER_OPEN_FAILED = "ILITRF-IO-WRITER-OPEN-FAILED";
+
     // Runtime
     public static final String RUN_REF_UNRESOLVED = "ILITRF-RUN-REF-UNRESOLVED";
     public static final String RUN_REF_AMBIGUOUS = "ILITRF-RUN-REF-AMBIGUOUS";

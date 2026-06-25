@@ -1,11 +1,11 @@
 package guru.interlis.transformer.model;
 
 import guru.interlis.transformer.interlis.InterlisModelLoader;
+import guru.interlis.transformer.io.FormatIdResolver;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
-import guru.interlis.transformer.mapping.plan.TransferFormat;
 
 import ch.interlis.ili2c.metamodel.TransferDescription;
 
@@ -122,7 +122,7 @@ public final class ModelRegistry {
                 TransferDescription td = registry.tdByModel.get(input.model);
                 TypeSystemFacade ts = registry.tsByModel.get(input.model);
                 Path path = input.path != null ? Path.of(input.path) : null;
-                TransferFormat format = parseFormat(input.format);
+                String format = FormatIdResolver.resolveInputFormat(input);
                 Map<String, String> options = JobConfigNormalizer.normalizeOptions(input.options);
                 registry.inputsById.put(
                         input.id, new InputBinding(input.id, path, input.model, format, options, td, ts));
@@ -133,22 +133,13 @@ public final class ModelRegistry {
                 TransferDescription td = registry.tdByModel.get(output.model);
                 TypeSystemFacade ts = registry.tsByModel.get(output.model);
                 Path path = output.path != null ? Path.of(output.path) : null;
-                TransferFormat format = parseFormat(output.format);
+                String format = FormatIdResolver.resolveOutputFormat(output);
                 Map<String, String> options = JobConfigNormalizer.normalizeOptions(output.options);
                 registry.outputsById.put(
                         output.id, new OutputBinding(output.id, path, output.model, format, options, td, ts));
             }
 
             return registry;
-        }
-
-        private static TransferFormat parseFormat(String format) {
-            if (format == null) return null;
-            try {
-                return TransferFormat.valueOf(format.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                return null;
-            }
         }
 
         private static TransferDescription loadModel(
@@ -177,7 +168,7 @@ public final class ModelRegistry {
                 TypeSystemFacade ts = sourceTypeSystems.get(input.model);
                 TransferDescription td = ts != null ? ts.getTransferDescription() : null;
                 Path path = input.path != null ? Path.of(input.path) : null;
-                TransferFormat format = parseFormat(input.format);
+                String format = FormatIdResolver.resolveInputFormat(input);
                 Map<String, String> options = JobConfigNormalizer.normalizeOptions(input.options);
                 registry.inputsById.put(
                         input.id, new InputBinding(input.id, path, input.model, format, options, td, ts));
@@ -192,7 +183,7 @@ public final class ModelRegistry {
                 TypeSystemFacade ts = targetTypeSystems.get(output.model);
                 TransferDescription td = ts != null ? ts.getTransferDescription() : null;
                 Path path = output.path != null ? Path.of(output.path) : null;
-                TransferFormat format = parseFormat(output.format);
+                String format = FormatIdResolver.resolveOutputFormat(output);
                 Map<String, String> options = JobConfigNormalizer.normalizeOptions(output.options);
                 registry.outputsById.put(
                         output.id, new OutputBinding(output.id, path, output.model, format, options, td, ts));

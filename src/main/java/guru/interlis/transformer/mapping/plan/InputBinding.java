@@ -13,7 +13,7 @@ public record InputBinding(
         String inputId,
         Path path,
         String declaredModelName,
-        TransferFormat format,
+        String format,
         Map<String, String> options,
         TransferDescription transferDescription,
         TypeSystemFacade typeSystem) {

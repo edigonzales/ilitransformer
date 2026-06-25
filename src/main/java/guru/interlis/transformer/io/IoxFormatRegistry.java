@@ -28,9 +28,9 @@ public final class IoxFormatRegistry {
         this.providers = List.copyOf(providers);
     }
 
-    /** Default registry. In phase 1 it only contains the built-in INTERLIS provider. */
+    /** Default registry containing the built-in INTERLIS provider plus the CSV input provider. */
     public static IoxFormatRegistry defaultRegistry() {
-        return new IoxFormatRegistry(List.of(new BuiltInInterlisFormatProvider()));
+        return new IoxFormatRegistry(List.of(new BuiltInInterlisFormatProvider(), new CsvFormatProvider()));
     }
 
     /** Finds a provider that handles the given format id (e.g. {@code xtf}, {@code itf}). */
@@ -78,9 +78,9 @@ public final class IoxFormatRegistry {
                 .collect(Collectors.joining(", "));
     }
 
-    private static String displayFormat(Object explicitFormat, Path path) {
-        if (explicitFormat != null) {
-            return explicitFormat.toString().toLowerCase(Locale.ROOT);
+    private static String displayFormat(String explicitFormat, Path path) {
+        if (explicitFormat != null && !explicitFormat.isBlank()) {
+            return explicitFormat.toLowerCase(Locale.ROOT);
         }
         return FormatIdResolver.fromPath(path).orElse("unknown");
     }

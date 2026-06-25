@@ -74,7 +74,14 @@ ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.ilimap --modeldir "sr
 
 # With validation
 ilitransformer transform -m profiles/dm01-to-dmav/1.1/lfp3.ilimap --modeldir "src/test/data/av/models/" --validate --report build/reports/lfp3
+
+# Transform a flat CSV file into a validated XTF (input-only format)
+ilitransformer transform -m examples/csv-to-xtf/mapping.yaml --modeldir examples/csv-to-xtf/models --validate --report build/reports/csv
 ```
+
+The native INTERLIS formats (`itf`, `xtf`, `xml`) are selected from the file extension. Additional
+input formats such as `csv` are declared with `format:` and configured via per-input `options`
+(see [mapping-dsl.md](mapping-dsl.md)). CSV is a deliberately flat, input-only format.
 
 Exit codes:
 - `0` — Transformation successful, no errors

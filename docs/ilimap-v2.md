@@ -202,7 +202,8 @@ output dmav {
 }
 ```
 
-`format` ist optional. Erlaubte Werte: `itf`, `xtf`.
+`format` ist optional. Erlaubte Werte: `itf`, `xtf`, `csv`. `csv` ist ein bewusst flaches,
+nur lesbares Eingabeformat (siehe unten).
 
 Optional koennen `input`- und `output`-Bloecke generische Formatoptionen deklarieren:
 
@@ -221,8 +222,20 @@ input source {
   oder String, der Wert ein String, eine Zahl oder ein Boolean.
 - Alle Werte werden als Strings gespeichert (`true` wird zu `"true"`, `10000` zu `"10000"`).
 - Die Optionen werden an den jeweiligen Formatprovider durchgereicht. Die nativen
-  INTERLIS-Formate werten sie derzeit nicht aus und ignorieren sie. Es wird noch kein neues
-  Format aktiviert.
+  INTERLIS-Formate werten sie derzeit nicht aus und ignorieren sie.
+
+Das `csv`-Format ist als Eingabeformat aktiv und wertet folgende Optionen aus:
+
+| Option | Default | Bedeutung |
+|---|---|---|
+| `firstLineIsHeader` | `true` | Erste Zeile enthaelt die Spaltennamen |
+| `separator` | `,` | Trennzeichen (ein Zeichen) |
+| `delimiter` | `"` | Anfuehrungszeichen (ein Zeichen) |
+| `encoding` | `UTF-8` | Zeichensatz der Datei |
+
+CSV ist bewusst flach: eine Tabelle, deren Spalten auf die Attribute genau einer Klasse des
+Quellmodells abgebildet werden. Strukturen, Referenzen und Geometrie kann CSV nicht ausdruecken.
+Ein vollstaendiges Beispiel liegt unter `examples/csv-to-xtf/`.
 
 ### oid
 

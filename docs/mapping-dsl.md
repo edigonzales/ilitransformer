@@ -67,7 +67,7 @@ mapping:
 - id: in1          # Pflicht: eindeutige ID
   path: "in.xtf"   # Pflicht: Pfad zur Eingabedatei
   model: "Model"   # Pflicht: INTERLIS-Modellname
-  format: "xtf"    # Optional: "itf" oder "xtf" (wird aus Dateiendung erkannt)
+  format: "xtf"    # Optional: "itf", "xtf" oder "csv" (wird sonst aus Dateiendung erkannt)
   options:         # Optional: generische Formatoptionen (siehe unten)
     encoding: UTF-8
 ```
@@ -93,8 +93,33 @@ gültig.
   -Zahlen (`10000`) werden dabei zu `"true"` bzw. `"10000"`.
 - Die Werte werden an den jeweiligen Formatprovider durchgereicht. Die nativen
   INTERLIS-Formate (`itf`, `xtf`, `xml`) werten derzeit keine Optionen aus und ignorieren sie.
-- Es werden noch keine zusätzlichen Eingabeformate aktiviert; der Block bildet lediglich die
-  Konfigurationsbasis für künftige Provider.
+
+#### CSV als Eingabeformat
+
+CSV ist ein bewusst flaches, **nur lesbares** Eingabeformat: eine Tabelle, deren Spalten auf
+die Attribute genau einer Klasse des Quellmodells abgebildet werden. Strukturen, Referenzen und
+Geometrie kann CSV nicht ausdrücken. Der Output bleibt ein normales INTERLIS-Modell.
+
+```yaml
+inputs:
+  - id: source
+    path: "input/municipalities.csv"
+    model: "DemoCsvSource"
+    format: csv
+    options:
+      firstLineIsHeader: "true"
+      separator: ";"
+      encoding: UTF-8
+```
+
+| Option | Default | Bedeutung |
+|---|---|---|
+| `firstLineIsHeader` | `true` | Erste Zeile enthält die Spaltennamen |
+| `separator` | `,` | Trennzeichen (ein Zeichen) |
+| `delimiter` | `"` | Anführungszeichen (ein Zeichen) |
+| `encoding` | `UTF-8` | Zeichensatz der Datei |
+
+Ein vollständiges Beispiel inklusive `.ilimap`-Variante liegt unter `examples/csv-to-xtf/`.
 
 ## Mapping-Sektion
 

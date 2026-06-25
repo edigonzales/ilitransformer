@@ -1,0 +1,41 @@
+mapping v2 "csv-to-xtf-demo" {
+  job {
+    description "Transform a flat CSV table into a valid INTERLIS 2.4 XTF transfer";
+    modeldir "models";
+    failPolicy strict;
+  }
+
+  input csv-input {
+    path "input/municipalities.csv";
+    model "DemoCsvSource";
+    format csv;
+    option firstLineIsHeader true;
+    option separator ";";
+    option encoding "UTF-8";
+  }
+
+  output xtf-output {
+    path "build/out/municipalities.xtf";
+    model "DemoTarget";
+    format xtf;
+  }
+
+  oid {
+    strategy deterministicUuid;
+    namespace "csv-to-xtf-demo";
+  }
+
+  basket byTopic;
+
+  rule municipality {
+    target xtf-output class "DemoTarget.Catalog.Municipality";
+    source src from csv-input class "DemoCsvSource.Data.Municipality";
+    identity src.bfsnr;
+
+    assign {
+      BfsNr = src.bfsnr;
+      Name = src.name;
+      Population = src.population;
+    }
+  }
+}

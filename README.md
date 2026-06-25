@@ -71,6 +71,21 @@ profiles/dmav-to-dm01/1.1/
 
 Tests, die produktive Profile prüfen, laden diese Dateien direkt und materialisieren nur Ein-/Ausgabepfade für die jeweilige Testumgebung.
 
+## Eingabeformate
+
+Die nativen INTERLIS-Transferformate `itf`, `xtf` und `xml` werden anhand der Dateiendung erkannt.
+Zusätzliche Eingabeformate werden über `format:` deklariert und pro Input mit `options` konfiguriert.
+
+- `csv` — bewusst flaches, nur lesbares Eingabeformat (eine Tabelle → eine Quellklasse). Optionen:
+  `firstLineIsHeader`, `separator`, `delimiter`, `encoding`.
+
+Ein vollständiges Beispiel (Source-ILI, Target-ILI, CSV, YAML- und `.ilimap`-Mapping) liegt unter
+`examples/csv-to-xtf/`:
+
+```bash
+ilitransformer transform -m examples/csv-to-xtf/mapping.yaml --modeldir examples/csv-to-xtf/models --validate --report build/reports/csv
+```
+
 ## Aktive Dokumentation
 
 - `docs/testing.md`
