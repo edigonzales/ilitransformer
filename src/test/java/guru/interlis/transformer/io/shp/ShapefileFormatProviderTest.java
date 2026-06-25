@@ -56,14 +56,13 @@ class ShapefileFormatProviderTest {
     }
 
     @Test
-    void openReaderReportsControlledNotImplemented() {
+    void openReaderFailsWithHelpfulMessageForMissingFile() {
         InputBinding binding =
                 new InputBinding("parcels", Path.of("parcels.shp"), "DemoShpSource", "shp", null, null, null);
         FormatOpenContext context = new FormatOpenContext(null, null, new DiagnosticCollector());
         assertThatThrownBy(() -> provider.openReader(binding, context))
-                .isInstanceOf(ShapefileMappingException.class)
-                .hasMessageContaining("parcels")
-                .hasMessageContaining("not implemented");
+                .isInstanceOf(Exception.class)
+                .hasMessageContaining("parcels");
     }
 
     private static InputBinding inputWithFormat(String format) {

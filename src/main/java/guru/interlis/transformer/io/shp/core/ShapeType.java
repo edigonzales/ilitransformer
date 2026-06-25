@@ -1,6 +1,7 @@
 package guru.interlis.transformer.io.shp.core;
 
 import guru.interlis.transformer.io.shp.ShapefileMappingException;
+import guru.interlis.transformer.io.shp.geom.GeometryKind;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -44,5 +45,16 @@ public enum ShapeType {
 
     public boolean isSupported2dMvp() {
         return this == NULL || this == POINT || this == POLYLINE || this == POLYGON;
+    }
+
+    public GeometryKind defaultGeometryKind() throws ShapefileMappingException {
+        return switch (this) {
+            case POINT -> GeometryKind.COORD;
+            case POLYLINE -> GeometryKind.POLYLINE;
+            case POLYGON -> GeometryKind.SURFACE;
+            default ->
+                throw new ShapefileMappingException("Shape type " + this
+                        + " has no default geometry kind. Only POINT, POLYLINE and POLYGON are supported.");
+        };
     }
 }

@@ -1,0 +1,15 @@
+INTERLIS 2.4;
+
+MODEL DemoShpSource AT "https://example.org/ilitransformer" VERSION "2026-06-25" =
+  DOMAIN
+    Coord = COORD 0.0 .. 50.0,
+            0.0 .. 90.0;
+
+  TOPIC Data =
+    CLASS Station =
+      bfsnr : 0 .. 9999;
+      name : TEXT*80;
+      geometry : Coord;
+    END Station;
+  END Data;
+END DemoShpSource.

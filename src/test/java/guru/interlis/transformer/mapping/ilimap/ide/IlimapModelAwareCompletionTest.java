@@ -67,7 +67,8 @@ class IlimapModelAwareCompletionTest {
 
     @Test
     void completesTargetAttributesViaTDot() {
-        List<IlimapCompletionItem> items = complete(mappingWithExpression("Beschreibung = t.;"), "= t.", "= t.".length());
+        List<IlimapCompletionItem> items =
+                complete(mappingWithExpression("Beschreibung = t.;"), "= t.", "= t.".length());
 
         assertThat(items).extracting(IlimapCompletionItem::label).contains("Name", "Beschreibung", "Anzahl", "Aktiv");
         assertThat(items).allSatisfy(item -> {

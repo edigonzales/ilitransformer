@@ -1,5 +1,6 @@
 package guru.interlis.transformer.io.shp;
 
+import guru.interlis.transformer.io.EndTransferAwareReader;
 import guru.interlis.transformer.io.FormatCapabilities;
 import guru.interlis.transformer.io.FormatOpenContext;
 import guru.interlis.transformer.io.IoxFormatProvider;
@@ -56,12 +57,8 @@ public final class ShapefileFormatProvider implements IoxFormatProvider {
     }
 
     @Override
-    public IoxReader openReader(InputBinding binding, FormatOpenContext context) throws ShapefileMappingException {
-        String inputId = binding.inputId() != null ? binding.inputId() : "?";
-        throw new ShapefileMappingException("SHP input '" + inputId
-                + "': Shapefile reader is not implemented yet. Format '"
-                + (binding.format() != null ? binding.format() : "shp")
-                + "' is a known provider but reading is added in a later phase.");
+    public IoxReader openReader(InputBinding binding, FormatOpenContext context) throws Exception {
+        return new EndTransferAwareReader(ShapefileIoxReader.open(binding, context));
     }
 
     @Override

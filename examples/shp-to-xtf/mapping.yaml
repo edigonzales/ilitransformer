@@ -1,0 +1,48 @@
+version: 1
+
+job:
+  name: "shp-point-to-xtf-demo"
+  description: "Transform a Point Shapefile into a valid INTERLIS 2.4 XTF transfer"
+  modeldir:
+    - "models"
+  inputs:
+    - id: shp-input
+      path: "input/stations.shp"
+      model: "DemoShpSource"
+      format: shp
+      options:
+        class: "DemoShpSource.Data.Station"
+        topic: "DemoShpSource.Data"
+        oidField: "BFS_NR"
+        geometryAttribute: "geometry"
+        geometryType: "coord"
+        dbfEncoding: "UTF-8"
+        column.BFS_NR: "bfsnr"
+        column.NAME: "name"
+  outputs:
+    - id: xtf-output
+      path: "build/out/stations.xtf"
+      model: "DemoTarget"
+      format: xtf
+
+mapping:
+  oidStrategy:
+    default: deterministicUuid
+    namespace: "shp-point-demo"
+  basketStrategy:
+    default: byTopic
+  rules:
+    - id: station
+      target:
+        output: xtf-output
+        class: "DemoTarget.Catalog.Station"
+      sources:
+        - alias: src
+          input: shp-input
+          class: "DemoShpSource.Data.Station"
+      identity:
+        sourceKey: ["src.bfsnr"]
+      assign:
+        BfsNr: "src.bfsnr"
+        Name: "src.name"
+        Geometry: "src.geometry"
