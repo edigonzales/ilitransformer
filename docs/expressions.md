@@ -69,6 +69,77 @@ The parser supports infix and prefix operators. They are desugared into function
 
 All comparison and boolean operators are fully supported and tested.
 
+## Formale Grammatik (EBNF)
+
+Die folgende EBNF definiert die vollstaendige Syntax der Expression-Language. Sie folgt der Praezedenz des Parsers (`ExpressionParser.java`) und beschreibt die syntaktische Struktur bis zu den Terminalsymbolen.
+
+```ebnf
+expression        = orExpr ;
+
+orExpr            = andExpr ("or" andExpr)* ;
+andExpr           = equalityExpr ("and" equalityExpr)* ;
+equalityExpr      = comparisonExpr (("==" | "!=") comparisonExpr)* ;
+comparisonExpr    = unaryExpr (("<=" | ">=" | "<" | ">") unaryExpr)* ;
+unaryExpr         = "not" unaryExpr | primary ;
+
+primary           = "(" expression ")"
+                  | stringLiteral
+                  | enumLiteral
+                  | pathRef
+                  | numberLiteral
+                  | "null" | "true" | "false"
+                  | functionCall
+                  | barePath ;
+
+stringLiteral     = ('"' character* '"') | ("'" character* "'") ;
+enumLiteral       = "#" identifier ;
+pathRef           = "${" identifier "." identifier "}" ;
+numberLiteral     = ("+" | "-")? digit+ ("." digit+)? ;
+functionCall      = identifier "(" (expression ("," expression)*)? ")" ;
+barePath          = identifier ("." identifier)? ;
+
+identifier        = idStart idCont* ;
+idStart           = letter | "_" ;
+idCont            = letter | digit | "_" ;
+```
+
+### Terminalsymbole
+
+| Symbol | Beschreibung |
+|--------|-------------|
+| `letter` | `a`-`z`, `A`-`Z` |
+| `digit` | `0`-`9` |
+| `character` | Beliebiges Zeichen ausser dem begrenzenden Quote; `\` escaped das naechste Zeichen |
+| `"..."`, `'...'` | String-Literale (doppelte oder einfache Quotes) |
+| `#` | Beginn eines Enum-Literals (`#Wert`) |
+| `${` `}` | Path-Referenz auf Quellattribut (`${alias.attribut}`) |
+
+### Semantische Anmerkungen
+
+| Syntaktische Form | Semantik |
+|-------------------|---|
+| `a == b` | `eq(a, b)`, ausser wenn `b` das Literal `null` ist → `notDefined(a)` |
+| `a != b` | `neq(a, b)`, ausser wenn `b` das Literal `null` ist → `defined(a)` |
+| `a < b` | `lt(a, b)` |
+| `a <= b` | `lte(a, b)` |
+| `a > b` | `gt(a, b)` |
+| `a >= b` | `gte(a, b)` |
+| `not a` | `not(a)` |
+| `a and b` | Lazy `ConditionalExpr`: wenn `a` wahr, dann `b`, sonst `false` |
+| `a or b` | Lazy `ConditionalExpr`: wenn `a` wahr, dann `true`, sonst `b` |
+| `if(cond, then, else)` | Lazy `ConditionalExpr` (keine reguläre Funktion; erscheint nicht in `FunctionRegistry`) |
+
+### Praezedenz (niedrigste zu hoechster)
+
+| Ebene | Operatoren | Assoziativitaet |
+|-------|-----------|-----------------|
+| 6 | `or` | links |
+| 5 | `and` | links |
+| 4 | `==`, `!=` | links |
+| 3 | `<`, `<=`, `>`, `>=` | links |
+| 2 | `not` | rechts |
+| 1 | `()`, Literale, Pfade, Funktionsaufrufe | -- |
+
 ## Builtin functions
 
 The authoritative list of built-in functions is generated from `FunctionRegistry` by `./gradlew generateExpressionReference`. That task produces `build/reports/expression-functions.md` and `build/reports/expression-functions.json`. The tables below are manually maintained; the generated report is the canonical reference.

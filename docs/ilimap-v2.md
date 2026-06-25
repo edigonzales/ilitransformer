@@ -785,6 +785,8 @@ idList            = id ("," id)* ;
 expressionList    = expression ("," expression)* ;
 ```
 
+`expression` ist ein Terminal der aeusseren Grammatik. Der Parser liest den Text bis zum Statement-Semikolon und uebergibt ihn an den Expression-Parser. Die formale EBNF der Expression-Language ist in [expressions.md](expressions.md) definiert.
+
 ## Statische Semantik
 
 Ein `.ilimap`-Parser erzeugt ein AST (`IlimapDocument`). Danach folgen Validierungsstufen:
