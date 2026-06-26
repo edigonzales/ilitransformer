@@ -106,6 +106,25 @@ class IlimapMappingSummaryServiceTest {
                 .isEqualTo("error");
     }
 
+    @Test
+    void attachesDiagnosticOwnerInformationToSummaryDiagnostics() {
+        IlimapAnalysis analysis = analyze(validMapping());
+        IlimapIdeRange assignmentRange = rangeAt(analysis, "s.X;");
+        IlimapAnalysis withWarning = withDiagnostics(
+                analysis,
+                List.of(new IlimapIdeDiagnostic(
+                        "TEST_WARNING", IlimapIdeSeverity.WARNING, "warning", assignmentRange, null)));
+
+        IlimapMappingSummary summary = summaryService.summarize(withWarning);
+
+        assertThat(summary.diagnostics()).singleElement().satisfies(diagnostic -> {
+            assertThat(diagnostic.ruleId()).isEqualTo("r1");
+            assertThat(diagnostic.targetClass()).isEqualTo("M.A");
+            assertThat(diagnostic.targetAttribute()).isEqualTo("X");
+            assertThat(diagnostic.ownerNodeId()).isEqualTo("rule:r1:assign:X");
+        });
+    }
+
     private IlimapAnalysis analyze(String source) {
         return analysisService.analyze("file:///test.ilimap", source, OPTIONS);
     }

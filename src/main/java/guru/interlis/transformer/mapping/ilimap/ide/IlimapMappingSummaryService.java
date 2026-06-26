@@ -217,9 +217,11 @@ public final class IlimapMappingSummaryService {
     }
 
     private static List<IlimapDiagnosticSummary> diagnostics(IlimapAnalysis analysis) {
+        IlimapDiagnosticOwnerResolver ownerResolver = new IlimapDiagnosticOwnerResolver();
         return analysis.diagnostics().stream()
                 .map(diagnostic -> {
                     IlimapIdeRange range = diagnostic.range();
+                    IlimapDiagnosticOwner owner = ownerResolver.resolve(analysis, diagnostic);
                     return new IlimapDiagnosticSummary(
                             diagnostic.code(),
                             diagnostic.severity().name().toLowerCase(),
@@ -232,7 +234,14 @@ public final class IlimapMappingSummaryService {
                                     range.start().line(),
                                     range.start().character(),
                                     range.end().line(),
-                                    range.end().character()));
+                                    range.end().character()),
+                            owner.ownerNodeId(),
+                            owner.ruleId(),
+                            owner.inputId(),
+                            owner.outputId(),
+                            owner.enumMapId(),
+                            owner.targetClass(),
+                            owner.targetAttribute());
                 })
                 .toList();
     }

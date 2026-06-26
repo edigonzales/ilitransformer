@@ -118,6 +118,13 @@ export interface IlimapDiagnosticSummary {
   character: number;
   nodeId?: string;
   location?: IlimapLocation;
+  ownerNodeId?: string;
+  ruleId?: string;
+  inputId?: string;
+  outputId?: string;
+  enumMapId?: string;
+  targetClass?: string;
+  targetAttribute?: string;
 }
 
 export interface IlimapCoverageClassSummary {

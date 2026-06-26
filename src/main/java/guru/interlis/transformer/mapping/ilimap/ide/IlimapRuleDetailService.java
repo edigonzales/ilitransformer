@@ -280,10 +280,12 @@ public final class IlimapRuleDetailService {
 
     private static List<IlimapDiagnosticSummary> ruleDiagnostics(
             IlimapAnalysis analysis, IlimapRuleBlock rule) {
+        IlimapDiagnosticOwnerResolver ownerResolver = new IlimapDiagnosticOwnerResolver();
         return analysis.diagnostics().stream()
                 .filter(diagnostic -> inside(analysis, diagnostic.range(), rule.range()))
                 .map(diagnostic -> {
                     IlimapIdeRange range = diagnostic.range();
+                    IlimapDiagnosticOwner owner = ownerResolver.resolve(analysis, diagnostic);
                     return new IlimapDiagnosticSummary(
                             diagnostic.code(),
                             diagnostic.severity().name().toLowerCase(),
@@ -296,7 +298,14 @@ public final class IlimapRuleDetailService {
                                     range.start().line(),
                                     range.start().character(),
                                     range.end().line(),
-                                    range.end().character()));
+                                    range.end().character()),
+                            owner.ownerNodeId(),
+                            owner.ruleId(),
+                            owner.inputId(),
+                            owner.outputId(),
+                            owner.enumMapId(),
+                            owner.targetClass(),
+                            owner.targetAttribute());
                 })
                 .toList();
     }

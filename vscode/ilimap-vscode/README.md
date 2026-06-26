@@ -74,7 +74,7 @@ This keeps local development simple while allowing published builds to work with
 Run `ilimap: Open Mapping Overview` while an `.ilimap` editor is active to open a read-only summary beside the editor. The webview shows:
 
 - a summary with counts and lists for inputs, outputs, enum maps, rules, bags and refs
-- diagnostics
+- diagnostics, shown both globally (grouped by the rule, input, output or enum map they belong to) and in context as count badges on the affected rules, inputs, outputs and coverage attributes
 - class coverage
 - a per-rule target coverage matrix (attribute, status, type, cardinality, source/expression) that highlights missing mandatory attributes
 - a source usage section that lists used and, when models are loaded, unused source attributes and roles grouped by source class

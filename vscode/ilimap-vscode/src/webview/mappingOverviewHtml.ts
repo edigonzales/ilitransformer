@@ -19,7 +19,6 @@ import type {
   IlimapRefSummary,
   IlimapRuleCoverageSummary,
   IlimapRuleDetailSummary,
-  IlimapRuleSummary,
   IlimapSourceDetailSummary,
   IlimapTargetDetailSummary,
   IlimapWithLocation
@@ -350,6 +349,17 @@ export function renderMappingOverviewHtml(
       background: transparent;
     }
 
+    .diagnostic-group {
+      margin-top: 8px;
+    }
+
+    .diagnostic-group h3 {
+      margin: 8px 0 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--vscode-descriptionForeground);
+    }
+
     .rule-coverage,
     .source-usage {
       margin-top: 24px;
@@ -638,11 +648,11 @@ function escapeAttribute(value: unknown): string {
 function renderAvailableSummary(summary: IlimapMappingSummary, selectedRuleDetail?: IlimapRuleDetailSummary): string {
   return `${renderMetrics(summary)}
     <div class="sections">
-      ${renderInputs(summary.inputs)}
-      ${renderOutputs(summary.outputs)}
+      ${renderInputs(summary)}
+      ${renderOutputs(summary)}
       ${renderEnumMaps(summary.enumMaps)}
-      ${renderRules(summary.rules)}
-      ${renderDiagnostics(summary.diagnostics)}
+      ${renderRules(summary)}
+      ${renderGlobalDiagnostics(summary)}
       ${renderCoverage(summary)}
     </div>
     ${renderRuleCoverageSection(summary)}
@@ -680,23 +690,23 @@ function renderMetrics(summary: IlimapMappingSummary): string {
     </div>`;
 }
 
-function renderInputs(inputs: IlimapMappingInputSummary[]): string {
+function renderInputs(summary: IlimapMappingSummary): string {
   return renderSection(
     'Inputs',
-    inputs,
+    summary.inputs,
     input => renderNavName(input.id, input),
     input => [input.path, input.model, input.format].filter(Boolean).join(' · '),
-    () => ''
+    input => renderDiagnosticBadges(diagnosticsForInput(summary, input.id, input.nodeId))
   );
 }
 
-function renderOutputs(outputs: IlimapMappingOutputSummary[]): string {
+function renderOutputs(summary: IlimapMappingSummary): string {
   return renderSection(
     'Outputs',
-    outputs,
+    summary.outputs,
     output => renderNavName(output.id, output),
     output => [output.path, output.model, output.format].filter(Boolean).join(' · '),
-    () => ''
+    output => renderDiagnosticBadges(diagnosticsForOutput(summary, output.id, output.nodeId))
   );
 }
 
@@ -710,10 +720,10 @@ function renderEnumMaps(enumMaps: IlimapEnumMapSummary[]): string {
   );
 }
 
-function renderRules(rules: IlimapRuleSummary[]): string {
+function renderRules(summary: IlimapMappingSummary): string {
   return renderSection(
     'Rules',
-    rules,
+    summary.rules,
     rule => `${renderNavName(rule.id, rule)} ${renderInspectLink(rule.id)}`,
     rule =>
       [
@@ -725,7 +735,9 @@ function renderRules(rules: IlimapRuleSummary[]): string {
       ]
         .filter(Boolean)
         .join(' · '),
-    rule => `<span class="tag ${statusClass(rule.status)}">${escapeHtml(rule.status)}</span>`
+    rule =>
+      `<span class="tag ${statusClass(rule.status)}">${escapeHtml(rule.status)}</span>` +
+      renderDiagnosticBadges(diagnosticsForRule(summary, rule.id))
   );
 }
 
@@ -737,6 +749,160 @@ function renderDiagnostics(diagnostics: IlimapDiagnosticSummary[]): string {
     diagnostic => `${diagnostic.code} · ${diagnostic.severity} · ${diagnostic.line + 1}:${diagnostic.character + 1}`,
     diagnostic => `<span class="tag ${statusClass(diagnostic.severity)}">${escapeHtml(diagnostic.severity)}</span>`
   );
+}
+
+interface DiagnosticSeverityCounts {
+  errors: number;
+  warnings: number;
+  others: number;
+}
+
+function diagnosticsForRule(summary: IlimapMappingSummary, ruleId: string): IlimapDiagnosticSummary[] {
+  return (summary.diagnostics ?? []).filter(diagnostic => diagnostic.ruleId === ruleId);
+}
+
+function diagnosticsForNode(summary: IlimapMappingSummary, nodeId: string | undefined): IlimapDiagnosticSummary[] {
+  if (!nodeId) {
+    return [];
+  }
+  return (summary.diagnostics ?? []).filter(diagnostic => diagnostic.ownerNodeId === nodeId);
+}
+
+function diagnosticsForInput(
+  summary: IlimapMappingSummary,
+  inputId: string,
+  nodeId?: string
+): IlimapDiagnosticSummary[] {
+  return (summary.diagnostics ?? []).filter(
+    diagnostic =>
+      diagnostic.inputId === inputId || (nodeId !== undefined && diagnostic.ownerNodeId === nodeId)
+  );
+}
+
+function diagnosticsForOutput(
+  summary: IlimapMappingSummary,
+  outputId: string,
+  nodeId?: string
+): IlimapDiagnosticSummary[] {
+  return (summary.diagnostics ?? []).filter(
+    diagnostic =>
+      diagnostic.outputId === outputId || (nodeId !== undefined && diagnostic.ownerNodeId === nodeId)
+  );
+}
+
+function diagnosticsForAttribute(
+  summary: IlimapMappingSummary,
+  ruleId: string,
+  attribute: IlimapCoverageAttributeSummary
+): IlimapDiagnosticSummary[] {
+  return (summary.diagnostics ?? []).filter(
+    diagnostic =>
+      (attribute.nodeId !== undefined && diagnostic.ownerNodeId === attribute.nodeId) ||
+      (diagnostic.ruleId === ruleId && diagnostic.targetAttribute === attribute.name)
+  );
+}
+
+function diagnosticSeverityCounts(diagnostics: IlimapDiagnosticSummary[]): DiagnosticSeverityCounts {
+  let errors = 0;
+  let warnings = 0;
+  let others = 0;
+  for (const diagnostic of diagnostics) {
+    if (diagnostic.severity === 'error') {
+      errors++;
+    } else if (diagnostic.severity === 'warning') {
+      warnings++;
+    } else {
+      others++;
+    }
+  }
+  return { errors, warnings, others };
+}
+
+function renderDiagnosticBadges(diagnostics: IlimapDiagnosticSummary[]): string {
+  const counts = diagnosticSeverityCounts(diagnostics);
+  const badges: string[] = [];
+  if (counts.errors > 0) {
+    badges.push(`<span class="tag error" title="errors">${counts.errors}</span>`);
+  }
+  if (counts.warnings > 0) {
+    badges.push(`<span class="tag warning" title="warnings">${counts.warnings}</span>`);
+  }
+  if (counts.others > 0) {
+    badges.push(`<span class="tag" title="diagnostics">${counts.others}</span>`);
+  }
+  return badges.length > 0 ? ` ${badges.join(' ')}` : '';
+}
+
+interface DiagnosticGroup {
+  key: string;
+  label: string;
+  diagnostics: IlimapDiagnosticSummary[];
+}
+
+function diagnosticOwnerGroup(diagnostic: IlimapDiagnosticSummary): { key: string; label: string } {
+  if (diagnostic.ruleId) {
+    return { key: `rule:${diagnostic.ruleId}`, label: `Rule ${diagnostic.ruleId}` };
+  }
+  if (diagnostic.inputId) {
+    return { key: `input:${diagnostic.inputId}`, label: `Input ${diagnostic.inputId}` };
+  }
+  if (diagnostic.outputId) {
+    return { key: `output:${diagnostic.outputId}`, label: `Output ${diagnostic.outputId}` };
+  }
+  if (diagnostic.enumMapId) {
+    return { key: `enum:${diagnostic.enumMapId}`, label: `Enum ${diagnostic.enumMapId}` };
+  }
+  return { key: 'unowned', label: 'Unowned' };
+}
+
+function groupDiagnosticsByOwner(diagnostics: IlimapDiagnosticSummary[]): DiagnosticGroup[] {
+  const order: string[] = [];
+  const map = new Map<string, DiagnosticGroup>();
+  for (const diagnostic of diagnostics) {
+    const { key, label } = diagnosticOwnerGroup(diagnostic);
+    let group = map.get(key);
+    if (!group) {
+      group = { key, label, diagnostics: [] };
+      map.set(key, group);
+      order.push(key);
+    }
+    group.diagnostics.push(diagnostic);
+  }
+  return order
+    .map(key => map.get(key) as DiagnosticGroup)
+    .sort((a, b) => Number(a.key === 'unowned') - Number(b.key === 'unowned'));
+}
+
+function renderDiagnosticListItem(diagnostic: IlimapDiagnosticSummary): string {
+  const detail = `${diagnostic.code} · ${diagnostic.severity} · ${diagnostic.line + 1}:${diagnostic.character + 1}`;
+  return `<li>
+        <div>
+          <div class="name">${renderNavName(diagnostic.message, diagnostic)}</div>
+          <div class="detail">${escapeHtml(detail)}</div>
+        </div>
+        <span class="tag ${statusClass(diagnostic.severity)}">${escapeHtml(diagnostic.severity)}</span>
+      </li>`;
+}
+
+function renderDiagnosticGroup(group: DiagnosticGroup): string {
+  return `<div class="diagnostic-group">
+        <h3>${escapeHtml(group.label)}${renderDiagnosticBadges(group.diagnostics)}</h3>
+        <ul>${group.diagnostics.map(renderDiagnosticListItem).join('')}</ul>
+      </div>`;
+}
+
+function renderGlobalDiagnostics(summary: IlimapMappingSummary): string {
+  const diagnostics = summary.diagnostics ?? [];
+  if (diagnostics.length === 0) {
+    return `<section>
+      <h2>Diagnostics</h2>
+      <p class="empty">None</p>
+    </section>`;
+  }
+  return `<section>
+      <h2>Diagnostics</h2>
+      ${groupDiagnosticsByOwner(diagnostics).map(renderDiagnosticGroup).join('')}
+    </section>`;
 }
 
 function renderCoverage(summary: IlimapMappingSummary): string {
@@ -753,7 +919,7 @@ function renderRuleCoverageSection(summary: IlimapMappingSummary): string {
   if (!summary.coverageAvailable) {
     return '';
   }
-  return renderRuleCoverage(summary.ruleCoverage ?? []);
+  return renderRuleCoverage(summary);
 }
 
 function renderClassCoverage(classes: IlimapCoverageClassSummary[]): string {
@@ -774,7 +940,8 @@ function renderClassCoverage(classes: IlimapCoverageClassSummary[]): string {
   );
 }
 
-function renderRuleCoverage(rules: IlimapRuleCoverageSummary[]): string {
+function renderRuleCoverage(summary: IlimapMappingSummary): string {
+  const rules = summary.ruleCoverage ?? [];
   if (rules.length === 0) {
     return `<section class="rule-coverage" data-active-filter="all">
       <h2>Rule Coverage</h2>
@@ -784,7 +951,7 @@ function renderRuleCoverage(rules: IlimapRuleCoverageSummary[]): string {
   return `<section class="rule-coverage" data-active-filter="all">
       <h2>Rule Coverage</h2>
       ${renderCoverageFilterBar()}
-      ${rules.map(renderRuleCoverageItem).join('')}
+      ${rules.map(rule => renderRuleCoverageItem(rule, summary)).join('')}
     </section>`;
 }
 
@@ -796,7 +963,7 @@ function renderCoverageFilterBar(): string {
     </div>`;
 }
 
-function renderRuleCoverageItem(rule: IlimapRuleCoverageSummary): string {
+function renderRuleCoverageItem(rule: IlimapRuleCoverageSummary, summary: IlimapMappingSummary): string {
   const missing = rule.attributes.filter(attribute => attribute.mandatory && !attribute.assigned);
   return `<div class="coverage-rule">
         <div class="coverage-rule-header">
@@ -808,12 +975,13 @@ function renderRuleCoverageItem(rule: IlimapRuleCoverageSummary): string {
             rule.refs.length > 0 ? `refs ${rule.refs.join(', ')}` : ''
           ].filter(Boolean).join(' · '))}</span>
           <span class="tag ${missing.length > 0 ? 'warning' : ''}">${missing.length > 0 ? 'gaps' : 'ok'}</span>
+          ${renderDiagnosticBadges(diagnosticsForRule(summary, rule.ruleId))}
         </div>
-        ${renderTargetCoverageMatrix(rule)}
+        ${renderTargetCoverageMatrix(rule, summary)}
       </div>`;
 }
 
-function renderTargetCoverageMatrix(rule: IlimapRuleCoverageSummary): string {
+function renderTargetCoverageMatrix(rule: IlimapRuleCoverageSummary, summary: IlimapMappingSummary): string {
   if (rule.attributes.length === 0) {
     return '<p class="empty">No target attributes.</p>';
   }
@@ -828,21 +996,26 @@ function renderTargetCoverageMatrix(rule: IlimapRuleCoverageSummary): string {
           </tr>
         </thead>
         <tbody>
-          ${rule.attributes.map(renderCoverageAttributeRow).join('')}
+          ${rule.attributes.map(attribute => renderCoverageAttributeRow(attribute, rule.ruleId, summary)).join('')}
         </tbody>
       </table>`;
 }
 
-function renderCoverageAttributeRow(attribute: IlimapCoverageAttributeSummary): string {
+function renderCoverageAttributeRow(
+  attribute: IlimapCoverageAttributeSummary,
+  ruleId: string,
+  summary: IlimapMappingSummary
+): string {
   const status = coverageStatus(attribute);
   const missing = attribute.mandatory && !attribute.assigned;
   const rowAttrs = `${missing ? ' data-missing="true"' : ''}${attribute.mandatory ? ' data-mandatory="true"' : ''}`;
   const source = attribute.sourceSummary || attribute.expression || '';
+  const diagnosticBadges = renderDiagnosticBadges(diagnosticsForAttribute(summary, ruleId, attribute));
   return `<tr class="${missing ? 'coverage-row-missing' : ''}"${rowAttrs}>
             <td>${renderNavName(attribute.name, attribute)}${
               attribute.mandatory ? ' <span class="req-marker" title="mandatory">*</span>' : ''
             }</td>
-            <td><span class="tag ${escapeAttribute(coverageStatusClass(status))}">${escapeHtml(status)}</span></td>
+            <td><span class="tag ${escapeAttribute(coverageStatusClass(status))}">${escapeHtml(status)}</span>${diagnosticBadges}</td>
             <td class="detail">${escapeHtml(attribute.type)}</td>
             <td class="detail">${escapeHtml(attribute.cardinality)}</td>
             <td>${source ? `<code>${escapeHtml(source)}</code>` : '<span class="detail">—</span>'}</td>

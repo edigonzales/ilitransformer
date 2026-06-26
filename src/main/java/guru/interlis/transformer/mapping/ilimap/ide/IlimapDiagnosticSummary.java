@@ -7,4 +7,11 @@ public record IlimapDiagnosticSummary(
         int line,
         int character,
         String nodeId,
-        IlimapOverviewLocation location) {}
+        IlimapOverviewLocation location,
+        String ownerNodeId,
+        String ruleId,
+        String inputId,
+        String outputId,
+        String enumMapId,
+        String targetClass,
+        String targetAttribute) {}

@@ -1091,3 +1091,117 @@ function unavailableDetail() {
     diagnostics: []
   };
 }
+
+test('rule list shows diagnostic count badges per rule', () => {
+  const html = renderMappingOverviewHtml(summaryWithOwnedDiagnostics(), 'test-nonce');
+
+  const rulesSection = sliceSection(html, 'Rules');
+  assert.match(rulesSection, /title="errors">1<\/span>/);
+});
+
+test('coverage row shows a diagnostic marker next to the affected target attribute', () => {
+  const html = renderMappingOverviewHtml(summaryWithOwnedDiagnostics(), 'test-nonce');
+
+  assert.match(html, /mapped<\/span> <span class="tag error" title="errors">1<\/span>/);
+});
+
+test('global diagnostics are grouped by owner with rule, input and unowned groups', () => {
+  const html = renderMappingOverviewHtml(summaryWithOwnedDiagnostics(), 'test-nonce');
+
+  const diagnosticsSection = sliceSection(html, 'Diagnostics');
+  assert.match(diagnosticsSection, /<h3>Rule r1/);
+  assert.match(diagnosticsSection, /<h3>Input src/);
+  assert.match(diagnosticsSection, /<h3>Unowned/);
+  assert.match(diagnosticsSection, /missing target attribute/);
+  assert.match(diagnosticsSection, /unused input/);
+  assert.match(diagnosticsSection, /global hint/);
+});
+
+test('grouped diagnostics remain navigable and escape their messages', () => {
+  const s = summaryWithOwnedDiagnostics();
+  s.diagnostics[2].message = '<img src=x onerror=alert(9)>';
+  s.diagnostics[2].location = { line: 7, character: 2 };
+  const html = renderMappingOverviewHtml(s, 'test-nonce');
+
+  assert.match(html, /data-nav-line="7"/);
+  assert.match(html, /&lt;img src=x onerror=alert\(9\)&gt;/);
+  assert.doesNotMatch(html, /<img src=x onerror=alert\(9\)>/);
+});
+
+test('input section shows diagnostic badges for affected input', () => {
+  const html = renderMappingOverviewHtml(summaryWithOwnedDiagnostics(), 'test-nonce');
+
+  const inputsSection = sliceSection(html, 'Inputs');
+  assert.match(inputsSection, /title="warnings">1<\/span>/);
+});
+
+test('contextual diagnostics preserve strict CSP and no editable controls', () => {
+  const html = renderMappingOverviewHtml(summaryWithOwnedDiagnostics(), 'test-nonce');
+
+  assert.match(
+    html,
+    /Content-Security-Policy" content="default-src 'none'; style-src 'nonce-test-nonce'; script-src 'nonce-test-nonce';"/
+  );
+  assert.doesNotMatch(html, /onclick=/i);
+  assert.doesNotMatch(html, /<button\b/i);
+  assert.doesNotMatch(html, /<input\b/i);
+  assert.doesNotMatch(html, /<form\b/i);
+  assert.doesNotMatch(html, /contenteditable/i);
+});
+
+test('global diagnostics render None when there are no diagnostics', () => {
+  const s = summary();
+  s.diagnostics = [];
+  const html = renderMappingOverviewHtml(s, 'test-nonce');
+
+  const diagnosticsSection = sliceSection(html, 'Diagnostics');
+  assert.match(diagnosticsSection, /<p class="empty">None<\/p>/);
+});
+
+function sliceSection(html, heading) {
+  const start = html.indexOf(`<h2>${heading}</h2>`);
+  assert.notEqual(start, -1, `section ${heading} not found`);
+  const next = html.indexOf('<h2>', start + heading.length + 9);
+  return next === -1 ? html.slice(start) : html.slice(start, next);
+}
+
+function summaryWithOwnedDiagnostics() {
+  const s = summary();
+  s.errorCount = 1;
+  s.warningCount = 1;
+  s.informationCount = 1;
+  s.diagnostics = [
+    {
+      code: 'MISSING_ATTR',
+      severity: 'error',
+      message: 'missing target attribute',
+      line: 12,
+      character: 6,
+      location: { line: 12, character: 6 },
+      ownerNodeId: 'rule:r1:assign:Name',
+      ruleId: 'r1',
+      targetClass: 'M.A',
+      targetAttribute: 'Name'
+    },
+    {
+      code: 'UNUSED_INPUT',
+      severity: 'warning',
+      message: 'unused input',
+      line: 2,
+      character: 0,
+      location: { line: 2, character: 0 },
+      ownerNodeId: 'input:src',
+      inputId: 'src'
+    },
+    {
+      code: 'GLOBAL_HINT',
+      severity: 'information',
+      message: 'global hint',
+      line: 0,
+      character: 0,
+      location: { line: 0, character: 0 }
+    }
+  ];
+  s.ruleCoverage[0].attributes[0].nodeId = 'rule:r1:assign:Name';
+  return s;
+}
