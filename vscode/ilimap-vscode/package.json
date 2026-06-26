@@ -45,7 +45,8 @@
     "onCommand:ilimap.showRuleCoverage",
     "onCommand:ilimap.mappingExplorer.refresh",
     "onCommand:ilimap.mappingExplorer.revealInEditor",
-    "onCommand:ilimap.mappingExplorer.showInOverview"
+    "onCommand:ilimap.mappingExplorer.showInOverview",
+    "onCommand:ilimap.exportMappingReport"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -125,6 +126,10 @@
       {
         "command": "ilimap.mappingExplorer.showInOverview",
         "title": "ilimap: Show in Mapping Overview"
+      },
+      {
+        "command": "ilimap.exportMappingReport",
+        "title": "ilimap: Export Mapping Report"
       }
     ],
     "configuration": {

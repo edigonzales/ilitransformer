@@ -37,6 +37,7 @@ test('registers public commands', () => {
   assert.ok(commands.includes('ilimap.mappingExplorer.refresh'));
   assert.ok(commands.includes('ilimap.mappingExplorer.revealInEditor'));
   assert.ok(commands.includes('ilimap.mappingExplorer.showInOverview'));
+  assert.ok(commands.includes('ilimap.exportMappingReport'));
 });
 
 test('activates mapping overview command', () => {
@@ -55,6 +56,16 @@ test('contributes and activates rule code lens commands', () => {
 
   assert.ok(manifest.activationEvents.includes('onCommand:ilimap.showRuleInOverview'));
   assert.ok(manifest.activationEvents.includes('onCommand:ilimap.showRuleCoverage'));
+});
+
+test('contributes and activates export mapping report command', () => {
+  const commands = manifest.contributes.commands;
+  const exportCmd = commands.find((command) => command.command === 'ilimap.exportMappingReport');
+
+  assert.ok(exportCmd);
+  assert.equal(exportCmd.title, 'ilimap: Export Mapping Report');
+
+  assert.ok(manifest.activationEvents.includes('onCommand:ilimap.exportMappingReport'));
 });
 
 test('contributes ilimap view container and mapping explorer view', () => {

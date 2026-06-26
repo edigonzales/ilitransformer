@@ -1205,3 +1205,11 @@ function summaryWithOwnedDiagnostics() {
   s.ruleCoverage[0].attributes[0].nodeId = 'rule:r1:assign:Name';
   return s;
 }
+
+test('renders Export report link in header without inline handler', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+  assert.match(html, /data-action="export"/);
+  assert.match(html, /Export report/);
+  assert.doesNotMatch(html, /<a[^>]*onclick/i);
+  assert.doesNotMatch(html, /<a[^>]*href="javascript:/i);
+});

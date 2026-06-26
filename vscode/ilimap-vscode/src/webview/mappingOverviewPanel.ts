@@ -229,6 +229,10 @@ function registerMessageHandler(
       }
       return;
     }
+    if (message && typeof message === 'object' && (message as { type?: unknown }).type === 'exportReport') {
+      await vscode.commands.executeCommand('ilimap.exportMappingReport');
+      return;
+    }
     if (message && typeof message === 'object' && (message as { type?: unknown }).type === 'selectNode') {
       const nodeId = (message as { nodeId?: unknown }).nodeId;
       if (typeof nodeId === 'string' && nodeId.startsWith('rule:')) {

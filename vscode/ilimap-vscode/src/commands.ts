@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 
 import { getLanguageClient, restartLanguageClient } from './client';
+import { renderMappingReportMarkdown } from './overview/mappingOverviewReporter';
 import { openMappingOverview, showRuleCoverage, showRuleInOverview } from './webview/mappingOverviewPanel';
+import { mappingSummaryRequest, type IlimapMappingSummary, type IlimapMappingSummaryParams } from './webview/mappingOverviewMessages';
 
 const validateMappingRequest = 'ilimap/validateMapping';
 
@@ -62,6 +64,94 @@ export function registerCommands(context: vscode.ExtensionContext, outputChannel
       await showRuleCoverage(context, outputChannel, uri, ruleId);
     })
   );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('ilimap.exportMappingReport', async () => {
+      await exportMappingReportCommand(outputChannel);
+    })
+  );
+}
+
+export async function exportMappingReportCommand(outputChannel: vscode.OutputChannel): Promise<void> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !isIlimapDocument(editor.document)) {
+    vscode.window.showInformationMessage('Open an .ilimap document before exporting the ilimap mapping report.');
+    return;
+  }
+
+  const client = getLanguageClient();
+  if (!client) {
+    vscode.window.showErrorMessage('ilimap language server is not running.');
+    return;
+  }
+
+  let summary: IlimapMappingSummary;
+  try {
+    summary = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Exporting ilimap mapping report'
+      },
+      () =>
+        client.sendRequest<IlimapMappingSummary>(
+          mappingSummaryRequest,
+          { uri: editor.document.uri.toString() } satisfies IlimapMappingSummaryParams
+        )
+    );
+  } catch (error) {
+    outputChannel.appendLine(`Failed to export ilimap mapping report: ${errorMessage(error)}`);
+    vscode.window.showErrorMessage('Failed to export ilimap mapping report.');
+    return;
+  }
+
+  await writeMappingReport(summary, outputChannel);
+}
+
+export async function writeMappingReport(
+  summary: IlimapMappingSummary,
+  outputChannel: vscode.OutputChannel
+): Promise<void> {
+  if (!summary.available) {
+    const message = summary.message || 'No ilimap mapping summary is available.';
+    vscode.window.showErrorMessage(message);
+    return;
+  }
+
+  const mappingName = summary.mappingName || 'mapping';
+  const safeName = mappingName.replace(/[\\/:\0]/g, '_');
+  const defaultUri = vscode.Uri.file(`${safeName}.mapping-report.md`);
+
+  const uri = await vscode.window.showSaveDialog({
+    defaultUri,
+    filters: { 'Markdown': ['md'] }
+  });
+
+  if (!uri) {
+    return;
+  }
+
+  const markdown = renderMappingReportMarkdown(summary);
+  try {
+    await vscode.workspace.fs.writeFile(uri, Buffer.from(markdown, 'utf8'));
+  } catch (error) {
+    outputChannel.appendLine(`Failed to write ilimap mapping report: ${errorMessage(error)}`);
+    vscode.window.showErrorMessage('Failed to write ilimap mapping report.');
+    return;
+  }
+
+  const openAction = 'Open';
+  const choice = await vscode.window.showInformationMessage(
+    `Mapping report saved to ${uri.fsPath}`,
+    openAction
+  );
+  if (choice === openAction) {
+    try {
+      const document = await vscode.workspace.openTextDocument(uri);
+      await vscode.window.showTextDocument(document);
+    } catch (error) {
+      outputChannel.appendLine(`Failed to open ilimap mapping report: ${errorMessage(error)}`);
+    }
+  }
 }
 
 async function validateActiveMapping(outputChannel: vscode.OutputChannel): Promise<boolean> {

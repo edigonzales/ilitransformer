@@ -1088,6 +1088,7 @@ function makeHarness({ activeUri = 'file:///tmp/profile.ilimap', activeFsPath = 
     outputLines: [],
     saveHandlers: [],
     changeHandlers: [],
+    executedCommands: [],
     panel: null
   };
 
@@ -1161,6 +1162,11 @@ function makeHarness({ activeUri = 'file:///tmp/profile.ilimap', activeFsPath = 
           set selection(_value) {},
           revealRange() {}
         };
+      }
+    },
+    commands: {
+      async executeCommand(command) {
+        refs.executedCommands.push(command);
       }
     }
   };
@@ -1412,4 +1418,20 @@ test('showRuleCoverage reuses the open panel and selects the rule', async (t) =>
   const ruleDetailRequests = harness.refs.requested.filter(entry => entry.method === 'ilimap/ruleDetail');
   assert.equal(ruleDetailRequests[ruleDetailRequests.length - 1].params.ruleId, 'r2');
   assert.match(harness.refs.panel.webview.html, /Rule r2/);
+});
+
+test('exportReport webview message triggers export command', async (t) => {
+  const harness = makeHarness();
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+  await flush();
+
+  harness.refs.executedCommands.length = 0;
+
+  await harness.refs.panel.messageCallback({ type: 'exportReport' });
+  await flush();
+
+  assert.equal(harness.refs.executedCommands.length, 1);
+  assert.equal(harness.refs.executedCommands[0], 'ilimap.exportMappingReport');
 });

@@ -595,6 +595,12 @@ export function renderMappingOverviewHtml(
         vscode.postMessage({ type: 'refresh' });
         return;
       }
+      const exportTarget = event.target.closest('[data-action="export"]');
+      if (exportTarget) {
+        event.preventDefault();
+        vscode.postMessage({ type: 'exportReport' });
+        return;
+      }
       const inspectTarget = event.target.closest('[data-action="inspect-rule"]');
       if (inspectTarget) {
         event.preventDefault();
@@ -1625,7 +1631,11 @@ function renderStatusBar(renderState?: MappingOverviewRenderState): string {
   const text = statusText(renderState);
   return `<div class="status-bar">
       <span class="status status-${escapeAttribute(state)}">${escapeHtml(text)}</span>
-      <a href="#" class="refresh-link" data-action="refresh">Refresh</a>
+      <span>
+        <a href="#" class="refresh-link" data-action="refresh">Refresh</a>
+        &nbsp;·&nbsp;
+        <a href="#" class="refresh-link" data-action="export">Export report</a>
+      </span>
     </div>`;
 }
 
