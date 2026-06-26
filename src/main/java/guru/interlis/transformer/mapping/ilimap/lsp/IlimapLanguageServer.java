@@ -3,6 +3,8 @@ package guru.interlis.transformer.mapping.ilimap.lsp;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingResult;
 
@@ -135,6 +137,11 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
     @JsonRequest(value = "ilimap/validateMapping", useSegment = false)
     public CompletableFuture<IlimapValidateMappingResult> validateMapping(IlimapValidateMappingParams params) {
         return textDocumentService.validateMapping(params);
+    }
+
+    @JsonRequest(value = "ilimap/ruleDetail", useSegment = false)
+    public CompletableFuture<IlimapRuleDetailSummary> ruleDetail(IlimapRuleDetailParams params) {
+        return textDocumentService.ruleDetail(params);
     }
 
     @Override

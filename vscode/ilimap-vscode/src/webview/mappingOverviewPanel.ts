@@ -5,9 +5,12 @@ import { getLanguageClient } from '../client';
 import { renderMappingOverviewHtml } from './mappingOverviewHtml';
 import {
   mappingSummaryRequest,
+  ruleDetailRequest,
   type IlimapLocation,
   type IlimapMappingSummary,
-  type IlimapMappingSummaryParams
+  type IlimapMappingSummaryParams,
+  type IlimapRuleDetailParams,
+  type IlimapRuleDetailSummary
 } from './mappingOverviewMessages';
 import type {
   MappingOverviewPanelState,
@@ -90,6 +93,7 @@ function createOrRevealPanelState(
     uri,
     loading: false,
     disposed: false,
+    selectedRuleDetail: undefined,
     disposables: []
   };
   state.disposables.push(registerMessageHandler(state, outputChannel));
@@ -118,6 +122,20 @@ function registerMessageHandler(
   return state.panel.webview.onDidReceiveMessage(async message => {
     if (isRefreshMessage(message)) {
       await refreshMappingOverview(state, outputChannel, { reason: 'manual' });
+      return;
+    }
+    if (message && typeof message === 'object' && (message as { type?: unknown }).type === 'requestRuleDetail') {
+      const ruleId = (message as { ruleId?: unknown }).ruleId;
+      if (typeof ruleId === 'string') {
+        await requestRuleDetail(state, ruleId, outputChannel);
+      }
+      return;
+    }
+    if (message && typeof message === 'object' && (message as { type?: unknown }).type === 'selectNode') {
+      const nodeId = (message as { nodeId?: unknown }).nodeId;
+      if (typeof nodeId === 'string' && nodeId.startsWith('rule:')) {
+        await requestRuleDetail(state, nodeId.substring(5), outputChannel);
+      }
       return;
     }
     const location = parseNavigationMessage(message);
@@ -232,12 +250,78 @@ async function refreshMappingOverview(
   }
 }
 
+async function requestRuleDetail(
+  state: MappingOverviewPanelState,
+  ruleId: string,
+  outputChannel: vscode.OutputChannel
+): Promise<void> {
+  if (state.disposed) {
+    return;
+  }
+
+  const client = getLanguageClient();
+  if (!client) {
+    state.selectedRuleDetail = {
+      available: false,
+      message: 'ilimap language server is not running.',
+      ruleId,
+      sources: [],
+      joins: [],
+      identity: [],
+      assignments: [],
+      defaults: [],
+      bags: [],
+      refs: [],
+      losses: [],
+      diagnostics: []
+    };
+    renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
+    return;
+  }
+
+  try {
+    const detail = await client.sendRequest<IlimapRuleDetailSummary>(
+      ruleDetailRequest,
+      { uri: state.uri, ruleId } satisfies IlimapRuleDetailParams
+    );
+    if (state.disposed) {
+      return;
+    }
+    state.selectedRuleDetail = detail;
+    renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
+  } catch (error) {
+    outputChannel.appendLine(`Failed to request rule detail: ${errorMessage(error)}`);
+    if (state.disposed) {
+      return;
+    }
+    state.selectedRuleDetail = {
+      available: false,
+      message: errorMessage(error),
+      ruleId,
+      sources: [],
+      joins: [],
+      identity: [],
+      assignments: [],
+      defaults: [],
+      bags: [],
+      refs: [],
+      losses: [],
+      diagnostics: []
+    };
+    renderPanel(state, {
+      refreshState: 'error',
+      errorMessage: 'Failed to load rule detail.',
+      lastUpdated: state.lastUpdated
+    });
+  }
+}
+
 function renderPanel(state: MappingOverviewPanelState, renderState: MappingOverviewRenderState): void {
   if (state.disposed) {
     return;
   }
   const summary = state.summary ?? unavailableSummary('No mapping summary is available.');
-  state.panel.webview.html = renderMappingOverviewHtml(summary, nonce(), renderState);
+  state.panel.webview.html = renderMappingOverviewHtml(summary, nonce(), renderState, state.selectedRuleDetail);
 }
 
 function unavailableSummary(message: string): IlimapMappingSummary {

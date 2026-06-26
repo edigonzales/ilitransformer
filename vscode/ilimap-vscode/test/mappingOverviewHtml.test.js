@@ -201,6 +201,177 @@ test('keeps strict CSP and no editable controls with render state', () => {
   assert.doesNotMatch(html, /contenteditable/i);
 });
 
+test('renders Inspect link on each rule', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.match(html, /data-action="inspect-rule"/);
+  assert.match(html, /data-rule-id="r1"/);
+  assert.match(html, />Inspect</);
+});
+
+test('inspect links do not use inline event handlers', () => {
+  const html = renderMappingOverviewHtml(summaryWithLocations(), 'test-nonce');
+
+  assert.match(html, /data-action="inspect-rule"/);
+  assert.doesNotMatch(html, /onclick=/i);
+});
+
+test('rule inspector renders when detail is available', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, baseDetail());
+
+  assert.match(html, /Rule r1/);
+  assert.match(html, /rule-inspector/);
+});
+
+test('rule inspector renders target section', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, baseDetail());
+
+  assert.match(html, /Target/);
+  assert.match(html, /M\.A/);
+  assert.match(html, /out/);
+});
+
+test('rule inspector renders source section', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, baseDetail());
+
+  assert.match(html, /Sources/);
+  assert.match(html, /s/);
+  assert.match(html, /src/);
+});
+
+test('rule inspector renders assignments with kind tags', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, baseDetail());
+
+  assert.match(html, /Assignments/);
+  assert.match(html, /Name/);
+  assert.match(html, /tag-copy/);
+  assert.match(html, />copy</);
+});
+
+test('rule inspector renders expressions in code blocks', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, baseDetail());
+
+  assert.match(html, /<code>s\.Name<\/code>/);
+});
+
+test('rule inspector renders empty sections as None', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, baseDetail());
+
+  assert.match(html, /Defaults: None/);
+  assert.doesNotMatch(html, /Joins<\/h3>/);
+  assert.doesNotMatch(html, /Identity<\/h3>/);
+  assert.doesNotMatch(html, /Refs<\/h3>/);
+  assert.doesNotMatch(html, /Loss<\/h3>/);
+});
+
+test('rule inspector renders joins', () => {
+  const detail = fullDetail();
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, detail);
+
+  assert.match(html, /Joins/);
+  assert.match(html, />left</);
+  assert.match(html, /a.*b/);
+  assert.match(html, /<code>eq\(a\.Key, b\.Key\)<\/code>/);
+});
+
+test('rule inspector renders identity', () => {
+  const detail = fullDetail();
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, detail);
+
+  assert.match(html, /Identity/);
+  assert.match(html, /<code>a\.Id<\/code>/);
+});
+
+test('rule inspector renders refs', () => {
+  const detail = fullDetail();
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, detail);
+
+  assert.match(html, /Refs/);
+  assert.match(html, /Parent/);
+  assert.match(html, /required/);
+  assert.match(html, />r1</);
+});
+
+test('rule inspector renders bags', () => {
+  const detail = fullDetail();
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, detail);
+
+  assert.match(html, /Bags/);
+  assert.match(html, /Outer/);
+  assert.match(html, />O</);
+  assert.match(html, /Inner/);
+});
+
+test('rule inspector renders losses', () => {
+  const detail = fullDetail();
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, detail);
+
+  assert.match(html, /Loss/);
+  assert.match(html, /NOT_MAPPED/);
+});
+
+test('rule inspector renders metadata', () => {
+  const detail = fullDetail();
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, detail);
+
+  assert.match(html, /Metadata/);
+  assert.match(html, /forward/);
+});
+
+test('rule inspector renders diagnostics', () => {
+  const detail = fullDetail();
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, detail);
+
+  assert.match(html, /Diagnostics/);
+  assert.match(html, /TEST_WARNING/);
+});
+
+test('rule inspector escapes all server values', () => {
+  const detail = {
+    ...fullDetail(),
+    sources: [{
+      alias: '<img src=x>',
+      inputIds: ['<script>'],
+      className: '<svg onload=alert(1)>'
+    }]
+  };
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, detail);
+
+  assert.match(html, /&lt;img src=x&gt;/);
+  assert.match(html, /&lt;script&gt;/);
+  assert.match(html, /&lt;svg onload=alert\(1\)&gt;/);
+  assert.doesNotMatch(html, /<img src=x>/);
+  assert.doesNotMatch(html, /<script>/);
+  assert.doesNotMatch(html, /<svg onload/);
+});
+
+test('CSP and no editable controls preserved with rule inspector', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, fullDetail());
+
+  assert.match(
+    html,
+    /Content-Security-Policy" content="default-src 'none'; style-src 'nonce-test-nonce'; script-src 'nonce-test-nonce';"/
+  );
+  assert.doesNotMatch(html, /<button\b/i);
+  assert.doesNotMatch(html, /<input\b/i);
+  assert.doesNotMatch(html, /<form\b/i);
+  assert.doesNotMatch(html, /contenteditable/i);
+});
+
+test('rule inspector shows unavailable message when detail not available', () => {
+  const detail = unavailableDetail();
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, detail);
+
+  assert.match(html, /Rule detail unavailable/);
+});
+
+test('no inspector section when detail is undefined', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.doesNotMatch(html, /<section class="rule-inspector"/);
+  assert.doesNotMatch(html, /Rule &lt;img/);
+});
+
 function summary() {
   return {
     available: true,
@@ -343,4 +514,190 @@ function summaryWithLocationEnds() {
   const s = summary();
   s.classCoverage[0].location = { line: 10, character: 4, endLine: 12, endCharacter: 18 };
   return s;
+}
+
+function baseDetail() {
+  return {
+    available: true,
+    message: '',
+    ruleId: 'r1',
+    nodeId: 'rule:r1',
+    location: { line: 8, character: 9 },
+    target: {
+      outputId: 'out',
+      className: 'M.A',
+      location: { line: 8, character: 11 }
+    },
+    sources: [
+      {
+        alias: 's',
+        inputIds: ['src'],
+        className: 'M.A',
+        where: undefined,
+        location: { line: 9, character: 7 }
+      }
+    ],
+    joins: [],
+    identity: [],
+    assignments: [
+      {
+        targetAttribute: 'Name',
+        expression: 's.Name',
+        kind: 'copy',
+        dependencies: [{ kind: 'sourceAttribute', alias: 's', member: 'Name' }],
+        location: { line: 11, character: 9 }
+      }
+    ],
+    defaults: [],
+    bags: [],
+    refs: [],
+    losses: [],
+    metadata: undefined,
+    diagnostics: []
+  };
+}
+
+function fullDetail() {
+  return {
+    available: true,
+    message: '',
+    ruleId: 'r1',
+    nodeId: 'rule:r1',
+    location: { line: 8, character: 9 },
+    target: {
+      outputId: 'out',
+      className: 'M.A',
+      location: { line: 8, character: 11 }
+    },
+    sources: [
+      {
+        alias: 's',
+        inputIds: ['src'],
+        className: 'M.A',
+        location: { line: 9, character: 7 }
+      }
+    ],
+    joins: [
+      {
+        type: 'left',
+        leftAlias: 'a',
+        rightAlias: 'b',
+        condition: 'eq(a.Key, b.Key)',
+        location: { line: 10, character: 7 }
+      }
+    ],
+    identity: [
+      { expression: 'a.Id', location: { line: 10, character: 14 } }
+    ],
+    assignments: [
+      {
+        targetAttribute: 'Name',
+        expression: 's.Name',
+        kind: 'copy',
+        dependencies: [{ kind: 'sourceAttribute', alias: 's', member: 'Name' }],
+        location: { line: 12, character: 9 }
+      }
+    ],
+    defaults: [
+      {
+        targetAttribute: 'Status',
+        expression: '"active"',
+        kind: 'default',
+        dependencies: [],
+        location: { line: 14, character: 9 }
+      }
+    ],
+    bags: [
+      {
+        name: 'Outer',
+        targetAttribute: 'OuterAttr',
+        structureClass: 'M.Outer',
+        source: {
+          alias: 'o',
+          inputIds: ['src'],
+          className: 'M.Outer'
+        },
+        assignments: [
+          {
+            targetAttribute: 'O',
+            expression: 'o.O',
+            kind: 'copy',
+            dependencies: [{ kind: 'sourceAttribute', alias: 'o', member: 'O' }],
+            location: { line: 100, character: 11 }
+          }
+        ],
+        nestedBags: [
+          {
+            name: 'Inner',
+            assignments: [
+              {
+                targetAttribute: 'I',
+                expression: 'i.I',
+                kind: 'copy',
+                dependencies: [{ kind: 'sourceAttribute', alias: 'i', member: 'I' }],
+                location: { line: 200, character: 13 }
+              }
+            ],
+            nestedBags: [],
+            location: { line: 200, character: 9 }
+          }
+        ],
+        location: { line: 100, character: 7 }
+      }
+    ],
+    refs: [
+      {
+        name: 'Parent',
+        association: 'M.ParentAssoc',
+        role: 'ParentRole',
+        required: true,
+        targetRuleId: 'r1',
+        sourceRef: 's.ParentId',
+        location: { line: 300, character: 7 }
+      }
+    ],
+    losses: [
+      {
+        sourcePath: 's.Obsolete',
+        reasonCode: 'NOT_MAPPED',
+        description: 'Field not in target',
+        when: 'defined(s.Obsolete)',
+        location: { line: 400, character: 7 }
+      }
+    ],
+    metadata: {
+      direction: 'forward',
+      roundtrip: 'notGuaranteed',
+      lossiness: 'minor',
+      location: { line: 500, character: 7 }
+    },
+    diagnostics: [
+      {
+        code: 'TEST_WARNING',
+        severity: 'warning',
+        message: 'Test warning message',
+        line: 0,
+        character: 0,
+        nodeId: 'diagnostic:TEST_WARNING:0:0',
+        location: { line: 0, character: 0 }
+      }
+    ]
+  };
+}
+
+function unavailableDetail() {
+  return {
+    available: false,
+    message: 'Rule detail unavailable.',
+    ruleId: 'bad',
+    sources: [],
+    joins: [],
+    identity: [],
+    assignments: [],
+    defaults: [],
+    bags: [],
+    refs: [],
+    losses: [],
+    diagnostics: []
+  };
 }

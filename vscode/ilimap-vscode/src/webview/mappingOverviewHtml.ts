@@ -1,14 +1,25 @@
 import type {
+  IlimapAssignmentSummary,
+  IlimapBagSummary,
   IlimapCoverageAttributeSummary,
   IlimapCoverageClassSummary,
   IlimapDiagnosticSummary,
   IlimapEnumMapSummary,
+  IlimapExpressionDependencySummary,
+  IlimapExpressionSummary,
+  IlimapJoinSummary,
   IlimapLocation,
+  IlimapLossSummary,
   IlimapMappingInputSummary,
   IlimapMappingOutputSummary,
   IlimapMappingSummary,
+  IlimapMetadataSummary,
+  IlimapRefSummary,
   IlimapRuleCoverageSummary,
+  IlimapRuleDetailSummary,
   IlimapRuleSummary,
+  IlimapSourceDetailSummary,
+  IlimapTargetDetailSummary,
   IlimapWithLocation
 } from './mappingOverviewMessages';
 import type { MappingOverviewRenderState } from './mappingOverviewState';
@@ -16,7 +27,8 @@ import type { MappingOverviewRenderState } from './mappingOverviewState';
 export function renderMappingOverviewHtml(
   summary: IlimapMappingSummary,
   nonce: string,
-  renderState?: MappingOverviewRenderState
+  renderState?: MappingOverviewRenderState,
+  selectedRuleDetail?: IlimapRuleDetailSummary
 ): string {
   const title = summary.available ? summary.mappingName || 'mapping' : 'Mapping unavailable';
   const diagnosticText = diagnosticsLabel(summary);
@@ -220,6 +232,99 @@ export function renderMappingOverviewHtml(
     a.refresh-link:hover {
       text-decoration: underline;
     }
+
+    .rule-inspector {
+      margin-top: 24px;
+      padding-top: 12px;
+      border-top: 2px solid var(--vscode-panel-border);
+    }
+
+    .rule-inspector h2 {
+      margin-bottom: 12px;
+    }
+
+    .inspector-section {
+      margin-bottom: 16px;
+    }
+
+    .inspector-section h3 {
+      margin: 0 0 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .inspector-section p {
+      margin: 0;
+    }
+
+    .inspector-section code {
+      font-family: var(--vscode-editor-font-family, monospace);
+      font-size: 12px;
+      background: var(--vscode-textCodeBlock-background);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    .inspector-section ul {
+      margin: 4px 0 0;
+    }
+
+    .inspector-section li {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: baseline;
+      padding: 4px 0;
+    }
+
+    .inspector-section li code {
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .tag-copy {
+      border-color: var(--vscode-charts-green);
+      color: var(--vscode-charts-green);
+    }
+
+    .tag-computed {
+      border-color: var(--vscode-charts-blue);
+      color: var(--vscode-charts-blue);
+    }
+
+    .tag-constant {
+      border-color: var(--vscode-charts-purple);
+      color: var(--vscode-charts-purple);
+    }
+
+    .tag-enumMap {
+      border-color: var(--vscode-charts-orange);
+      color: var(--vscode-charts-orange);
+    }
+
+    .tag-null {
+      border-color: var(--vscode-descriptionForeground);
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .tag-unknown {
+      border-color: var(--vscode-descriptionForeground);
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .bag-item {
+      margin-left: 16px;
+      margin-bottom: 8px;
+    }
+
+    .bag-item p {
+      margin: 0 0 4px;
+    }
+
+    .loss-section li {
+      color: var(--vscode-editorWarning-foreground);
+    }
   </style>
 </head>
 <body>
@@ -232,7 +337,7 @@ export function renderMappingOverviewHtml(
       <div class="muted">${escapeHtml(diagnosticText)}</div>
     </div>
     ${renderStatusBar(renderState)}
-    ${summary.available ? renderAvailableSummary(summary) : renderUnavailable(summary)}
+    ${summary.available ? renderAvailableSummary(summary, selectedRuleDetail) : renderUnavailable(summary)}
   </main>
   <script nonce="${escapeAttribute(nonce)}">
     const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
@@ -244,6 +349,15 @@ export function renderMappingOverviewHtml(
       if (refreshTarget) {
         event.preventDefault();
         vscode.postMessage({ type: 'refresh' });
+        return;
+      }
+      const inspectTarget = event.target.closest('[data-action="inspect-rule"]');
+      if (inspectTarget) {
+        event.preventDefault();
+        vscode.postMessage({
+          type: 'requestRuleDetail',
+          ruleId: inspectTarget.getAttribute('data-rule-id')
+        });
         return;
       }
       const target = event.target.closest('[data-nav-line]');
@@ -287,7 +401,7 @@ function escapeAttribute(value: unknown): string {
   return escapeHtml(value);
 }
 
-function renderAvailableSummary(summary: IlimapMappingSummary): string {
+function renderAvailableSummary(summary: IlimapMappingSummary, selectedRuleDetail?: IlimapRuleDetailSummary): string {
   return `${renderMetrics(summary)}
     <div class="sections">
       ${renderInputs(summary.inputs)}
@@ -296,7 +410,8 @@ function renderAvailableSummary(summary: IlimapMappingSummary): string {
       ${renderRules(summary.rules)}
       ${renderDiagnostics(summary.diagnostics)}
       ${renderCoverage(summary)}
-    </div>`;
+    </div>
+    ${renderRuleInspector(selectedRuleDetail)}`;
 }
 
 function renderUnavailable(summary: IlimapMappingSummary): string {
@@ -362,7 +477,7 @@ function renderRules(rules: IlimapRuleSummary[]): string {
   return renderSection(
     'Rules',
     rules,
-    rule => renderNavName(rule.id, rule),
+    rule => `${renderNavName(rule.id, rule)} ${renderInspectLink(rule.id)}`,
     rule =>
       [
         rule.targetClass ? `target ${rule.targetClass}` : '',
@@ -466,6 +581,192 @@ function renderAttributeList(attributes: IlimapCoverageAttributeSummary[]): stri
         : escapeHtml(attribute.name)
     )
     .join(', ');
+}
+
+function renderInspectLink(ruleId: string): string {
+  return `<a href="#" class="muted" data-rule-id="${escapeAttribute(ruleId)}" data-action="inspect-rule">Inspect</a>`;
+}
+
+function renderRuleInspector(detail?: IlimapRuleDetailSummary): string {
+  if (!detail) {
+    return '';
+  }
+  let content: string;
+  if (!detail.available) {
+    content = `<p class="empty">${escapeHtml(detail.message || 'Rule detail unavailable.')}</p>`;
+  } else {
+    content = [
+      renderTargetDetail(detail.target),
+      renderSourceDetails(detail.sources),
+      renderJoinDetails(detail.joins),
+      renderIdentityDetails(detail.identity),
+      renderAssignmentDetails('Assignments', detail.assignments),
+      renderAssignmentDetails('Defaults', detail.defaults),
+      renderBagDetails(detail.bags),
+      renderRefDetails(detail.refs),
+      renderLossDetails(detail.losses),
+      renderMetadataDetail(detail.metadata),
+      renderDiagnostics(detail.diagnostics)
+    ].join('');
+  }
+  return `<section class="rule-inspector">
+    <h2>Rule ${escapeHtml(detail.ruleId)}</h2>
+    ${content}
+  </section>`;
+}
+
+function renderTargetDetail(target?: IlimapTargetDetailSummary): string {
+  if (!target) {
+    return '<p class="empty">Target: None</p>';
+  }
+  return `<div class="inspector-section">
+    <h3>Target</h3>
+    <p>${escapeHtml(target.className)} → ${renderNavName(target.outputId, target)}</p>
+  </div>`;
+}
+
+function renderSourceDetails(sources: IlimapSourceDetailSummary[]): string {
+  if (sources.length === 0) {
+    return '<p class="empty">Sources: None</p>';
+  }
+  return `<div class="inspector-section">
+    <h3>Sources</h3>
+    <ul>${sources.map(source => `<li>
+      <span>${escapeHtml(source.alias)}</span>
+      <span class="detail">${escapeHtml(source.className)} from ${escapeHtml(source.inputIds.join(', '))}${source.where ? ` where ${escapeHtml(source.where)}` : ''}</span>
+    </li>`).join('')}</ul>
+  </div>`;
+}
+
+function renderJoinDetails(joins: IlimapJoinSummary[]): string {
+  if (joins.length === 0) {
+    return '';
+  }
+  return `<div class="inspector-section">
+    <h3>Joins</h3>
+    <ul>${joins.map(join => `<li>
+      <span class="tag">${escapeHtml(join.type)}</span>
+      <span>${escapeHtml(join.leftAlias)} ⟕ ${escapeHtml(join.rightAlias)}</span>
+      <span class="detail"><code>${escapeHtml(join.condition)}</code></span>
+    </li>`).join('')}</ul>
+  </div>`;
+}
+
+function renderIdentityDetails(identities: IlimapExpressionSummary[]): string {
+  if (identities.length === 0) {
+    return '';
+  }
+  return `<div class="inspector-section">
+    <h3>Identity</h3>
+    <ul>${identities.map(id => `<li><code>${escapeHtml(id.expression)}</code></li>`).join('')}</ul>
+  </div>`;
+}
+
+function renderAssignmentDetails(title: string, assignments: IlimapAssignmentSummary[]): string {
+  if (assignments.length === 0) {
+    return `<p class="empty">${escapeHtml(title)}: None</p>`;
+  }
+  return `<div class="inspector-section">
+    <h3>${escapeHtml(title)}</h3>
+    <ul>${assignments.map(assignment => {
+      const deps = assignment.dependencies.length > 0
+        ? `<span class="detail">${assignment.dependencies.map(d => escapeHtml(d.alias ? `${d.alias}.${d.member || ''}` : d.enumMapId || d.literal || d.kind)).join(', ')}</span>`
+        : '';
+      return `<li>
+        <span>${escapeHtml(assignment.targetAttribute)}</span>
+        <span class="tag tag-${escapeAttribute(assignment.kind)}">${escapeHtml(assignment.kind)}</span>
+        <code>${escapeHtml(assignment.expression)}</code>
+        ${deps}
+      </li>`;
+    }).join('')}</ul>
+  </div>`;
+}
+
+function renderBagDetails(bags: IlimapBagSummary[]): string {
+  if (bags.length === 0) {
+    return '';
+  }
+  return `<div class="inspector-section">
+    <h3>Bags</h3>
+    ${bags.map(bag => renderBagItem(bag, 0)).join('')}
+  </div>`;
+}
+
+function renderBagItem(bag: IlimapBagSummary, depth: number): string {
+  const indent = '  '.repeat(depth);
+  const sourceLine = bag.source
+    ? `<span class="detail">from ${escapeHtml(bag.source.alias)} (${escapeHtml(bag.source.className)})` +
+      `${bag.source.where ? ` where ${escapeHtml(bag.source.where)}` : ''}</span>`
+    : '';
+  const bagAssignments = bag.assignments.length > 0
+    ? `<ul>${bag.assignments.map(a => `<li>
+        <span>${escapeHtml(a.targetAttribute)}</span>
+        <span class="tag tag-${escapeAttribute(a.kind)}">${escapeHtml(a.kind)}</span>
+        <code>${escapeHtml(a.expression)}</code>
+      </li>`).join('')}</ul>`
+    : '';
+  const nested = bag.nestedBags.map(n => renderBagItem(n, depth + 1)).join('');
+  return `${indent}<div class="bag-item">
+    <p><strong>${escapeHtml(bag.name)}</strong>` +
+    (bag.targetAttribute ? ` → ${escapeHtml(bag.targetAttribute)}` : '') +
+    (bag.structureClass ? ` : ${escapeHtml(bag.structureClass)}` : '') +
+    (bag.mode ? ` [${escapeHtml(bag.mode)}]` : '') +
+    (bag.maxItems != null ? ` max ${bag.maxItems}` : '') +
+    `</p>
+    ${sourceLine}
+    ${bagAssignments}
+    ${nested}
+  </div>`;
+}
+
+function renderRefDetails(refs: IlimapRefSummary[]): string {
+  if (refs.length === 0) {
+    return '';
+  }
+  return `<div class="inspector-section">
+    <h3>Refs</h3>
+    <ul>${refs.map(ref => `<li>
+      <span>${escapeHtml(ref.name)}</span>
+      ${ref.required ? '<span class="tag warning">required</span>' : ''}
+      ${ref.association ? `<span class="detail">association ${escapeHtml(ref.association)}</span>` : ''}
+      ${ref.role ? `<span class="detail">role ${escapeHtml(ref.role)}</span>` : ''}
+      ${ref.targetRuleId ? `<span class="detail">→ rule ${escapeHtml(ref.targetRuleId)}</span>` : ''}
+      ${ref.sourceRef ? `<span class="detail">source: <code>${escapeHtml(ref.sourceRef)}</code></span>` : ''}
+    </li>`).join('')}</ul>
+  </div>`;
+}
+
+function renderLossDetails(losses: IlimapLossSummary[]): string {
+  if (losses.length === 0) {
+    return '';
+  }
+  return `<div class="inspector-section loss-section">
+    <h3>Loss</h3>
+    <ul>${losses.map(loss => `<li>
+      ${loss.sourcePath ? `<code>${escapeHtml(loss.sourcePath)}</code>` : ''}
+      ${loss.reasonCode ? `<span class="tag warning">${escapeHtml(loss.reasonCode)}</span>` : ''}
+      ${loss.description ? `<span class="detail">${escapeHtml(loss.description)}</span>` : ''}
+      ${loss.when ? `<span class="detail">when: <code>${escapeHtml(loss.when)}</code></span>` : ''}
+    </li>`).join('')}</ul>
+  </div>`;
+}
+
+function renderMetadataDetail(metadata?: IlimapMetadataSummary): string {
+  if (!metadata) {
+    return '';
+  }
+  const parts = [
+    metadata.direction ? `Direction: ${escapeHtml(metadata.direction)}` : '',
+    metadata.roundtrip ? `Roundtrip: ${escapeHtml(metadata.roundtrip)}` : '',
+    metadata.lossiness ? `Lossiness: ${escapeHtml(metadata.lossiness)}` : ''
+  ].filter(Boolean);
+  if (parts.length === 0) {
+    return '';
+  }
+  return `<div class="inspector-section">
+    <h3>Metadata</h3>
+    <p>${parts.join(' · ')}</p>
+  </div>`;
 }
 
 function renderSection<T>(

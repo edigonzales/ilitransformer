@@ -1,4 +1,5 @@
 export const mappingSummaryRequest = 'ilimap/mappingSummary';
+export const ruleDetailRequest = 'ilimap/ruleDetail';
 
 export interface IlimapLocation {
   line: number;
@@ -148,5 +149,112 @@ export interface IlimapRuleCoverageSummary {
   line: number;
   character: number;
   nodeId?: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapRuleDetailParams {
+  uri: string;
+  ruleId: string;
+}
+
+export interface IlimapRuleDetailSummary {
+  available: boolean;
+  message: string;
+  ruleId: string;
+  nodeId?: string;
+  location?: IlimapLocation;
+  target?: IlimapTargetDetailSummary;
+  sources: IlimapSourceDetailSummary[];
+  joins: IlimapJoinSummary[];
+  identity: IlimapExpressionSummary[];
+  assignments: IlimapAssignmentSummary[];
+  defaults: IlimapAssignmentSummary[];
+  bags: IlimapBagSummary[];
+  refs: IlimapRefSummary[];
+  losses: IlimapLossSummary[];
+  metadata?: IlimapMetadataSummary;
+  diagnostics: IlimapDiagnosticSummary[];
+}
+
+export interface IlimapTargetDetailSummary {
+  outputId: string;
+  className: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapSourceDetailSummary {
+  alias: string;
+  inputIds: string[];
+  className: string;
+  where?: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapJoinSummary {
+  type: 'inner' | 'left' | string;
+  leftAlias: string;
+  rightAlias: string;
+  condition: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapExpressionSummary {
+  expression: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapAssignmentSummary {
+  targetAttribute: string;
+  expression: string;
+  kind: 'copy' | 'constant' | 'computed' | 'enumMap' | 'default' | 'null' | 'unknown' | string;
+  dependencies: IlimapExpressionDependencySummary[];
+  location?: IlimapLocation;
+}
+
+export interface IlimapExpressionDependencySummary {
+  kind: 'sourceAttribute' | 'sourceRole' | 'enumMap' | 'function' | 'constant' | 'unknown' | string;
+  alias?: string;
+  member?: string;
+  sourceClass?: string;
+  enumMapId?: string;
+  functionName?: string;
+  literal?: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapBagSummary {
+  name: string;
+  targetAttribute?: string;
+  structureClass?: string;
+  mode?: string;
+  maxItems?: number;
+  source?: IlimapSourceDetailSummary;
+  assignments: IlimapAssignmentSummary[];
+  nestedBags: IlimapBagSummary[];
+  location?: IlimapLocation;
+}
+
+export interface IlimapRefSummary {
+  name: string;
+  association?: string;
+  role?: string;
+  required: boolean;
+  targetRuleId?: string;
+  sourceRef?: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapLossSummary {
+  sourcePath?: string;
+  reasonCode?: string;
+  description?: string;
+  when?: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapMetadataSummary {
+  direction?: string;
+  roundtrip?: string;
+  lossiness?: string;
   location?: IlimapLocation;
 }

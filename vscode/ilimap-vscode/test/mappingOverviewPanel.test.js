@@ -1164,3 +1164,143 @@ function loadPanel(t, harness) {
   });
   return panelModule;
 }
+
+test('requestRuleDetail sends ilimap/ruleDetail with ruleId', async (t) => {
+  const harness = makeHarness();
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+  const summaryCalls = harness.refs.requested.length;
+
+  await harness.refs.panel.messageCallback({ type: 'requestRuleDetail', ruleId: 'r1' });
+  await flush();
+
+  assert.equal(harness.refs.requested.length, summaryCalls + 1);
+  assert.deepEqual(harness.refs.requested[summaryCalls], {
+    method: 'ilimap/ruleDetail',
+    params: { uri: 'file:///tmp/profile.ilimap', ruleId: 'r1' }
+  });
+});
+
+test('ruleDetail result is rendered in webview', async (t) => {
+  let ruleDetailCalls = 0;
+  const ruleDetailResponse = {
+    available: true,
+    message: '',
+    ruleId: 'r1',
+    sources: [],
+    joins: [],
+    identity: [],
+    assignments: [
+      { targetAttribute: 'Name', expression: 's.Name', kind: 'copy', dependencies: [], location: null }
+    ],
+    defaults: [],
+    bags: [],
+    refs: [],
+    losses: [],
+    diagnostics: []
+  };
+  const harness = makeHarness({
+    respond(method, params) {
+      if (method === 'ilimap/ruleDetail') {
+        ruleDetailCalls += 1;
+        return ruleDetailResponse;
+      }
+      return baseSummary('Profile');
+    }
+  });
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+
+  await harness.refs.panel.messageCallback({ type: 'requestRuleDetail', ruleId: 'r1' });
+  await flush();
+
+  assert.equal(ruleDetailCalls, 1);
+  assert.match(harness.refs.panel.webview.html, /rule-inspector/);
+  assert.match(harness.refs.panel.webview.html, /Rule r1/);
+  assert.match(harness.refs.panel.webview.html, /Assignments/);
+  assert.match(harness.refs.panel.webview.html, />copy</);
+});
+
+test('failed ruleDetail request shows error without crashing', async (t) => {
+  let ruleDetailCalls = 0;
+  const harness = makeHarness({
+    respond(method, params) {
+      if (method === 'ilimap/ruleDetail') {
+        ruleDetailCalls += 1;
+        throw new Error('server gone');
+      }
+      return baseSummary('Profile');
+    }
+  });
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+
+  await harness.refs.panel.messageCallback({ type: 'requestRuleDetail', ruleId: 'r1' });
+  await flush();
+
+  assert.equal(ruleDetailCalls, 1);
+  assert.ok(
+    harness.refs.outputLines.some(line =>
+      line.includes('Failed to request rule detail') && line.includes('server gone')
+    )
+  );
+  assert.match(harness.refs.panel.webview.html, /Failed to load rule detail/);
+});
+
+test('selectNode with rule prefix dispatches ruleDetail request', async (t) => {
+  let ruleDetailCalls = 0;
+  const harness = makeHarness({
+    respond(method, params) {
+      if (method === 'ilimap/ruleDetail') {
+        ruleDetailCalls += 1;
+        return {
+          available: true,
+          message: '',
+          ruleId: params.ruleId,
+          sources: [],
+          joins: [],
+          identity: [],
+          assignments: [],
+          defaults: [],
+          bags: [],
+          refs: [],
+          losses: [],
+          diagnostics: []
+        };
+      }
+      return baseSummary('Profile');
+    }
+  });
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+
+  await harness.refs.panel.messageCallback({ type: 'selectNode', nodeId: 'rule:r5' });
+  await flush();
+
+  assert.equal(ruleDetailCalls, 1);
+  assert.match(harness.refs.panel.webview.html, /Rule r5/);
+});
+
+test('selectNode with non-rule prefix is ignored', async (t) => {
+  let ruleDetailCalls = 0;
+  const harness = makeHarness({
+    respond(method, params) {
+      if (method === 'ilimap/ruleDetail') {
+        ruleDetailCalls += 1;
+      }
+      return baseSummary('Profile');
+    }
+  });
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+
+  await harness.refs.panel.messageCallback({ type: 'selectNode', nodeId: 'input:src' });
+  await flush();
+
+  assert.equal(ruleDetailCalls, 0);
+});

@@ -3,6 +3,7 @@ package guru.interlis.transformer.mapping.ilimap.lsp;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams;
 
 import java.lang.reflect.Method;
@@ -33,6 +34,16 @@ class IlimapMappingSummaryLspTest {
 
         assertThat(request).isNotNull();
         assertThat(request.value()).isEqualTo("ilimap/validateMapping");
+        assertThat(request.useSegment()).isFalse();
+    }
+
+    @Test
+    void exposesRuleDetailCustomRequest() throws NoSuchMethodException {
+        Method method = IlimapLanguageServer.class.getMethod("ruleDetail", IlimapRuleDetailParams.class);
+        JsonRequest request = method.getAnnotation(JsonRequest.class);
+
+        assertThat(request).isNotNull();
+        assertThat(request.value()).isEqualTo("ilimap/ruleDetail");
         assertThat(request.useSegment()).isFalse();
     }
 

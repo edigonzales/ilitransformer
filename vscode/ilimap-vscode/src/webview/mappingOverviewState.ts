@@ -1,12 +1,13 @@
 import type * as vscode from 'vscode';
 
-import type { IlimapMappingSummary } from './mappingOverviewMessages';
+import type { IlimapMappingSummary, IlimapRuleDetailSummary } from './mappingOverviewMessages';
 
 export interface MappingOverviewPanelState {
   panel: vscode.WebviewPanel;
   uri: string;
   documentVersion?: number;
   summary?: IlimapMappingSummary;
+  selectedRuleDetail?: IlimapRuleDetailSummary;
   lastUpdated?: string;
   refreshTimer?: ReturnType<typeof setTimeout>;
   loading: boolean;
