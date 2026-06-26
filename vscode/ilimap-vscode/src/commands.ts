@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { getLanguageClient, restartLanguageClient } from './client';
 import { renderMappingReportMarkdown } from './overview/mappingOverviewReporter';
-import { openMappingOverview, showRuleCoverage, showRuleInOverview } from './webview/mappingOverviewPanel';
+import { openMappingOverview, refreshOpenMappingOverview, showRuleCoverage, showRuleInOverview } from './webview/mappingOverviewPanel';
 import { mappingSummaryRequest, type IlimapMappingSummary, type IlimapMappingSummaryParams } from './webview/mappingOverviewMessages';
 
 const validateMappingRequest = 'ilimap/validateMapping';
@@ -42,6 +42,7 @@ export function registerCommands(context: vscode.ExtensionContext, outputChannel
   context.subscriptions.push(
     vscode.commands.registerCommand('ilimap.validate', async () => {
       if (await validateActiveMapping(outputChannel)) {
+        await refreshOpenMappingOverview(outputChannel);
         await vscode.commands.executeCommand('workbench.action.problems.focus');
       }
     })

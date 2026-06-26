@@ -89,8 +89,12 @@ class IlimapCompletionServiceTest {
         List<IlimapCompletionItem> failPolicyItems =
                 complete(mappingWithJobFailPolicyPrefix(), "failPolicy l", "failPolicy l".length());
 
-        assertThat(formatItems).extracting(IlimapCompletionItem::label).containsExactly("xtf");
-        assertThat(failPolicyItems).extracting(IlimapCompletionItem::label).containsExactly("lenient");
+        assertThat(formatItems)
+                .extracting(IlimapCompletionItem::label)
+                .containsExactlyInAnyOrder("itf", "xtf", "csv", "gpkg", "jdbc", "shp");
+        assertThat(failPolicyItems)
+                .extracting(IlimapCompletionItem::label)
+                .containsExactlyInAnyOrder("strict", "lenient", "reportOnly");
     }
 
     @Test

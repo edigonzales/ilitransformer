@@ -21,6 +21,9 @@ public final class IlimapLspCompletionMapper {
         completionItem.setDetail(item.detail());
         completionItem.setDocumentation(item.documentation());
         completionItem.setInsertText(item.insertText());
+        if (item.filterText() != null) {
+            completionItem.setFilterText(item.filterText());
+        }
         if (item.snippet()) {
             completionItem.setInsertTextFormat(InsertTextFormat.Snippet);
         }

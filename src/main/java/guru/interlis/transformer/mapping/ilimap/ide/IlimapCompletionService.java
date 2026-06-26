@@ -218,9 +218,15 @@ public final class IlimapCompletionService {
 
     private static List<IlimapCompletionItem> valueItems(List<String> values, IlimapCompletionContext context) {
         return values.stream()
-                .filter(value -> value.startsWith(context.prefix()))
                 .map(value -> new IlimapCompletionItem(
-                        value, IlimapCompletionKind.VALUE, "ILIMAP value", null, value, context.replacementRange()))
+                        value,
+                        IlimapCompletionKind.VALUE,
+                        "ILIMAP value",
+                        null,
+                        value,
+                        context.replacementRange(),
+                        false,
+                        context.prefix()))
                 .toList();
     }
 

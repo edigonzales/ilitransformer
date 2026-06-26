@@ -705,6 +705,12 @@ export function renderMappingOverviewHtml(
         vscode.postMessage({ type: 'exportReport' });
         return;
       }
+      const loadModelsTarget = event.target.closest('[data-action="load-models"]');
+      if (loadModelsTarget) {
+        event.preventDefault();
+        vscode.postMessage({ type: 'loadModels' });
+        return;
+      }
       const inspectTarget = event.target.closest('[data-action="inspect-rule"]');
       if (inspectTarget) {
         event.preventDefault();
@@ -1051,6 +1057,7 @@ function renderCoverage(summary: IlimapMappingSummary): string {
     return `<section>
       <h2>Coverage</h2>
       <p class="empty">${escapeHtml(summary.coverageMessage || 'Model coverage unavailable.')}</p>
+      <p><a href="#" class="refresh-link" data-action="load-models">Load INTERLIS models</a></p>
     </section>`;
   }
   return renderClassCoverage(summary.classCoverage ?? []);
@@ -1058,7 +1065,10 @@ function renderCoverage(summary: IlimapMappingSummary): string {
 
 function renderRuleCoverageSection(summary: IlimapMappingSummary): string {
   if (!summary.coverageAvailable) {
-    return '';
+    return `<section class="rule-coverage">
+      <h2>Rule Coverage</h2>
+      <p class="empty">Model coverage is not loaded.</p>
+    </section>`;
   }
   return renderRuleCoverage(summary);
 }

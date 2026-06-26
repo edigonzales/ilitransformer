@@ -224,6 +224,10 @@ function registerMessageHandler(
       await refreshMappingOverview(state, outputChannel, { reason: 'manual' });
       return;
     }
+    if (message && typeof message === 'object' && (message as { type?: unknown }).type === 'loadModels') {
+      await handleLoadModels(state, outputChannel);
+      return;
+    }
     if (message && typeof message === 'object' && (message as { type?: unknown }).type === 'requestRuleDetail') {
       const ruleId = (message as { ruleId?: unknown }).ruleId;
       if (typeof ruleId === 'string') {
@@ -304,6 +308,53 @@ function scheduleDebouncedRefresh(
     state.refreshTimer = undefined;
     void refreshMappingOverview(state, outputChannel, { reason: 'change' });
   }, CHANGE_DEBOUNCE_MS);
+}
+
+async function handleLoadModels(
+  state: MappingOverviewPanelState,
+  outputChannel: vscode.OutputChannel
+): Promise<void> {
+  const client = getLanguageClient();
+  if (!client) {
+    outputChannel.appendLine('Cannot load models: language server is not running.');
+    return;
+  }
+
+    const document = vscode.workspace.textDocuments.find(
+        doc => doc.uri.toString() === state.uri
+    );
+    if (!document) {
+        return;
+    }
+
+  if (state.refreshTimer) {
+    clearTimeout(state.refreshTimer);
+    state.refreshTimer = undefined;
+  }
+  state.loading = true;
+  renderPanel(state, { refreshState: 'loading', lastUpdated: state.lastUpdated });
+
+  try {
+    await client.sendRequest<{ available: boolean; message: string; diagnosticCount: number }>(
+      'ilimap/validateMapping',
+      {
+        uri: state.uri,
+        text: document.getText(),
+        version: document.version
+      }
+    );
+    await refreshMappingOverview(state, outputChannel, { reason: 'manual' });
+  } catch (error) {
+    state.loading = false;
+    outputChannel.appendLine(`Failed to load models: ${errorMessage(error)}`);
+    if (!state.disposed) {
+      renderPanel(state, {
+        refreshState: 'error',
+        errorMessage: 'Failed to load models.',
+        lastUpdated: state.lastUpdated
+      });
+    }
+  }
 }
 
 async function refreshMappingOverview(
@@ -549,6 +600,14 @@ export async function revealLocation(
 
 export function isIlimapDocument(document: vscode.TextDocument): boolean {
   return document.languageId === 'ilimap' || document.uri.fsPath.endsWith('.ilimap');
+}
+
+export async function refreshOpenMappingOverview(outputChannel: vscode.OutputChannel): Promise<void> {
+  const state = currentPanelState;
+  if (!state || state.disposed) {
+    return;
+  }
+  await refreshMappingOverview(state, outputChannel, { reason: 'manual' });
 }
 
 function nonce(): string {

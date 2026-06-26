@@ -627,6 +627,9 @@ function loadCommandsModule({ client, vscodeOverrides, reporterMarkdown }) {
         async openMappingOverview(...args) {
           panelCalls.push({ fn: 'openMappingOverview', args });
         },
+        async refreshOpenMappingOverview(...args) {
+          panelCalls.push({ fn: 'refreshOpenMappingOverview', args });
+        },
         async showRuleInOverview(...args) {
           panelCalls.push({ fn: 'showRuleInOverview', args });
         },

@@ -463,10 +463,21 @@ public final class IlimapCompletionContextResolver {
             IlimapRuleBlock currentRule,
             IlimapAstNode currentNode,
             String blockName) {
-        String text = analysis.text();
         int blockStart = currentNode.range().start().offset();
         int clamped =
                 Math.max(blockStart, Math.min(offset, currentNode.range().end().offset()));
+        return detectBlockFieldValue(analysis, offset, blockStart, clamped, blockName, currentRule, currentNode);
+    }
+
+    private static Optional<IlimapCompletionContext> detectBlockFieldValue(
+            IlimapAnalysis analysis,
+            int offset,
+            int blockStart,
+            int clamped,
+            String blockName,
+            IlimapRuleBlock currentRule,
+            IlimapAstNode currentNode) {
+        String text = analysis.text();
         String beforeCursor = text.substring(blockStart, clamped);
         int semicolon = beforeCursor.lastIndexOf(';');
         int brace = beforeCursor.lastIndexOf('{');
@@ -479,7 +490,7 @@ public final class IlimapCompletionContextResolver {
         }
         String fieldName = matcher.group(1);
         int fieldEnd = blockStart + lineStart + 1 + matcher.end(1);
-        if (clamped <= fieldEnd) {
+        if (clamped < fieldEnd) {
             return Optional.empty();
         }
         return Optional.of(new IlimapCompletionContext(
@@ -499,22 +510,36 @@ public final class IlimapCompletionContextResolver {
     }
 
     private static IlimapCompletionContext fallbackContext(IlimapAnalysis analysis, int offset, String prefix) {
-        String beforeCursor = analysis.text()
-                .substring(0, Math.max(0, Math.min(offset, analysis.text().length())));
+        String text = analysis.text();
+        String beforeCursor = text.substring(0, Math.max(0, Math.min(offset, text.length())));
         int lastBrace = beforeCursor.lastIndexOf('{');
         int lastCloseBrace = beforeCursor.lastIndexOf('}');
         if (lastBrace > lastCloseBrace) {
             String header = beforeCursor.substring(0, lastBrace).stripTrailing();
             String lastWord = lastWord(header);
-            IlimapCompletionContextKind kind =
+            String blockName =
                     switch (lastWord) {
-                        case "job" -> IlimapCompletionContextKind.JOB_BLOCK;
-                        case "input" -> IlimapCompletionContextKind.INPUT_BLOCK;
-                        case "output" -> IlimapCompletionContextKind.OUTPUT_BLOCK;
-                        case "oid" -> IlimapCompletionContextKind.OID_BLOCK;
-                        default -> IlimapCompletionContextKind.UNKNOWN;
+                        case "job" -> "job";
+                        case "input" -> "input";
+                        case "output" -> "output";
+                        case "oid" -> "oid";
+                        default -> null;
                     };
-            if (kind != IlimapCompletionContextKind.UNKNOWN) {
+            if (blockName != null) {
+                int clamped = Math.max(lastBrace, Math.min(offset, text.length()));
+                Optional<IlimapCompletionContext> valueContext =
+                        detectBlockFieldValue(analysis, offset, lastBrace, clamped, blockName, null, null);
+                if (valueContext.isPresent()) {
+                    return valueContext.get();
+                }
+                IlimapCompletionContextKind kind =
+                        switch (lastWord) {
+                            case "job" -> IlimapCompletionContextKind.JOB_BLOCK;
+                            case "input" -> IlimapCompletionContextKind.INPUT_BLOCK;
+                            case "output" -> IlimapCompletionContextKind.OUTPUT_BLOCK;
+                            case "oid" -> IlimapCompletionContextKind.OID_BLOCK;
+                            default -> IlimapCompletionContextKind.UNKNOWN;
+                        };
                 return new IlimapCompletionContext(kind, prefix, null, null);
             }
         }
