@@ -35,14 +35,35 @@
   ],
   "activationEvents": [
     "onLanguage:ilimap",
+    "onView:ilimap.mappingExplorer",
     "onCommand:ilimap.restartLanguageServer",
     "onCommand:ilimap.showLanguageServerLogs",
     "onCommand:ilimap.format",
     "onCommand:ilimap.validate",
-    "onCommand:ilimap.openMappingOverview"
+    "onCommand:ilimap.openMappingOverview",
+    "onCommand:ilimap.mappingExplorer.refresh",
+    "onCommand:ilimap.mappingExplorer.revealInEditor",
+    "onCommand:ilimap.mappingExplorer.showInOverview"
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ilimap",
+          "title": "ilimap",
+          "icon": "images/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "ilimap": [
+        {
+          "id": "ilimap.mappingExplorer",
+          "name": "Mapping Explorer"
+        }
+      ]
+    },
     "languages": [
       {
         "id": "ilimap",
@@ -82,6 +103,18 @@
       {
         "command": "ilimap.openMappingOverview",
         "title": "ilimap: Open Mapping Overview"
+      },
+      {
+        "command": "ilimap.mappingExplorer.refresh",
+        "title": "ilimap: Refresh Mapping Explorer"
+      },
+      {
+        "command": "ilimap.mappingExplorer.revealInEditor",
+        "title": "ilimap: Reveal in Editor"
+      },
+      {
+        "command": "ilimap.mappingExplorer.showInOverview",
+        "title": "ilimap: Show in Mapping Overview"
       }
     ],
     "configuration": {

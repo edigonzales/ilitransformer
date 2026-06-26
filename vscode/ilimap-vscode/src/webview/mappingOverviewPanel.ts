@@ -2,6 +2,7 @@ import * as crypto from 'crypto';
 import * as vscode from 'vscode';
 
 import { getLanguageClient } from '../client';
+import { getMappingExplorerInstance } from '../overview/mappingExplorerProvider';
 import { renderMappingOverviewHtml } from './mappingOverviewHtml';
 import {
   mappingSummaryRequest,
@@ -64,6 +65,7 @@ export async function openMappingOverview(
   state.lastUpdated = formatTime(new Date());
   state.loading = false;
   renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
+  getMappingExplorerInstance()?.refresh(summary, uri);
 }
 
 function createOrRevealPanelState(
@@ -236,6 +238,7 @@ async function refreshMappingOverview(
     state.lastUpdated = formatTime(new Date());
     state.loading = false;
     renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
+    getMappingExplorerInstance()?.refresh(summary, state.uri);
   } catch (error) {
     state.loading = false;
     outputChannel.appendLine(`Failed to refresh ilimap mapping overview: ${errorMessage(error)}`);
@@ -408,7 +411,7 @@ function isValidLineCharacter(line: unknown, character: unknown): boolean {
     && character >= 0;
 }
 
-async function revealLocation(
+export async function revealLocation(
   uri: string,
   location: IlimapLocation,
   outputChannel: vscode.OutputChannel
@@ -423,7 +426,7 @@ async function revealLocation(
   editor.revealRange(new vscode.Range(start, end), vscode.TextEditorRevealType.InCenterIfOutsideViewport);
 }
 
-function isIlimapDocument(document: vscode.TextDocument): boolean {
+export function isIlimapDocument(document: vscode.TextDocument): boolean {
   return document.languageId === 'ilimap' || document.uri.fsPath.endsWith('.ilimap');
 }
 

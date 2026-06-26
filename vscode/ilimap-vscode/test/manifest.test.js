@@ -32,10 +32,37 @@ test('registers public commands', () => {
   assert.ok(commands.includes('ilimap.format'));
   assert.ok(commands.includes('ilimap.validate'));
   assert.ok(commands.includes('ilimap.openMappingOverview'));
+  assert.ok(commands.includes('ilimap.mappingExplorer.refresh'));
+  assert.ok(commands.includes('ilimap.mappingExplorer.revealInEditor'));
+  assert.ok(commands.includes('ilimap.mappingExplorer.showInOverview'));
 });
 
 test('activates mapping overview command', () => {
   assert.ok(manifest.activationEvents.includes('onCommand:ilimap.openMappingOverview'));
+});
+
+test('contributes ilimap view container and mapping explorer view', () => {
+  const viewContainers = manifest.contributes.viewsContainers;
+  assert.ok(viewContainers);
+  assert.ok(viewContainers.activitybar);
+  const container = viewContainers.activitybar.find(c => c.id === 'ilimap');
+  assert.ok(container);
+  assert.equal(container.title, 'ilimap');
+  assert.equal(container.icon, 'images/icon.png');
+
+  const views = manifest.contributes.views;
+  assert.ok(views);
+  assert.ok(views.ilimap);
+  const explorerView = views.ilimap.find(v => v.id === 'ilimap.mappingExplorer');
+  assert.ok(explorerView);
+  assert.equal(explorerView.name, 'Mapping Explorer');
+});
+
+test('activates on view and explorer commands', () => {
+  assert.ok(manifest.activationEvents.includes('onView:ilimap.mappingExplorer'));
+  assert.ok(manifest.activationEvents.includes('onCommand:ilimap.mappingExplorer.refresh'));
+  assert.ok(manifest.activationEvents.includes('onCommand:ilimap.mappingExplorer.revealInEditor'));
+  assert.ok(manifest.activationEvents.includes('onCommand:ilimap.mappingExplorer.showInOverview'));
 });
 
 test('declares required settings', () => {

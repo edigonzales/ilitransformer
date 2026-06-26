@@ -6,6 +6,31 @@ const test = require('node:test');
 const extensionRoot = path.resolve(__dirname, '..');
 const distPanelPath = path.join(extensionRoot, 'dist', 'webview', 'mappingOverviewPanel.js');
 
+const STANDARD_VSCODE_MOCKS = {
+  TreeItem: class TreeItem {
+    constructor(label, collapsibleState) {
+      this.label = label;
+      this.collapsibleState = collapsibleState;
+    }
+  },
+  TreeItemCollapsibleState: {
+    None: 0,
+    Collapsed: 1,
+    Expanded: 2
+  },
+  ThemeIcon: class ThemeIcon {
+    constructor(id) {
+      this.id = id;
+    }
+  },
+  EventEmitter: class EventEmitter {
+    constructor() {
+      this.event = () => ({ dispose() {} });
+    }
+    fire() {}
+  }
+};
+
 test('openMappingOverview requests active document summary and renders webview', async (t) => {
   const requested = [];
   const panels = [];
@@ -17,6 +42,7 @@ test('openMappingOverview requests active document summary and renders webview',
   const revealedRanges = [];
 
   const vscodeMock = {
+    ...STANDARD_VSCODE_MOCKS,
     ViewColumn: {
       One: 1,
       Beside: 2
@@ -236,6 +262,7 @@ test('openMappingOverview reuses panel without registering duplicate message han
   const secondUri = 'file:///tmp/second.ilimap';
 
   const vscodeMock = {
+    ...STANDARD_VSCODE_MOCKS,
     ViewColumn: {
       One: 1,
       Beside: 2
@@ -402,6 +429,7 @@ test('navigateToLocation with end positions creates range selection', async (t) 
   const openedDocuments = [];
 
   const vscodeMock = {
+    ...STANDARD_VSCODE_MOCKS,
     ViewColumn: {
       One: 1,
       Beside: 2
@@ -579,6 +607,7 @@ test('legacy navigate message still works', async (t) => {
   const openedDocuments = [];
 
   const vscodeMock = {
+    ...STANDARD_VSCODE_MOCKS,
     ViewColumn: { One: 1, Beside: 2 },
     ProgressLocation: { Notification: 15 },
     TextEditorRevealType: { InCenterIfOutsideViewport: 2 },
@@ -684,6 +713,7 @@ test('malformed messages are ignored', async (t) => {
   const outputLines = [];
 
   const vscodeMock = {
+    ...STANDARD_VSCODE_MOCKS,
     ViewColumn: { One: 1, Beside: 2 },
     ProgressLocation: { Notification: 15 },
     TextEditorRevealType: { InCenterIfOutsideViewport: 2 },
@@ -788,6 +818,7 @@ test('navigateToLocation without end positions creates point selection', async (
   const selections = [];
 
   const vscodeMock = {
+    ...STANDARD_VSCODE_MOCKS,
     ViewColumn: { One: 1, Beside: 2 },
     ProgressLocation: { Notification: 15 },
     TextEditorRevealType: { InCenterIfOutsideViewport: 2 },
@@ -1071,6 +1102,7 @@ function makeHarness({ activeUri = 'file:///tmp/profile.ilimap', activeFsPath = 
   };
 
   const vscodeMock = {
+    ...STANDARD_VSCODE_MOCKS,
     ViewColumn: { One: 1, Beside: 2 },
     ProgressLocation: { Notification: 15 },
     TextEditorRevealType: { InCenterIfOutsideViewport: 2 },
