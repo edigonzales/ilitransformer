@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapSourceAttributeUsageSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams;
 
 import java.lang.reflect.Method;
@@ -133,6 +134,70 @@ class IlimapMappingSummaryLspTest {
     }
 
     @Test
+    void populatesCoverageAttributeStatusAndGroupedSourceUsageAfterValidation() {
+        IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
+        IlimapLanguageServer server = new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
+        String source = modelAwareMappingWithPartialAssignments();
+        textDocumentService.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));
+        server.validateMapping(new IlimapValidateMappingParams(URI, source, 1)).join();
+
+        var summary = server.mappingSummary(new IlimapMappingSummaryParams(URI)).join();
+
+        assertThat(summary.ruleCoverage()).singleElement().satisfies(ruleCoverage -> {
+            assertThat(ruleCoverage.attributes())
+                    .filteredOn(attribute -> attribute.name().equals("Name"))
+                    .singleElement()
+                    .satisfies(name -> {
+                        assertThat(name.status()).isEqualTo("mapped");
+                        assertThat(name.expression()).isEqualTo("s.Name");
+                        assertThat(name.sourceSummary()).isEqualTo("s.Name");
+                    });
+            assertThat(ruleCoverage.attributes())
+                    .filteredOn(attribute -> attribute.name().equals("Beschreibung"))
+                    .singleElement()
+                    .satisfies(beschreibung -> assertThat(beschreibung.status()).isEqualTo("unknown"));
+        });
+
+        assertThat(summary.sourceUsage()).singleElement().satisfies(group -> {
+            assertThat(group.sourceClass()).isEqualTo("TestModel.TestTopic.TestClass");
+            assertThat(group.inputIds()).containsExactly("src");
+            assertThat(group.aliases()).containsExactly("s");
+            assertThat(group.attributes())
+                    .filteredOn(attribute -> attribute.name().equals("Name"))
+                    .singleElement()
+                    .satisfies(name -> {
+                        assertThat(name.kind()).isEqualTo("attribute");
+                        assertThat(name.status()).isEqualTo("used");
+                        assertThat(name.usedBy()).isNotEmpty();
+                    });
+            assertThat(group.attributes())
+                    .filteredOn(attribute -> attribute.status().equals("unused"))
+                    .extracting(IlimapSourceAttributeUsageSummary::name)
+                    .contains("Beschreibung", "Anzahl", "Aktiv");
+        });
+    }
+
+    @Test
+    void marksMissingMandatoryCoverageAttributeAfterValidation() {
+        IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
+        IlimapLanguageServer server = new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
+        String source = modelAwareMappingWithoutMandatoryAssignment();
+        textDocumentService.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));
+        server.validateMapping(new IlimapValidateMappingParams(URI, source, 1)).join();
+
+        var summary = server.mappingSummary(new IlimapMappingSummaryParams(URI)).join();
+
+        assertThat(summary.ruleCoverage()).singleElement().satisfies(ruleCoverage ->
+                assertThat(ruleCoverage.attributes())
+                        .filteredOn(attribute -> attribute.name().equals("Name"))
+                        .singleElement()
+                        .satisfies(name -> {
+                            assertThat(name.assigned()).isFalse();
+                            assertThat(name.status()).isEqualTo("missing");
+                        }));
+    }
+
+    @Test
     void returnsUnavailableSummaryForUnopenedDocument() {
         IlimapLanguageServer server =
                 new IlimapLanguageServer(new IlimapTextDocumentService(), new IlimapWorkspaceService());
@@ -203,6 +268,25 @@ class IlimapMappingSummaryLspTest {
                     source s from src class "TestModel.TestTopic.TestClass";
                     assign {
                       Name = s.Name;
+                    }
+                  }
+                }
+                """;
+    }
+
+    private static String modelAwareMappingWithoutMandatoryAssignment() {
+        return """
+                mapping v2 "Profile" {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "TestModel"; }
+                  output out { path "out.xtf"; model "TestModel"; }
+                  rule r1 {
+                    target out class "TestModel.TestTopic.TestClass";
+                    source s from src class "TestModel.TestTopic.TestClass";
+                    assign {
+                      Beschreibung = s.Name;
                     }
                   }
                 }

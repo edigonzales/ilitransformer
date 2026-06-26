@@ -76,9 +76,10 @@ Run `ilimap: Open Mapping Overview` while an `.ilimap` editor is active to open 
 - a summary with counts and lists for inputs, outputs, enum maps, rules, bags and refs
 - diagnostics
 - class coverage
-- rule coverage
+- a per-rule target coverage matrix (attribute, status, type, cardinality, source/expression) that highlights missing mandatory attributes
+- a source usage section that lists used and, when models are loaded, unused source attributes and roles grouped by source class
 
-The overview is read-only: it does not edit mappings. It does compute and display class coverage and rule coverage.
+The overview is read-only: it does not edit mappings. It does compute and display class coverage, the rule coverage matrix and source usage. The coverage matrix and source usage sections provide read-only filter links (for example "Missing only" or "Unused only") that only change what is displayed.
 
 The overview stays bound to the document it was opened for and keeps its summary current: it refreshes automatically when that `.ilimap` document is saved and after a short debounce when it is edited. A non-editing **Refresh** link reloads the summary on demand. A status line reports loading, stale, error and last-updated state without adding any editable controls.
 

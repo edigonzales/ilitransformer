@@ -25,7 +25,8 @@ public record IlimapMappingSummary(
         boolean coverageAvailable,
         String coverageMessage,
         List<IlimapCoverageClassSummary> classCoverage,
-        List<IlimapRuleCoverageSummary> ruleCoverage) {
+        List<IlimapRuleCoverageSummary> ruleCoverage,
+        List<IlimapSourceClassUsageSummary> sourceUsage) {
 
     public IlimapMappingSummary {
         Objects.requireNonNull(message, "message");
@@ -38,6 +39,7 @@ public record IlimapMappingSummary(
         Objects.requireNonNull(coverageMessage, "coverageMessage");
         Objects.requireNonNull(classCoverage, "classCoverage");
         Objects.requireNonNull(ruleCoverage, "ruleCoverage");
+        Objects.requireNonNull(sourceUsage, "sourceUsage");
         inputs = List.copyOf(inputs);
         outputs = List.copyOf(outputs);
         enumMaps = List.copyOf(enumMaps);
@@ -45,11 +47,12 @@ public record IlimapMappingSummary(
         diagnostics = List.copyOf(diagnostics);
         classCoverage = List.copyOf(classCoverage);
         ruleCoverage = List.copyOf(ruleCoverage);
+        sourceUsage = List.copyOf(sourceUsage);
     }
 
     public static IlimapMappingSummary unavailable(String message) {
         return new IlimapMappingSummary(
                 false, message, "mapping", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), List.of(), List.of(), List.of(),
-                List.of(), false, message, List.of(), List.of());
+                List.of(), false, message, List.of(), List.of(), List.of());
     }
 }

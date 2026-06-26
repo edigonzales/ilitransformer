@@ -325,6 +325,150 @@ export function renderMappingOverviewHtml(
     .loss-section li {
       color: var(--vscode-editorWarning-foreground);
     }
+
+    .tag-mapped {
+      border-color: var(--vscode-charts-green);
+      color: var(--vscode-charts-green);
+    }
+
+    .tag-default {
+      border-color: var(--vscode-charts-yellow);
+      color: var(--vscode-charts-yellow);
+    }
+
+    .tag-bag,
+    .tag-ref {
+      border-color: var(--vscode-charts-blue);
+      color: var(--vscode-charts-blue);
+    }
+
+    .tag-missing {
+      border-color: var(--vscode-editorError-foreground);
+      color: var(--vscode-editorError-foreground);
+      background: transparent;
+    }
+
+    .rule-coverage,
+    .source-usage {
+      margin-top: 24px;
+      padding-top: 12px;
+      border-top: 1px solid var(--vscode-panel-border);
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      margin: 10px 0 4px;
+    }
+
+    a.filter-link {
+      color: var(--vscode-textLink-foreground);
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    a.filter-link:hover {
+      text-decoration: underline;
+    }
+
+    a.filter-link.active {
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .coverage-rule {
+      margin-top: 16px;
+    }
+
+    .coverage-rule-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    table.coverage-matrix {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    table.coverage-matrix th,
+    table.coverage-matrix td {
+      padding: 4px 8px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--vscode-panel-border);
+      overflow-wrap: anywhere;
+    }
+
+    table.coverage-matrix th {
+      color: var(--vscode-descriptionForeground);
+      font-weight: 600;
+    }
+
+    table.coverage-matrix td code {
+      font-family: var(--vscode-editor-font-family, monospace);
+      background: var(--vscode-textCodeBlock-background);
+      padding: 1px 4px;
+      border-radius: 3px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    tr.coverage-row-missing {
+      background: color-mix(in srgb, var(--vscode-editorError-foreground) 12%, transparent);
+    }
+
+    .req-marker {
+      color: var(--vscode-editorError-foreground);
+      font-weight: 700;
+    }
+
+    .rule-coverage[data-active-filter="missing"] tbody tr:not([data-missing]),
+    .rule-coverage[data-active-filter="mandatory"] tbody tr:not([data-mandatory]),
+    .source-usage[data-active-filter="used"] li[data-usage-status="unused"],
+    .source-usage[data-active-filter="unused"] li[data-usage-status="used"] {
+      display: none;
+    }
+
+    .usage-group {
+      margin-top: 14px;
+    }
+
+    .usage-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 10px;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+
+    .usage-members {
+      margin: 2px 0 2px 12px;
+    }
+
+    .usage-title {
+      color: var(--vscode-descriptionForeground);
+      font-size: 12px;
+    }
+
+    ul.usage-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 10px;
+      margin: 2px 0 0;
+    }
+
+    ul.usage-list li {
+      display: inline-flex;
+      gap: 4px;
+      align-items: baseline;
+      padding: 2px 0;
+      border: 0;
+    }
   </style>
 </head>
 <body>
@@ -342,7 +486,22 @@ export function renderMappingOverviewHtml(
   <script nonce="${escapeAttribute(nonce)}">
     const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
     document.addEventListener('click', event => {
-      if (!(event.target instanceof Element) || !vscode) {
+      if (!(event.target instanceof Element)) {
+        return;
+      }
+      const filterTarget = event.target.closest('[data-filter-value]');
+      if (filterTarget) {
+        event.preventDefault();
+        const wrapperClass = filterTarget.getAttribute('data-filter-target');
+        const wrapper = wrapperClass ? filterTarget.closest('.' + wrapperClass) : null;
+        if (wrapper) {
+          wrapper.setAttribute('data-active-filter', filterTarget.getAttribute('data-filter-value') || 'all');
+          wrapper.querySelectorAll('.filter-bar [data-filter-value]').forEach(link => link.classList.remove('active'));
+          filterTarget.classList.add('active');
+        }
+        return;
+      }
+      if (!vscode) {
         return;
       }
       const refreshTarget = event.target.closest('[data-action="refresh"]');
@@ -411,6 +570,8 @@ function renderAvailableSummary(summary: IlimapMappingSummary, selectedRuleDetai
       ${renderDiagnostics(summary.diagnostics)}
       ${renderCoverage(summary)}
     </div>
+    ${renderRuleCoverageSection(summary)}
+    ${renderSourceUsage(summary)}
     ${renderRuleInspector(selectedRuleDetail)}`;
 }
 
@@ -509,8 +670,14 @@ function renderCoverage(summary: IlimapMappingSummary): string {
       <p class="empty">${escapeHtml(summary.coverageMessage || 'Model coverage unavailable.')}</p>
     </section>`;
   }
-  return `${renderClassCoverage(summary.classCoverage ?? [])}
-      ${renderRuleCoverage(summary.ruleCoverage ?? [])}`;
+  return renderClassCoverage(summary.classCoverage ?? []);
+}
+
+function renderRuleCoverageSection(summary: IlimapMappingSummary): string {
+  if (!summary.coverageAvailable) {
+    return '';
+  }
+  return renderRuleCoverage(summary.ruleCoverage ?? []);
 }
 
 function renderClassCoverage(classes: IlimapCoverageClassSummary[]): string {
@@ -532,55 +699,245 @@ function renderClassCoverage(classes: IlimapCoverageClassSummary[]): string {
 }
 
 function renderRuleCoverage(rules: IlimapRuleCoverageSummary[]): string {
-  return `<section>
+  if (rules.length === 0) {
+    return `<section class="rule-coverage" data-active-filter="all">
       <h2>Rule Coverage</h2>
-      ${
-        rules.length === 0
-          ? '<p class="empty">None</p>'
-          : `<ul>${rules.map(renderRuleCoverageItem).join('')}</ul>`
-      }
+      <p class="empty">None</p>
     </section>`;
+  }
+  return `<section class="rule-coverage" data-active-filter="all">
+      <h2>Rule Coverage</h2>
+      ${renderCoverageFilterBar()}
+      ${rules.map(renderRuleCoverageItem).join('')}
+    </section>`;
+}
+
+function renderCoverageFilterBar(): string {
+  return `<div class="filter-bar">
+      ${filterLink('rule-coverage', 'all', 'All attributes', true)}
+      ${filterLink('rule-coverage', 'missing', 'Missing only', false)}
+      ${filterLink('rule-coverage', 'mandatory', 'Mandatory only', false)}
+    </div>`;
 }
 
 function renderRuleCoverageItem(rule: IlimapRuleCoverageSummary): string {
   const missing = rule.attributes.filter(attribute => attribute.mandatory && !attribute.assigned);
-  const assigned = rule.attributes.filter(attribute => attribute.assigned);
-  const unassigned = rule.attributes.filter(attribute => !attribute.assigned);
-  const sourceDetails = rule.sources
-    .map(source => {
-      const members = [...source.usedAttributes, ...source.usedRoles.map(role => `${role} (role)`)];
-      return `${source.alias}: ${members.length === 0 ? 'no members used' : members.join(', ')}`;
-    })
-    .join(' · ');
-  return `<li>
-        <div>
-          <div class="name">${renderNavName(rule.ruleId, rule)}</div>
-          <div class="detail">${escapeHtml([
+  return `<div class="coverage-rule">
+        <div class="coverage-rule-header">
+          <span class="name">${renderNavName(rule.ruleId, rule)}</span>
+          <span class="detail">${escapeHtml([
             rule.targetClass,
             `${rule.directAssignmentCount} direct assignments`,
             `${rule.bagAssignmentCount} bag assignments`,
             rule.refs.length > 0 ? `refs ${rule.refs.join(', ')}` : ''
-          ].filter(Boolean).join(' · '))}</div>
-          <div class="detail">Assigned: ${renderAttributeList(assigned)}</div>
-          <div class="detail">Unassigned: ${renderAttributeList(unassigned)}</div>
-          ${missing.length > 0 ? `<div class="detail">Missing mandatory: ${renderAttributeList(missing)}</div>` : ''}
-          ${sourceDetails ? `<div class="detail">Sources: ${escapeHtml(sourceDetails)}</div>` : ''}
+          ].filter(Boolean).join(' · '))}</span>
+          <span class="tag ${missing.length > 0 ? 'warning' : ''}">${missing.length > 0 ? 'gaps' : 'ok'}</span>
         </div>
-        <span class="tag ${missing.length > 0 ? 'warning' : ''}">${missing.length > 0 ? 'gaps' : 'ok'}</span>
-      </li>`;
+        ${renderTargetCoverageMatrix(rule)}
+      </div>`;
 }
 
-function renderAttributeList(attributes: IlimapCoverageAttributeSummary[]): string {
-  if (attributes.length === 0) {
-    return 'none';
+function renderTargetCoverageMatrix(rule: IlimapRuleCoverageSummary): string {
+  if (rule.attributes.length === 0) {
+    return '<p class="empty">No target attributes.</p>';
   }
-  return attributes
-    .map(attribute =>
-      attribute.assigned || isValidLocation(navLocation(attribute))
-        ? renderNavName(attribute.name, attribute)
-        : escapeHtml(attribute.name)
-    )
-    .join(', ');
+  return `<table class="coverage-matrix">
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th>Status</th>
+            <th>Type</th>
+            <th>Cardinality</th>
+            <th>Source / Expression</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rule.attributes.map(renderCoverageAttributeRow).join('')}
+        </tbody>
+      </table>`;
+}
+
+function renderCoverageAttributeRow(attribute: IlimapCoverageAttributeSummary): string {
+  const status = coverageStatus(attribute);
+  const missing = attribute.mandatory && !attribute.assigned;
+  const rowAttrs = `${missing ? ' data-missing="true"' : ''}${attribute.mandatory ? ' data-mandatory="true"' : ''}`;
+  const source = attribute.sourceSummary || attribute.expression || '';
+  return `<tr class="${missing ? 'coverage-row-missing' : ''}"${rowAttrs}>
+            <td>${renderNavName(attribute.name, attribute)}${
+              attribute.mandatory ? ' <span class="req-marker" title="mandatory">*</span>' : ''
+            }</td>
+            <td><span class="tag ${escapeAttribute(coverageStatusClass(status))}">${escapeHtml(status)}</span></td>
+            <td class="detail">${escapeHtml(attribute.type)}</td>
+            <td class="detail">${escapeHtml(attribute.cardinality)}</td>
+            <td>${source ? `<code>${escapeHtml(source)}</code>` : '<span class="detail">—</span>'}</td>
+          </tr>`;
+}
+
+function coverageStatus(attribute: IlimapCoverageAttributeSummary): string {
+  if (attribute.status) {
+    return attribute.status;
+  }
+  if (attribute.assigned) {
+    return 'mapped';
+  }
+  if (attribute.mandatory) {
+    return 'missing';
+  }
+  return 'unknown';
+}
+
+function coverageStatusClass(status: string): string {
+  if (status === 'missing') {
+    return 'tag-missing warning';
+  }
+  return `tag-${status}`;
+}
+
+interface NormalizedUsageMember extends IlimapWithLocation {
+  name: string;
+  kind: string;
+  status: string;
+}
+
+interface NormalizedSourceUsageGroup extends IlimapWithLocation {
+  inputIds: string[];
+  sourceClass: string;
+  aliases: string[];
+  attributes: NormalizedUsageMember[];
+  roles: NormalizedUsageMember[];
+}
+
+function renderSourceUsage(summary: IlimapMappingSummary): string {
+  const groups = sourceUsageGroups(summary);
+  if (groups.length === 0) {
+    return `<section class="source-usage" data-active-filter="all">
+      <h2>Source Usage</h2>
+      <p class="empty">None</p>
+    </section>`;
+  }
+  return `<section class="source-usage" data-active-filter="all">
+      <h2>Source Usage</h2>
+      ${renderSourceUsageFilterBar()}
+      ${groups.map(renderSourceUsageGroup).join('')}
+    </section>`;
+}
+
+function renderSourceUsageFilterBar(): string {
+  return `<div class="filter-bar">
+      ${filterLink('source-usage', 'all', 'All', true)}
+      ${filterLink('source-usage', 'used', 'Used only', false)}
+      ${filterLink('source-usage', 'unused', 'Unused only', false)}
+    </div>`;
+}
+
+function sourceUsageGroups(summary: IlimapMappingSummary): NormalizedSourceUsageGroup[] {
+  const grouped = summary.sourceUsage ?? [];
+  if (grouped.length > 0) {
+    return grouped.map(group => ({
+      inputIds: group.inputIds ?? [],
+      sourceClass: group.sourceClass,
+      aliases: group.aliases ?? [],
+      location: group.location,
+      attributes: (group.attributes ?? []).map(toNormalizedMember),
+      roles: (group.roles ?? []).map(toNormalizedMember)
+    }));
+  }
+  const map = new Map<string, NormalizedSourceUsageGroup>();
+  for (const rule of summary.ruleCoverage ?? []) {
+    for (const source of rule.sources ?? []) {
+      const inputIds = source.inputIds ?? [];
+      const key = `${source.sourceClass}\n${inputIds.join(',')}`;
+      let group = map.get(key);
+      if (!group) {
+        group = {
+          inputIds,
+          sourceClass: source.sourceClass,
+          aliases: [],
+          location: source.location,
+          attributes: [],
+          roles: []
+        };
+        map.set(key, group);
+      }
+      if (source.alias && !group.aliases.includes(source.alias)) {
+        group.aliases.push(source.alias);
+      }
+      for (const name of source.usedAttributes ?? []) {
+        if (!group.attributes.some(member => member.name === name)) {
+          group.attributes.push({ name, kind: 'attribute', status: 'used' });
+        }
+      }
+      for (const name of source.usedRoles ?? []) {
+        if (!group.roles.some(member => member.name === name)) {
+          group.roles.push({ name, kind: 'role', status: 'used' });
+        }
+      }
+    }
+  }
+  return Array.from(map.values());
+}
+
+function toNormalizedMember(member: {
+  name: string;
+  kind: string;
+  status: string;
+  location?: IlimapLocation;
+}): NormalizedUsageMember {
+  return { name: member.name, kind: member.kind, status: member.status, location: member.location };
+}
+
+function renderSourceUsageGroup(group: NormalizedSourceUsageGroup): string {
+  const detail = [
+    group.inputIds.length > 0 ? `input ${group.inputIds.join(', ')}` : '',
+    group.aliases.length > 0 ? `alias ${group.aliases.join(', ')}` : ''
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return `<div class="usage-group">
+        <div class="usage-header">
+          <span class="name">${renderNavName(group.sourceClass, group)}</span>
+          ${detail ? `<span class="detail">${escapeHtml(detail)}</span>` : ''}
+        </div>
+        ${renderUsageMembers('Attributes', group.attributes)}
+        ${renderUsageMembers('Roles', group.roles)}
+      </div>`;
+}
+
+function renderUsageMembers(title: string, members: NormalizedUsageMember[]): string {
+  if (members.length === 0) {
+    return `<div class="usage-members"><span class="usage-title">${escapeHtml(title)}:</span> <span class="detail">None</span></div>`;
+  }
+  return `<div class="usage-members">
+        <span class="usage-title">${escapeHtml(title)}:</span>
+        <ul class="usage-list">
+          ${members.map(renderUsageMember).join('')}
+        </ul>
+      </div>`;
+}
+
+function renderUsageMember(member: NormalizedUsageMember): string {
+  const status = member.status || 'used';
+  const filterStatus = status === 'unused' ? 'unused' : 'used';
+  return `<li data-usage-status="${escapeAttribute(filterStatus)}">
+            <span class="name">${renderNavName(member.name, member)}</span>
+            <span class="tag ${escapeAttribute(usageStatusClass(status))}">${escapeHtml(status)}</span>
+          </li>`;
+}
+
+function usageStatusClass(status: string): string {
+  if (status === 'unused') {
+    return 'tag-unknown';
+  }
+  if (status === 'used') {
+    return 'tag-mapped';
+  }
+  return 'tag-computed';
+}
+
+function filterLink(target: string, value: string, label: string, active: boolean): string {
+  return `<a href="#" class="filter-link${active ? ' active' : ''}" data-filter-target="${escapeAttribute(
+    target
+  )}" data-filter-value="${escapeAttribute(value)}">${escapeHtml(label)}</a>`;
 }
 
 function renderInspectLink(ruleId: string): string {

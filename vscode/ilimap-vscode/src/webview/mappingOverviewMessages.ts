@@ -41,6 +41,7 @@ export interface IlimapMappingSummary {
   coverageMessage?: string;
   classCoverage?: IlimapCoverageClassSummary[];
   ruleCoverage?: IlimapRuleCoverageSummary[];
+  sourceUsage?: IlimapSourceClassUsageSummary[];
 }
 
 export interface IlimapMappingInputSummary {
@@ -123,6 +124,20 @@ export interface IlimapCoverageAttributeSummary {
   character: number;
   nodeId?: string;
   location?: IlimapLocation;
+  status?:
+    | 'mapped'
+    | 'constant'
+    | 'computed'
+    | 'enumMap'
+    | 'default'
+    | 'bag'
+    | 'ref'
+    | 'missing'
+    | 'documentedLoss'
+    | 'unknown'
+    | string;
+  expression?: string;
+  sourceSummary?: string;
 }
 
 export interface IlimapSourceUsageSummary {
@@ -134,6 +149,30 @@ export interface IlimapSourceUsageSummary {
   line: number;
   character: number;
   nodeId?: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapSourceClassUsageSummary {
+  inputIds: string[];
+  sourceClass: string;
+  aliases: string[];
+  attributes: IlimapSourceAttributeUsageSummary[];
+  roles: IlimapSourceAttributeUsageSummary[];
+  location?: IlimapLocation;
+}
+
+export interface IlimapSourceAttributeUsageSummary {
+  name: string;
+  kind: 'attribute' | 'role' | string;
+  status: 'used' | 'unused' | 'identity' | 'where' | 'join' | 'loss' | 'unknown' | string;
+  usedBy: IlimapUsageReferenceSummary[];
+  location?: IlimapLocation;
+}
+
+export interface IlimapUsageReferenceSummary {
+  ruleId: string;
+  context: 'assign' | 'where' | 'join' | 'identity' | 'ref' | 'bag' | 'loss' | string;
+  targetAttribute?: string;
   location?: IlimapLocation;
 }
 

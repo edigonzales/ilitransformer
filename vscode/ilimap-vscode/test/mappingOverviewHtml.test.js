@@ -42,7 +42,110 @@ test('renders coverage sections with navigation metadata', () => {
   assert.match(html, /Rule Coverage/);
   assert.match(html, /data-nav-line="10"/);
   assert.match(html, /data-nav-character="4"/);
-  assert.match(html, /Missing mandatory/);
+  assert.match(html, /class="coverage-matrix"/);
+});
+
+test('renders the target coverage matrix with header columns and status tags', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.match(html, /<table class="coverage-matrix">/);
+  assert.match(html, /<th>Attribute<\/th>/);
+  assert.match(html, /<th>Status<\/th>/);
+  assert.match(html, /<th>Source \/ Expression<\/th>/);
+  assert.match(html, /class="tag tag-mapped">mapped</);
+  assert.match(html, />missing</);
+});
+
+test('renders derived status from assigned/mandatory when server status is absent', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.match(html, /tag-mapped">mapped</);
+  assert.match(html, /tag-missing warning">missing</);
+});
+
+test('uses server-provided status when present', () => {
+  const s = summary();
+  s.ruleCoverage[0].attributes[0].status = 'enumMap';
+  const html = renderMappingOverviewHtml(s, 'test-nonce');
+
+  assert.match(html, /tag-enumMap">enumMap</);
+});
+
+test('marks missing mandatory attributes with a warning row class and data attributes', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.match(html, /<tr class="coverage-row-missing" data-missing="true" data-mandatory="true">/);
+  assert.match(html, /class="req-marker"/);
+});
+
+test('escapes coverage expressions and source summaries', () => {
+  const html = renderMappingOverviewHtml(summaryWithUnsafeExpression(), 'test-nonce');
+
+  assert.match(html, /<code>&lt;b&gt;evil&lt;\/b&gt;<\/code>/);
+  assert.doesNotMatch(html, /<code><b>evil<\/b><\/code>/);
+});
+
+test('renders a coverage filter bar without inline handlers', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.match(html, /data-filter-target="rule-coverage"/);
+  assert.match(html, /data-filter-value="missing"/);
+  assert.match(html, /data-filter-value="mandatory"/);
+  assert.doesNotMatch(html, /onclick=/i);
+});
+
+test('renders Source Usage section from grouped server source usage', () => {
+  const html = renderMappingOverviewHtml(summaryWithSourceUsage(), 'test-nonce');
+
+  assert.match(html, /<section class="source-usage"[^>]*>/);
+  assert.match(html, /Source Usage/);
+  assert.match(html, /Attributes:/);
+  assert.match(html, /Roles:/);
+  assert.match(html, /data-usage-status="used"/);
+  assert.match(html, /data-usage-status="unused"/);
+  assert.match(html, />Entstehung</);
+  assert.match(html, /data-filter-value="unused"/);
+});
+
+test('derives Source Usage from rule coverage sources when grouped usage is absent', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.match(html, /Source Usage/);
+  assert.match(html, /Attributes:/);
+  assert.match(html, /data-usage-status="used"/);
+});
+
+test('escapes source usage member names', () => {
+  const s = summaryWithSourceUsage();
+  s.sourceUsage[0].attributes.push({
+    name: '<img src=x onerror=alert(3)>',
+    kind: 'attribute',
+    status: 'used',
+    usedBy: []
+  });
+  const html = renderMappingOverviewHtml(s, 'test-nonce');
+
+  assert.match(html, /&lt;img src=x onerror=alert\(3\)&gt;/);
+  assert.doesNotMatch(html, /<img src=x onerror=alert\(3\)>/);
+});
+
+test('renders None when there is no source usage', () => {
+  const html = renderMappingOverviewHtml(summaryWithoutSourceUsage(), 'test-nonce');
+
+  assert.match(html, /<section class="source-usage"[^>]*>\s*<h2>Source Usage<\/h2>\s*<p class="empty">None<\/p>/);
+});
+
+test('keeps strict CSP and no editable controls with coverage matrix and source usage', () => {
+  const html = renderMappingOverviewHtml(summaryWithSourceUsage(), 'test-nonce');
+
+  assert.match(
+    html,
+    /Content-Security-Policy" content="default-src 'none'; style-src 'nonce-test-nonce'; script-src 'nonce-test-nonce';"/
+  );
+  assert.doesNotMatch(html, /<button\b/i);
+  assert.doesNotMatch(html, /<input\b/i);
+  assert.doesNotMatch(html, /<form\b/i);
+  assert.doesNotMatch(html, /contenteditable/i);
 });
 
 test('renders input IDs as navigable links when location present', () => {
@@ -513,6 +616,37 @@ function summaryWithLineCharOnly() {
 function summaryWithLocationEnds() {
   const s = summary();
   s.classCoverage[0].location = { line: 10, character: 4, endLine: 12, endCharacter: 18 };
+  return s;
+}
+
+function summaryWithUnsafeExpression() {
+  const s = summary();
+  s.ruleCoverage[0].attributes[0].expression = '<b>evil</b>';
+  s.ruleCoverage[0].attributes[0].sourceSummary = undefined;
+  return s;
+}
+
+function summaryWithSourceUsage() {
+  const s = summary();
+  s.sourceUsage = [
+    {
+      inputIds: ['src'],
+      sourceClass: 'M.A',
+      aliases: ['s'],
+      attributes: [
+        { name: 'Name', kind: 'attribute', status: 'used', usedBy: [] },
+        { name: 'Beschreibung', kind: 'attribute', status: 'unused', usedBy: [] }
+      ],
+      roles: [{ name: 'Entstehung', kind: 'role', status: 'used', usedBy: [] }]
+    }
+  ];
+  return s;
+}
+
+function summaryWithoutSourceUsage() {
+  const s = summary();
+  s.sourceUsage = [];
+  s.ruleCoverage = [];
   return s;
 }
 

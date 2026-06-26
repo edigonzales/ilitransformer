@@ -9,4 +9,7 @@ public record IlimapCoverageAttributeSummary(
         int line,
         int character,
         String nodeId,
-        IlimapOverviewLocation location) {}
+        IlimapOverviewLocation location,
+        String status,
+        String expression,
+        String sourceSummary) {}

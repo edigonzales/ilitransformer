@@ -60,6 +60,7 @@ public final class IlimapMappingSummaryService {
                     false,
                     "Model coverage unavailable because the mapping could not be parsed.",
                     List.of(),
+                    List.of(),
                     List.of());
         }
 
@@ -68,6 +69,7 @@ public final class IlimapMappingSummaryService {
                 .map(rule -> ruleSummary(analysis, rule))
                 .toList();
         Coverage coverage = coverage(analysis, document);
+        List<IlimapSourceClassUsageSummary> sourceUsage = sourceUsage(analysis, document);
 
         return new IlimapMappingSummary(
                 true,
@@ -106,7 +108,8 @@ public final class IlimapMappingSummaryService {
                 coverage.available(),
                 coverage.message(),
                 coverage.classCoverage(),
-                coverage.ruleCoverage());
+                coverage.ruleCoverage(),
+                sourceUsage);
     }
 
     private IlimapRuleSummary ruleSummary(IlimapAnalysis analysis, IlimapRuleBlock rule) {
@@ -330,6 +333,7 @@ public final class IlimapMappingSummaryService {
                             ? analysis.lineMap()
                                     .toIdePosition(assignment.range().start().offset())
                             : new IlimapIdePosition(-1, -1);
+                    String expression = assignment != null ? assignment.expression().text() : null;
                     return new IlimapCoverageAttributeSummary(
                             attribute.name(),
                             attribute.type(),
@@ -343,7 +347,10 @@ public final class IlimapMappingSummaryService {
                                     : null,
                             assignment != null
                                     ? new IlimapOverviewLocation(pos.line(), pos.character(), null, null)
-                                    : null);
+                                    : null,
+                            coverageStatus(attribute, expression),
+                            expression,
+                            expression != null ? sourceSummary(expression) : null);
                 })
                 .toList();
 
@@ -445,6 +452,194 @@ public final class IlimapMappingSummaryService {
 
     private static List<String> sorted(Set<String> values) {
         return values.stream().sorted().toList();
+    }
+
+    private static String coverageStatus(IlimapAttributeInfo attribute, String expression) {
+        if (expression == null) {
+            return attribute.mandatory() ? "missing" : "unknown";
+        }
+        String kind = IlimapRuleDetailService.classifyAssignmentKind(expression);
+        return "copy".equals(kind) ? "mapped" : kind;
+    }
+
+    private static String sourceSummary(String expression) {
+        Set<String> parts = new LinkedHashSet<>();
+        for (IlimapExpressionDependencySummary dependency :
+                IlimapRuleDetailService.extractDependencies(expression)) {
+            if ("enumMap".equals(dependency.kind()) && dependency.enumMapId() != null) {
+                parts.add("enumMap(" + dependency.enumMapId() + ")");
+            } else if (dependency.alias() != null && dependency.member() != null) {
+                parts.add(dependency.alias() + "." + dependency.member());
+            }
+        }
+        return parts.isEmpty() ? null : String.join(", ", parts);
+    }
+
+    private List<IlimapSourceClassUsageSummary> sourceUsage(IlimapAnalysis analysis, IlimapDocument document) {
+        Map<String, SourceGroup> groups = new LinkedHashMap<>();
+        for (IlimapRuleBlock rule : document.rules()) {
+            Map<String, SourceBinding> bindings = new LinkedHashMap<>();
+            for (IlimapRuleElement element : rule.elements()) {
+                collectSources(element, bindings);
+            }
+            for (SourceBinding binding : bindings.values()) {
+                sourceClass(analysis, binding).ifPresent(classInfo -> groups
+                        .computeIfAbsent(
+                                groupKey(binding),
+                                ignored -> new SourceGroup(
+                                        binding.inputIds(),
+                                        binding.sourceClass(),
+                                        classInfo,
+                                        pointLocation(analysis, binding.range())))
+                        .aliases
+                        .add(binding.alias()));
+            }
+            for (ContextualExpression contextual : contextualExpressions(rule)) {
+                Matcher matcher = SOURCE_MEMBER_PATTERN.matcher(contextual.expression().text());
+                while (matcher.find()) {
+                    String alias = matcher.group(1);
+                    String member = matcher.group(2);
+                    SourceBinding binding = bindings.get(alias);
+                    if (binding == null) {
+                        continue;
+                    }
+                    SourceGroup group = groups.get(groupKey(binding));
+                    if (group == null) {
+                        continue;
+                    }
+                    IlimapUsageReferenceSummary reference = new IlimapUsageReferenceSummary(
+                            rule.id(),
+                            contextual.context(),
+                            null,
+                            pointLocation(analysis, contextual.expression().range()));
+                    if (group.classInfo.findRole(member).isPresent()) {
+                        group.usedRoles
+                                .computeIfAbsent(member, ignored -> new ArrayList<>())
+                                .add(reference);
+                    } else if (group.classInfo.findAttribute(member).isPresent()) {
+                        group.usedAttributes
+                                .computeIfAbsent(member, ignored -> new ArrayList<>())
+                                .add(reference);
+                    }
+                }
+            }
+        }
+        return groups.values().stream().map(SourceGroup::toSummary).toList();
+    }
+
+    private static String groupKey(SourceBinding binding) {
+        return binding.sourceClass() + "\n" + String.join(",", binding.inputIds().stream().sorted().toList());
+    }
+
+    private static IlimapOverviewLocation pointLocation(IlimapAnalysis analysis, IlimapSourceRange range) {
+        IlimapIdePosition position = analysis.lineMap().toIdePosition(range.start().offset());
+        return IlimapOverviewLocation.point(position.line(), position.character());
+    }
+
+    private static List<ContextualExpression> contextualExpressions(IlimapRuleBlock rule) {
+        List<ContextualExpression> result = new ArrayList<>();
+        for (IlimapRuleElement element : rule.elements()) {
+            collectContextual(element, result);
+        }
+        return result;
+    }
+
+    private static void collectContextual(IlimapRuleElement element, List<ContextualExpression> result) {
+        switch (element) {
+            case IlimapAssignmentBlock block ->
+                    block.assignments().forEach(a -> result.add(new ContextualExpression("assign", a.expression())));
+            case IlimapDefaultsBlock block ->
+                    block.assignments().forEach(a -> result.add(new ContextualExpression("assign", a.expression())));
+            case IlimapSourceStmt source -> {
+                if (source.where() != null) {
+                    result.add(new ContextualExpression("where", source.where()));
+                }
+            }
+            case IlimapWhereStmt where -> result.add(new ContextualExpression("where", where.expression()));
+            case IlimapIdentityStmt identity ->
+                    identity.expressions().forEach(e -> result.add(new ContextualExpression("identity", e)));
+            case IlimapJoinStmt join -> result.add(new ContextualExpression("join", join.on()));
+            case IlimapBagBlock bag -> collectContextual(bag, result);
+            case IlimapRefBlock ref -> {
+                if (ref.sourceRef() != null) {
+                    result.add(new ContextualExpression("ref", ref.sourceRef()));
+                }
+            }
+            case IlimapCreateBlock create -> {
+                if (create.assign() != null) {
+                    create.assign().assignments()
+                            .forEach(a -> result.add(new ContextualExpression("assign", a.expression())));
+                }
+            }
+            case IlimapLossBlock loss -> {
+                if (loss.sourcePath() != null) {
+                    result.add(new ContextualExpression("loss", loss.sourcePath()));
+                }
+                if (loss.when() != null) {
+                    result.add(new ContextualExpression("loss", loss.when()));
+                }
+            }
+            default -> {}
+        }
+    }
+
+    private static void collectContextual(IlimapBagBlock bag, List<ContextualExpression> result) {
+        if (bag.from() != null && bag.from().where() != null) {
+            result.add(new ContextualExpression("bag", bag.from().where()));
+        }
+        if (bag.assign() != null) {
+            bag.assign().assignments().forEach(a -> result.add(new ContextualExpression("bag", a.expression())));
+        }
+        for (IlimapBagBlock nested : bag.nestedBags()) {
+            collectContextual(nested, result);
+        }
+    }
+
+    private record ContextualExpression(String context, IlimapExpressionText expression) {}
+
+    private static final class SourceGroup {
+        private final List<String> inputIds;
+        private final String sourceClass;
+        private final IlimapClassInfo classInfo;
+        private final IlimapOverviewLocation location;
+        private final Set<String> aliases = new LinkedHashSet<>();
+        private final Map<String, List<IlimapUsageReferenceSummary>> usedAttributes = new LinkedHashMap<>();
+        private final Map<String, List<IlimapUsageReferenceSummary>> usedRoles = new LinkedHashMap<>();
+
+        private SourceGroup(
+                List<String> inputIds,
+                String sourceClass,
+                IlimapClassInfo classInfo,
+                IlimapOverviewLocation location) {
+            this.inputIds = List.copyOf(inputIds);
+            this.sourceClass = sourceClass;
+            this.classInfo = classInfo;
+            this.location = location;
+        }
+
+        private IlimapSourceClassUsageSummary toSummary() {
+            List<IlimapSourceAttributeUsageSummary> attributes = classInfo.attributes().stream()
+                    .map(attribute ->
+                            memberUsage(attribute.name(), "attribute", usedAttributes.get(attribute.name())))
+                    .toList();
+            List<IlimapSourceAttributeUsageSummary> roles = classInfo.roles().stream()
+                    .map(role -> memberUsage(role.name(), "role", usedRoles.get(role.name())))
+                    .toList();
+            return new IlimapSourceClassUsageSummary(
+                    inputIds,
+                    sourceClass,
+                    aliases.stream().sorted().toList(),
+                    attributes,
+                    roles,
+                    location);
+        }
+
+        private static IlimapSourceAttributeUsageSummary memberUsage(
+                String name, String kind, List<IlimapUsageReferenceSummary> usedBy) {
+            boolean used = usedBy != null && !usedBy.isEmpty();
+            return new IlimapSourceAttributeUsageSummary(
+                    name, kind, used ? "used" : "unused", used ? List.copyOf(usedBy) : List.of(), null);
+        }
     }
 
     private static List<String> refs(IlimapRuleBlock rule) {
