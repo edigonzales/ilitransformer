@@ -134,6 +134,23 @@ class IlimapMappingSummaryLspTest {
     }
 
     @Test
+    void classCoverageExcludesImportedDependencyModelsAfterValidation() {
+        IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
+        IlimapLanguageServer server = new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
+        String source = avMapping();
+        textDocumentService.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));
+
+        server.validateMapping(new IlimapValidateMappingParams(URI, source, 1)).join();
+        var summary = server.mappingSummary(new IlimapMappingSummaryParams(URI)).join();
+
+        assertThat(summary.coverageAvailable()).isTrue();
+        assertThat(summary.classCoverage())
+                .extracting(coverage -> coverage.className())
+                .allSatisfy(className -> assertThat(className).startsWith("DM01AVCH24LV95D."))
+                .noneSatisfy(className -> assertThat(className).startsWith("CoordSys."));
+    }
+
+    @Test
     void populatesCoverageAttributeStatusAndGroupedSourceUsageAfterValidation() {
         IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
         IlimapLanguageServer server = new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
@@ -269,6 +286,22 @@ class IlimapMappingSummaryLspTest {
                     assign {
                       Name = s.Name;
                     }
+                  }
+                }
+                """;
+    }
+
+    private static String avMapping() {
+        return """
+                mapping v2 "Profile" {
+                  job {
+                    modeldir "src/test/data/av/models/";
+                  }
+                  input src { path "in.itf"; model "DM01AVCH24LV95D"; }
+                  output out { path "out.itf"; model "DM01AVCH24LV95D"; }
+                  rule r1 {
+                    target out class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3";
+                    source p from src class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3";
                   }
                 }
                 """;

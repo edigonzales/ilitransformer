@@ -19,6 +19,7 @@ import type {
   IlimapRefSummary,
   IlimapRuleCoverageSummary,
   IlimapRuleDetailSummary,
+  IlimapSourceUsageSummary,
   IlimapSourceDetailSummary,
   IlimapTargetDetailSummary,
   IlimapWithLocation
@@ -29,10 +30,12 @@ export function renderMappingOverviewHtml(
   summary: IlimapMappingSummary,
   nonce: string,
   renderState?: MappingOverviewRenderState,
-  selectedRuleDetail?: IlimapRuleDetailSummary
+  ruleDetails?: IlimapRuleDetailSummary | IlimapRuleDetailSummary[],
+  activeRuleId?: string
 ): string {
   const title = summary.available ? summary.mappingName || 'mapping' : 'Mapping unavailable';
   const diagnosticText = diagnosticsLabel(summary);
+  const normalizedRuleDetails = normalizeRuleDetails(ruleDetails);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,7 +58,7 @@ export function renderMappingOverviewHtml(
     }
 
     main {
-      max-width: 1120px;
+      width: min(1440px, 100%);
       margin: 0 auto;
     }
 
@@ -167,16 +170,28 @@ export function renderMappingOverviewHtml(
 
     .tag {
       align-self: start;
+      display: inline-flex;
+      box-sizing: border-box;
+      align-items: center;
+      justify-content: center;
       min-width: 54px;
-      padding: 2px 7px;
-      border: 1px solid var(--vscode-badge-background);
+      min-height: 20px;
+      max-width: 100%;
+      padding: 2px 8px;
+      border: 1px solid var(--vscode-descriptionForeground);
       border-radius: 999px;
-      color: var(--vscode-badge-foreground);
-      background: var(--vscode-badge-background);
+      color: var(--vscode-descriptionForeground);
+      background: transparent;
       text-align: center;
       font-size: 11px;
-      line-height: 1.4;
+      line-height: 1.25;
       text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .tag.ok {
+      border-color: var(--vscode-charts-green);
+      color: var(--vscode-charts-green);
     }
 
     .tag.warning {
@@ -401,10 +416,37 @@ export function renderMappingOverviewHtml(
       margin-bottom: 6px;
     }
 
+    .coverage-matrix-scroll {
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
     table.coverage-matrix {
       width: 100%;
+      min-width: 760px;
+      table-layout: fixed;
       border-collapse: collapse;
       font-size: 12px;
+    }
+
+    table.coverage-matrix col.coverage-attribute {
+      width: 18%;
+    }
+
+    table.coverage-matrix col.coverage-status {
+      width: 120px;
+    }
+
+    table.coverage-matrix col.coverage-type {
+      width: 34%;
+    }
+
+    table.coverage-matrix col.coverage-cardinality {
+      width: 96px;
+    }
+
+    table.coverage-matrix col.coverage-source {
+      width: 26%;
     }
 
     table.coverage-matrix th,
@@ -413,7 +455,7 @@ export function renderMappingOverviewHtml(
       text-align: left;
       vertical-align: top;
       border-bottom: 1px solid var(--vscode-panel-border);
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
     }
 
     table.coverage-matrix th {
@@ -426,8 +468,12 @@ export function renderMappingOverviewHtml(
       background: var(--vscode-textCodeBlock-background);
       padding: 1px 4px;
       border-radius: 3px;
-      white-space: pre-wrap;
-      word-break: break-all;
+      white-space: normal;
+      overflow-wrap: break-word;
+    }
+
+    table.coverage-matrix td.coverage-status-cell {
+      white-space: nowrap;
     }
 
     tr.coverage-row-missing {
@@ -488,14 +534,35 @@ export function renderMappingOverviewHtml(
       border-top: 1px solid var(--vscode-panel-border);
     }
 
-    .flow-grid {
-      display: grid;
-      grid-template-columns: 1fr 28px 1fr 28px 1fr 28px 1fr 28px 1fr;
+    .flow-scroll {
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    .flow-diagram {
       margin-top: 10px;
     }
 
-    .flow-header-cell {
-      padding: 4px 6px 8px;
+    .flow-grid {
+      min-width: 1420px;
+    }
+
+    .flow-data-row {
+      display: grid;
+      grid-template-columns:
+        minmax(180px, 220px) 32px
+        minmax(300px, 360px) 32px
+        minmax(170px, 210px) 32px
+        minmax(340px, 400px) 32px
+        minmax(180px, 220px);
+      gap: 0;
+      align-items: stretch;
+      padding: 8px 0;
+      border-top: 1px solid var(--vscode-panel-border);
+    }
+
+    .flow-stage-title {
+      margin-bottom: 6px;
       font-size: 10px;
       font-weight: 600;
       color: var(--vscode-descriptionForeground);
@@ -503,21 +570,31 @@ export function renderMappingOverviewHtml(
       letter-spacing: 0.04em;
     }
 
-    .flow-data-row {
-      display: contents;
+    .flow-node {
+      padding: 8px;
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 6px;
+      background: var(--vscode-editorWidget-background);
+      min-width: 0;
     }
 
-    .flow-node {
-      padding: 6px;
+    .flow-node-stack {
+      display: grid;
+      gap: 6px;
+    }
+
+    .flow-cell + .flow-cell {
+      padding-top: 6px;
       border-top: 1px solid var(--vscode-panel-border);
-      min-width: 0;
-      overflow-wrap: anywhere;
     }
 
     .flow-node .flow-node-label {
+      display: block;
       font-weight: 600;
       font-size: 13px;
       line-height: 1.3;
+      overflow-wrap: anywhere;
+      word-break: normal;
     }
 
     .flow-node a.flow-node-label {
@@ -535,6 +612,11 @@ export function renderMappingOverviewHtml(
       font-size: 11px;
       line-height: 1.3;
       overflow-wrap: anywhere;
+      word-break: normal;
+    }
+
+    .rule-inspector[data-active-rule-detail="true"] {
+      border-top-color: var(--vscode-focusBorder);
     }
 
     .flow-arrow-cell {
@@ -542,7 +624,6 @@ export function renderMappingOverviewHtml(
       align-items: center;
       justify-content: center;
       padding: 6px 0;
-      border-top: 1px solid var(--vscode-panel-border);
       color: var(--vscode-descriptionForeground);
       font-size: 13px;
     }
@@ -566,13 +647,34 @@ export function renderMappingOverviewHtml(
       <div class="muted">${escapeHtml(diagnosticText)}</div>
     </div>
     ${renderStatusBar(renderState)}
-    ${summary.available ? renderAvailableSummary(summary, selectedRuleDetail) : renderUnavailable(summary)}
+    ${summary.available ? renderAvailableSummary(summary, normalizedRuleDetails, activeRuleId) : renderUnavailable(summary)}
   </main>
   <script nonce="${escapeAttribute(nonce)}">
     const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
+    const activeRuleDetailId = ${scriptString(activeRuleId || '')};
+    function preserveScrollPosition(anchor, action) {
+      const top = anchor.getBoundingClientRect().top;
+      const left = window.scrollX;
+      action();
+      requestAnimationFrame(() => {
+        const nextTop = anchor.getBoundingClientRect().top;
+        window.scrollTo(left, window.scrollY + nextTop - top);
+      });
+    }
+    function preserveCurrentScroll(action) {
+      const top = window.scrollY;
+      const left = window.scrollX;
+      action();
+      requestAnimationFrame(() => window.scrollTo(left, top));
+    }
+
     document.addEventListener('click', event => {
       if (!(event.target instanceof Element)) {
         return;
+      }
+      const internalLink = event.target.closest('a[href="#"]');
+      if (internalLink) {
+        event.preventDefault();
       }
       const filterTarget = event.target.closest('[data-filter-value]');
       if (filterTarget) {
@@ -580,9 +682,11 @@ export function renderMappingOverviewHtml(
         const wrapperClass = filterTarget.getAttribute('data-filter-target');
         const wrapper = wrapperClass ? filterTarget.closest('.' + wrapperClass) : null;
         if (wrapper) {
-          wrapper.setAttribute('data-active-filter', filterTarget.getAttribute('data-filter-value') || 'all');
-          wrapper.querySelectorAll('.filter-bar [data-filter-value]').forEach(link => link.classList.remove('active'));
-          filterTarget.classList.add('active');
+          preserveScrollPosition(wrapper, () => {
+            wrapper.setAttribute('data-active-filter', filterTarget.getAttribute('data-filter-value') || 'all');
+            wrapper.querySelectorAll('.filter-bar [data-filter-value]').forEach(link => link.classList.remove('active'));
+            filterTarget.classList.add('active');
+          });
         }
         return;
       }
@@ -616,23 +720,36 @@ export function renderMappingOverviewHtml(
       }
       event.preventDefault();
       if (target.hasAttribute('data-nav-end-line')) {
-        vscode.postMessage({
-          type: 'navigateToLocation',
-          location: {
-            line: Number(target.getAttribute('data-nav-line')),
-            character: Number(target.getAttribute('data-nav-character')),
-            endLine: Number(target.getAttribute('data-nav-end-line')),
-            endCharacter: Number(target.getAttribute('data-nav-end-character'))
-          }
+        preserveCurrentScroll(() => {
+          vscode.postMessage({
+            type: 'navigateToLocation',
+            location: {
+              line: Number(target.getAttribute('data-nav-line')),
+              character: Number(target.getAttribute('data-nav-character')),
+              endLine: Number(target.getAttribute('data-nav-end-line')),
+              endCharacter: Number(target.getAttribute('data-nav-end-character'))
+            }
+          });
         });
       } else {
-        vscode.postMessage({
-          type: 'navigate',
-          line: Number(target.getAttribute('data-nav-line')),
-          character: Number(target.getAttribute('data-nav-character'))
+        preserveCurrentScroll(() => {
+          vscode.postMessage({
+            type: 'navigate',
+            line: Number(target.getAttribute('data-nav-line')),
+            character: Number(target.getAttribute('data-nav-character'))
+          });
         });
       }
     });
+    if (activeRuleDetailId) {
+      requestAnimationFrame(() => {
+        const detail = Array.from(document.querySelectorAll('[data-rule-detail-id]'))
+          .find(candidate => candidate.getAttribute('data-rule-detail-id') === activeRuleDetailId);
+        if (detail) {
+          detail.scrollIntoView({ block: 'start' });
+        }
+      });
+    }
   </script>
 </body>
 </html>`;
@@ -651,7 +768,25 @@ function escapeAttribute(value: unknown): string {
   return escapeHtml(value);
 }
 
-function renderAvailableSummary(summary: IlimapMappingSummary, selectedRuleDetail?: IlimapRuleDetailSummary): string {
+function scriptString(value: string): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
+}
+
+function normalizeRuleDetails(ruleDetails?: IlimapRuleDetailSummary | IlimapRuleDetailSummary[]): IlimapRuleDetailSummary[] {
+  if (!ruleDetails) {
+    return [];
+  }
+  return Array.isArray(ruleDetails) ? ruleDetails : [ruleDetails];
+}
+
+function renderAvailableSummary(
+  summary: IlimapMappingSummary,
+  ruleDetails: IlimapRuleDetailSummary[],
+  activeRuleId?: string
+): string {
   return `${renderMetrics(summary)}
     <div class="sections">
       ${renderInputs(summary)}
@@ -664,7 +799,7 @@ function renderAvailableSummary(summary: IlimapMappingSummary, selectedRuleDetai
     ${renderRuleCoverageSection(summary)}
     ${renderSourceUsage(summary)}
     ${renderFlowMap(summary)}
-    ${renderRuleInspector(selectedRuleDetail)}`;
+    ${renderRuleInspectors(summary, ruleDetails, activeRuleId)}`;
 }
 
 function renderUnavailable(summary: IlimapMappingSummary): string {
@@ -942,7 +1077,10 @@ function renderClassCoverage(classes: IlimapCoverageClassSummary[]): string {
       ]
         .filter(Boolean)
         .join(' · '),
-    item => `<span class="tag ${item.mandatoryMissingCount > 0 ? 'warning' : ''}">${item.targeted ? 'mapped' : 'open'}</span>`
+    item =>
+      `<span class="tag ${
+        item.mandatoryMissingCount > 0 ? 'warning' : item.targeted ? 'tag-mapped' : 'tag-unknown'
+      }">${item.targeted ? 'mapped' : 'open'}</span>`
   );
 }
 
@@ -980,7 +1118,7 @@ function renderRuleCoverageItem(rule: IlimapRuleCoverageSummary, summary: Ilimap
             `${rule.bagAssignmentCount} bag assignments`,
             rule.refs.length > 0 ? `refs ${rule.refs.join(', ')}` : ''
           ].filter(Boolean).join(' · '))}</span>
-          <span class="tag ${missing.length > 0 ? 'warning' : ''}">${missing.length > 0 ? 'gaps' : 'ok'}</span>
+          <span class="tag ${missing.length > 0 ? 'warning' : 'ok'}">${missing.length > 0 ? 'gaps' : 'ok'}</span>
           ${renderDiagnosticBadges(diagnosticsForRule(summary, rule.ruleId))}
         </div>
         ${renderTargetCoverageMatrix(rule, summary)}
@@ -991,7 +1129,15 @@ function renderTargetCoverageMatrix(rule: IlimapRuleCoverageSummary, summary: Il
   if (rule.attributes.length === 0) {
     return '<p class="empty">No target attributes.</p>';
   }
-  return `<table class="coverage-matrix">
+  return `<div class="coverage-matrix-scroll">
+      <table class="coverage-matrix">
+        <colgroup>
+          <col class="coverage-attribute">
+          <col class="coverage-status">
+          <col class="coverage-type">
+          <col class="coverage-cardinality">
+          <col class="coverage-source">
+        </colgroup>
         <thead>
           <tr>
             <th>Attribute</th>
@@ -1004,7 +1150,8 @@ function renderTargetCoverageMatrix(rule: IlimapRuleCoverageSummary, summary: Il
         <tbody>
           ${rule.attributes.map(attribute => renderCoverageAttributeRow(attribute, rule.ruleId, summary)).join('')}
         </tbody>
-      </table>`;
+      </table>
+    </div>`;
 }
 
 function renderCoverageAttributeRow(
@@ -1021,7 +1168,7 @@ function renderCoverageAttributeRow(
             <td>${renderNavName(attribute.name, attribute)}${
               attribute.mandatory ? ' <span class="req-marker" title="mandatory">*</span>' : ''
             }</td>
-            <td><span class="tag ${escapeAttribute(coverageStatusClass(status))}">${escapeHtml(status)}</span>${diagnosticBadges}</td>
+            <td class="coverage-status-cell"><span class="tag ${escapeAttribute(coverageStatusClass(status))}">${escapeHtml(status)}</span>${diagnosticBadges}</td>
             <td class="detail">${escapeHtml(attribute.type)}</td>
             <td class="detail">${escapeHtml(attribute.cardinality)}</td>
             <td>${source ? `<code>${escapeHtml(source)}</code>` : '<span class="detail">—</span>'}</td>
@@ -1218,6 +1365,13 @@ interface FlowRow {
   hasMissingMandatory: boolean;
 }
 
+interface FlowSourceGroup {
+  inputIds: string[];
+  sourceClass: string;
+  aliases: string[];
+  location?: IlimapLocation;
+}
+
 function renderFlowMap(summary: IlimapMappingSummary): string {
   const rows = buildFlowRows(summary);
   if (rows.length === 0) {
@@ -1229,19 +1383,10 @@ function renderFlowMap(summary: IlimapMappingSummary): string {
   return `<section class="flow-map" data-active-filter="all">
       <h2>Flow Map</h2>
       ${renderFlowFilterBar()}
-      <div class="flow-grid">
-        <div style="display:contents">
-          <div class="flow-header-cell">Inputs</div>
-          <div class="flow-header-cell"></div>
-          <div class="flow-header-cell">Source Classes</div>
-          <div class="flow-header-cell"></div>
-          <div class="flow-header-cell">Rules</div>
-          <div class="flow-header-cell"></div>
-          <div class="flow-header-cell">Target Classes</div>
-          <div class="flow-header-cell"></div>
-          <div class="flow-header-cell">Outputs</div>
+      <div class="flow-scroll">
+        <div class="flow-diagram flow-grid">
+          ${rows.map(renderFlowRow).join('')}
         </div>
-        ${rows.map(renderFlowRow).join('')}
       </div>
     </section>`;
 }
@@ -1270,14 +1415,18 @@ function buildFlowRows(summary: IlimapMappingSummary): FlowRow[] {
   for (const output of summary.outputs) {
     outputMap.set(output.id, output);
   }
+  const fallbackSources = allocateFallbackSourceGroups(summary);
 
   return summary.rules.map(rule => {
     const coverage = coverageMap.get(rule.id);
     const sources = coverage?.sources ?? [];
+    const sourceCells = sources.length > 0
+      ? sources
+      : (fallbackSources.get(rule.id) ?? []);
 
     const seenInputIds = new Set<string>();
     const inputs: FlowCell[] = [];
-    for (const source of sources) {
+    for (const source of sourceCells) {
       for (const inputId of source.inputIds ?? []) {
         if (!seenInputIds.has(inputId)) {
           seenInputIds.add(inputId);
@@ -1292,10 +1441,9 @@ function buildFlowRows(summary: IlimapMappingSummary): FlowRow[] {
       }
     }
 
-    const sourceClasses: FlowCell[] = sources.map(source => ({
+    const sourceClasses: FlowCell[] = sourceCells.map(source => ({
       label: source.sourceClass || '?',
-      sublabel: source.alias ? `alias ${source.alias}` : undefined,
-      nodeId: source.nodeId,
+      sublabel: sourceAliases(source).length > 0 ? `alias ${sourceAliases(source).join(', ')}` : undefined,
       location: source.location
     }));
 
@@ -1303,7 +1451,7 @@ function buildFlowRows(summary: IlimapMappingSummary): FlowRow[] {
     const targetClasses: FlowCell[] = rule.targetClass ? [{
       label: rule.targetClass,
       nodeId: coverage?.nodeId,
-      location: coverage?.location
+      location: coverage?.location ?? rule.location
     }] : [];
     const outputs: FlowCell[] = rule.targetOutput ? [{
       label: rule.targetOutput,
@@ -1333,6 +1481,40 @@ function buildFlowRows(summary: IlimapMappingSummary): FlowRow[] {
   });
 }
 
+function allocateFallbackSourceGroups(summary: IlimapMappingSummary): Map<string, FlowSourceGroup[]> {
+  const result = new Map<string, FlowSourceGroup[]>();
+  const groups = (summary.sourceUsage ?? []).map(group => ({
+    inputIds: group.inputIds ?? [],
+    sourceClass: group.sourceClass,
+    aliases: group.aliases ?? [],
+    location: group.location
+  }));
+  let cursor = 0;
+  for (const rule of summary.rules) {
+    const assigned: FlowSourceGroup[] = [];
+    let remaining = rule.sourceCount;
+    while (remaining > 0 && cursor < groups.length) {
+      const group = groups[cursor++];
+      assigned.push(group);
+      remaining -= Math.max(1, group.aliases.length);
+    }
+    if (assigned.length > 0) {
+      result.set(rule.id, assigned);
+    }
+  }
+  return result;
+}
+
+function sourceAliases(source: IlimapSourceUsageSummary | FlowSourceGroup): string[] {
+  if ('alias' in source && source.alias) {
+    return [source.alias];
+  }
+  if ('aliases' in source) {
+    return source.aliases ?? [];
+  }
+  return [];
+}
+
 function renderFlowRow(row: FlowRow): string {
   const rowAttrs = [
     `data-status="${escapeAttribute(row.status)}"`,
@@ -1341,15 +1523,15 @@ function renderFlowRow(row: FlowRow): string {
     row.hasMissingMandatory ? 'data-missing-mandatory="true"' : ''
   ].filter(Boolean).join(' ');
   return `<div class="flow-data-row" ${rowAttrs}>
-      ${renderFlowCol(row.inputs)}
+      ${renderFlowCol('Inputs', row.inputs)}
       <div class="flow-arrow-cell">→</div>
-      ${renderFlowCol(row.sourceClasses)}
+      ${renderFlowCol('Source Classes', row.sourceClasses, true)}
       <div class="flow-arrow-cell">→</div>
       ${renderFlowRuleNode(row)}
       <div class="flow-arrow-cell">→</div>
-      ${renderFlowCol(row.targetClasses)}
+      ${renderFlowCol('Target Classes', row.targetClasses, true)}
       <div class="flow-arrow-cell">→</div>
-      ${renderFlowCol(row.outputs)}
+      ${renderFlowCol('Outputs', row.outputs)}
     </div>`;
 }
 
@@ -1357,37 +1539,73 @@ function renderFlowRuleNode(row: FlowRow): string {
   const tagClass = row.status === 'error' ? 'error' : row.status === 'warning' ? 'warning' : '';
   const location = navLocation(row.rule);
   const labelHtml = isValidLocation(location)
-    ? `<a href="#" class="flow-node-label" data-nav-line="${escapeAttribute(location.line)}" data-nav-character="${escapeAttribute(location.character)}">${escapeHtml(row.rule.label)}</a>`
-    : `<span class="flow-node-label">${escapeHtml(row.rule.label)}</span>`;
+    ? `<a href="#" class="flow-node-label" title="${escapeAttribute(row.rule.label)}" data-nav-line="${escapeAttribute(
+        location.line
+      )}" data-nav-character="${escapeAttribute(location.character)}">${escapeHtml(row.rule.label)}</a>`
+    : `<span class="flow-node-label" title="${escapeAttribute(row.rule.label)}">${escapeHtml(row.rule.label)}</span>`;
   const tagHtml = tagClass
     ? ` <span class="tag ${escapeAttribute(tagClass)}">${escapeHtml(row.status)}</span>`
     : '';
-  return `<div class="flow-node">${labelHtml}${tagHtml}</div>`;
+  return `<div class="flow-node flow-rule-node">
+      <div class="flow-stage-title">Rules</div>
+      <div class="flow-node-stack">
+        <div class="flow-cell">${labelHtml}${tagHtml}</div>
+      </div>
+    </div>`;
 }
 
-function renderFlowCol(cells: FlowCell[]): string {
+function renderFlowCol(stage: string, cells: FlowCell[], wrapQualifiedNames = false): string {
   if (cells.length === 0) {
-    return '<div class="flow-node"><span class="flow-node-label detail">—</span></div>';
+    return `<div class="flow-node">
+        <div class="flow-stage-title">${escapeHtml(stage)}</div>
+        <div class="flow-node-stack"><div class="flow-cell"><span class="flow-node-label detail">—</span></div></div>
+      </div>`;
   }
-  return `<div class="flow-node">${cells.map((cell, i) => {
+  return `<div class="flow-node">
+      <div class="flow-stage-title">${escapeHtml(stage)}</div>
+      <div class="flow-node-stack">${cells.map(cell => {
     const location = navLocation(cell);
     const labelHtml = isValidLocation(location)
-      ? `<a href="#" class="flow-node-label" data-nav-line="${escapeAttribute(location.line)}" data-nav-character="${escapeAttribute(location.character)}">${escapeHtml(cell.label)}</a>`
-      : `<span class="flow-node-label">${escapeHtml(cell.label)}</span>`;
+      ? `<a href="#" class="flow-node-label" title="${escapeAttribute(cell.label)}" data-nav-line="${escapeAttribute(
+          location.line
+        )}" data-nav-character="${escapeAttribute(location.character)}">${renderFlowLabel(cell.label, wrapQualifiedNames)}</a>`
+      : `<span class="flow-node-label" title="${escapeAttribute(cell.label)}">${renderFlowLabel(
+          cell.label,
+          wrapQualifiedNames
+        )}</span>`;
     const sublabelHtml = cell.sublabel
-      ? `<div class="flow-sublabel">${escapeHtml(cell.sublabel)}</div>`
+      ? `<div class="flow-sublabel" title="${escapeAttribute(cell.sublabel)}">${escapeHtml(cell.sublabel)}</div>`
       : '';
-    const sepStyle = i > 0
-      ? ' style="margin-top:6px;padding-top:6px;border-top:1px solid var(--vscode-panel-border)"'
-      : '';
-    return `<div${sepStyle}>${labelHtml}${sublabelHtml}</div>`;
-  }).join('')}</div>`;
+    return `<div class="flow-cell">${labelHtml}${sublabelHtml}</div>`;
+  }).join('')}</div>
+    </div>`;
 }
 
-function renderRuleInspector(detail?: IlimapRuleDetailSummary): string {
-  if (!detail) {
+function renderFlowLabel(label: string, allowDotBreaks: boolean): string {
+  if (!allowDotBreaks || !label.includes('.')) {
+    return escapeHtml(label);
+  }
+  return label.split('.').map(part => escapeHtml(part)).join('.<wbr>');
+}
+
+function renderRuleInspectors(
+  summary: IlimapMappingSummary,
+  details: IlimapRuleDetailSummary[],
+  activeRuleId?: string
+): string {
+  if (details.length === 0) {
     return '';
   }
+  const ruleOrder = new Map(summary.rules.map((rule, index) => [rule.id, index]));
+  const sorted = [...details].sort((a, b) => {
+    const aIndex = ruleOrder.get(a.ruleId) ?? Number.MAX_SAFE_INTEGER;
+    const bIndex = ruleOrder.get(b.ruleId) ?? Number.MAX_SAFE_INTEGER;
+    return aIndex - bIndex || a.ruleId.localeCompare(b.ruleId);
+  });
+  return sorted.map(detail => renderRuleInspector(detail, activeRuleId === detail.ruleId)).join('');
+}
+
+function renderRuleInspector(detail: IlimapRuleDetailSummary, active: boolean): string {
   let content: string;
   if (!detail.available) {
     content = `<p class="empty">${escapeHtml(detail.message || 'Rule detail unavailable.')}</p>`;
@@ -1406,7 +1624,9 @@ function renderRuleInspector(detail?: IlimapRuleDetailSummary): string {
       renderDiagnostics(detail.diagnostics)
     ].join('');
   }
-  return `<section class="rule-inspector">
+  return `<section class="rule-inspector${active ? ' active' : ''}" data-rule-detail-id="${escapeAttribute(
+    detail.ruleId
+  )}"${active ? ' data-active-rule-detail="true"' : ''}>
     <h2>Rule ${escapeHtml(detail.ruleId)}</h2>
     ${content}
   </section>`;

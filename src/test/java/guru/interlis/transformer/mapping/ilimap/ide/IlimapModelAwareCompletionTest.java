@@ -66,6 +66,17 @@ class IlimapModelAwareCompletionTest {
     }
 
     @Test
+    void completesSourceAliasMembersAfterDotInSourceRef() {
+        List<IlimapCompletionItem> items = complete(
+                associationMapping().replace("sourceRef c.ChildRole", "sourceRef c."),
+                "sourceRef c.",
+                "sourceRef c.".length());
+
+        assertThat(items).extracting(IlimapCompletionItem::label).contains("Name", "Wert", "ChildRole");
+        assertThat(items).noneSatisfy(item -> assertThat(item.label()).contains("Validate or save"));
+    }
+
+    @Test
     void completesTargetAttributesViaTDot() {
         List<IlimapCompletionItem> items =
                 complete(mappingWithExpression("Beschreibung = t.;"), "= t.", "= t.".length());

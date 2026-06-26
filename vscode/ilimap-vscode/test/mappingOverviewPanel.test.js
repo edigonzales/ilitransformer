@@ -1082,6 +1082,23 @@ function baseSummary(name) {
   };
 }
 
+function ruleDetail(ruleId, assignments = []) {
+  return {
+    available: true,
+    message: '',
+    ruleId,
+    sources: [],
+    joins: [],
+    identity: [],
+    assignments,
+    defaults: [],
+    bags: [],
+    refs: [],
+    losses: [],
+    diagnostics: []
+  };
+}
+
 function makeHarness({ activeUri = 'file:///tmp/profile.ilimap', activeFsPath = '/tmp/profile.ilimap', respond } = {}) {
   const refs = {
     requested: [],
@@ -1222,22 +1239,9 @@ test('requestRuleDetail sends ilimap/ruleDetail with ruleId', async (t) => {
 
 test('ruleDetail result is rendered in webview', async (t) => {
   let ruleDetailCalls = 0;
-  const ruleDetailResponse = {
-    available: true,
-    message: '',
-    ruleId: 'r1',
-    sources: [],
-    joins: [],
-    identity: [],
-    assignments: [
-      { targetAttribute: 'Name', expression: 's.Name', kind: 'copy', dependencies: [], location: null }
-    ],
-    defaults: [],
-    bags: [],
-    refs: [],
-    losses: [],
-    diagnostics: []
-  };
+  const ruleDetailResponse = ruleDetail('r1', [
+    { targetAttribute: 'Name', expression: 's.Name', kind: 'copy', dependencies: [], location: null }
+  ]);
   const harness = makeHarness({
     respond(method, params) {
       if (method === 'ilimap/ruleDetail') {
@@ -1259,6 +1263,80 @@ test('ruleDetail result is rendered in webview', async (t) => {
   assert.match(harness.refs.panel.webview.html, /Rule r1/);
   assert.match(harness.refs.panel.webview.html, /Assignments/);
   assert.match(harness.refs.panel.webview.html, />copy</);
+});
+
+test('requestRuleDetail keeps previously loaded details and marks the active rule', async (t) => {
+  let ruleDetailCalls = 0;
+  const harness = makeHarness({
+    respond(method, params) {
+      if (method === 'ilimap/ruleDetail') {
+        ruleDetailCalls += 1;
+        return ruleDetail(params.ruleId);
+      }
+      return baseSummary('Profile');
+    }
+  });
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+  await harness.refs.panel.messageCallback({ type: 'requestRuleDetail', ruleId: 'r1' });
+  await flush();
+  await harness.refs.panel.messageCallback({ type: 'requestRuleDetail', ruleId: 'r2' });
+  await flush();
+
+  assert.equal(ruleDetailCalls, 2);
+  assert.match(harness.refs.panel.webview.html, /Rule r1/);
+  assert.match(harness.refs.panel.webview.html, /Rule r2/);
+  assert.match(harness.refs.panel.webview.html, /data-rule-detail-id="r2"/);
+  assert.match(harness.refs.panel.webview.html, /data-active-rule-detail="true"/);
+});
+
+test('requestRuleDetail reuses cached detail for repeated inspect clicks', async (t) => {
+  let ruleDetailCalls = 0;
+  const harness = makeHarness({
+    respond(method, params) {
+      if (method === 'ilimap/ruleDetail') {
+        ruleDetailCalls += 1;
+        return ruleDetail(params.ruleId);
+      }
+      return baseSummary('Profile');
+    }
+  });
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+  await harness.refs.panel.messageCallback({ type: 'requestRuleDetail', ruleId: 'r1' });
+  await flush();
+  await harness.refs.panel.messageCallback({ type: 'requestRuleDetail', ruleId: 'r1' });
+  await flush();
+
+  assert.equal(ruleDetailCalls, 1);
+  const ruleDetailRequests = harness.refs.requested.filter(entry => entry.method === 'ilimap/ruleDetail');
+  assert.equal(ruleDetailRequests.length, 1);
+  assert.match(harness.refs.panel.webview.html, /data-active-rule-detail="true"/);
+});
+
+test('refresh clears cached rule details', async (t) => {
+  const harness = makeHarness({
+    respond(method, params) {
+      if (method === 'ilimap/ruleDetail') {
+        return ruleDetail(params.ruleId);
+      }
+      return baseSummary('Profile');
+    }
+  });
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.openMappingOverview(context(), harness.outputChannel);
+  await harness.refs.panel.messageCallback({ type: 'requestRuleDetail', ruleId: 'r1' });
+  await flush();
+  assert.match(harness.refs.panel.webview.html, /Rule r1/);
+
+  await harness.refs.panel.messageCallback({ type: 'refresh' });
+  await flush();
+
+  assert.doesNotMatch(harness.refs.panel.webview.html, /Rule r1/);
+  assert.doesNotMatch(harness.refs.panel.webview.html, /<section class="rule-inspector/);
 });
 
 test('failed ruleDetail request shows error without crashing', async (t) => {
@@ -1294,20 +1372,7 @@ test('selectNode with rule prefix dispatches ruleDetail request', async (t) => {
     respond(method, params) {
       if (method === 'ilimap/ruleDetail') {
         ruleDetailCalls += 1;
-        return {
-          available: true,
-          message: '',
-          ruleId: params.ruleId,
-          sources: [],
-          joins: [],
-          identity: [],
-          assignments: [],
-          defaults: [],
-          bags: [],
-          refs: [],
-          losses: [],
-          diagnostics: []
-        };
+        return ruleDetail(params.ruleId);
       }
       return baseSummary('Profile');
     }
@@ -1347,20 +1412,7 @@ test('showRuleInOverview opens the panel and selects the rule', async (t) => {
   const harness = makeHarness({
     respond(method, params) {
       if (method === 'ilimap/ruleDetail') {
-        return {
-          available: true,
-          message: '',
-          ruleId: params.ruleId,
-          sources: [],
-          joins: [],
-          identity: [],
-          assignments: [],
-          defaults: [],
-          bags: [],
-          refs: [],
-          losses: [],
-          diagnostics: []
-        };
+        return ruleDetail(params.ruleId);
       }
       return baseSummary('Profile');
     }
@@ -1382,26 +1434,14 @@ test('showRuleInOverview opens the panel and selects the rule', async (t) => {
   const ruleDetailRequest = harness.refs.requested.find(entry => entry.method === 'ilimap/ruleDetail');
   assert.deepEqual(ruleDetailRequest.params, { uri: 'file:///tmp/profile.ilimap', ruleId: 'r1' });
   assert.match(harness.refs.panel.webview.html, /Rule r1/);
+  assert.match(harness.refs.panel.webview.html, /data-active-rule-detail="true"/);
 });
 
 test('showRuleCoverage reuses the open panel and selects the rule', async (t) => {
   const harness = makeHarness({
     respond(method, params) {
       if (method === 'ilimap/ruleDetail') {
-        return {
-          available: true,
-          message: '',
-          ruleId: params.ruleId,
-          sources: [],
-          joins: [],
-          identity: [],
-          assignments: [],
-          defaults: [],
-          bags: [],
-          refs: [],
-          losses: [],
-          diagnostics: []
-        };
+        return ruleDetail(params.ruleId);
       }
       return baseSummary('Profile');
     }
@@ -1418,6 +1458,7 @@ test('showRuleCoverage reuses the open panel and selects the rule', async (t) =>
   const ruleDetailRequests = harness.refs.requested.filter(entry => entry.method === 'ilimap/ruleDetail');
   assert.equal(ruleDetailRequests[ruleDetailRequests.length - 1].params.ruleId, 'r2');
   assert.match(harness.refs.panel.webview.html, /Rule r2/);
+  assert.match(harness.refs.panel.webview.html, /data-active-rule-detail="true"/);
 });
 
 test('exportReport webview message triggers export command', async (t) => {

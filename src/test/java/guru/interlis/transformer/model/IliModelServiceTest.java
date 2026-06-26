@@ -117,6 +117,21 @@ class IliModelServiceTest {
     }
 
     @Test
+    void inventoryIncludesOnlyRequestedNormalDataModelClasses() {
+        IliModelCompileResult result = service.compileModel("DM01AVCH24LV95D", "src/test/data/av/models/");
+        assertThat(result.hasErrors()).isFalse();
+
+        ModelInventory inv = service.buildInventory(result.transferDescription(), "DM01AVCH24LV95D");
+
+        assertThat(inv.modelName()).isEqualTo("DM01AVCH24LV95D");
+        assertThat(inv.topics())
+                .flatExtracting(ModelInventory.TopicInventory::classes)
+                .extracting(ModelInventory.ClassInventory::path)
+                .allSatisfy(path -> assertThat(path).startsWith("DM01AVCH24LV95D."))
+                .noneSatisfy(path -> assertThat(path).startsWith("CoordSys."));
+    }
+
+    @Test
     void compilesStructureModel() {
         IliModelCompileResult result = service.compileModel("src/test/data/models/with-structures.ili", MODELDIR);
         assertThat(result.hasErrors()).isFalse();

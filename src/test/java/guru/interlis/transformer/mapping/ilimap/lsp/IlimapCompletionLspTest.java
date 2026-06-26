@@ -118,6 +118,37 @@ class IlimapCompletionLspTest {
                 .isEqualTo(rangeFor(source, "TestModel.Test", 0, "TestModel.Test".length()));
     }
 
+    @Test
+    void lspCompletesSourceRefAliasMembersWithoutPriorValidation() {
+        IlimapTextDocumentService modelAwareService = new IlimapTextDocumentService(
+                new IlimapDocumentStore(),
+                new IlimapLspDiagnosticMapper(),
+                new IlimapFormattingService(),
+                new IlimapLspRangeMapper(),
+                IlimapAnalysisOptions.defaults(Path.of("/tmp")));
+        InitializeParams params = new InitializeParams();
+        params.setRootUri(Path.of(".").toAbsolutePath().normalize().toUri().toString());
+        new IlimapLanguageServer(modelAwareService, new IlimapWorkspaceService())
+                .initialize(params)
+                .join();
+
+        String source = associationMappingWithOpenSourceRef();
+        modelAwareService.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));
+
+        List<CompletionItem> items = modelAwareService
+                .completion(completionParams(source, "sourceRef c.;", "sourceRef c.".length()))
+                .join()
+                .getLeft();
+
+        assertThat(items)
+                .extracting(CompletionItem::getLabel, CompletionItem::getKind)
+                .contains(
+                        tuple("Name", CompletionItemKind.Field),
+                        tuple("Wert", CompletionItemKind.Field),
+                        tuple("ChildRole", CompletionItemKind.Reference));
+        assertThat(items).extracting(CompletionItem::getLabel).doesNotContain("Validate or save to load models");
+    }
+
     private void open(String source) {
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));
     }
@@ -172,6 +203,29 @@ class IlimapCompletionLspTest {
                     source s from src class "TestModel.TestTopic.TestClass";
                     assign {
                       Name = s.Name;
+                    }
+                  }
+                }
+                """;
+    }
+
+    private static String associationMappingWithOpenSourceRef() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "AssocModel"; }
+                  output out { path "out.xtf"; model "AssocModel"; }
+                  rule rParent {
+                    target out class "AssocModel.AssocTopic.Parent";
+                    source p from src class "AssocModel.AssocTopic.Parent";
+                  }
+                  rule rChild {
+                    target out class "AssocModel.AssocTopic.Child";
+                    source c from src class "AssocModel.AssocTopic.Child";
+                    ref ParentRole {
+                      target rule rParent sourceRef c.;
                     }
                   }
                 }

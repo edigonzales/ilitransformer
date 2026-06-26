@@ -56,6 +56,27 @@ test('renders the target coverage matrix with header columns and status tags', (
   assert.match(html, />missing</);
 });
 
+test('wraps coverage matrix in a responsive scroll container with stable columns', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.match(html, /class="coverage-matrix-scroll"/);
+  assert.match(html, /<col class="coverage-attribute">/);
+  assert.match(html, /<col class="coverage-status">/);
+  assert.match(html, /<col class="coverage-type">/);
+  assert.match(html, /<col class="coverage-cardinality">/);
+  assert.match(html, /<col class="coverage-source">/);
+  assert.match(html, /class="coverage-status-cell"/);
+});
+
+test('badge styles are non-wrapping and outline based', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.match(html, /display: inline-flex;/);
+  assert.match(html, /white-space: nowrap;/);
+  assert.match(html, /background: transparent;/);
+  assert.match(html, /\.tag\.ok/);
+});
+
 test('renders derived status from assigned/mandatory when server status is absent', () => {
   const html = renderMappingOverviewHtml(summary(), 'test-nonce');
 
@@ -326,6 +347,18 @@ test('rule inspector renders when detail is available', () => {
   assert.match(html, /rule-inspector/);
 });
 
+test('rule inspector renders multiple cached details and marks the active one', () => {
+  const r2 = { ...baseDetail(), ruleId: 'r2' };
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, [baseDetail(), r2], 'r2');
+
+  assert.match(html, /Rule r1/);
+  assert.match(html, /Rule r2/);
+  assert.match(html, /data-rule-detail-id="r2"/);
+  assert.match(html, /data-active-rule-detail="true"/);
+  assert.match(html, /const activeRuleDetailId = "r2"/);
+  assert.match(html, /scrollIntoView\(\{ block: 'start' \}\)/);
+});
+
 test('rule inspector renders target section', () => {
   const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, baseDetail());
 
@@ -480,8 +513,35 @@ test('flow map section renders when rules exist', () => {
 
   assert.match(html, /<section class="flow-map"[^>]*>/);
   assert.match(html, /Flow Map/);
+  assert.match(html, /flow-scroll/);
   assert.match(html, /flow-grid/);
-  assert.match(html, /flow-header-cell/);
+  assert.match(html, /flow-diagram/);
+  assert.match(html, /flow-stage-title/);
+});
+
+test('flow map renders readable diagram cards with full values in titles', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, /title="r_ok"/);
+  assert.match(html, /title="M\.A"/);
+  assert.match(html, /title="in\.xtf · M"/);
+  assert.match(html, /class="flow-node-stack"/);
+  assert.match(html, /class="flow-cell"/);
+  assert.match(html, /overflow-wrap: anywhere;/);
+  assert.match(html, /\.flow-scroll/);
+  assert.match(html, /min-width: 1420px;/);
+  assert.match(html, /minmax\(300px, 360px\)/);
+  assert.match(html, /minmax\(340px, 400px\)/);
+});
+
+test('flow map inserts dot break opportunities only for qualified class labels', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, />DM01\.<wbr>Test\.<wbr>Class</);
+  assert.match(html, /title="DM01\.Test\.Class"/);
+  assert.match(html, />in\.xtf · M</);
+  assert.doesNotMatch(html, />in<wbr>\.xtf/);
+  assert.doesNotMatch(html, />r<wbr>_ok</);
 });
 
 test('flow map renders column headers', () => {
@@ -530,6 +590,23 @@ test('flow map filter bar has no inline handlers or editable controls', () => {
   assert.doesNotMatch(html, /contenteditable/i);
 });
 
+test('filter links preserve scroll position instead of jumping to the top', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, /function preserveScrollPosition/);
+  assert.match(html, /event\.target\.closest\('a\[href="#"]'\)/);
+  assert.match(html, /requestAnimationFrame/);
+  assert.match(html, /window\.scrollTo/);
+});
+
+test('navigation links preserve current scroll position', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, /function preserveCurrentScroll/);
+  assert.match(html, /preserveCurrentScroll\(\(\) => \{/);
+  assert.match(html, /vscode\.postMessage\(\{\s*type: 'navigate'/);
+});
+
 test('flow map preserves strict CSP', () => {
   const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
 
@@ -557,6 +634,53 @@ test('flow map nodes are navigable when location present', () => {
 
   assert.match(html, /data-nav-line="8"/);
   assert.match(html, /data-nav-character="9"/);
+});
+
+test('flow map falls back to source usage when rule coverage sources are absent', () => {
+  const s = summaryWithFlowData();
+  s.ruleCoverage = [];
+  s.sourceUsage = [
+    {
+      inputIds: ['src'],
+      sourceClass: 'M.A',
+      aliases: ['s'],
+      attributes: [],
+      roles: [],
+      location: { line: 11, character: 4 }
+    },
+    {
+      inputIds: ['src'],
+      sourceClass: 'M.B',
+      aliases: ['a', 'b'],
+      attributes: [],
+      roles: [],
+      location: { line: 20, character: 4 }
+    },
+    {
+      inputIds: ['dm01'],
+      sourceClass: 'DM01.Test.Class',
+      aliases: ['d'],
+      attributes: [],
+      roles: [],
+      location: { line: 30, character: 4 }
+    }
+  ];
+  const html = renderMappingOverviewHtml(s, 'test-nonce');
+
+  assert.match(html, />src</);
+  assert.match(html, /alias s/);
+  assert.match(html, /alias a, b/);
+  assert.match(html, />dm01</);
+  assert.match(html, /data-nav-line="20"/);
+});
+
+test('flow map target classes navigate via rule location when coverage is absent', () => {
+  const s = summaryWithFlowData();
+  s.ruleCoverage = [];
+  s.rules[1].location = { line: 22, character: 8 };
+  const html = renderMappingOverviewHtml(s, 'test-nonce');
+
+  assert.match(html, /title="M\.B" data-nav-line="22" data-nav-character="8">M\.<wbr>B<\/a>/);
 });
 
 test('flow map shows empty state when no rules', () => {

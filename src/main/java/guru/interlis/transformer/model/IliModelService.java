@@ -15,10 +15,14 @@ import ch.interlis.ili2c.metamodel.Domain;
 import ch.interlis.ili2c.metamodel.Element;
 import ch.interlis.ili2c.metamodel.Extendable;
 import ch.interlis.ili2c.metamodel.Model;
+import ch.interlis.ili2c.metamodel.PredefinedModel;
+import ch.interlis.ili2c.metamodel.RefSystemModel;
 import ch.interlis.ili2c.metamodel.RoleDef;
+import ch.interlis.ili2c.metamodel.SymbologyModel;
 import ch.interlis.ili2c.metamodel.Table;
 import ch.interlis.ili2c.metamodel.Topic;
 import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.ili2c.metamodel.TypeModel;
 import ch.interlis.ili2c.metamodel.ViewableTransferElement;
 
 import java.io.IOException;
@@ -159,11 +163,12 @@ public final class IliModelService {
         String foundVersion = null;
         String foundIssuer = null;
 
+        List<Model> selectedModels = selectedInventoryModels(td, modelName);
         Iterator<Model> modelIt = td.iterator();
         while (modelIt.hasNext()) {
             Model model = modelIt.next();
+            if (!selectedModels.contains(model)) continue;
             String currentModelName = model.getName() != null ? model.getName() : modelName;
-            if (isInternalModel(currentModelName)) continue;
 
             foundName = currentModelName;
             foundVersion = model.getModelVersion();
@@ -178,6 +183,32 @@ public final class IliModelService {
             }
         }
         return new ModelInventory(foundName, foundVersion, foundIssuer, topics);
+    }
+
+    private static List<Model> selectedInventoryModels(TransferDescription td, String requestedModelName) {
+        List<Model> normalModels = new ArrayList<>();
+        Iterator<Model> modelIt = td.iterator();
+        while (modelIt.hasNext()) {
+            Model model = modelIt.next();
+            String currentModelName = model.getName() != null ? model.getName() : requestedModelName;
+            if (isInternalModel(currentModelName) || !isNormalDataModel(model)) {
+                continue;
+            }
+            normalModels.add(model);
+        }
+
+        List<Model> exactMatches = normalModels.stream()
+                .filter(model -> requestedModelName != null && requestedModelName.equals(model.getName()))
+                .toList();
+        return exactMatches.isEmpty() ? normalModels : exactMatches;
+    }
+
+    private static boolean isNormalDataModel(Model model) {
+        return !model.isContracted()
+                && !(model instanceof TypeModel)
+                && !(model instanceof RefSystemModel)
+                && !(model instanceof SymbologyModel)
+                && !(model instanceof PredefinedModel);
     }
 
     private ModelInventory.TopicInventory buildTopicInventory(Topic topic, String modelName) {

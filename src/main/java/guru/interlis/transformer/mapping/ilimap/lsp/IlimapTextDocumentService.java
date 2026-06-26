@@ -305,7 +305,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(Either.forLeft(List.of()));
         }
 
-        IlimapAnalysis analysis = analysisForCompletion(uri);
+        IlimapAnalysis analysis = analysisForModelAwareCompletion(uri);
         IlimapIdePosition position = new IlimapIdePosition(
                 params.getPosition().getLine(), params.getPosition().getCharacter());
         List<CompletionItem> items = completionService.complete(analysis, position).stream()
@@ -442,6 +442,12 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         return documentStore
                 .cachedAnalysis(uri, modelAwareOptions())
                 .orElseGet(() -> documentStore.analyze(uri, fastOptions()));
+    }
+
+    private IlimapAnalysis analysisForModelAwareCompletion(String uri) {
+        return documentStore
+                .cachedAnalysis(uri, modelAwareOptions())
+                .orElseGet(() -> documentStore.analyze(uri, modelAwareOptions()));
     }
 
     private IlimapAnalysisOptions fastOptions() {

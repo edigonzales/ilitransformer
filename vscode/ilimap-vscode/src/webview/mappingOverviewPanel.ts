@@ -134,6 +134,7 @@ async function openOverviewForUri(
   const state = createOrRevealPanelState(context, uri, outputChannel);
   state.summary = summary;
   state.documentVersion = documentVersion;
+  clearRuleDetails(state);
   state.lastUpdated = formatTime(new Date());
   state.loading = false;
   renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
@@ -158,7 +159,7 @@ export async function revealRuleInOpenOverview(
     return;
   }
   const ruleId = nodeId.substring('rule:'.length);
-  if (!ruleId || state.selectedRuleDetail?.ruleId === ruleId) {
+  if (!ruleId || state.activeRuleId === ruleId) {
     return;
   }
   await requestRuleDetail(state, ruleId, outputChannel);
@@ -191,7 +192,8 @@ function createOrRevealPanelState(
     uri,
     loading: false,
     disposed: false,
-    selectedRuleDetail: undefined,
+    ruleDetailsById: new Map(),
+    activeRuleId: undefined,
     disposables: []
   };
   state.disposables.push(registerMessageHandler(state, outputChannel));
@@ -323,6 +325,7 @@ async function refreshMappingOverview(
     return;
   }
 
+  clearRuleDetails(state);
   state.loading = true;
   renderPanel(state, { refreshState: 'loading', lastUpdated: state.lastUpdated });
 
@@ -364,7 +367,8 @@ async function requestRuleDetail(
 
   const client = getLanguageClient();
   if (!client) {
-    state.selectedRuleDetail = {
+    state.activeRuleId = ruleId;
+    state.ruleDetailsById.set(ruleId, {
       available: false,
       message: 'ilimap language server is not running.',
       ruleId,
@@ -377,7 +381,13 @@ async function requestRuleDetail(
       refs: [],
       losses: [],
       diagnostics: []
-    };
+    });
+    renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
+    return;
+  }
+
+  state.activeRuleId = ruleId;
+  if (state.ruleDetailsById.has(ruleId)) {
     renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
     return;
   }
@@ -390,14 +400,14 @@ async function requestRuleDetail(
     if (state.disposed) {
       return;
     }
-    state.selectedRuleDetail = detail;
+    state.ruleDetailsById.set(ruleId, detail);
     renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
   } catch (error) {
     outputChannel.appendLine(`Failed to request rule detail: ${errorMessage(error)}`);
     if (state.disposed) {
       return;
     }
-    state.selectedRuleDetail = {
+    state.ruleDetailsById.set(ruleId, {
       available: false,
       message: errorMessage(error),
       ruleId,
@@ -410,7 +420,7 @@ async function requestRuleDetail(
       refs: [],
       losses: [],
       diagnostics: []
-    };
+    });
     renderPanel(state, {
       refreshState: 'error',
       errorMessage: 'Failed to load rule detail.',
@@ -424,7 +434,18 @@ function renderPanel(state: MappingOverviewPanelState, renderState: MappingOverv
     return;
   }
   const summary = state.summary ?? unavailableSummary('No mapping summary is available.');
-  state.panel.webview.html = renderMappingOverviewHtml(summary, nonce(), renderState, state.selectedRuleDetail);
+  state.panel.webview.html = renderMappingOverviewHtml(
+    summary,
+    nonce(),
+    renderState,
+    Array.from(state.ruleDetailsById.values()),
+    state.activeRuleId
+  );
+}
+
+function clearRuleDetails(state: MappingOverviewPanelState): void {
+  state.ruleDetailsById.clear();
+  state.activeRuleId = undefined;
 }
 
 function unavailableSummary(message: string): IlimapMappingSummary {

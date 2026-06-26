@@ -7,7 +7,8 @@ export interface MappingOverviewPanelState {
   uri: string;
   documentVersion?: number;
   summary?: IlimapMappingSummary;
-  selectedRuleDetail?: IlimapRuleDetailSummary;
+  ruleDetailsById: Map<string, IlimapRuleDetailSummary>;
+  activeRuleId?: string;
   lastUpdated?: string;
   refreshTimer?: ReturnType<typeof setTimeout>;
   loading: boolean;
