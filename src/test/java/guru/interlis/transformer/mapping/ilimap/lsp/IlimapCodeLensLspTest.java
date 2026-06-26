@@ -2,7 +2,6 @@ package guru.interlis.transformer.mapping.ilimap.lsp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapCodeLensService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams;
 
 import java.util.List;
@@ -25,7 +24,8 @@ class IlimapCodeLensLspTest {
                 new IlimapLanguageServer().initialize(new InitializeParams()).join();
 
         assertThat(result.getCapabilities().getCodeLensProvider()).isNotNull();
-        assertThat(result.getCapabilities().getCodeLensProvider().getResolveProvider()).isFalse();
+        assertThat(result.getCapabilities().getCodeLensProvider().getResolveProvider())
+                .isFalse();
     }
 
     @Test
@@ -33,27 +33,26 @@ class IlimapCodeLensLspTest {
         IlimapTextDocumentService service = new IlimapTextDocumentService();
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, validMapping())));
 
-        List<? extends CodeLens> lenses =
-                service.codeLens(new CodeLensParams(new TextDocumentIdentifier(URI))).join();
+        List<? extends CodeLens> lenses = service.codeLens(new CodeLensParams(new TextDocumentIdentifier(URI)))
+                .join();
 
-        assertThat(lenses)
-                .anySatisfy(lens -> {
-                    assertThat(lens.getCommand().getCommand()).isEqualTo("ilimap.showRuleInOverview");
-                    assertThat(lens.getCommand().getTitle()).isEqualTo("Show in Overview");
-                    assertThat(lens.getCommand().getArguments()).containsExactly(URI, "r1");
-                });
-        assertThat(lenses)
-                .anySatisfy(lens -> {
-                    assertThat(lens.getCommand().getCommand()).isEqualTo("ilimap.showRuleCoverage");
-                    assertThat(lens.getCommand().getArguments()).containsExactly(URI, "r1");
-                });
+        assertThat(lenses).anySatisfy(lens -> {
+            assertThat(lens.getCommand().getCommand()).isEqualTo("ilimap.showRuleInOverview");
+            assertThat(lens.getCommand().getTitle()).isEqualTo("Show in Overview");
+            assertThat(lens.getCommand().getArguments()).containsExactly(URI, "r1");
+        });
+        assertThat(lenses).anySatisfy(lens -> {
+            assertThat(lens.getCommand().getCommand()).isEqualTo("ilimap.showRuleCoverage");
+            assertThat(lens.getCommand().getArguments()).containsExactly(URI, "r1");
+        });
     }
 
     @Test
     void returnsNoCodeLensesForUnopenedDocument() {
         IlimapTextDocumentService service = new IlimapTextDocumentService();
 
-        var lenses = service.codeLens(new CodeLensParams(new TextDocumentIdentifier(URI))).join();
+        var lenses = service.codeLens(new CodeLensParams(new TextDocumentIdentifier(URI)))
+                .join();
 
         assertThat(lenses).isEmpty();
     }
@@ -65,8 +64,8 @@ class IlimapCodeLensLspTest {
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, source)));
         service.validateMapping(new IlimapValidateMappingParams(URI, source, 1)).join();
 
-        List<? extends CodeLens> lenses =
-                service.codeLens(new CodeLensParams(new TextDocumentIdentifier(URI))).join();
+        List<? extends CodeLens> lenses = service.codeLens(new CodeLensParams(new TextDocumentIdentifier(URI)))
+                .join();
 
         assertThat(lenses)
                 .filteredOn(lens -> lens.getCommand().getCommand().equals("ilimap.showRuleCoverage"))

@@ -45,8 +45,7 @@ class IlimapRuleDetailServiceTest {
 
     @Test
     void detailForRuleWithJoinsIdentityAndWhere() {
-        IlimapRuleDetailSummary detail = ruleDetailService.detail(
-                analyze(mappingWithJoinsIdentityWhere()), "r2");
+        IlimapRuleDetailSummary detail = ruleDetailService.detail(analyze(mappingWithJoinsIdentityWhere()), "r2");
 
         assertThat(detail.available()).isTrue();
 
@@ -67,8 +66,7 @@ class IlimapRuleDetailServiceTest {
 
     @Test
     void detailForRuleWithEnumMapAssignment() {
-        IlimapRuleDetailSummary detail = ruleDetailService.detail(
-                analyze(mappingWithEnumMap()), "r3");
+        IlimapRuleDetailSummary detail = ruleDetailService.detail(analyze(mappingWithEnumMap()), "r3");
 
         assertThat(detail.available()).isTrue();
         assertThat(detail.assignments()).hasSize(1);
@@ -81,8 +79,7 @@ class IlimapRuleDetailServiceTest {
 
     @Test
     void detailForRuleWithBags() {
-        IlimapRuleDetailSummary detail = ruleDetailService.detail(
-                analyze(mappingWithBags()), "r4");
+        IlimapRuleDetailSummary detail = ruleDetailService.detail(analyze(mappingWithBags()), "r4");
 
         assertThat(detail.available()).isTrue();
         assertThat(detail.bags()).hasSize(1);
@@ -102,8 +99,7 @@ class IlimapRuleDetailServiceTest {
 
     @Test
     void detailForRuleWithRefs() {
-        IlimapRuleDetailSummary detail = ruleDetailService.detail(
-                analyze(mappingWithRef()), "r5");
+        IlimapRuleDetailSummary detail = ruleDetailService.detail(analyze(mappingWithRef()), "r5");
 
         assertThat(detail.available()).isTrue();
         assertThat(detail.refs()).singleElement().satisfies(ref -> {
@@ -118,8 +114,7 @@ class IlimapRuleDetailServiceTest {
 
     @Test
     void detailForRuleWithLosses() {
-        IlimapRuleDetailSummary detail = ruleDetailService.detail(
-                analyze(mappingWithLoss()), "r6");
+        IlimapRuleDetailSummary detail = ruleDetailService.detail(analyze(mappingWithLoss()), "r6");
 
         assertThat(detail.available()).isTrue();
         assertThat(detail.losses()).singleElement().satisfies(loss -> {
@@ -132,8 +127,7 @@ class IlimapRuleDetailServiceTest {
 
     @Test
     void detailForRuleWithMetadata() {
-        IlimapRuleDetailSummary detail = ruleDetailService.detail(
-                analyze(mappingWithMetadata()), "r7");
+        IlimapRuleDetailSummary detail = ruleDetailService.detail(analyze(mappingWithMetadata()), "r7");
 
         assertThat(detail.available()).isTrue();
         assertThat(detail.metadata()).isNotNull();
@@ -144,8 +138,7 @@ class IlimapRuleDetailServiceTest {
 
     @Test
     void detailForRuleWithDefaults() {
-        IlimapRuleDetailSummary detail = ruleDetailService.detail(
-                analyze(mappingWithDefaults()), "r8");
+        IlimapRuleDetailSummary detail = ruleDetailService.detail(analyze(mappingWithDefaults()), "r8");
 
         assertThat(detail.available()).isTrue();
         assertThat(detail.defaults()).hasSize(1);
@@ -176,12 +169,14 @@ class IlimapRuleDetailServiceTest {
     @Test
     void assignmentKindCopy() {
         assertThat(IlimapRuleDetailService.classifyAssignmentKind("p.Name")).isEqualTo("copy");
-        assertThat(IlimapRuleDetailService.classifyAssignmentKind("s.Description")).isEqualTo("copy");
+        assertThat(IlimapRuleDetailService.classifyAssignmentKind("s.Description"))
+                .isEqualTo("copy");
     }
 
     @Test
     void assignmentKindConstant() {
-        assertThat(IlimapRuleDetailService.classifyAssignmentKind("\"literal\"")).isEqualTo("constant");
+        assertThat(IlimapRuleDetailService.classifyAssignmentKind("\"literal\""))
+                .isEqualTo("constant");
         assertThat(IlimapRuleDetailService.classifyAssignmentKind("42")).isEqualTo("constant");
         assertThat(IlimapRuleDetailService.classifyAssignmentKind("3.14")).isEqualTo("constant");
         assertThat(IlimapRuleDetailService.classifyAssignmentKind("true")).isEqualTo("constant");
@@ -195,13 +190,15 @@ class IlimapRuleDetailServiceTest {
 
     @Test
     void assignmentKindEnumMap() {
-        assertThat(IlimapRuleDetailService.classifyAssignmentKind("enumMap(Quality)")).isEqualTo("enumMap");
+        assertThat(IlimapRuleDetailService.classifyAssignmentKind("enumMap(Quality)"))
+                .isEqualTo("enumMap");
     }
 
     @Test
     void assignmentKindComputed() {
         assertThat(IlimapRuleDetailService.classifyAssignmentKind("s.X + 1")).isEqualTo("computed");
-        assertThat(IlimapRuleDetailService.classifyAssignmentKind("s.First + \" \" + s.Last")).isEqualTo("computed");
+        assertThat(IlimapRuleDetailService.classifyAssignmentKind("s.First + \" \" + s.Last"))
+                .isEqualTo("computed");
     }
 
     @Test
@@ -213,7 +210,8 @@ class IlimapRuleDetailServiceTest {
 
     @Test
     void extractDependenciesForSourceAttributes() {
-        List<IlimapExpressionDependencySummary> deps = IlimapRuleDetailService.extractDependencies("p.Name + s.Description");
+        List<IlimapExpressionDependencySummary> deps =
+                IlimapRuleDetailService.extractDependencies("p.Name + s.Description");
 
         assertThat(deps).hasSize(2);
         assertThat(deps).anySatisfy(dep -> {
@@ -251,8 +249,8 @@ class IlimapRuleDetailServiceTest {
 
         assertThat(detail.available()).isTrue();
         assertThat(detail.diagnostics()).isNotEmpty();
-        assertThat(detail.diagnostics()).anySatisfy(diagnostic ->
-                assertThat(diagnostic.severity()).isEqualTo("error"));
+        assertThat(detail.diagnostics())
+                .anySatisfy(diagnostic -> assertThat(diagnostic.severity()).isEqualTo("error"));
     }
 
     private IlimapAnalysis analyze(String source) {

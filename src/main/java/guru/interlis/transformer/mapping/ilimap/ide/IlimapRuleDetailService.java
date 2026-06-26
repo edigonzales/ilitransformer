@@ -5,7 +5,6 @@ import guru.interlis.transformer.mapping.ilimap.ast.IlimapAssignmentBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapBagBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapBagFromStmt;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapDefaultsBlock;
-import guru.interlis.transformer.mapping.ilimap.ast.IlimapExpressionText;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapIdentityStmt;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapJoinStmt;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapLossBlock;
@@ -77,8 +76,7 @@ public final class IlimapRuleDetailService {
                 ruleDiagnostics(analysis, rule));
     }
 
-    private static <T extends IlimapRuleElement> T find(
-            List<IlimapRuleElement> elements, Class<T> type) {
+    private static <T extends IlimapRuleElement> T find(List<IlimapRuleElement> elements, Class<T> type) {
         return elements.stream()
                 .filter(type::isInstance)
                 .map(type::cast)
@@ -86,12 +84,8 @@ public final class IlimapRuleDetailService {
                 .orElse(null);
     }
 
-    private static <T extends IlimapRuleElement> List<T> findAll(
-            List<IlimapRuleElement> elements, Class<T> type) {
-        return elements.stream()
-                .filter(type::isInstance)
-                .map(type::cast)
-                .toList();
+    private static <T extends IlimapRuleElement> List<T> findAll(List<IlimapRuleElement> elements, Class<T> type) {
+        return elements.stream().filter(type::isInstance).map(type::cast).toList();
     }
 
     private static List<IlimapSourceDetailSummary> sourceDetails(
@@ -106,8 +100,7 @@ public final class IlimapRuleDetailService {
                 .toList();
     }
 
-    private static List<IlimapJoinSummary> joinDetails(
-            IlimapAnalysis analysis, List<IlimapRuleElement> elements) {
+    private static List<IlimapJoinSummary> joinDetails(IlimapAnalysis analysis, List<IlimapRuleElement> elements) {
         return findAll(elements, IlimapJoinStmt.class).stream()
                 .map(join -> new IlimapJoinSummary(
                         join.joinType(),
@@ -125,17 +118,15 @@ public final class IlimapRuleDetailService {
             return List.of();
         }
         return identity.expressions().stream()
-                .map(expr -> new IlimapExpressionSummary(
-                        expr.text(), toLocation(analysis, expr.range())))
+                .map(expr -> new IlimapExpressionSummary(expr.text(), toLocation(analysis, expr.range())))
                 .toList();
     }
 
     private static List<IlimapAssignmentSummary> assignmentDetails(
             IlimapAnalysis analysis, List<IlimapRuleElement> elements, boolean defaultsOnly) {
         List<IlimapAssignmentSummary> result = new ArrayList<>();
-        Predicate<IlimapRuleElement> filter = defaultsOnly
-                ? IlimapDefaultsBlock.class::isInstance
-                : IlimapAssignmentBlock.class::isInstance;
+        Predicate<IlimapRuleElement> filter =
+                defaultsOnly ? IlimapDefaultsBlock.class::isInstance : IlimapAssignmentBlock.class::isInstance;
 
         for (IlimapRuleElement element : elements) {
             if (!filter.test(element)) {
@@ -216,8 +207,7 @@ public final class IlimapRuleDetailService {
         return result;
     }
 
-    private static List<IlimapBagSummary> bagDetails(
-            IlimapAnalysis analysis, List<IlimapRuleElement> elements) {
+    private static List<IlimapBagSummary> bagDetails(IlimapAnalysis analysis, List<IlimapRuleElement> elements) {
         return findAll(elements, IlimapBagBlock.class).stream()
                 .map(bag -> bagSummary(analysis, bag))
                 .toList();
@@ -242,8 +232,7 @@ public final class IlimapRuleDetailService {
                 toLocation(analysis, bag.range()));
     }
 
-    private static IlimapSourceDetailSummary sourceDetail(
-            IlimapAnalysis analysis, IlimapBagFromStmt from) {
+    private static IlimapSourceDetailSummary sourceDetail(IlimapAnalysis analysis, IlimapBagFromStmt from) {
         return new IlimapSourceDetailSummary(
                 from.alias(),
                 List.of(from.inputId()),
@@ -252,8 +241,7 @@ public final class IlimapRuleDetailService {
                 toLocation(analysis, from.range()));
     }
 
-    private static List<IlimapRefSummary> refDetails(
-            IlimapAnalysis analysis, List<IlimapRuleElement> elements) {
+    private static List<IlimapRefSummary> refDetails(IlimapAnalysis analysis, List<IlimapRuleElement> elements) {
         return findAll(elements, IlimapRefBlock.class).stream()
                 .map(ref -> new IlimapRefSummary(
                         ref.id(),
@@ -266,8 +254,7 @@ public final class IlimapRuleDetailService {
                 .toList();
     }
 
-    private static List<IlimapLossSummary> lossDetails(
-            IlimapAnalysis analysis, List<IlimapRuleElement> elements) {
+    private static List<IlimapLossSummary> lossDetails(IlimapAnalysis analysis, List<IlimapRuleElement> elements) {
         return findAll(elements, IlimapLossBlock.class).stream()
                 .map(loss -> new IlimapLossSummary(
                         loss.sourcePath() != null ? loss.sourcePath().text() : null,
@@ -278,8 +265,7 @@ public final class IlimapRuleDetailService {
                 .toList();
     }
 
-    private static List<IlimapDiagnosticSummary> ruleDiagnostics(
-            IlimapAnalysis analysis, IlimapRuleBlock rule) {
+    private static List<IlimapDiagnosticSummary> ruleDiagnostics(IlimapAnalysis analysis, IlimapRuleBlock rule) {
         IlimapDiagnosticOwnerResolver ownerResolver = new IlimapDiagnosticOwnerResolver();
         return analysis.diagnostics().stream()
                 .filter(diagnostic -> inside(analysis, diagnostic.range(), rule.range()))
@@ -292,8 +278,8 @@ public final class IlimapRuleDetailService {
                             diagnostic.message(),
                             range.start().line(),
                             range.start().character(),
-                            "diagnostic:" + diagnostic.code() + ":" + range.start().line() + ":"
-                                    + range.start().character(),
+                            "diagnostic:" + diagnostic.code() + ":"
+                                    + range.start().line() + ":" + range.start().character(),
                             new IlimapOverviewLocation(
                                     range.start().line(),
                                     range.start().character(),
@@ -313,7 +299,8 @@ public final class IlimapRuleDetailService {
     private static boolean inside(
             IlimapAnalysis analysis, IlimapIdeRange diagnosticRange, IlimapSourceRange sourceRange) {
         int diagnosticStart = analysis.lineMap()
-                .positionToOffset(diagnosticRange.start().line(), diagnosticRange.start().character());
+                .positionToOffset(
+                        diagnosticRange.start().line(), diagnosticRange.start().character());
         return sourceRange.start().offset() <= diagnosticStart
                 && diagnosticStart <= sourceRange.end().offset();
     }

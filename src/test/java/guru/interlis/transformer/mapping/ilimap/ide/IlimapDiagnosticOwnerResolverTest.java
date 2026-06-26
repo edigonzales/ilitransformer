@@ -75,8 +75,7 @@ class IlimapDiagnosticOwnerResolverTest {
     void leavesDiagnosticOutsideAnyBlockUnowned() {
         IlimapAnalysis analysis = analyze(validMapping());
         IlimapIdeRange start = new IlimapIdeRange(new IlimapIdePosition(0, 0), new IlimapIdePosition(0, 0));
-        IlimapIdeDiagnostic diagnostic =
-                new IlimapIdeDiagnostic("TOP", IlimapIdeSeverity.WARNING, "top", start, null);
+        IlimapIdeDiagnostic diagnostic = new IlimapIdeDiagnostic("TOP", IlimapIdeSeverity.WARNING, "top", start, null);
 
         IlimapDiagnosticOwner owner = resolver.resolve(analysis, diagnostic);
 

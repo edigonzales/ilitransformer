@@ -204,14 +204,14 @@ class IlimapMappingSummaryLspTest {
 
         var summary = server.mappingSummary(new IlimapMappingSummaryParams(URI)).join();
 
-        assertThat(summary.ruleCoverage()).singleElement().satisfies(ruleCoverage ->
-                assertThat(ruleCoverage.attributes())
-                        .filteredOn(attribute -> attribute.name().equals("Name"))
-                        .singleElement()
-                        .satisfies(name -> {
-                            assertThat(name.assigned()).isFalse();
-                            assertThat(name.status()).isEqualTo("missing");
-                        }));
+        assertThat(summary.ruleCoverage()).singleElement().satisfies(ruleCoverage -> assertThat(
+                        ruleCoverage.attributes())
+                .filteredOn(attribute -> attribute.name().equals("Name"))
+                .singleElement()
+                .satisfies(name -> {
+                    assertThat(name.assigned()).isFalse();
+                    assertThat(name.status()).isEqualTo("missing");
+                }));
     }
 
     @Test
