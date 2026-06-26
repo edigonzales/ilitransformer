@@ -39,7 +39,79 @@ export async function openMappingOverview(
     return;
   }
 
-  const uri = editor.document.uri.toString();
+  await openOverviewForUri(
+    context,
+    outputChannel,
+    client,
+    editor.document.uri.toString(),
+    editor.document.version
+  );
+}
+
+export async function showRuleInOverview(
+  context: vscode.ExtensionContext,
+  outputChannel: vscode.OutputChannel,
+  uri?: string,
+  ruleId?: string
+): Promise<void> {
+  await showRuleInOverviewInternal(context, outputChannel, uri, ruleId);
+}
+
+export async function showRuleCoverage(
+  context: vscode.ExtensionContext,
+  outputChannel: vscode.OutputChannel,
+  uri?: string,
+  ruleId?: string
+): Promise<void> {
+  await showRuleInOverviewInternal(context, outputChannel, uri, ruleId);
+}
+
+async function showRuleInOverviewInternal(
+  context: vscode.ExtensionContext,
+  outputChannel: vscode.OutputChannel,
+  uri?: string,
+  ruleId?: string
+): Promise<void> {
+  const target = resolveTargetUri(uri);
+  if (!target) {
+    vscode.window.showInformationMessage('Open an .ilimap document before opening the ilimap mapping overview.');
+    return;
+  }
+
+  const client = getLanguageClient();
+  if (!client) {
+    vscode.window.showErrorMessage('ilimap language server is not running.');
+    return;
+  }
+
+  const state = await openOverviewForUri(context, outputChannel, client, target.uri, target.version);
+  if (!state) {
+    return;
+  }
+  if (typeof ruleId === 'string' && ruleId.length > 0) {
+    await requestRuleDetail(state, ruleId, outputChannel);
+  }
+}
+
+function resolveTargetUri(uri?: string): { uri: string; version?: number } | undefined {
+  if (typeof uri === 'string' && uri.length > 0) {
+    const document = vscode.workspace.textDocuments?.find(candidate => candidate.uri.toString() === uri);
+    return { uri, version: document?.version };
+  }
+  const editor = vscode.window.activeTextEditor;
+  if (editor && isIlimapDocument(editor.document)) {
+    return { uri: editor.document.uri.toString(), version: editor.document.version };
+  }
+  return undefined;
+}
+
+async function openOverviewForUri(
+  context: vscode.ExtensionContext,
+  outputChannel: vscode.OutputChannel,
+  client: NonNullable<ReturnType<typeof getLanguageClient>>,
+  uri: string,
+  documentVersion?: number
+): Promise<MappingOverviewPanelState | undefined> {
   let summary: IlimapMappingSummary;
   try {
     summary = await vscode.window.withProgress(
@@ -56,16 +128,40 @@ export async function openMappingOverview(
   } catch (error) {
     outputChannel.appendLine(`Failed to load ilimap mapping overview: ${errorMessage(error)}`);
     vscode.window.showErrorMessage('Failed to load ilimap mapping overview.');
-    return;
+    return undefined;
   }
 
   const state = createOrRevealPanelState(context, uri, outputChannel);
   state.summary = summary;
-  state.documentVersion = editor.document.version;
+  state.documentVersion = documentVersion;
   state.lastUpdated = formatTime(new Date());
   state.loading = false;
   renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
   getMappingExplorerInstance()?.refresh(summary, uri);
+  return state;
+}
+
+export function getOpenOverviewSummary(): IlimapMappingSummary | undefined {
+  return currentPanelState?.summary;
+}
+
+export function getOpenOverviewUri(): string | undefined {
+  return currentPanelState?.uri;
+}
+
+export async function revealRuleInOpenOverview(
+  nodeId: string,
+  outputChannel: vscode.OutputChannel
+): Promise<void> {
+  const state = currentPanelState;
+  if (!state || state.disposed || !nodeId.startsWith('rule:')) {
+    return;
+  }
+  const ruleId = nodeId.substring('rule:'.length);
+  if (!ruleId || state.selectedRuleDetail?.ruleId === ruleId) {
+    return;
+  }
+  await requestRuleDetail(state, ruleId, outputChannel);
 }
 
 function createOrRevealPanelState(

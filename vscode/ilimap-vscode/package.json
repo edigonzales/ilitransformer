@@ -41,6 +41,8 @@
     "onCommand:ilimap.format",
     "onCommand:ilimap.validate",
     "onCommand:ilimap.openMappingOverview",
+    "onCommand:ilimap.showRuleInOverview",
+    "onCommand:ilimap.showRuleCoverage",
     "onCommand:ilimap.mappingExplorer.refresh",
     "onCommand:ilimap.mappingExplorer.revealInEditor",
     "onCommand:ilimap.mappingExplorer.showInOverview"
@@ -103,6 +105,14 @@
       {
         "command": "ilimap.openMappingOverview",
         "title": "ilimap: Open Mapping Overview"
+      },
+      {
+        "command": "ilimap.showRuleInOverview",
+        "title": "ilimap: Show Rule in Mapping Overview"
+      },
+      {
+        "command": "ilimap.showRuleCoverage",
+        "title": "ilimap: Show Rule Coverage"
       },
       {
         "command": "ilimap.mappingExplorer.refresh",

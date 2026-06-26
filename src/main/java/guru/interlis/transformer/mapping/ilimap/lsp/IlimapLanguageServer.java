@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionOptions;
+import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
@@ -65,6 +66,7 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
         capabilities.setFoldingRangeProvider(true);
         capabilities.setCodeActionProvider(
                 new CodeActionOptions(List.of(CodeActionKind.QuickFix, CodeActionKind.Source)));
+        capabilities.setCodeLensProvider(new CodeLensOptions(false));
         CompletionOptions completionOptions = new CompletionOptions();
         completionOptions.setResolveProvider(false);
         completionOptions.setTriggerCharacters(List.of(".", "\""));

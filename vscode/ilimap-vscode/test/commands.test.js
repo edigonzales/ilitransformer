@@ -196,8 +196,47 @@ test('validate command shows error message without language client', async (t) =
   ]);
 });
 
+test('showRuleInOverview command forwards uri and ruleId to the panel', async (t) => {
+  const { commandsModule, registered, panelCalls, restore } = loadCommandsModule({
+    client: undefined,
+    vscodeOverrides: {
+      commands: { executeCommand() { return Promise.resolve(); } },
+      window: { showInformationMessage() {}, showErrorMessage() {} }
+    }
+  });
+  t.after(restore);
+
+  commandsModule.registerCommands(context(), outputChannel([]));
+  await registered.get('ilimap.showRuleInOverview')('file:///profile.ilimap', 'r1');
+
+  assert.equal(panelCalls.length, 1);
+  assert.equal(panelCalls[0].fn, 'showRuleInOverview');
+  assert.equal(panelCalls[0].args[2], 'file:///profile.ilimap');
+  assert.equal(panelCalls[0].args[3], 'r1');
+});
+
+test('showRuleCoverage command forwards uri and ruleId to the panel', async (t) => {
+  const { commandsModule, registered, panelCalls, restore } = loadCommandsModule({
+    client: undefined,
+    vscodeOverrides: {
+      commands: { executeCommand() { return Promise.resolve(); } },
+      window: { showInformationMessage() {}, showErrorMessage() {} }
+    }
+  });
+  t.after(restore);
+
+  commandsModule.registerCommands(context(), outputChannel([]));
+  await registered.get('ilimap.showRuleCoverage')('file:///profile.ilimap', 'r2');
+
+  assert.equal(panelCalls.length, 1);
+  assert.equal(panelCalls[0].fn, 'showRuleCoverage');
+  assert.equal(panelCalls[0].args[2], 'file:///profile.ilimap');
+  assert.equal(panelCalls[0].args[3], 'r2');
+});
+
 function loadCommandsModule({ client, vscodeOverrides }) {
   const registered = new Map();
+  const panelCalls = [];
   const vscodeMock = {
     ProgressLocation: {
       Notification: 15
@@ -229,7 +268,15 @@ function loadCommandsModule({ client, vscodeOverrides }) {
     }
     if (request === './webview/mappingOverviewPanel') {
       return {
-        async openMappingOverview() {}
+        async openMappingOverview(...args) {
+          panelCalls.push({ fn: 'openMappingOverview', args });
+        },
+        async showRuleInOverview(...args) {
+          panelCalls.push({ fn: 'showRuleInOverview', args });
+        },
+        async showRuleCoverage(...args) {
+          panelCalls.push({ fn: 'showRuleCoverage', args });
+        }
       };
     }
     return originalLoad.call(this, request, parent, isMain);
@@ -240,6 +287,7 @@ function loadCommandsModule({ client, vscodeOverrides }) {
   return {
     commandsModule,
     registered,
+    panelCalls,
     restore() {
       delete require.cache[distCommandsPath];
       Module._load = originalLoad;

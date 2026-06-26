@@ -32,6 +32,8 @@ test('registers public commands', () => {
   assert.ok(commands.includes('ilimap.format'));
   assert.ok(commands.includes('ilimap.validate'));
   assert.ok(commands.includes('ilimap.openMappingOverview'));
+  assert.ok(commands.includes('ilimap.showRuleInOverview'));
+  assert.ok(commands.includes('ilimap.showRuleCoverage'));
   assert.ok(commands.includes('ilimap.mappingExplorer.refresh'));
   assert.ok(commands.includes('ilimap.mappingExplorer.revealInEditor'));
   assert.ok(commands.includes('ilimap.mappingExplorer.showInOverview'));
@@ -39,6 +41,20 @@ test('registers public commands', () => {
 
 test('activates mapping overview command', () => {
   assert.ok(manifest.activationEvents.includes('onCommand:ilimap.openMappingOverview'));
+});
+
+test('contributes and activates rule code lens commands', () => {
+  const commands = manifest.contributes.commands;
+  const showInOverview = commands.find((command) => command.command === 'ilimap.showRuleInOverview');
+  const showCoverage = commands.find((command) => command.command === 'ilimap.showRuleCoverage');
+
+  assert.ok(showInOverview);
+  assert.equal(showInOverview.title, 'ilimap: Show Rule in Mapping Overview');
+  assert.ok(showCoverage);
+  assert.equal(showCoverage.title, 'ilimap: Show Rule Coverage');
+
+  assert.ok(manifest.activationEvents.includes('onCommand:ilimap.showRuleInOverview'));
+  assert.ok(manifest.activationEvents.includes('onCommand:ilimap.showRuleCoverage'));
 });
 
 test('contributes ilimap view container and mapping explorer view', () => {

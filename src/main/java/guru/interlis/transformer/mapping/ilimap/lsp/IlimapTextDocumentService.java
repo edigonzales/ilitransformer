@@ -4,6 +4,8 @@ import guru.interlis.transformer.mapping.ilimap.format.IlimapFormatOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysis;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapCodeActionService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapCodeLensService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapCodeLensSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapCompletionService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapDefinition;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapDefinitionService;
@@ -19,6 +21,7 @@ import guru.interlis.transformer.mapping.ilimap.ide.IlimapIdeRange;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapOverviewLocation;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailService;
@@ -37,6 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.CodeLens;
+import org.eclipse.lsp4j.CodeLensParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
@@ -58,6 +63,7 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
@@ -84,6 +90,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     private final IlimapRuleDetailService ruleDetailService;
     private final IlimapLspRangeMapper rangeMapper;
     private final IlimapCodeActionService codeActionService;
+    private final IlimapCodeLensService codeLensService;
     private final Map<String, CompletableFuture<IlimapAnalysis>> runningModelAnalyses = new ConcurrentHashMap<>();
     private IlimapAnalysisOptions analysisOptions;
     private LanguageClient client;
@@ -178,6 +185,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         this.ruleDetailService = Objects.requireNonNull(ruleDetailService, "ruleDetailService");
         this.rangeMapper = Objects.requireNonNull(rangeMapper, "rangeMapper");
         this.codeActionService = new IlimapCodeActionService(this.formattingService);
+        this.codeLensService = new IlimapCodeLensService(this.mappingSummaryService);
         this.analysisOptions = Objects.requireNonNull(analysisOptions, "analysisOptions");
     }
 
@@ -250,6 +258,20 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 .map(action -> Either.<Command, CodeAction>forRight(toLspCodeAction(uri, action, context)))
                 .toList();
         return CompletableFuture.completedFuture(actions);
+    }
+
+    @Override
+    public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
+        String uri = params.getTextDocument().getUri();
+        if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(List.of());
+        }
+
+        IlimapAnalysis analysis = analysisForCompletion(uri);
+        List<CodeLens> lenses = codeLensService.codeLenses(analysis).stream()
+                .map(lens -> toLspCodeLens(uri, lens))
+                .toList();
+        return CompletableFuture.completedFuture(lenses);
     }
 
     @Override
@@ -432,6 +454,19 @@ public final class IlimapTextDocumentService implements TextDocumentService {
 
     private TextEdit toLspTextEdit(IlimapTextEdit edit) {
         return new TextEdit(rangeMapper.toLspRange(edit.range()), edit.newText());
+    }
+
+    private CodeLens toLspCodeLens(String uri, IlimapCodeLensSummary lens) {
+        Command command = new Command(lens.title(), lens.command(), List.of(uri, lens.ruleId()));
+        return new CodeLens(toLspRange(lens.location()), command, null);
+    }
+
+    private static Range toLspRange(IlimapOverviewLocation location) {
+        Position start = new Position(location.line(), location.character());
+        Position end = location.endLine() != null && location.endCharacter() != null
+                ? new Position(location.endLine(), location.endCharacter())
+                : start;
+        return new Range(start, end);
     }
 
     private CodeAction toLspCodeAction(

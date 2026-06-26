@@ -9,8 +9,11 @@ import {
 import {
   openMappingOverview,
   revealLocation,
-  isIlimapDocument
+  isIlimapDocument,
+  getOpenOverviewSummary,
+  revealRuleInOpenOverview
 } from './webview/mappingOverviewPanel';
+import { MappingOverviewSelectionSync } from './overview/mappingOverviewSelectionSync';
 import type { IlimapLocation } from './webview/mappingOverviewMessages';
 
 let outputChannel: vscode.OutputChannel | undefined;
@@ -27,7 +30,31 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   registerCommands(context, outputChannel);
   registerExplorerCommands(context, outputChannel, mappingExplorerProvider);
+  registerSelectionSync(context, outputChannel);
   await startLanguageClient(context, outputChannel);
+}
+
+function registerSelectionSync(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): void {
+  const sync = new MappingOverviewSelectionSync(
+    () => getOpenOverviewSummary(),
+    nodeId => {
+      void revealRuleInOpenOverview(nodeId, outputChannel);
+    }
+  );
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const disposable = vscode.window.onDidChangeTextEditorSelection?.(event => {
+    if (timer) {
+      clearTimeout(timer);
+    }
+    timer = setTimeout(() => {
+      timer = undefined;
+      sync.handleSelectionChange(event);
+    }, 250);
+  });
+  if (disposable) {
+    context.subscriptions.push(disposable);
+  }
 }
 
 function registerExplorerCommands(

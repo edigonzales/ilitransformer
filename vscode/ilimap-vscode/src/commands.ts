@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { getLanguageClient, restartLanguageClient } from './client';
-import { openMappingOverview } from './webview/mappingOverviewPanel';
+import { openMappingOverview, showRuleCoverage, showRuleInOverview } from './webview/mappingOverviewPanel';
 
 const validateMappingRequest = 'ilimap/validateMapping';
 
@@ -48,6 +48,18 @@ export function registerCommands(context: vscode.ExtensionContext, outputChannel
   context.subscriptions.push(
     vscode.commands.registerCommand('ilimap.openMappingOverview', async () => {
       await openMappingOverview(context, outputChannel);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('ilimap.showRuleInOverview', async (uri?: string, ruleId?: string) => {
+      await showRuleInOverview(context, outputChannel, uri, ruleId);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('ilimap.showRuleCoverage', async (uri?: string, ruleId?: string) => {
+      await showRuleCoverage(context, outputChannel, uri, ruleId);
     })
   );
 }

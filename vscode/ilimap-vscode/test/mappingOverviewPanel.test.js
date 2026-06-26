@@ -1336,3 +1336,80 @@ test('selectNode with non-rule prefix is ignored', async (t) => {
 
   assert.equal(ruleDetailCalls, 0);
 });
+
+test('showRuleInOverview opens the panel and selects the rule', async (t) => {
+  const harness = makeHarness({
+    respond(method, params) {
+      if (method === 'ilimap/ruleDetail') {
+        return {
+          available: true,
+          message: '',
+          ruleId: params.ruleId,
+          sources: [],
+          joins: [],
+          identity: [],
+          assignments: [],
+          defaults: [],
+          bags: [],
+          refs: [],
+          losses: [],
+          diagnostics: []
+        };
+      }
+      return baseSummary('Profile');
+    }
+  });
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.showRuleInOverview(
+    context(),
+    harness.outputChannel,
+    'file:///tmp/profile.ilimap',
+    'r1'
+  );
+  await flush();
+
+  assert.ok(harness.refs.panel);
+  const methods = harness.refs.requested.map(entry => entry.method);
+  assert.ok(methods.includes('ilimap/mappingSummary'));
+  assert.ok(methods.includes('ilimap/ruleDetail'));
+  const ruleDetailRequest = harness.refs.requested.find(entry => entry.method === 'ilimap/ruleDetail');
+  assert.deepEqual(ruleDetailRequest.params, { uri: 'file:///tmp/profile.ilimap', ruleId: 'r1' });
+  assert.match(harness.refs.panel.webview.html, /Rule r1/);
+});
+
+test('showRuleCoverage reuses the open panel and selects the rule', async (t) => {
+  const harness = makeHarness({
+    respond(method, params) {
+      if (method === 'ilimap/ruleDetail') {
+        return {
+          available: true,
+          message: '',
+          ruleId: params.ruleId,
+          sources: [],
+          joins: [],
+          identity: [],
+          assignments: [],
+          defaults: [],
+          bags: [],
+          refs: [],
+          losses: [],
+          diagnostics: []
+        };
+      }
+      return baseSummary('Profile');
+    }
+  });
+  const panelModule = loadPanel(t, harness);
+
+  await panelModule.showRuleInOverview(context(), harness.outputChannel, 'file:///tmp/profile.ilimap', 'r1');
+  const firstPanel = harness.refs.panel;
+
+  await panelModule.showRuleCoverage(context(), harness.outputChannel, 'file:///tmp/profile.ilimap', 'r2');
+  await flush();
+
+  assert.strictEqual(harness.refs.panel, firstPanel);
+  const ruleDetailRequests = harness.refs.requested.filter(entry => entry.method === 'ilimap/ruleDetail');
+  assert.equal(ruleDetailRequests[ruleDetailRequests.length - 1].params.ruleId, 'r2');
+  assert.match(harness.refs.panel.webview.html, /Rule r2/);
+});

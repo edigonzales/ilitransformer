@@ -83,6 +83,11 @@ The overview is read-only: it does not edit mappings. It does compute and displa
 
 The overview stays bound to the document it was opened for and keeps its summary current: it refreshes automatically when that `.ilimap` document is saved and after a short debounce when it is edited. A non-editing **Refresh** link reloads the summary on demand. A status line reports loading, stale, error and last-updated state without adding any editable controls.
 
+## Editor integration
+
+Each `rule` in an `.ilimap` file shows a CodeLens above its declaration with a `Show in Overview` action and a concise read-only summary such as `Coverage 12/14 · 2 refs · 1 bag · 1 warning`. The CodeLens actions run the `ilimap.showRuleInOverview` and `ilimap.showRuleCoverage` commands, which open (or reuse) the Mapping Overview and select the rule in the read-only Rule Inspector. Moving the cursor into a rule highlights that rule in an already open overview. The coverage segment appears once models are loaded (after save or `ilimap: Validate Mapping`).
+
+
 ## Developer notes
 
 Further DX roadmap: see `./docs/ilimap-vscode-mapping-overview-dx-spec.md`.
