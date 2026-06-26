@@ -42,6 +42,26 @@ export interface IlimapMappingSummary {
   classCoverage?: IlimapCoverageClassSummary[];
   ruleCoverage?: IlimapRuleCoverageSummary[];
   sourceUsage?: IlimapSourceClassUsageSummary[];
+  flowNodes?: IlimapFlowNode[];
+  flowEdges?: IlimapFlowEdge[];
+}
+
+export interface IlimapFlowNode {
+  nodeId: string;
+  kind: 'input' | 'sourceClass' | 'rule' | 'targetClass' | 'output' | string;
+  label: string;
+  detail?: string;
+  status: 'ok' | 'warning' | 'error' | string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapFlowEdge {
+  id: string;
+  fromNodeId: string;
+  toNodeId: string;
+  kind: 'inputToSource' | 'sourceToRule' | 'ruleToTarget' | 'targetToOutput' | 'ref' | string;
+  label?: string;
+  status: 'ok' | 'warning' | 'error' | string;
 }
 
 export interface IlimapMappingInputSummary {

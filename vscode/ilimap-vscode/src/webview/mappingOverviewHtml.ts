@@ -7,6 +7,8 @@ import type {
   IlimapEnumMapSummary,
   IlimapExpressionDependencySummary,
   IlimapExpressionSummary,
+  IlimapFlowEdge,
+  IlimapFlowNode,
   IlimapJoinSummary,
   IlimapLocation,
   IlimapLossSummary,
@@ -469,6 +471,79 @@ export function renderMappingOverviewHtml(
       padding: 2px 0;
       border: 0;
     }
+
+    .flow-map {
+      margin-top: 24px;
+      padding-top: 12px;
+      border-top: 1px solid var(--vscode-panel-border);
+    }
+
+    .flow-grid {
+      display: grid;
+      grid-template-columns: 1fr 28px 1fr 28px 1fr 28px 1fr 28px 1fr;
+      margin-top: 10px;
+    }
+
+    .flow-header-cell {
+      padding: 4px 6px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--vscode-descriptionForeground);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .flow-data-row {
+      display: contents;
+    }
+
+    .flow-node {
+      padding: 6px;
+      border-top: 1px solid var(--vscode-panel-border);
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .flow-node .flow-node-label {
+      font-weight: 600;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .flow-node a.flow-node-label {
+      color: var(--vscode-textLink-foreground);
+      text-decoration: none;
+    }
+
+    .flow-node a.flow-node-label:hover {
+      text-decoration: underline;
+    }
+
+    .flow-node .flow-sublabel {
+      margin-top: 2px;
+      color: var(--vscode-descriptionForeground);
+      font-size: 11px;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
+    .flow-arrow-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 0;
+      border-top: 1px solid var(--vscode-panel-border);
+      color: var(--vscode-descriptionForeground);
+      font-size: 13px;
+    }
+
+    .flow-map[data-active-filter="errors"] .flow-data-row:not([data-status="error"]),
+    .flow-map[data-active-filter="warnings"] .flow-data-row:not([data-status="warning"]),
+    .flow-map[data-active-filter="missing-mandatory"] .flow-data-row:not([data-missing-mandatory="true"]),
+    .flow-map[data-active-filter="refs"] .flow-data-row:not([data-has-refs="true"]),
+    .flow-map[data-active-filter="bags"] .flow-data-row:not([data-has-bags="true"]) {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -572,6 +647,7 @@ function renderAvailableSummary(summary: IlimapMappingSummary, selectedRuleDetai
     </div>
     ${renderRuleCoverageSection(summary)}
     ${renderSourceUsage(summary)}
+    ${renderFlowMap(summary)}
     ${renderRuleInspector(selectedRuleDetail)}`;
 }
 
@@ -942,6 +1018,191 @@ function filterLink(target: string, value: string, label: string, active: boolea
 
 function renderInspectLink(ruleId: string): string {
   return `<a href="#" class="muted" data-rule-id="${escapeAttribute(ruleId)}" data-action="inspect-rule">Inspect</a>`;
+}
+
+interface FlowCell {
+  label: string;
+  sublabel?: string;
+  nodeId?: string;
+  location?: IlimapLocation;
+}
+
+interface FlowRow {
+  inputs: FlowCell[];
+  sourceClasses: FlowCell[];
+  rule: FlowCell;
+  targetClasses: FlowCell[];
+  outputs: FlowCell[];
+  status: string;
+  hasRefs: boolean;
+  hasBags: boolean;
+  hasMissingMandatory: boolean;
+}
+
+function renderFlowMap(summary: IlimapMappingSummary): string {
+  const rows = buildFlowRows(summary);
+  if (rows.length === 0) {
+    return `<section class="flow-map" data-active-filter="all">
+      <h2>Flow Map</h2>
+      <p class="empty">None</p>
+    </section>`;
+  }
+  return `<section class="flow-map" data-active-filter="all">
+      <h2>Flow Map</h2>
+      ${renderFlowFilterBar()}
+      <div class="flow-grid">
+        <div style="display:contents">
+          <div class="flow-header-cell">Inputs</div>
+          <div class="flow-header-cell"></div>
+          <div class="flow-header-cell">Source Classes</div>
+          <div class="flow-header-cell"></div>
+          <div class="flow-header-cell">Rules</div>
+          <div class="flow-header-cell"></div>
+          <div class="flow-header-cell">Target Classes</div>
+          <div class="flow-header-cell"></div>
+          <div class="flow-header-cell">Outputs</div>
+        </div>
+        ${rows.map(renderFlowRow).join('')}
+      </div>
+    </section>`;
+}
+
+function renderFlowFilterBar(): string {
+  return `<div class="filter-bar">
+      ${filterLink('flow-map', 'all', 'All', true)}
+      ${filterLink('flow-map', 'errors', 'Errors', false)}
+      ${filterLink('flow-map', 'warnings', 'Warnings', false)}
+      ${filterLink('flow-map', 'missing-mandatory', 'Missing mandatory', false)}
+      ${filterLink('flow-map', 'refs', 'Rules with refs', false)}
+      ${filterLink('flow-map', 'bags', 'Rules with bags', false)}
+    </div>`;
+}
+
+function buildFlowRows(summary: IlimapMappingSummary): FlowRow[] {
+  const coverageMap = new Map<string, IlimapRuleCoverageSummary>();
+  for (const rc of summary.ruleCoverage ?? []) {
+    coverageMap.set(rc.ruleId, rc);
+  }
+  const inputMap = new Map<string, IlimapMappingInputSummary>();
+  for (const input of summary.inputs) {
+    inputMap.set(input.id, input);
+  }
+  const outputMap = new Map<string, IlimapMappingOutputSummary>();
+  for (const output of summary.outputs) {
+    outputMap.set(output.id, output);
+  }
+
+  return summary.rules.map(rule => {
+    const coverage = coverageMap.get(rule.id);
+    const sources = coverage?.sources ?? [];
+
+    const seenInputIds = new Set<string>();
+    const inputs: FlowCell[] = [];
+    for (const source of sources) {
+      for (const inputId of source.inputIds ?? []) {
+        if (!seenInputIds.has(inputId)) {
+          seenInputIds.add(inputId);
+          const input = inputMap.get(inputId);
+          inputs.push({
+            label: inputId,
+            sublabel: input ? `${input.path} · ${input.model}` : undefined,
+            nodeId: input?.nodeId,
+            location: input?.location
+          });
+        }
+      }
+    }
+
+    const sourceClasses: FlowCell[] = sources.map(source => ({
+      label: source.sourceClass || '?',
+      sublabel: source.alias ? `alias ${source.alias}` : undefined,
+      nodeId: source.nodeId,
+      location: source.location
+    }));
+
+    const output = outputMap.get(rule.targetOutput);
+    const targetClasses: FlowCell[] = rule.targetClass ? [{
+      label: rule.targetClass,
+      nodeId: coverage?.nodeId,
+      location: coverage?.location
+    }] : [];
+    const outputs: FlowCell[] = rule.targetOutput ? [{
+      label: rule.targetOutput,
+      sublabel: output ? `${output.path} · ${output.model}` : undefined,
+      nodeId: output?.nodeId,
+      location: output?.location
+    }] : [];
+
+    const hasMissingMandatory = (coverage?.attributes ?? [])
+      .some(a => a.mandatory && !a.assigned);
+
+    return {
+      inputs,
+      sourceClasses,
+      rule: {
+        label: rule.id,
+        nodeId: rule.nodeId,
+        location: rule.location
+      },
+      targetClasses,
+      outputs,
+      status: rule.status,
+      hasRefs: rule.refCount > 0,
+      hasBags: rule.bagCount > 0,
+      hasMissingMandatory
+    };
+  });
+}
+
+function renderFlowRow(row: FlowRow): string {
+  const rowAttrs = [
+    `data-status="${escapeAttribute(row.status)}"`,
+    row.hasRefs ? 'data-has-refs="true"' : '',
+    row.hasBags ? 'data-has-bags="true"' : '',
+    row.hasMissingMandatory ? 'data-missing-mandatory="true"' : ''
+  ].filter(Boolean).join(' ');
+  return `<div class="flow-data-row" ${rowAttrs}>
+      ${renderFlowCol(row.inputs)}
+      <div class="flow-arrow-cell">→</div>
+      ${renderFlowCol(row.sourceClasses)}
+      <div class="flow-arrow-cell">→</div>
+      ${renderFlowRuleNode(row)}
+      <div class="flow-arrow-cell">→</div>
+      ${renderFlowCol(row.targetClasses)}
+      <div class="flow-arrow-cell">→</div>
+      ${renderFlowCol(row.outputs)}
+    </div>`;
+}
+
+function renderFlowRuleNode(row: FlowRow): string {
+  const tagClass = row.status === 'error' ? 'error' : row.status === 'warning' ? 'warning' : '';
+  const location = navLocation(row.rule);
+  const labelHtml = isValidLocation(location)
+    ? `<a href="#" class="flow-node-label" data-nav-line="${escapeAttribute(location.line)}" data-nav-character="${escapeAttribute(location.character)}">${escapeHtml(row.rule.label)}</a>`
+    : `<span class="flow-node-label">${escapeHtml(row.rule.label)}</span>`;
+  const tagHtml = tagClass
+    ? ` <span class="tag ${escapeAttribute(tagClass)}">${escapeHtml(row.status)}</span>`
+    : '';
+  return `<div class="flow-node">${labelHtml}${tagHtml}</div>`;
+}
+
+function renderFlowCol(cells: FlowCell[]): string {
+  if (cells.length === 0) {
+    return '<div class="flow-node"><span class="flow-node-label detail">—</span></div>';
+  }
+  return `<div class="flow-node">${cells.map((cell, i) => {
+    const location = navLocation(cell);
+    const labelHtml = isValidLocation(location)
+      ? `<a href="#" class="flow-node-label" data-nav-line="${escapeAttribute(location.line)}" data-nav-character="${escapeAttribute(location.character)}">${escapeHtml(cell.label)}</a>`
+      : `<span class="flow-node-label">${escapeHtml(cell.label)}</span>`;
+    const sublabelHtml = cell.sublabel
+      ? `<div class="flow-sublabel">${escapeHtml(cell.sublabel)}</div>`
+      : '';
+    const sepStyle = i > 0
+      ? ' style="margin-top:6px;padding-top:6px;border-top:1px solid var(--vscode-panel-border)"'
+      : '';
+    return `<div${sepStyle}>${labelHtml}${sublabelHtml}</div>`;
+  }).join('')}</div>`;
 }
 
 function renderRuleInspector(detail?: IlimapRuleDetailSummary): string {

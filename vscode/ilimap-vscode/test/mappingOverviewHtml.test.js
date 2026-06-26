@@ -475,6 +475,262 @@ test('no inspector section when detail is undefined', () => {
   assert.doesNotMatch(html, /Rule &lt;img/);
 });
 
+test('flow map section renders when rules exist', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, /<section class="flow-map"[^>]*>/);
+  assert.match(html, /Flow Map/);
+  assert.match(html, /flow-grid/);
+  assert.match(html, /flow-header-cell/);
+});
+
+test('flow map renders column headers', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, />Inputs</);
+  assert.match(html, />Source Classes</);
+  assert.match(html, />Rules</);
+  assert.match(html, />Target Classes</);
+  assert.match(html, />Outputs</);
+});
+
+test('flow map renders rule node with status', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, /data-status="ok"/);
+  assert.match(html, /data-status="warning"/);
+  assert.match(html, /data-status="error"/);
+});
+
+test('flow map filter bar renders with data-filter attributes', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, /data-filter-target="flow-map"/);
+  assert.match(html, /data-filter-value="all"/);
+  assert.match(html, /data-filter-value="errors"/);
+  assert.match(html, /data-filter-value="warnings"/);
+  assert.match(html, /data-filter-value="missing-mandatory"/);
+  assert.match(html, /data-filter-value="refs"/);
+  assert.match(html, /data-filter-value="bags"/);
+  assert.match(html, />All</);
+  assert.match(html, />Errors</);
+  assert.match(html, />Warnings</);
+  assert.match(html, />Missing mandatory</);
+  assert.match(html, />Rules with refs</);
+  assert.match(html, />Rules with bags</);
+});
+
+test('flow map filter bar has no inline handlers or editable controls', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.doesNotMatch(html, /onclick=/i);
+  assert.doesNotMatch(html, /<button\b/i);
+  assert.doesNotMatch(html, /<input\b/i);
+  assert.doesNotMatch(html, /<form\b/i);
+  assert.doesNotMatch(html, /contenteditable/i);
+});
+
+test('flow map preserves strict CSP', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(
+    html,
+    /Content-Security-Policy" content="default-src 'none'; style-src 'nonce-test-nonce'; script-src 'nonce-test-nonce';"/
+  );
+});
+
+test('flow map escapes node labels', () => {
+  const s = summaryWithFlowData();
+  s.rules[0].id = '<script>alert(1)</script>';
+  const html = renderMappingOverviewHtml(s, 'test-nonce');
+
+  assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
+});
+
+test('flow map nodes are navigable when location present', () => {
+  const s = summaryWithFlowData();
+  s.rules[0].location = { line: 8, character: 9 };
+  s.inputs[0].location = { line: 2, character: 3 };
+  s.outputs[0].location = { line: 4, character: 5 };
+  const html = renderMappingOverviewHtml(s, 'test-nonce');
+
+  assert.match(html, /data-nav-line="8"/);
+  assert.match(html, /data-nav-character="9"/);
+});
+
+test('flow map shows empty state when no rules', () => {
+  const s = summaryWithFlowData();
+  s.rules = [];
+  s.ruleCoverage = [];
+  const html = renderMappingOverviewHtml(s, 'test-nonce');
+
+  assert.match(html, /<section class="flow-map"[^>]*>\s*<h2>Flow Map<\/h2>\s*<p class="empty">None<\/p>/);
+});
+
+test('flow row has refs data attribute when rule has refs', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, /data-has-refs="true"/);
+});
+
+test('flow row has bags data attribute when rule has bags', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, /data-has-bags="true"/);
+});
+
+test('flow row has missing mandatory data attribute when mandatory attribute is unassigned', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, /data-missing-mandatory="true"/);
+});
+
+test('flow map derives source classes and inputs from rule coverage', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, />M\.A</);
+  assert.match(html, />src</);
+  assert.match(html, />DM01\.Test\.Class</);
+});
+
+test('flow arrow cells render between columns', () => {
+  const html = renderMappingOverviewHtml(summaryWithFlowData(), 'test-nonce');
+
+  assert.match(html, /flow-arrow-cell/);
+  assert.match(html, />→</);
+});
+
+function summaryWithFlowData() {
+  const s = summary();
+  s.rules = [
+    {
+      id: 'r_ok',
+      targetOutput: 'out_main',
+      targetClass: 'M.A',
+      sourceCount: 1,
+      assignmentCount: 2,
+      bagCount: 0,
+      refCount: 1,
+      status: 'ok',
+      location: { line: 10, character: 4 }
+    },
+    {
+      id: 'r_warn',
+      targetOutput: 'out_main',
+      targetClass: 'M.B',
+      sourceCount: 2,
+      assignmentCount: 1,
+      bagCount: 3,
+      refCount: 0,
+      status: 'warning'
+    },
+    {
+      id: 'r_err',
+      targetOutput: 'out_aux',
+      targetClass: 'DM01.Test.Class',
+      sourceCount: 1,
+      assignmentCount: 1,
+      bagCount: 0,
+      refCount: 0,
+      status: 'error'
+    }
+  ];
+  s.inputs = [
+    { id: 'src', path: 'in.xtf', model: 'M', format: 'xtf' },
+    { id: 'dm01', path: 'dm01.itf', model: 'DM01', format: 'itf' }
+  ];
+  s.outputs = [
+    { id: 'out_main', path: 'out.xtf', model: 'M', format: 'xtf' },
+    { id: 'out_aux', path: 'aux.xtf', model: 'M', format: 'xtf' }
+  ];
+  s.ruleCoverage = [
+    {
+      ruleId: 'r_ok',
+      targetOutput: 'out_main',
+      targetClass: 'M.A',
+      attributes: [
+        { name: 'Name', type: 'TEXT', cardinality: '1', mandatory: true, assigned: true, line: 12, character: 6 },
+        { name: 'Desc', type: 'TEXT', cardinality: '0..1', mandatory: false, assigned: true, line: 13, character: 6 }
+      ],
+      sources: [
+        {
+          alias: 's',
+          inputIds: ['src'],
+          sourceClass: 'M.A',
+          usedAttributes: ['Name'],
+          usedRoles: [],
+          line: 11,
+          character: 4,
+          nodeId: 'rule:r_ok:source:s',
+          location: { line: 11, character: 4 }
+        }
+      ],
+      refs: ['Parent'],
+      directAssignmentCount: 2,
+      bagAssignmentCount: 0,
+      line: 10,
+      character: 4
+    },
+    {
+      ruleId: 'r_warn',
+      targetOutput: 'out_main',
+      targetClass: 'M.B',
+      attributes: [
+        { name: 'Id', type: 'TEXT', cardinality: '1', mandatory: true, assigned: false, line: -1, character: -1 }
+      ],
+      sources: [
+        {
+          alias: 'a',
+          inputIds: ['src'],
+          sourceClass: 'M.A',
+          usedAttributes: [],
+          usedRoles: [],
+          line: 20,
+          character: 4
+        },
+        {
+          alias: 'b',
+          inputIds: ['src'],
+          sourceClass: 'M.B',
+          usedAttributes: [],
+          usedRoles: [],
+          line: 21,
+          character: 4
+        }
+      ],
+      refs: [],
+      directAssignmentCount: 1,
+      bagAssignmentCount: 3,
+      line: 20,
+      character: 4
+    },
+    {
+      ruleId: 'r_err',
+      targetOutput: 'out_aux',
+      targetClass: 'DM01.Test.Class',
+      attributes: [],
+      sources: [
+        {
+          alias: 'd',
+          inputIds: ['dm01'],
+          sourceClass: 'DM01.Test.Class',
+          usedAttributes: [],
+          usedRoles: [],
+          line: 30,
+          character: 4
+        }
+      ],
+      refs: [],
+      directAssignmentCount: 1,
+      bagAssignmentCount: 0,
+      line: 30,
+      character: 4
+    }
+  ];
+  return s;
+}
+
 function summary() {
   return {
     available: true,
