@@ -1,7 +1,3 @@
 package guru.interlis.transformer.mapping.ilimap.ide;
 
-public record IlimapEnumMapSummary(
-        String id,
-        int entryCount,
-        String nodeId,
-        IlimapOverviewLocation location) {}
+public record IlimapEnumMapSummary(String id, int entryCount, String nodeId, IlimapOverviewLocation location) {}

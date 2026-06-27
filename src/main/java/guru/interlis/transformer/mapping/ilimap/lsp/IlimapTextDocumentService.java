@@ -23,8 +23,8 @@ import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapOverviewLocation;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailParams;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapSymbolDisplayKind;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams;
@@ -362,15 +362,13 @@ public final class IlimapTextDocumentService implements TextDocumentService {
 
     public CompletableFuture<IlimapRuleDetailSummary> ruleDetail(IlimapRuleDetailParams params) {
         if (params == null || params.uri() == null || params.uri().isBlank()) {
-            return CompletableFuture.completedFuture(
-                    IlimapRuleDetailSummary.unavailable(
-                            params != null ? params.ruleId() : "", "No ILIMAP document URI provided."));
+            return CompletableFuture.completedFuture(IlimapRuleDetailSummary.unavailable(
+                    params != null ? params.ruleId() : "", "No ILIMAP document URI provided."));
         }
         String uri = params.uri();
         if (documentStore.get(uri).isEmpty()) {
             return CompletableFuture.completedFuture(
-                    IlimapRuleDetailSummary.unavailable(
-                            params.ruleId(), "No open ILIMAP document for URI: " + uri));
+                    IlimapRuleDetailSummary.unavailable(params.ruleId(), "No open ILIMAP document for URI: " + uri));
         }
 
         IlimapAnalysis analysis = analysisForCompletion(uri);

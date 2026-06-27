@@ -1,12 +1,13 @@
 plugins {
     id 'application'
     id 'java'
+    id 'maven-publish'
     id 'com.gradleup.shadow' version '9.4.2'
     id 'com.diffplug.spotless' version '8.7.0'
 }
 
 group = 'guru.interlis'
-version = '0.1.0'
+version = '0.1.0-SNAPSHOT'
 
 base {
     archivesName = 'ilitransformer'
@@ -147,6 +148,29 @@ distributions {
             from('docs/feature-matrix.md') { into 'docs' }
             from('docs/expressions.md') { into 'docs' }
             from('README.md')
+        }
+    }
+}
+
+publishing {
+    publications {
+        distribution(MavenPublication) {
+            groupId = 'guru.interlis'
+            artifactId = 'ilitransformer'
+            version = project.version
+            artifact(tasks.named('distZip'))
+        }
+    }
+    repositories {
+        maven {
+            name = 'interlisGuruSnapshots'
+            url = uri('https://jars.interlis.guru/snapshots')
+            credentials {
+                username = providers.gradleProperty('mavenRepoUser')
+                        .orElse(providers.environmentVariable('MAVEN_REPO_USER')).getOrNull()
+                password = providers.gradleProperty('mavenRepoPassword')
+                        .orElse(providers.environmentVariable('MAVEN_REPO_PASSWORD')).getOrNull()
+            }
         }
     }
 }

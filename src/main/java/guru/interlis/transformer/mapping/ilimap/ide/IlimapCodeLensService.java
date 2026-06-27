@@ -39,8 +39,7 @@ public final class IlimapCodeLensService {
             if (location == null || location.line() < 0 || location.character() < 0) {
                 continue;
             }
-            lenses.add(new IlimapCodeLensSummary(
-                    location, "Show in Overview", SHOW_IN_OVERVIEW_COMMAND, rule.id()));
+            lenses.add(new IlimapCodeLensSummary(location, "Show in Overview", SHOW_IN_OVERVIEW_COMMAND, rule.id()));
             lenses.add(new IlimapCodeLensSummary(
                     location,
                     coverageTitle(rule, coverageById.get(rule.id()), summary),

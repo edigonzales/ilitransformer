@@ -2,8 +2,7 @@ package guru.interlis.transformer.mapping.ilimap.ide;
 
 import java.util.Objects;
 
-public record IlimapCodeLensSummary(
-        IlimapOverviewLocation location, String title, String command, String ruleId) {
+public record IlimapCodeLensSummary(IlimapOverviewLocation location, String title, String command, String ruleId) {
 
     public IlimapCodeLensSummary {
         Objects.requireNonNull(location, "location");

@@ -62,8 +62,7 @@ public final class IlimapDiagnosticOwnerResolver {
         String ownerNodeId = targetAttribute != null
                 ? "rule:" + rule.id() + ":assign:" + targetAttribute
                 : IlimapOverviewNodeIds.rule(rule.id());
-        return new IlimapDiagnosticOwner(
-                ownerNodeId, rule.id(), null, null, null, targetClass, targetAttribute);
+        return new IlimapDiagnosticOwner(ownerNodeId, rule.id(), null, null, null, targetClass, targetAttribute);
     }
 
     private static String targetClass(IlimapRuleBlock rule) {

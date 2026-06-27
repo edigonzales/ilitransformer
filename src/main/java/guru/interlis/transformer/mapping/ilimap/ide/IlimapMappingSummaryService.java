@@ -87,19 +87,26 @@ public final class IlimapMappingSummaryService {
                 diagnosticCount(analysis, IlimapIdeSeverity.HINT),
                 document.inputs().stream()
                         .map(input -> new IlimapMappingInputSummary(
-                                input.id(), input.path(), input.model(), input.format(),
+                                input.id(),
+                                input.path(),
+                                input.model(),
+                                input.format(),
                                 IlimapOverviewNodeIds.input(input.id()),
                                 toLocation(analysis, input.range())))
                         .toList(),
                 document.outputs().stream()
                         .map(output -> new IlimapMappingOutputSummary(
-                                output.id(), output.path(), output.model(), output.format(),
+                                output.id(),
+                                output.path(),
+                                output.model(),
+                                output.format(),
                                 IlimapOverviewNodeIds.output(output.id()),
                                 toLocation(analysis, output.range())))
                         .toList(),
                 document.enums().stream()
                         .map(enumBlock -> new IlimapEnumMapSummary(
-                                enumBlock.id(), enumBlock.entries().size(),
+                                enumBlock.id(),
+                                enumBlock.entries().size(),
                                 IlimapOverviewNodeIds.enumMap(enumBlock.id()),
                                 toLocation(analysis, enumBlock.range())))
                         .toList(),
@@ -228,8 +235,8 @@ public final class IlimapMappingSummaryService {
                             diagnostic.message(),
                             range.start().line(),
                             range.start().character(),
-                            "diagnostic:" + diagnostic.code() + ":" + range.start().line() + ":"
-                                    + range.start().character(),
+                            "diagnostic:" + diagnostic.code() + ":"
+                                    + range.start().line() + ":" + range.start().character(),
                             new IlimapOverviewLocation(
                                     range.start().line(),
                                     range.start().character(),
@@ -342,7 +349,8 @@ public final class IlimapMappingSummaryService {
                             ? analysis.lineMap()
                                     .toIdePosition(assignment.range().start().offset())
                             : new IlimapIdePosition(-1, -1);
-                    String expression = assignment != null ? assignment.expression().text() : null;
+                    String expression =
+                            assignment != null ? assignment.expression().text() : null;
                     return new IlimapCoverageAttributeSummary(
                             attribute.name(),
                             attribute.type(),
@@ -351,9 +359,7 @@ public final class IlimapMappingSummaryService {
                             assignment != null,
                             pos.line(),
                             pos.character(),
-                            assignment != null
-                                    ? "rule:" + rule.id() + ":assign:" + attribute.name()
-                                    : null,
+                            assignment != null ? "rule:" + rule.id() + ":assign:" + attribute.name() : null,
                             assignment != null
                                     ? new IlimapOverviewLocation(pos.line(), pos.character(), null, null)
                                     : null,
@@ -473,8 +479,7 @@ public final class IlimapMappingSummaryService {
 
     private static String sourceSummary(String expression) {
         Set<String> parts = new LinkedHashSet<>();
-        for (IlimapExpressionDependencySummary dependency :
-                IlimapRuleDetailService.extractDependencies(expression)) {
+        for (IlimapExpressionDependencySummary dependency : IlimapRuleDetailService.extractDependencies(expression)) {
             if ("enumMap".equals(dependency.kind()) && dependency.enumMapId() != null) {
                 parts.add("enumMap(" + dependency.enumMapId() + ")");
             } else if (dependency.alias() != null && dependency.member() != null) {
@@ -492,8 +497,7 @@ public final class IlimapMappingSummaryService {
                 collectSources(element, bindings);
             }
             for (SourceBinding binding : bindings.values()) {
-                sourceClass(analysis, binding).ifPresent(classInfo -> groups
-                        .computeIfAbsent(
+                sourceClass(analysis, binding).ifPresent(classInfo -> groups.computeIfAbsent(
                                 groupKey(binding),
                                 ignored -> new SourceGroup(
                                         binding.inputIds(),
@@ -504,7 +508,8 @@ public final class IlimapMappingSummaryService {
                         .add(binding.alias()));
             }
             for (ContextualExpression contextual : contextualExpressions(rule)) {
-                Matcher matcher = SOURCE_MEMBER_PATTERN.matcher(contextual.expression().text());
+                Matcher matcher =
+                        SOURCE_MEMBER_PATTERN.matcher(contextual.expression().text());
                 while (matcher.find()) {
                     String alias = matcher.group(1);
                     String member = matcher.group(2);
@@ -537,11 +542,13 @@ public final class IlimapMappingSummaryService {
     }
 
     private static String groupKey(SourceBinding binding) {
-        return binding.sourceClass() + "\n" + String.join(",", binding.inputIds().stream().sorted().toList());
+        return binding.sourceClass() + "\n"
+                + String.join(",", binding.inputIds().stream().sorted().toList());
     }
 
     private static IlimapOverviewLocation pointLocation(IlimapAnalysis analysis, IlimapSourceRange range) {
-        IlimapIdePosition position = analysis.lineMap().toIdePosition(range.start().offset());
+        IlimapIdePosition position =
+                analysis.lineMap().toIdePosition(range.start().offset());
         return IlimapOverviewLocation.point(position.line(), position.character());
     }
 
@@ -556,9 +563,9 @@ public final class IlimapMappingSummaryService {
     private static void collectContextual(IlimapRuleElement element, List<ContextualExpression> result) {
         switch (element) {
             case IlimapAssignmentBlock block ->
-                    block.assignments().forEach(a -> result.add(new ContextualExpression("assign", a.expression())));
+                block.assignments().forEach(a -> result.add(new ContextualExpression("assign", a.expression())));
             case IlimapDefaultsBlock block ->
-                    block.assignments().forEach(a -> result.add(new ContextualExpression("assign", a.expression())));
+                block.assignments().forEach(a -> result.add(new ContextualExpression("assign", a.expression())));
             case IlimapSourceStmt source -> {
                 if (source.where() != null) {
                     result.add(new ContextualExpression("where", source.where()));
@@ -566,7 +573,7 @@ public final class IlimapMappingSummaryService {
             }
             case IlimapWhereStmt where -> result.add(new ContextualExpression("where", where.expression()));
             case IlimapIdentityStmt identity ->
-                    identity.expressions().forEach(e -> result.add(new ContextualExpression("identity", e)));
+                identity.expressions().forEach(e -> result.add(new ContextualExpression("identity", e)));
             case IlimapJoinStmt join -> result.add(new ContextualExpression("join", join.on()));
             case IlimapBagBlock bag -> collectContextual(bag, result);
             case IlimapRefBlock ref -> {
@@ -576,7 +583,8 @@ public final class IlimapMappingSummaryService {
             }
             case IlimapCreateBlock create -> {
                 if (create.assign() != null) {
-                    create.assign().assignments()
+                    create.assign()
+                            .assignments()
                             .forEach(a -> result.add(new ContextualExpression("assign", a.expression())));
                 }
             }
@@ -616,10 +624,7 @@ public final class IlimapMappingSummaryService {
         private final Map<String, List<IlimapUsageReferenceSummary>> usedRoles = new LinkedHashMap<>();
 
         private SourceGroup(
-                List<String> inputIds,
-                String sourceClass,
-                IlimapClassInfo classInfo,
-                IlimapOverviewLocation location) {
+                List<String> inputIds, String sourceClass, IlimapClassInfo classInfo, IlimapOverviewLocation location) {
             this.inputIds = List.copyOf(inputIds);
             this.sourceClass = sourceClass;
             this.classInfo = classInfo;
@@ -628,19 +633,13 @@ public final class IlimapMappingSummaryService {
 
         private IlimapSourceClassUsageSummary toSummary() {
             List<IlimapSourceAttributeUsageSummary> attributes = classInfo.attributes().stream()
-                    .map(attribute ->
-                            memberUsage(attribute.name(), "attribute", usedAttributes.get(attribute.name())))
+                    .map(attribute -> memberUsage(attribute.name(), "attribute", usedAttributes.get(attribute.name())))
                     .toList();
             List<IlimapSourceAttributeUsageSummary> roles = classInfo.roles().stream()
                     .map(role -> memberUsage(role.name(), "role", usedRoles.get(role.name())))
                     .toList();
             return new IlimapSourceClassUsageSummary(
-                    inputIds,
-                    sourceClass,
-                    aliases.stream().sorted().toList(),
-                    attributes,
-                    roles,
-                    location);
+                    inputIds, sourceClass, aliases.stream().sorted().toList(), attributes, roles, location);
         }
 
         private static IlimapSourceAttributeUsageSummary memberUsage(
