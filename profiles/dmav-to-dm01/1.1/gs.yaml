@@ -70,7 +70,7 @@ mapping:
         NBIdent: "nf.NBIdent"
         Identifikator: "nf.Identifikator"
         Beschreibung: "truncate(nf.Beschreibung, 30)"
-        Gueltigkeit: "if(notDefined(nf.Grundbucheintrag), #projektiert, #gueltig)"
+        Gueltigkeit: "enumMap(coalesce(nf.Mutationsart, #Normal), 'Mutationsart_Status')"
         GueltigerEintrag: "toDate(nf.GueltigerEintrag)"
         GBEintrag: "toDate(nf.Grundbucheintrag)"
 
@@ -129,7 +129,7 @@ mapping:
         - alias: gs
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
-          where: 'gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
+          where: 'gs.Grundstuecksart == #Liegenschaft and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #projektiert and notDefined(gs.Untergang)'
       identity:
         sourceKey: ["gs.NBIdent", "gs.Nummer"]
       assign:
@@ -173,7 +173,6 @@ mapping:
         - alias: ls
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft"
-          where: "ls.Fiktiv == false"
         - alias: gs
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
@@ -181,7 +180,7 @@ mapping:
         NummerTeilGrundstueck: "ls.NummerTeilgrundstueck"
         Geometrie: "ls.Geometrie"
         Flaechenmass: "ls.Flaechenmass"
-      where: 'gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
+      where: 'gs.Grundstuecksart == #Liegenschaft and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #projektiert and notDefined(gs.Untergang)'
       refs:
         - association: "ProjLiegenschaftProjLiegenschaft_von"
           role: "ProjLiegenschaft_von"
@@ -203,7 +202,7 @@ mapping:
         - alias: gs
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
-          where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
+          where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #projektiert and notDefined(gs.Untergang)'
       identity:
         sourceKey: ["gs.NBIdent", "gs.Nummer"]
       assign:
@@ -237,7 +236,7 @@ mapping:
         NummerTeilGrundstueck: "sr.NummerTeilgrundstueck"
         Geometrie: "sr.Geometrie"
         Flaechenmass: "sr.Flaechenmass"
-      where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
+      where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #projektiert and notDefined(gs.Untergang)'
       refs:
         - association: "ProjSelbstRechtProjSelbstRecht_von"
           role: "ProjSelbstRecht_von"
@@ -259,7 +258,7 @@ mapping:
         - alias: gs
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
-          where: 'gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
+          where: 'gs.Grundstuecksart == #Bergwerk and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #projektiert and notDefined(gs.Untergang)'
       identity:
         sourceKey: ["gs.NBIdent", "gs.Nummer"]
       assign:
@@ -293,7 +292,7 @@ mapping:
         NummerTeilGrundstueck: "bw.NummerTeilgrundstueck"
         Geometrie: "bw.Geometrie"
         Flaechenmass: "bw.Flaechenmass"
-      where: 'gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang)'
+      where: 'gs.Grundstuecksart == #Bergwerk and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #projektiert and notDefined(gs.Untergang)'
       refs:
         - association: "ProjBergwerkProjBergwerk_von"
           role: "ProjBergwerk_von"
@@ -315,7 +314,7 @@ mapping:
         - alias: gs
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
-          where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
+          where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), "Mutationsart_Status") != #gueltig)'
       identity:
         sourceKey: ["gs.NBIdent", "gs.Nummer"]
       assign:
@@ -349,7 +348,7 @@ mapping:
         NummerTeilGrundstueck: "sr.NummerTeilgrundstueck"
         Geometrie: "sr.Geometrie"
         Flaechenmass: "sr.Flaechenmass"
-      where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
+      where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), "Mutationsart_Status") != #gueltig)'
       refs:
         - association: "SelbstRechtSelbstRecht_von"
           role: "SelbstRecht_von"
@@ -371,7 +370,7 @@ mapping:
         - alias: gs
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
-          where: 'gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
+          where: 'gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), "Mutationsart_Status") != #gueltig)'
       identity:
         sourceKey: ["gs.NBIdent", "gs.Nummer"]
       assign:
@@ -405,7 +404,7 @@ mapping:
         NummerTeilGrundstueck: "bw.NummerTeilgrundstueck"
         Geometrie: "bw.Geometrie"
         Flaechenmass: "bw.Flaechenmass"
-      where: 'gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
+      where: 'gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), "Mutationsart_Status") != #gueltig)'
       refs:
         - association: "BergwerkBergwerk_von"
           role: "Bergwerk_von"
@@ -427,7 +426,7 @@ mapping:
         - alias: gs
           input: dmav
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
-          where: 'gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
+          where: 'gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), "Mutationsart_Status") != #gueltig)'
       assign:
         NBIdent: "gs.NBIdent"
         Nummer: "gs.Nummer"
@@ -477,7 +476,7 @@ mapping:
         NummerTeilGrundstueck: "ls.NummerTeilgrundstueck"
         Geometrie: "ls.Geometrie"
         Flaechenmass: "ls.Flaechenmass"
-      where: 'gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")))'
+      where: 'gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), "Mutationsart_Status") != #gueltig)'
       refs:
         - association: "LiegenschaftLiegenschaft_von"
           role: "Liegenschaft_von"

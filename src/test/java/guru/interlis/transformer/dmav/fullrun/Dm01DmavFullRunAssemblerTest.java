@@ -176,20 +176,24 @@ class Dm01DmavFullRunAssemblerTest {
                         "gs-grundstueck-gueltig",
                         "gs-liegenschaft");
         assertThat(rulesById.get("gs-gs-nachfuehrung-gueltig").assign)
-                .containsEntry("Gueltigkeit", "if(notDefined(nf.Grundbucheintrag), #projektiert, #gueltig)")
+                .containsEntry("Gueltigkeit", "enumMap(coalesce(nf.Mutationsart, #Normal), \"Mutationsart_Status\")")
                 .containsEntry("GBEintrag", "toDate(nf.Grundbucheintrag)");
 
         assertThat(sourceWhere(rulesById.get("gs-grundstueck-gueltig"), "gs"))
                 .contains("gs.Grundstuecksart == #Liegenschaft")
                 .contains("gs.Fiktiv == false")
                 .contains("defined(gs.Entstehung)")
-                .contains("Grundbucheintrag")
-                .contains("notDefined(gs.Untergang)");
+                .contains("Mutationsart")
+                .contains("\"Mutationsart_Status\") == #gueltig")
+                .contains("notDefined(gs.Untergang)")
+                .contains("\"Mutationsart_Status\") != #gueltig")
+                .doesNotContain("Grundbucheintrag");
         assertThat(rulesById.get("gs-liegenschaft").where)
                 .contains("gs.Grundstuecksart == #Liegenschaft")
                 .contains("gs.Fiktiv == false")
                 .contains("defined(gs.Entstehung)")
-                .contains("Grundbucheintrag");
+                .contains("\"Mutationsart_Status\") == #gueltig")
+                .doesNotContain("Grundbucheintrag");
         assertThat(sourceWhere(rulesById.get("gs-liegenschaft"), "ls")).isEqualTo("ls.Fiktiv == false");
         assertThat(rulesById.get("gs-liegenschaft").joins).singleElement().satisfies(join -> {
             assertThat(join.left).isEqualTo("ls");
@@ -200,66 +204,75 @@ class Dm01DmavFullRunAssemblerTest {
 
         assertThat(sourceWhere(rulesById.get("gs-proj-grundstueck"), "gs"))
                 .contains("gs.Grundstuecksart == #Liegenschaft")
-                .contains("gs.Fiktiv == false")
-                .contains("notDefined(lookupIn")
+                .contains("Mutationsart")
+                .contains("\"Mutationsart_Status\") == #projektiert")
                 .contains("notDefined(gs.Untergang)")
-                .doesNotContain("gs.Fiktiv == true");
-        assertThat(sourceWhere(rulesById.get("gs-proj-liegenschaft"), "ls")).isEqualTo("ls.Fiktiv == false");
+                .doesNotContain("gs.Fiktiv == false")
+                .doesNotContain("Grundbucheintrag");
+        assertThat(sourceWhere(rulesById.get("gs-proj-liegenschaft"), "ls")).isNull();
         assertThat(rulesById.get("gs-proj-liegenschaft").where)
-                .contains("gs.Fiktiv == false")
-                .contains("notDefined(lookupIn")
+                .contains("\"Mutationsart_Status\") == #projektiert")
                 .contains("notDefined(gs.Untergang)")
-                .doesNotContain("gs.Fiktiv == true");
+                .doesNotContain("gs.Fiktiv == false")
+                .doesNotContain("Grundbucheintrag");
         assertThat(rulesById.get("gs-proj-liegenschaft").joins).singleElement().satisfies(join -> assertThat(join.on)
                 .isEqualTo("eq(ls.Grundstueck, gs)"));
 
         assertThat(sourceWhere(rulesById.get("gs-selbstrecht-grundstueck"), "gs"))
                 .contains("gs.Grundstuecksart == #SelbstaendigesDauerndesRecht")
                 .contains("gs.Fiktiv == false")
-                .contains("defined(lookupIn")
-                .contains("notDefined(gs.Untergang)");
+                .contains("\"Mutationsart_Status\") == #gueltig")
+                .contains("notDefined(gs.Untergang)")
+                .contains("\"Mutationsart_Status\") != #gueltig")
+                .doesNotContain("Grundbucheintrag");
         assertThat(rulesById.get("gs-selbstrecht").where)
                 .contains("gs.Grundstuecksart == #SelbstaendigesDauerndesRecht")
                 .contains("gs.Fiktiv == false")
-                .contains("defined(lookupIn");
+                .contains("\"Mutationsart_Status\") == #gueltig")
+                .doesNotContain("Grundbucheintrag");
         assertThat(rulesById.get("gs-selbstrecht").joins).singleElement().satisfies(join -> assertThat(join.on)
                 .isEqualTo("eq(sr.Grundstueck, gs)"));
 
         assertThat(sourceWhere(rulesById.get("gs-proj-selbstrecht-grundstueck"), "gs"))
                 .contains("gs.Grundstuecksart == #SelbstaendigesDauerndesRecht")
-                .contains("gs.Fiktiv == false")
-                .contains("notDefined(lookupIn")
+                .contains("\"Mutationsart_Status\") == #projektiert")
                 .contains("notDefined(gs.Untergang)")
-                .doesNotContain("gs.Fiktiv == true");
+                .doesNotContain("gs.Fiktiv == false")
+                .doesNotContain("Grundbucheintrag");
         assertThat(rulesById.get("gs-proj-selbstrecht").where)
-                .contains("gs.Fiktiv == false")
-                .contains("notDefined(lookupIn")
-                .contains("notDefined(gs.Untergang)");
+                .contains("\"Mutationsart_Status\") == #projektiert")
+                .contains("notDefined(gs.Untergang)")
+                .doesNotContain("gs.Fiktiv == false")
+                .doesNotContain("Grundbucheintrag");
         assertThat(rulesById.get("gs-proj-selbstrecht").joins).singleElement().satisfies(join -> assertThat(join.on)
                 .isEqualTo("eq(sr.Grundstueck, gs)"));
 
         assertThat(sourceWhere(rulesById.get("gs-bergwerk-grundstueck"), "gs"))
                 .contains("gs.Grundstuecksart == #Bergwerk")
                 .contains("gs.Fiktiv == false")
-                .contains("defined(lookupIn")
-                .contains("notDefined(gs.Untergang)");
+                .contains("\"Mutationsart_Status\") == #gueltig")
+                .contains("notDefined(gs.Untergang)")
+                .contains("\"Mutationsart_Status\") != #gueltig")
+                .doesNotContain("Grundbucheintrag");
         assertThat(rulesById.get("gs-bergwerk").where)
                 .contains("gs.Grundstuecksart == #Bergwerk")
                 .contains("gs.Fiktiv == false")
-                .contains("defined(lookupIn");
+                .contains("\"Mutationsart_Status\") == #gueltig")
+                .doesNotContain("Grundbucheintrag");
         assertThat(rulesById.get("gs-bergwerk").joins).singleElement().satisfies(join -> assertThat(join.on)
                 .isEqualTo("eq(bw.Grundstueck, gs)"));
 
         assertThat(sourceWhere(rulesById.get("gs-proj-bergwerk-grundstueck"), "gs"))
                 .contains("gs.Grundstuecksart == #Bergwerk")
-                .contains("gs.Fiktiv == false")
-                .contains("notDefined(lookupIn")
+                .contains("\"Mutationsart_Status\") == #projektiert")
                 .contains("notDefined(gs.Untergang)")
-                .doesNotContain("gs.Fiktiv == true");
+                .doesNotContain("gs.Fiktiv == false")
+                .doesNotContain("Grundbucheintrag");
         assertThat(rulesById.get("gs-proj-bergwerk").where)
-                .contains("gs.Fiktiv == false")
-                .contains("notDefined(lookupIn")
-                .contains("notDefined(gs.Untergang)");
+                .contains("\"Mutationsart_Status\") == #projektiert")
+                .contains("notDefined(gs.Untergang)")
+                .doesNotContain("gs.Fiktiv == false")
+                .doesNotContain("Grundbucheintrag");
         assertThat(rulesById.get("gs-proj-bergwerk").joins).singleElement().satisfies(join -> assertThat(join.on)
                 .isEqualTo("eq(bw.Grundstueck, gs)"));
     }

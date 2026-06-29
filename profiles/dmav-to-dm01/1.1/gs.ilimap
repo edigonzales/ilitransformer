@@ -70,7 +70,7 @@ mapping v2 "dmav-to-dm01-gs" {
       NBIdent = nf.NBIdent;
       Identifikator = nf.Identifikator;
       Beschreibung = truncate(nf.Beschreibung, 30);
-      Gueltigkeit = if(notDefined(nf.Grundbucheintrag), #projektiert, #gueltig);
+      Gueltigkeit = enumMap(coalesce(nf.Mutationsart, #Normal), Mutationsart_Status);
       GueltigerEintrag = toDate(nf.GueltigerEintrag);
       GBEintrag = toDate(nf.Grundbucheintrag);
     }
@@ -116,7 +116,7 @@ mapping v2 "dmav-to-dm01-gs" {
 
   rule proj-grundstueck {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck";
-    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang);
+    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #Liegenschaft and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #projektiert and notDefined(gs.Untergang);
     identity gs.NBIdent, gs.Nummer;
 
     assign {
@@ -153,9 +153,9 @@ mapping v2 "dmav-to-dm01-gs" {
 
   rule proj-liegenschaft {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.ProjLiegenschaft";
-    source ls from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft" where ls.Fiktiv == false;
+    source ls from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft";
     source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck";
-    where gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang);
+    where gs.Grundstuecksart == #Liegenschaft and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #projektiert and notDefined(gs.Untergang);
     join inner ls to gs on eq(ls.Grundstueck, gs);
 
     assign {
@@ -174,7 +174,7 @@ mapping v2 "dmav-to-dm01-gs" {
 
   rule proj-selbstrecht-grundstueck {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck";
-    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang);
+    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #projektiert and notDefined(gs.Untergang);
     identity gs.NBIdent, gs.Nummer;
 
     assign {
@@ -199,7 +199,7 @@ mapping v2 "dmav-to-dm01-gs" {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.ProjSelbstRecht";
     source sr from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.SelbstaendigesDauerndesRecht";
     source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck";
-    where gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang);
+    where gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #projektiert and notDefined(gs.Untergang);
     join inner sr to gs on eq(sr.Grundstueck, gs);
 
     assign {
@@ -218,7 +218,7 @@ mapping v2 "dmav-to-dm01-gs" {
 
   rule proj-bergwerk-grundstueck {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck";
-    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang);
+    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #Bergwerk and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #projektiert and notDefined(gs.Untergang);
     identity gs.NBIdent, gs.Nummer;
 
     assign {
@@ -243,7 +243,7 @@ mapping v2 "dmav-to-dm01-gs" {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.ProjBergwerk";
     source bw from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Bergwerk";
     source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck";
-    where gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and notDefined(gs.Untergang);
+    where gs.Grundstuecksart == #Bergwerk and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #projektiert and notDefined(gs.Untergang);
     join inner bw to gs on eq(bw.Grundstueck, gs);
 
     assign {
@@ -262,7 +262,7 @@ mapping v2 "dmav-to-dm01-gs" {
 
   rule selbstrecht-grundstueck {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.Grundstueck";
-    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")));
+    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), Mutationsart_Status) != #gueltig);
     identity gs.NBIdent, gs.Nummer;
 
     assign {
@@ -287,7 +287,7 @@ mapping v2 "dmav-to-dm01-gs" {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.SelbstRecht";
     source sr from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.SelbstaendigesDauerndesRecht";
     source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck";
-    where gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")));
+    where gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), Mutationsart_Status) != #gueltig);
     join inner sr to gs on eq(sr.Grundstueck, gs);
 
     assign {
@@ -306,7 +306,7 @@ mapping v2 "dmav-to-dm01-gs" {
 
   rule bergwerk-grundstueck {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.Grundstueck";
-    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")));
+    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), Mutationsart_Status) != #gueltig);
     identity gs.NBIdent, gs.Nummer;
 
     assign {
@@ -331,7 +331,7 @@ mapping v2 "dmav-to-dm01-gs" {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.Bergwerk";
     source bw from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Bergwerk";
     source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck";
-    where gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")));
+    where gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), Mutationsart_Status) != #gueltig);
     join inner bw to gs on eq(bw.Grundstueck, gs);
 
     assign {
@@ -350,7 +350,7 @@ mapping v2 "dmav-to-dm01-gs" {
 
   rule grundstueck-gueltig {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.Grundstueck";
-    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")));
+    source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck" where gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), Mutationsart_Status) != #gueltig);
 
     assign {
       NBIdent = gs.NBIdent;
@@ -388,7 +388,7 @@ mapping v2 "dmav-to-dm01-gs" {
     target dm01 class "DM01AVCH24LV95D.Liegenschaften.Liegenschaft";
     source ls from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft" where ls.Fiktiv == false;
     source gs from dmav class "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck";
-    where gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and defined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Grundbucheintrag")) and (notDefined(gs.Untergang) or notDefined(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Grundbucheintrag")));
+    where gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), Mutationsart_Status) == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), Mutationsart_Status) != #gueltig);
     join inner ls to gs on eq(ls.Grundstueck, gs);
 
     assign {

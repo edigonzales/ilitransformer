@@ -134,6 +134,117 @@ class BagTransformationTest {
     }
 
     @Test
+    void duplicateBagPlansDoNotDuplicateEmbeddedChild() throws Exception {
+        TransformPlan plan = compileMappingContent("""
+                version: 1
+
+                job:
+                  name: bag-embed-duplicate-plan-test
+                  direction: flat-to-nested
+                  failPolicy: strict
+                  inputs:
+                    - id: flat
+                      path: "input/bag-flat.itf"
+                      model: "BagFlatSource"
+                      format: "itf"
+                  outputs:
+                    - id: nested
+                      path: "build/out/bag-nested.xtf"
+                      model: "BagNestedTarget"
+                      format: "xtf"
+
+                mapping:
+                  oidStrategy:
+                    default: deterministicUuid
+                    namespace: "test-bag-duplicate-plans"
+                  basketStrategy:
+                    default: preserveOrGenerateUuid
+
+                  rules:
+                    - id: parent-active
+                      target:
+                        output: nested
+                        class: "BagNestedTarget.NestedTopic.Parent"
+                      sources:
+                        - alias: p
+                          input: flat
+                          class: "BagFlatSource.FlatTopic.Parent"
+                          where: "p.Description == 'active'"
+                      identity:
+                        sourceKey: ["p.ParentId"]
+                      assign:
+                        ParentId: "p.ParentId"
+                        Description: "p.Description"
+                      bags:
+                        Positions:
+                          from:
+                            input: flat
+                            class: "BagFlatSource.FlatTopic.Child"
+                            alias: c
+                          structure: "BagNestedTarget.NestedTopic.Position"
+                          parentRef:
+                            attribute: "ParentId"
+                            parentAlias: "p"
+                          assign:
+                            X: "c.X"
+                            Y: "c.Y"
+                    - id: parent-inactive
+                      target:
+                        output: nested
+                        class: "BagNestedTarget.NestedTopic.Parent"
+                      sources:
+                        - alias: p
+                          input: flat
+                          class: "BagFlatSource.FlatTopic.Parent"
+                          where: "p.Description == 'inactive'"
+                      identity:
+                        sourceKey: ["p.ParentId"]
+                      assign:
+                        ParentId: "p.ParentId"
+                        Description: "p.Description"
+                      bags:
+                        Positions:
+                          from:
+                            input: flat
+                            class: "BagFlatSource.FlatTopic.Child"
+                            alias: c
+                          structure: "BagNestedTarget.NestedTopic.Position"
+                          parentRef:
+                            attribute: "ParentId"
+                            parentAlias: "p"
+                          assign:
+                            X: "c.X"
+                            Y: "c.Y"
+                """);
+        assertThat(plan.diagnostics().hasErrors()).isFalse();
+
+        Iom_jObject parent = new Iom_jObject("BagFlatSource.FlatTopic.Parent", "p1");
+        parent.setattrvalue("ParentId", "P001");
+        parent.setattrvalue("Description", "active");
+
+        Iom_jObject child = new Iom_jObject("BagFlatSource.FlatTopic.Child", "c1");
+        child.setattrvalue("ParentId", "p1");
+        child.setattrvalue("X", "1.500");
+        child.setattrvalue("Y", "2.500");
+
+        Path outputPath = Files.createTempFile("bag-embed-duplicate-plans-", ".xtf");
+        try {
+            InterlisIoFactory ioFactory = new InterlisIoFactory();
+            IoxWriter writer = ioFactory.createWriter(outputPath, nestedTransferDescription);
+            DiagnosticCollector engineDiag = new DiagnosticCollector();
+            TransformationEngine engine =
+                    new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), engineDiag);
+            TransformResult result = engine.runTyped(plan, onceReaderFactory(parent, child), Map.of("nested", writer));
+
+            assertThat(result.errors()).isEqualTo(0);
+            String content = Files.readString(outputPath);
+            assertThat(countOccurrences(content, "<BagNestedTarget:Position>")).isEqualTo(1);
+        } finally {
+            Files.deleteIfExists(outputPath);
+        }
+    }
+
+    @Test
     void bagEmbedManyChildrenStableOrder() throws Exception {
         TransformPlan plan = compileMapping("src/test/resources/mappings/bag-embed-test.yaml");
         assertThat(plan.diagnostics().hasErrors()).isFalse();
@@ -411,6 +522,16 @@ class BagTransformationTest {
     private TransformPlan compileMapping(String mappingPath) throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(mappingPath).toFile(), JobConfig.class);
+        return compileMapping(config);
+    }
+
+    private TransformPlan compileMappingContent(String mappingContent) throws Exception {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        JobConfig config = mapper.readValue(mappingContent, JobConfig.class);
+        return compileMapping(config);
+    }
+
+    private TransformPlan compileMapping(JobConfig config) {
         Map<String, TypeSystemFacade> sourceTs = Map.of(
                 "BagFlatSource", flatTs,
                 "BagNestedTarget", nestedTs);
@@ -418,6 +539,16 @@ class BagTransformationTest {
                 "BagFlatSource", flatTs,
                 "BagNestedTarget", nestedTs);
         return new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+    }
+
+    private static int countOccurrences(String text, String needle) {
+        int count = 0;
+        int index = 0;
+        while ((index = text.indexOf(needle, index)) >= 0) {
+            count++;
+            index += needle.length();
+        }
+        return count;
     }
 
     private static java.util.function.Function<String, IoxReader> onceReaderFactory(Iom_jObject... objects) {
