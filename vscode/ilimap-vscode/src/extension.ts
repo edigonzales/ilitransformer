@@ -31,6 +31,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   registerCommands(context, outputChannel);
   registerExplorerCommands(context, outputChannel, mappingExplorerProvider);
   registerSelectionSync(context, outputChannel);
+  registerFileTracking(context, mappingExplorerProvider, outputChannel);
   await startLanguageClient(context, outputChannel);
 }
 
@@ -141,6 +142,41 @@ async function refreshMappingExplorer(
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function registerFileTracking(
+  context: vscode.ExtensionContext,
+  provider: MappingExplorerProvider,
+  outputChannel: vscode.OutputChannel
+): void {
+  const updateContext = () => {
+    const hasOpenDocument = vscode.workspace.textDocuments.some(doc => isIlimapDocument(doc));
+    void vscode.commands.executeCommand('setContext', 'ilimap:hasOpenDocument', hasOpenDocument);
+    if (!hasOpenDocument) {
+      provider.refresh(undefined, undefined);
+    }
+  };
+
+  updateContext();
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+      updateContext();
+      if (editor && isIlimapDocument(editor.document)) {
+        const currentUri = provider.getCurrentUri();
+        const activeUri = editor.document.uri.toString();
+        if (currentUri !== activeUri) {
+          await refreshMappingExplorer(provider, outputChannel);
+        }
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidCloseTextDocument(() => {
+      updateContext();
+    })
+  );
 }
 
 export async function deactivate(): Promise<void> {

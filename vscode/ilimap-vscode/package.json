@@ -63,7 +63,8 @@
       "ilimap": [
         {
           "id": "ilimap.mappingExplorer",
-          "name": "Mapping Explorer"
+          "name": "Mapping Explorer",
+          "when": "ilimap:hasOpenDocument"
         }
       ]
     },
