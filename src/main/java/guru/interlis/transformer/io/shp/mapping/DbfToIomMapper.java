@@ -3,12 +3,14 @@ package guru.interlis.transformer.io.shp.mapping;
 import guru.interlis.transformer.io.shp.ShapefileMappingException;
 import guru.interlis.transformer.io.shp.ShapefileOptions;
 import guru.interlis.transformer.io.shp.core.DbfField;
+import guru.interlis.transformer.io.shp.core.DbfFieldType;
 import guru.interlis.transformer.io.shp.core.DbfRecord;
 
 import ch.interlis.iom_j.Iom_jObject;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -18,6 +20,7 @@ public final class DbfToIomMapper {
     private final Optional<String> oidField;
     private final int oidFieldIndex;
     private final Map<String, String> columnMappings;
+    private final List<DbfField> fields;
     private final Map<String, Integer> fieldNameToIndex;
     private final ShapefileOptions.DeletedRecordPolicy deletedRecordPolicy;
 
@@ -32,6 +35,7 @@ public final class DbfToIomMapper {
         this.oidField = oidField;
         this.columnMappings = columnMappings;
         this.deletedRecordPolicy = deletedRecordPolicy;
+        this.fields = List.copyOf(fields);
 
         LinkedHashMap<String, Integer> idxMap = new LinkedHashMap<>();
         for (int i = 0; i < fields.size(); i++) {
@@ -79,13 +83,42 @@ public final class DbfToIomMapper {
 
             String iomAttrName = columnMappings.getOrDefault(dbfFieldName, dbfFieldName);
 
-            String trimmed = rawValue.trim();
-            if (!trimmed.isEmpty()) {
-                object.setattrvalue(iomAttrName, trimmed);
+            String normalized = normalize(fields.get(fieldIndex), rawValue);
+            if (normalized != null) {
+                object.setattrvalue(iomAttrName, normalized);
             }
         }
 
         return object;
+    }
+
+    private static String normalize(DbfField field, String rawValue) {
+        String trimmed = rawValue.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+
+        DbfFieldType type = field.type();
+        if ((type == DbfFieldType.NUMERIC || type == DbfFieldType.FLOAT)
+                && trimmed.chars().allMatch(ch -> ch == '*')) {
+            return null;
+        }
+        if (type == DbfFieldType.DATE) {
+            if ("00000000".equals(trimmed)) {
+                return null;
+            }
+            if (trimmed.length() == 8 && trimmed.chars().allMatch(Character::isDigit)) {
+                return trimmed.substring(0, 4) + "-" + trimmed.substring(4, 6) + "-" + trimmed.substring(6, 8);
+            }
+        }
+        if (type == DbfFieldType.LOGICAL) {
+            return switch (trimmed.toUpperCase(Locale.ROOT)) {
+                case "T", "Y", "1" -> "true";
+                case "F", "N", "0" -> "false";
+                default -> trimmed;
+            };
+        }
+        return trimmed;
     }
 
     private String resolveOid(long recordNumber, DbfRecord dbfRecord) {

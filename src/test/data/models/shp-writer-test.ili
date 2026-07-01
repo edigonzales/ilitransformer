@@ -51,5 +51,11 @@ MODEL ShpWriterTest (en)
       Lage: LV95MultiCoord;
     END MehrPunkt;
 
+    CLASS Tabelle =
+      Name: TEXT*60;
+      Zahl: 0 .. 9999;
+      Flag: BOOLEAN;
+    END Tabelle;
+
   END Data;
 END ShpWriterTest.

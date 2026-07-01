@@ -42,13 +42,23 @@ public final class DbfWriter implements AutoCloseable {
     private final FileChannel channel;
     private final List<DbfField> fields;
     private final Charset charset;
+    private final ShapefileWriteOptions.OverflowPolicy overflowPolicy;
     private final int headerLength;
     private final int recordLength;
 
     public DbfWriter(FileChannel channel, List<DbfField> fields, Charset charset) {
+        this(channel, fields, charset, ShapefileWriteOptions.OverflowPolicy.STRICT);
+    }
+
+    public DbfWriter(
+            FileChannel channel,
+            List<DbfField> fields,
+            Charset charset,
+            ShapefileWriteOptions.OverflowPolicy overflowPolicy) {
         this.channel = channel;
         this.fields = List.copyOf(fields);
         this.charset = charset;
+        this.overflowPolicy = overflowPolicy;
 
         int recLen = 1;
         for (DbfField field : this.fields) {
@@ -165,9 +175,14 @@ public final class DbfWriter implements AutoCloseable {
         Charset fieldCharset = field.type() == DbfFieldType.CHARACTER ? charset : StandardCharsets.US_ASCII;
         byte[] encoded = text.getBytes(fieldCharset);
         if (encoded.length > length) {
-            throw new ShapefileMappingException("DBF field '" + field.name() + "': value '" + text + "' encodes to "
-                    + encoded.length + " bytes but the field width is " + length
-                    + " (overflow policy is strict)");
+            if (field.type() == DbfFieldType.CHARACTER
+                    && overflowPolicy == ShapefileWriteOptions.OverflowPolicy.TRUNCATE) {
+                encoded = truncateToBytes(text, fieldCharset, length);
+            } else {
+                throw new ShapefileMappingException("DBF field '" + field.name() + "': value '" + text + "' encodes to "
+                        + encoded.length + " bytes but the field width is " + length
+                        + " (overflow policy is " + overflowPolicy.name().toLowerCase() + ")");
+            }
         }
 
         byte[] out = new byte[length];
@@ -185,6 +200,23 @@ public final class DbfWriter implements AutoCloseable {
             }
         }
         return out;
+    }
+
+    private static byte[] truncateToBytes(String text, Charset charset, int maxBytes) {
+        StringBuilder out = new StringBuilder();
+        int usedBytes = 0;
+        int offset = 0;
+        while (offset < text.length()) {
+            int codePoint = text.codePointAt(offset);
+            byte[] next = new String(Character.toChars(codePoint)).getBytes(charset);
+            if (usedBytes + next.length > maxBytes) {
+                break;
+            }
+            out.appendCodePoint(codePoint);
+            usedBytes += next.length;
+            offset += Character.charCount(codePoint);
+        }
+        return out.toString().getBytes(charset);
     }
 
     private String formatNumber(DbfField field, Object value) throws ShapefileMappingException {

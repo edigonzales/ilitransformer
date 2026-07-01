@@ -346,7 +346,8 @@ SELECT id, identifier, name, ST_AsText(geom) AS geom_wkt FROM stations;
 ## Shapefile
 
 Shapefile (`shp` / `shapefile`) ist ein Eingabe- **und Ausgabeformat** fuer Simple Features.
-Unterstuetzt werden 2D Point-, MultiPoint-, PolyLine- und Polygon-Shapefiles.
+Unterstuetzt werden 2D Point-, MultiPoint-, PolyLine- und Polygon-Shapefiles; beim Schreiben kann
+`shapeType=null` explizit NullShape-Shapefiles fuer DBF-only Tabellen erzeugen.
 
 Beim Lesen entspricht jedes Shapefile genau einer flachen Quellklasse. Beim Schreiben wird genau
 eine IOX-Klasse mit genau einem Geometrietyp in ein Shapefile-Dataset serialisiert. Strukturen,
@@ -409,13 +410,18 @@ Das DBF-Schema wird **modellbewusst** aus der INTERLIS-Zielklasse abgeleitet (Fe
 Nicht-skalare Attribute (Strukturen, Referenzen, weitere Geometrieattribute) werden nicht
 geschrieben, sondern als Warnung gemeldet.
 
+Mit `shapeType=null` schreibt der Writer explizit ein NullShape-Shapefile fuer Klassen ohne
+Geometrie. Klassen mit Geometrieattributen oder die gleichzeitige Angabe von `geometryAttribute`
+werden dabei abgelehnt, damit Geometrien nicht still verloren gehen.
+
 | Option | Default | Bedeutung |
 |---|---|---|
 | `class` | erste geschriebene Objektklasse | Welche IOX-Klasse geschrieben wird |
 | `geometryAttribute` | inferiert (genau ein Geometrieattribut) | Attribut, das als `.shp`-Geometrie geschrieben wird |
-| `shapeType` | aus Geometrieattribut abgeleitet | `point`, `multipoint`, `polyline`, `polygon` |
+| `shapeType` | aus Geometrieattribut abgeleitet | `null`, `point`, `multipoint`, `polyline`, `polygon` |
 | `dbfEncoding` | `UTF-8` | DBF-Encoding und `.cpg` |
 | `fieldNameStrategy` | `strict` | `strict`, `truncate` oder `stable` (DBF-Feldnamen max. 10 Zeichen) |
+| `overflowPolicy` | `strict` | `strict` oder `truncate` fuer zu lange DBF-Character-Werte |
 | `writeSidecarMapping` | `true` | Schreibt `*.iliattr.json` bei gekuerzten/umbenannten Feldnamen |
 | `prj` | *(leer)* | Statischer WKT-Inhalt fuer die `.prj`-Datei |
 | `failOnMultipleBaskets` | `true` | Mehrere Baskets ablehnen |
@@ -423,6 +429,10 @@ geschrieben, sondern als Warnung gemeldet.
 DBF-Feldnamen sind auf 10 Zeichen begrenzt. `strict` lehnt zu lange oder kollidierende Namen ab;
 `truncate` kuerzt auf 10 Zeichen (Kollision = Fehler); `stable` kuerzt und nummeriert deterministisch
 (`ATTRIBUT`, `ATTRIBU_1`) und schreibt ein `*.iliattr.json`-Sidecar mit der Namenszuordnung.
+
+DBF-Wertueberlaeufe bleiben standardmaessig strikt. Mit `overflowPolicy=truncate` werden nur
+Character-Werte byte-sicher im Ziel-Encoding gekuerzt; numerische, logische und Datumsfelder bleiben
+strict.
 
 #### Mapping (YAML)
 

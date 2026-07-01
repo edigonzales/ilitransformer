@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import guru.interlis.transformer.io.FormatOptions;
+import guru.interlis.transformer.io.shp.core.ShapeType;
+import guru.interlis.transformer.io.shp.core.ShapefileWriteOptions;
 import guru.interlis.transformer.io.shp.geom.GeometryKind;
 
 import java.nio.charset.StandardCharsets;
@@ -265,6 +267,12 @@ class ShapefileOptionsTest {
         assertThat(ShapefileOptions.output(FormatOptions.of(Map.of("shapeType", "polygon")))
                         .shapeTypeOverride())
                 .hasValue(guru.interlis.transformer.io.shp.core.ShapeType.POLYGON);
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of("shapeType", "null")))
+                        .shapeTypeOverride())
+                .hasValue(ShapeType.NULL);
+        assertThat(ShapefileOptions.output(FormatOptions.of(Map.of("shapeType", "nullshape")))
+                        .shapeTypeOverride())
+                .hasValue(ShapeType.NULL);
     }
 
     @Test
@@ -331,5 +339,28 @@ class ShapefileOptionsTest {
         ShapefileOptions opts = ShapefileOptions.output(FormatOptions.of(Map.of("prj", "PROJCS[...]")));
 
         assertThat(opts.prj()).hasValue("PROJCS[...]");
+    }
+
+    @Test
+    void overflowPolicyDefaultsToStrict() throws ShapefileMappingException {
+        ShapefileOptions opts = ShapefileOptions.output(FormatOptions.of(Map.of()));
+
+        assertThat(opts.overflowPolicy()).isEqualTo(ShapefileWriteOptions.OverflowPolicy.STRICT);
+    }
+
+    @Test
+    void overflowPolicyParsesTruncate() throws ShapefileMappingException {
+        ShapefileOptions opts = ShapefileOptions.output(FormatOptions.of(Map.of("overflowPolicy", "TRUNCATE")));
+
+        assertThat(opts.overflowPolicy()).isEqualTo(ShapefileWriteOptions.OverflowPolicy.TRUNCATE);
+    }
+
+    @Test
+    void overflowPolicyInvalidThrows() {
+        ShapefileOptions opts = ShapefileOptions.output(FormatOptions.of(Map.of("overflowPolicy", "clip")));
+
+        assertThatThrownBy(opts::overflowPolicy)
+                .isInstanceOf(ShapefileMappingException.class)
+                .hasMessageContaining("overflowPolicy");
     }
 }

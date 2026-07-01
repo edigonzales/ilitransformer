@@ -245,7 +245,7 @@ entries:
   - feature: "Shapefile Input (Reader)"
     phase: "Phases 1-6"
     status: SUPPORTED
-    description: "Read Point, MultiPoint, PolyLine, Polygon 2D Shapefiles with DBF attribute mapping, encoding detection, sidecar validation and ZIP input; one Shapefile = one flat source class"
+    description: "Read Point, MultiPoint, PolyLine, Polygon 2D Shapefiles with DBF attribute mapping, DBF date/logical/null normalisation, encoding detection, sidecar validation and ZIP input; one Shapefile = one flat source class"
     testReferences:
       - "ShapefileFormatProviderTest"
       - "ShapefileOptionsTest"
@@ -259,7 +259,7 @@ entries:
   - feature: "Shapefile Output (Writer)"
     phase: "Phases 7-8"
     status: SUPPORTED
-    description: "Write one class / one geometry type per Shapefile dataset (.shp/.shx/.dbf/.cpg); streaming low-level writer with header patching, model-driven DBF schema, field name strategies, and .iliattr.json sidecar"
+    description: "Write one class / one geometry type per Shapefile dataset (.shp/.shx/.dbf/.cpg), including explicit NullShape output for DBF-only classes; streaming low-level writer with header patching, model-driven DBF schema, field name and overflow policies, and .iliattr.json sidecar"
     testReferences:
       - "ShapefileFormatProviderTest"
       - "ShapefileDatasetWriterTest"

@@ -30,6 +30,9 @@ public final class IomToDbfMapper {
     }
 
     public Geometry extractGeometry(IomObject object) throws ShapefileMappingException {
+        if (schema.geometryAttribute() == null) {
+            return null;
+        }
         if (object.getattrvaluecount(schema.geometryAttribute()) == 0) {
             return null;
         }

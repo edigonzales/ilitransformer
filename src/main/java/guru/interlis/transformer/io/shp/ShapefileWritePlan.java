@@ -3,6 +3,7 @@ package guru.interlis.transformer.io.shp;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.io.shp.ShapefileOptions.FieldNameStrategy;
 import guru.interlis.transformer.io.shp.core.ShapeType;
+import guru.interlis.transformer.io.shp.core.ShapefileWriteOptions;
 import guru.interlis.transformer.io.shp.geom.GeometryKind;
 import guru.interlis.transformer.io.shp.mapping.ShapefileSchemaBuilder;
 import guru.interlis.transformer.io.shp.mapping.ShapefileSchemaBuilder.WriteSchema;
@@ -27,6 +28,7 @@ public final class ShapefileWritePlan {
     private final Optional<ShapeType> shapeTypeOverride;
     private final Charset charset;
     private final Optional<String> prjWkt;
+    private final ShapefileWriteOptions.OverflowPolicy overflowPolicy;
     private final FieldNameStrategy fieldNameStrategy;
     private final boolean writeSidecarMapping;
     private final boolean failOnMultipleBaskets;
@@ -41,6 +43,7 @@ public final class ShapefileWritePlan {
             Optional<ShapeType> shapeTypeOverride,
             Charset charset,
             Optional<String> prjWkt,
+            ShapefileWriteOptions.OverflowPolicy overflowPolicy,
             FieldNameStrategy fieldNameStrategy,
             boolean writeSidecarMapping,
             boolean failOnMultipleBaskets) {
@@ -51,6 +54,7 @@ public final class ShapefileWritePlan {
         this.shapeTypeOverride = shapeTypeOverride;
         this.charset = charset;
         this.prjWkt = prjWkt;
+        this.overflowPolicy = overflowPolicy;
         this.fieldNameStrategy = fieldNameStrategy;
         this.writeSidecarMapping = writeSidecarMapping;
         this.failOnMultipleBaskets = failOnMultipleBaskets;
@@ -66,6 +70,7 @@ public final class ShapefileWritePlan {
                 options.shapeTypeOverride(),
                 options.dbfCharset(Optional.empty()),
                 options.prj(),
+                options.overflowPolicy(),
                 options.fieldNameStrategy(),
                 options.writeSidecarMapping(),
                 options.failOnMultipleBaskets());
@@ -114,6 +119,10 @@ public final class ShapefileWritePlan {
 
     public Optional<String> prjWkt() {
         return prjWkt;
+    }
+
+    public ShapefileWriteOptions.OverflowPolicy overflowPolicy() {
+        return overflowPolicy;
     }
 
     public boolean writeSidecarMapping() {

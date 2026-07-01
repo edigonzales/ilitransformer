@@ -86,7 +86,7 @@ Zusätzliche Eingabeformate werden über `format:` deklariert und pro Input mit 
   Punktgeometrie über WKT/WKB-Spalten. Passwörter werden nie geloggt; auch als `.ilimap` unterstützt.
 
 Shapefile (`shp` / `shapefile`) ist als Eingabe- und Ausgabeformat implementiert (Point, MultiPoint,
-PolyLine, Polygon 2D). Siehe Beispiele `examples/shp-to-xtf/`, `examples/shp-polyline-to-xtf/`,
+PolyLine, Polygon 2D; Output optional auch NullShape fuer DBF-only Tabellen). Siehe Beispiele `examples/shp-to-xtf/`, `examples/shp-polyline-to-xtf/`,
 `examples/shp-polygon-to-xtf/`. Der Writer schreibt genau eine Klasse mit einem Geometrietyp pro
 Shapefile-Dataset und lehnt mehrdeutige Situationen strikt ab.
 

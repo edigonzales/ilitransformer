@@ -89,6 +89,10 @@ public final class ShapefileSchemaBuilder {
                     "SHP output '" + outputId + "': output class '" + className + "' not found in model");
         }
 
+        if (shapeTypeOverride.isPresent() && shapeTypeOverride.get() == ShapeType.NULL) {
+            return noGeometrySchemaFromModel(table, className, configuredGeometryAttribute);
+        }
+
         GeometryAttributeResolver resolver = new GeometryAttributeResolver();
         GeometryAttributeResolver.ResolvedGeometryAttribute geom =
                 resolver.resolveForOutput(typeSystem, className, configuredGeometryAttribute, configuredKind);
@@ -128,6 +132,10 @@ public final class ShapefileSchemaBuilder {
             Optional<GeometryKind> configuredKind,
             Optional<ShapeType> shapeTypeOverride)
             throws ShapefileMappingException {
+
+        if (shapeTypeOverride.isPresent() && shapeTypeOverride.get() == ShapeType.NULL) {
+            return noGeometrySchemaFromFirstObject(sample, configuredGeometryAttribute);
+        }
 
         if (configuredGeometryAttribute.isEmpty()) {
             throw new ShapefileMappingException("SHP output '" + outputId
@@ -182,6 +190,70 @@ public final class ShapefileSchemaBuilder {
         return new WriteSchema(shapeType, geometryAttribute, fields, mapping);
     }
 
+    private WriteSchema noGeometrySchemaFromModel(
+            Table table, String className, Optional<String> configuredGeometryAttribute)
+            throws ShapefileMappingException {
+
+        if (configuredGeometryAttribute.isPresent()) {
+            throw new ShapefileMappingException(
+                    "SHP output '" + outputId + "': option 'geometryAttribute' cannot be used with shapeType=null.");
+        }
+        List<String> geometryAttributes = findOutputGeometryAttributeNames(table);
+        if (!geometryAttributes.isEmpty()) {
+            throw new ShapefileMappingException("SHP output '" + outputId + "': output class '" + className
+                    + "' has geometry attributes " + geometryAttributes
+                    + " and cannot be written as shapeType=null because geometries would be dropped.");
+        }
+
+        List<String> iomAttrs = new ArrayList<>();
+        List<DbfFieldSpec> pendingFields = new ArrayList<>();
+        Iterator<Extendable> it = table.getAttributes();
+        while (it.hasNext()) {
+            Extendable ext = it.next();
+            if (!(ext instanceof AttributeDef attr) || attr.getName() == null) {
+                continue;
+            }
+            Type domain = Type.findReal(attr.getDomain());
+            DbfFieldSpec spec = mapScalarDomain(domain);
+            if (spec == null) {
+                skip(attr.getName(), describeDomain(domain));
+                continue;
+            }
+            iomAttrs.add(attr.getName());
+            pendingFields.add(spec);
+        }
+
+        return assemble(ShapeType.NULL, null, iomAttrs, pendingFields);
+    }
+
+    private WriteSchema noGeometrySchemaFromFirstObject(IomObject sample, Optional<String> configuredGeometryAttribute)
+            throws ShapefileMappingException {
+
+        if (configuredGeometryAttribute.isPresent()) {
+            throw new ShapefileMappingException(
+                    "SHP output '" + outputId + "': option 'geometryAttribute' cannot be used with shapeType=null.");
+        }
+
+        List<String> iomAttrs = new ArrayList<>();
+        List<DbfFieldSpec> pendingFields = new ArrayList<>();
+        for (int i = 0; i < sample.getattrcount(); i++) {
+            String attrName = sample.getattrname(i);
+            if (attrName == null) {
+                continue;
+            }
+            boolean hasScalar = sample.getattrvalue(attrName) != null;
+            boolean hasObject = sample.getattrvaluecount(attrName) > 0 && sample.getattrobj(attrName, 0) != null;
+            if (!hasScalar || hasObject) {
+                skip(attrName, "non-scalar attribute");
+                continue;
+            }
+            iomAttrs.add(attrName);
+            pendingFields.add(new DbfFieldSpec(DbfFieldType.CHARACTER, DEFAULT_CHAR_LEN, 0));
+        }
+
+        return assemble(ShapeType.NULL, null, iomAttrs, pendingFields);
+    }
+
     private static ShapeType shapeTypeFor(GeometryKind kind) {
         return switch (kind) {
             case COORD -> ShapeType.POINT;
@@ -189,6 +261,21 @@ public final class ShapefileSchemaBuilder {
             case POLYLINE -> ShapeType.POLYLINE;
             case SURFACE -> ShapeType.POLYGON;
         };
+    }
+
+    private static List<String> findOutputGeometryAttributeNames(Table table) {
+        List<String> result = new ArrayList<>();
+        Iterator<Extendable> it = table.getAttributes();
+        while (it.hasNext()) {
+            Extendable ext = it.next();
+            if (ext instanceof AttributeDef attr && attr.getName() != null) {
+                if (GeometryAttributeResolver.geometryKindOf(Type.findReal(attr.getDomain()))
+                        .isPresent()) {
+                    result.add(attr.getName());
+                }
+            }
+        }
+        return result;
     }
 
     private DbfFieldSpec mapScalarDomain(Type domain) {

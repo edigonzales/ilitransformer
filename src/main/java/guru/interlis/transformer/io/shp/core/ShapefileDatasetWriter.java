@@ -122,7 +122,7 @@ public final class ShapefileDatasetWriter implements AutoCloseable {
             shxChannel = openTruncating(shxTmp);
             dbfChannel = openTruncating(dbfTmp);
 
-            DbfWriter dbfWriter = new DbfWriter(dbfChannel, schema.fields(), options.dbfCharset());
+            DbfWriter dbfWriter = new DbfWriter(dbfChannel, schema.fields(), options.dbfCharset(), options.overflow());
 
             ShapefileDatasetWriter writer = new ShapefileDatasetWriter(
                     targetShp, schema.shapeType(), options, shpChannel, shxChannel, dbfChannel, dbfWriter);

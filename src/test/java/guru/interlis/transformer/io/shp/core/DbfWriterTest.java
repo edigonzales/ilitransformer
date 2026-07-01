@@ -99,6 +99,40 @@ class DbfWriterTest {
     }
 
     @Test
+    void truncatesCharacterValuesByteSafelyWhenConfigured() throws Exception {
+        Path dbf = tempDir.resolve("truncate.dbf");
+        List<DbfField> truncateFields = List.of(new DbfField("NAME", DbfFieldType.CHARACTER, 5, 0));
+        try (FileChannel channel = openWrite(dbf)) {
+            DbfWriter writer = new DbfWriter(
+                    channel, truncateFields, StandardCharsets.UTF_8, ShapefileWriteOptions.OverflowPolicy.TRUNCATE);
+            writer.writeHeader(0);
+            writer.writeRecord(new Object[] {"äbcdef"});
+            writer.writeEndOfFile();
+            writer.patchRecordCount(1);
+        }
+
+        try (DbfReader reader = DbfReader.open(dbf, StandardCharsets.UTF_8)) {
+            assertThat(reader.readNext().orElseThrow().values().get(0).trim()).isEqualTo("äbcd");
+        }
+    }
+
+    @Test
+    void truncatePolicyKeepsNonCharacterFieldsStrict() throws Exception {
+        assertThatThrownBy(() ->
+                        writeSingleTruncateField(new DbfField("NUM", DbfFieldType.NUMERIC, 2, 0), "123", "num.dbf"))
+                .isInstanceOf(ShapefileMappingException.class)
+                .hasMessageContaining("field width");
+        assertThatThrownBy(() -> writeSingleTruncateField(
+                        new DbfField("DATE", DbfFieldType.DATE, 4, 0), LocalDate.of(2026, 7, 1), "date.dbf"))
+                .isInstanceOf(ShapefileMappingException.class)
+                .hasMessageContaining("field width");
+        assertThatThrownBy(() -> writeSingleTruncateField(
+                        new DbfField("FLAG", DbfFieldType.LOGICAL, 0, 0), Boolean.TRUE, "logical.dbf"))
+                .isInstanceOf(ShapefileMappingException.class)
+                .hasMessageContaining("field width");
+    }
+
+    @Test
     void rejectsWrongValueCount() throws Exception {
         Path dbf = tempDir.resolve("count.dbf");
         try (FileChannel channel = openWrite(dbf)) {
@@ -113,5 +147,15 @@ class DbfWriterTest {
     private static FileChannel openWrite(Path path) throws Exception {
         return FileChannel.open(
                 path, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+    }
+
+    private void writeSingleTruncateField(DbfField field, Object value, String fileName) throws Exception {
+        Path dbf = tempDir.resolve(fileName);
+        try (FileChannel channel = openWrite(dbf)) {
+            DbfWriter writer = new DbfWriter(
+                    channel, List.of(field), StandardCharsets.UTF_8, ShapefileWriteOptions.OverflowPolicy.TRUNCATE);
+            writer.writeHeader(0);
+            writer.writeRecord(new Object[] {value});
+        }
     }
 }

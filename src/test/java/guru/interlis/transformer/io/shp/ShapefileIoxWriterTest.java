@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.io.FormatOpenContext;
+import guru.interlis.transformer.io.shp.core.DbfReader;
+import guru.interlis.transformer.io.shp.core.ShapeType;
+import guru.interlis.transformer.io.shp.core.ShpReader;
 import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
 import guru.interlis.transformer.model.IliModelCompileResult;
@@ -23,6 +26,7 @@ import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
 import ch.interlis.iox_j.jts.Jts2iox;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -39,6 +43,7 @@ class ShapefileIoxWriterTest {
     private static final String MODEL = "src/test/data/models/shp-writer-test.ili";
     private static final String MODELDIR = "src/test/data/models/";
     private static final String STATION = "ShpWriterTest.Data.Station";
+    private static final String TABELLE = "ShpWriterTest.Data.Tabelle";
     private static final String TOPIC = "ShpWriterTest.Data";
 
     private static TransferDescription td;
@@ -194,6 +199,68 @@ class ShapefileIoxWriterTest {
         com.vividsolutions.jts.geom.Geometry jts = ch.interlis.iox_j.jts.Iox2jts.multicoord2JTS(geom);
         assertThat(jts).isInstanceOf(com.vividsolutions.jts.geom.MultiPoint.class);
         assertThat(jts.getNumGeometries()).isEqualTo(3);
+    }
+
+    @Test
+    void writesNullShapeForModelClassWithoutGeometryWhenExplicitlyConfigured(@TempDir Path dir) throws Exception {
+        Path shp = dir.resolve("table.shp");
+
+        Iom_jObject object = new Iom_jObject(TABELLE, "t1");
+        object.setattrvalue("Name", "Plain");
+        object.setattrvalue("Zahl", "7");
+        object.setattrvalue("Flag", "true");
+
+        IoxWriter writer =
+                ShapefileIoxWriter.open(output(shp, Map.of("class", TABELLE, "shapeType", "null")), context());
+        writer.write(new StartTransferEvent("test", null, null));
+        writer.write(new StartBasketEvent(TOPIC, "b1"));
+        writer.write(new ObjectEvent(object));
+        writer.write(new EndBasketEvent());
+        writer.write(new EndTransferEvent());
+        writer.close();
+
+        try (ShpReader reader = ShpReader.open(shp);
+                DbfReader dbf = DbfReader.open(dir.resolve("table.dbf"), StandardCharsets.UTF_8)) {
+            assertThat(reader.header().shapeType()).isEqualTo(ShapeType.NULL);
+            assertThat(reader.readNext()).isPresent();
+            assertThat(dbf.fields()).extracting(field -> field.name()).containsExactly("Name", "Zahl", "Flag");
+            List<String> values = dbf.readNext().orElseThrow().values();
+            assertThat(values.get(0).trim()).isEqualTo("Plain");
+            assertThat(values.get(1).trim()).isEqualTo("7");
+            assertThat(values.get(2).trim()).isEqualTo("T");
+        }
+    }
+
+    @Test
+    void rejectsNullShapeForModelClassWithGeometry(@TempDir Path dir) throws Exception {
+        Path shp = dir.resolve("bad-null.shp");
+        IoxWriter writer =
+                ShapefileIoxWriter.open(output(shp, Map.of("class", STATION, "shapeType", "null")), context());
+        writer.write(new StartTransferEvent("test", null, null));
+        writer.write(new StartBasketEvent(TOPIC, "b1"));
+
+        assertThatThrownBy(() -> writer.write(new ObjectEvent(station("s1", "A", "1", 2600000.0, 1200000.0))))
+                .isInstanceOf(Exception.class)
+                .hasMessageContaining("shapeType=null");
+        writer.close();
+    }
+
+    @Test
+    void rejectsGeometryAttributeWithNullShape(@TempDir Path dir) throws Exception {
+        Path shp = dir.resolve("bad-geometry-attribute.shp");
+        IoxWriter writer = ShapefileIoxWriter.open(
+                output(shp, Map.of("class", TABELLE, "shapeType", "null", "geometryAttribute", "Geom")), context());
+        writer.write(new StartTransferEvent("test", null, null));
+        writer.write(new StartBasketEvent(TOPIC, "b1"));
+
+        Iom_jObject object = new Iom_jObject(TABELLE, "t1");
+        object.setattrvalue("Name", "Plain");
+
+        assertThatThrownBy(() -> writer.write(new ObjectEvent(object)))
+                .isInstanceOf(Exception.class)
+                .hasMessageContaining("geometryAttribute")
+                .hasMessageContaining("shapeType=null");
+        writer.close();
     }
 
     private List<IomObject> readBack(Path shp) throws Exception {

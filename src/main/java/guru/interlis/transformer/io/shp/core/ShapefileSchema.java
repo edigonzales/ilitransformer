@@ -25,16 +25,17 @@ public record ShapefileSchema(ShapeType shapeType, List<DbfField> fields) {
 
     /**
      * Validates that this schema describes a geometry type the writer can produce. The writer
-     * supports Point, MultiPoint, PolyLine and Polygon.
+     * supports NullShape, Point, MultiPoint, PolyLine and Polygon.
      */
     public void validateWritable() throws ShapefileMappingException {
         switch (shapeType) {
-            case POINT, MULTIPOINT, POLYLINE, POLYGON -> {
+            case NULL, POINT, MULTIPOINT, POLYLINE, POLYGON -> {
                 // supported
             }
             default ->
                 throw new ShapefileMappingException("Shapefile writer cannot write shape type " + shapeType + " ("
-                        + shapeType.code() + "). Supported: POINT (1), MULTIPOINT (8), POLYLINE (3), POLYGON (5).");
+                        + shapeType.code()
+                        + "). Supported: NULL (0), POINT (1), MULTIPOINT (8), POLYLINE (3), POLYGON (5).");
         }
     }
 }

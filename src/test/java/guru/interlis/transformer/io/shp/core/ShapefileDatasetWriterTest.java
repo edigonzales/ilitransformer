@@ -152,6 +152,36 @@ class ShapefileDatasetWriterTest {
     }
 
     @Test
+    void writesNullShapeDatasetRoundtripsDbfValues() throws Exception {
+        Path shp = tempDir.resolve("table.shp");
+        ShapefileSchema schema = new ShapefileSchema(ShapeType.NULL, nameField);
+
+        try (ShapefileDatasetWriter writer =
+                ShapefileDatasetWriter.open(shp, schema, ShapefileWriteOptions.defaults())) {
+            writer.write(null, new Object[] {"A"});
+            writer.write(null, new Object[] {"B"});
+            writer.finish();
+        }
+
+        try (ShpReader reader = ShpReader.open(shp)) {
+            assertThat(reader.header().shapeType()).isEqualTo(ShapeType.NULL);
+            Optional<ShapeRecord> first = reader.readNext();
+            assertThat(first).isPresent();
+            assertThat(first.get().shapeType()).isEqualTo(ShapeType.NULL);
+            Optional<ShapeRecord> second = reader.readNext();
+            assertThat(second).isPresent();
+            assertThat(second.get().shapeType()).isEqualTo(ShapeType.NULL);
+            assertThat(reader.readNext()).isEmpty();
+        }
+
+        try (DbfReader dbf = DbfReader.open(tempDir.resolve("table.dbf"), StandardCharsets.UTF_8)) {
+            assertThat(dbf.header().recordCount()).isEqualTo(2);
+            assertThat(dbf.readNext().orElseThrow().values().get(0).trim()).isEqualTo("A");
+            assertThat(dbf.readNext().orElseThrow().values().get(0).trim()).isEqualTo("B");
+        }
+    }
+
+    @Test
     void writesPrjWhenConfigured() throws Exception {
         Path shp = tempDir.resolve("withprj.shp");
         ShapefileSchema schema = new ShapefileSchema(ShapeType.POINT, nameField);

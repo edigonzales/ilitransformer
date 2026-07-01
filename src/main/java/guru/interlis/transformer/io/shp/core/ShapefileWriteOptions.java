@@ -32,7 +32,10 @@ public record ShapefileWriteOptions(Charset dbfCharset, Optional<String> prjWkt,
 
     /** Policy applied when an attribute value does not fit into the target DBF field width. */
     public enum OverflowPolicy {
-        /** Reject the value with a {@code ShapefileMappingException}. The only MVP policy. */
-        STRICT
+        /** Reject the value with a {@code ShapefileMappingException}. */
+        STRICT,
+
+        /** Truncate DBF character fields byte-safely; all non-character fields remain strict. */
+        TRUNCATE
     }
 }

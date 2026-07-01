@@ -2,6 +2,7 @@ package guru.interlis.transformer.io.shp;
 
 import guru.interlis.transformer.io.FormatOptions;
 import guru.interlis.transformer.io.shp.core.ShapeType;
+import guru.interlis.transformer.io.shp.core.ShapefileWriteOptions;
 import guru.interlis.transformer.io.shp.geom.GeometryKind;
 
 import java.nio.charset.Charset;
@@ -35,6 +36,7 @@ public final class ShapefileOptions {
     private static final String WRITE_SIDECAR_MAPPING_KEY = "writeSidecarMapping";
     private static final String PRJ_KEY = "prj";
     private static final String FAIL_ON_MULTIPLE_BASKETS_KEY = "failOnMultipleBaskets";
+    private static final String OVERFLOW_POLICY_KEY = "overflowPolicy";
 
     private static final String DEFAULT_BASKET_ID = "b1";
     private static final Charset DEFAULT_INPUT_DBF_CHARSET = StandardCharsets.ISO_8859_1;
@@ -145,13 +147,14 @@ public final class ShapefileOptions {
         String lower = value.trim().toLowerCase(Locale.ROOT);
         return Optional.of(
                 switch (lower) {
+                    case "null", "nullshape" -> ShapeType.NULL;
                     case "point" -> ShapeType.POINT;
                     case "polyline", "line" -> ShapeType.POLYLINE;
                     case "polygon", "surface", "area" -> ShapeType.POLYGON;
                     default ->
                         throw new ShapefileMappingException(
-                                "SHP option 'shapeType': expected 'point', 'polyline' or 'polygon', got '" + value
-                                        + "'");
+                                "SHP option 'shapeType': expected 'null', 'point', 'polyline' or 'polygon', got '"
+                                        + value + "'");
                 });
     }
 
@@ -173,6 +176,20 @@ public final class ShapefileOptions {
 
     public boolean failOnMultipleBaskets() {
         return options.getBoolean(FAIL_ON_MULTIPLE_BASKETS_KEY, true);
+    }
+
+    public ShapefileWriteOptions.OverflowPolicy overflowPolicy() throws ShapefileMappingException {
+        String value = options.get(OVERFLOW_POLICY_KEY);
+        if (value == null || value.isBlank()) {
+            return ShapefileWriteOptions.OverflowPolicy.STRICT;
+        }
+        return switch (value.trim().toLowerCase(Locale.ROOT)) {
+            case "strict" -> ShapefileWriteOptions.OverflowPolicy.STRICT;
+            case "truncate" -> ShapefileWriteOptions.OverflowPolicy.TRUNCATE;
+            default ->
+                throw new ShapefileMappingException(
+                        "SHP option 'overflowPolicy': expected 'strict' or 'truncate', got '" + value + "'");
+        };
     }
 
     public enum FieldNameStrategy {

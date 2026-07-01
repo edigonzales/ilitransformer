@@ -131,6 +131,52 @@ class ShapefileSchemaBuilderTest {
     }
 
     @Test
+    void buildsNullShapeSchemaForModelClassWithoutGeometryWhenExplicitlyConfigured() throws Exception {
+        WriteSchema schema = builder(new DiagnosticCollector())
+                .fromModel(
+                        ts,
+                        "ShpWriterTest.Data.Tabelle",
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(ShapeType.NULL));
+
+        assertThat(schema.shapeType()).isEqualTo(ShapeType.NULL);
+        assertThat(schema.geometryAttribute()).isNull();
+        assertThat(schema.iomAttributes()).containsExactly("Name", "Zahl", "Flag");
+        assertThat(schema.dbfFields())
+                .extracting(DbfField::type)
+                .containsExactly(DbfFieldType.CHARACTER, DbfFieldType.NUMERIC, DbfFieldType.LOGICAL);
+    }
+
+    @Test
+    void rejectsNullShapeForModelClassWithGeometry() {
+        assertThatThrownBy(() -> builder(new DiagnosticCollector())
+                        .fromModel(
+                                ts,
+                                "ShpWriterTest.Data.Station",
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(ShapeType.NULL)))
+                .isInstanceOf(ShapefileMappingException.class)
+                .hasMessageContaining("shapeType=null")
+                .hasMessageContaining("Geometrie");
+    }
+
+    @Test
+    void rejectsGeometryAttributeWithNullShape() {
+        assertThatThrownBy(() -> builder(new DiagnosticCollector())
+                        .fromModel(
+                                ts,
+                                "ShpWriterTest.Data.Tabelle",
+                                Optional.of("Geometrie"),
+                                Optional.empty(),
+                                Optional.of(ShapeType.NULL)))
+                .isInstanceOf(ShapefileMappingException.class)
+                .hasMessageContaining("geometryAttribute")
+                .hasMessageContaining("shapeType=null");
+    }
+
+    @Test
     void ambiguousGeometryAttributesRejected() {
         assertThatThrownBy(() -> builder(new DiagnosticCollector())
                         .fromModel(
@@ -174,6 +220,21 @@ class ShapefileSchemaBuilderTest {
                 .fromFirstObject(obj, Optional.of("geom"), Optional.of(GeometryKind.COORD), Optional.empty());
 
         assertThat(schema.shapeType()).isEqualTo(ShapeType.POINT);
+        assertThat(schema.iomAttributes()).containsExactlyInAnyOrder("code", "label");
+        assertThat(schema.dbfFields()).allMatch(f -> f.type() == DbfFieldType.CHARACTER);
+    }
+
+    @Test
+    void fallbackFromFirstObjectBuildsNullShapeSchemaWhenExplicitlyConfigured() throws Exception {
+        Iom_jObject obj = new Iom_jObject("Some.Unknown.Cls", "o1");
+        obj.setattrvalue("code", "42");
+        obj.setattrvalue("label", "Hello");
+
+        WriteSchema schema = builder(new DiagnosticCollector())
+                .fromFirstObject(obj, Optional.empty(), Optional.empty(), Optional.of(ShapeType.NULL));
+
+        assertThat(schema.shapeType()).isEqualTo(ShapeType.NULL);
+        assertThat(schema.geometryAttribute()).isNull();
         assertThat(schema.iomAttributes()).containsExactlyInAnyOrder("code", "label");
         assertThat(schema.dbfFields()).allMatch(f -> f.type() == DbfFieldType.CHARACTER);
     }

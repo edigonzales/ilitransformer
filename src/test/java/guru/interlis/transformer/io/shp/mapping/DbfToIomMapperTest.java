@@ -22,6 +22,17 @@ class DbfToIomMapperTest {
 
     private static final List<DbfField> STATION_FIELDS = List.of(
             new DbfField("BFS_NR", DbfFieldType.NUMERIC, 10, 0), new DbfField("NAME", DbfFieldType.CHARACTER, 80, 0));
+    private static final List<DbfField> TYPED_FIELDS = List.of(
+            new DbfField("DT", DbfFieldType.DATE, 8, 0),
+            new DbfField("COUNT", DbfFieldType.NUMERIC, 6, 0),
+            new DbfField("RATIO", DbfFieldType.FLOAT, 8, 2),
+            new DbfField("FLAG_T", DbfFieldType.LOGICAL, 1, 0),
+            new DbfField("FLAG_Y", DbfFieldType.LOGICAL, 1, 0),
+            new DbfField("FLAG_1", DbfFieldType.LOGICAL, 1, 0),
+            new DbfField("FLAG_F", DbfFieldType.LOGICAL, 1, 0),
+            new DbfField("FLAG_N", DbfFieldType.LOGICAL, 1, 0),
+            new DbfField("FLAG_0", DbfFieldType.LOGICAL, 1, 0),
+            new DbfField("FLAG_U", DbfFieldType.LOGICAL, 1, 0));
 
     @Test
     void mapsDbfFieldsToAttributes() throws Exception {
@@ -181,5 +192,48 @@ class DbfToIomMapperTest {
         assertThat(obj.getobjectoid()).isEqualTo("2601");
         assertThat(obj.getattrvalue("BFS_NR")).isEqualTo("2601");
         assertThat(obj.getattrvalue("NAME")).isEqualTo("Solothurn");
+    }
+
+    @Test
+    void normalizesDateAndLogicalDbfValues() throws Exception {
+        var mapper = new DbfToIomMapper(
+                "Demo.Topic.Typed",
+                Optional.empty(),
+                Map.of(),
+                TYPED_FIELDS,
+                ShapefileOptions.DeletedRecordPolicy.ERROR);
+
+        DbfRecord record = new DbfRecord(false, List.of("20131021", "42", "3.50", "T", "Y", "1", "F", "N", "0", "?"));
+        Iom_jObject obj = mapper.map(1, record);
+
+        assertThat(obj.getattrvalue("DT")).isEqualTo("2013-10-21");
+        assertThat(obj.getattrvalue("COUNT")).isEqualTo("42");
+        assertThat(obj.getattrvalue("RATIO")).isEqualTo("3.50");
+        assertThat(obj.getattrvalue("FLAG_T")).isEqualTo("true");
+        assertThat(obj.getattrvalue("FLAG_Y")).isEqualTo("true");
+        assertThat(obj.getattrvalue("FLAG_1")).isEqualTo("true");
+        assertThat(obj.getattrvalue("FLAG_F")).isEqualTo("false");
+        assertThat(obj.getattrvalue("FLAG_N")).isEqualTo("false");
+        assertThat(obj.getattrvalue("FLAG_0")).isEqualTo("false");
+        assertThat(obj.getattrvalue("FLAG_U")).isEqualTo("?");
+    }
+
+    @Test
+    void skipsDbfNullSentinels() throws Exception {
+        var mapper = new DbfToIomMapper(
+                "Demo.Topic.Typed",
+                Optional.empty(),
+                Map.of(),
+                TYPED_FIELDS,
+                ShapefileOptions.DeletedRecordPolicy.ERROR);
+
+        DbfRecord record =
+                new DbfRecord(false, List.of("00000000", "******", "********", "T", "Y", "1", "F", "N", "0", "?"));
+        Iom_jObject obj = mapper.map(1, record);
+
+        assertThat(obj.getattrvalue("DT")).isNull();
+        assertThat(obj.getattrvalue("COUNT")).isNull();
+        assertThat(obj.getattrvalue("RATIO")).isNull();
+        assertThat(obj.getattrvalue("FLAG_T")).isEqualTo("true");
     }
 }

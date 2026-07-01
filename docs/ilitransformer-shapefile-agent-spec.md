@@ -248,9 +248,10 @@ input parcels {
 |---|---:|---|---|
 | `class` | empfohlen | erste geschriebene ObjectEvent-Klasse | Welche IOX-Klasse geschrieben wird |
 | `geometryAttribute` | nein | inferierbar, wenn Klasse genau ein Geometrieattribut enthält | Attribut, das als `.shp`-Geometrie geschrieben wird |
-| `shapeType` | nein | aus Geometrieattribut inferieren | `point`, `polyline`, `polygon` |
+| `shapeType` | nein | aus Geometrieattribut inferieren | `null`, `point`, `polyline`, `polygon` |
 | `dbfEncoding` | nein | `UTF-8` | DBF-Encoding und `.cpg` |
 | `fieldNameStrategy` | nein | `strict` | `strict`, `truncate`, `stable` |
+| `overflowPolicy` | nein | `strict` | `strict`, `truncate` fuer Character-Werte |
 | `writeSidecarMapping` | nein | `true` bei gekürzten Namen | Schreibt `*.iliattr.json` |
 | `prj` | nein | leer | WKT oder Pfad zu `.prj`-Template |
 | `failOnMultipleBaskets` | nein | `true` | Mehrere Baskets ablehnen |
@@ -1658,4 +1659,3 @@ Writer gilt als fertig, wenn:
 - Roundtrip-Tests erfolgreich sind.
 - Performance-Regressionsschutz vorhanden ist.
 - `./gradlew check` erfolgreich läuft.
-

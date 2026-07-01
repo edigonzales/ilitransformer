@@ -162,7 +162,7 @@ public final class ShapefileIoxWriter implements IoxWriter {
     private void openDatasetWriter() throws IOException, ShapefileMappingException {
         ShapefileSchema coreSchema = new ShapefileSchema(schema.shapeType(), schema.dbfFields());
         ShapefileWriteOptions writeOptions =
-                new ShapefileWriteOptions(plan.charset(), plan.prjWkt(), ShapefileWriteOptions.OverflowPolicy.STRICT);
+                new ShapefileWriteOptions(plan.charset(), plan.prjWkt(), plan.overflowPolicy());
         datasetWriter = ShapefileDatasetWriter.open(targetShp, coreSchema, writeOptions);
     }
 
