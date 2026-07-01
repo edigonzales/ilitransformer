@@ -236,7 +236,9 @@ class IlimapRenameServiceTest {
     void renameSourceAlias_inLfp3_renamesAllReferencesInScope() {
         IlimapAnalysis analysis = analyze(dmavToDm01Lfp3());
         // cursor on 'p' in "source p from dmav" in rule lfp3
-        IlimapIdePosition pos = positionAt(analysis, "source p from dmav class \"DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3\" where p.LFPArt == #LFP3;",
+        IlimapIdePosition pos = positionAt(
+                analysis,
+                "source p from dmav class \"DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3\" where p.LFPArt == #LFP3;",
                 "source p".length());
 
         IlimapRenameResult result = renameService.rename(analysis, pos, "q");
@@ -256,8 +258,8 @@ class IlimapRenameServiceTest {
 
         // declaration must be in the edits
         boolean hasDeclaration = result.edits().stream()
-                .anyMatch(edit -> textAt(analysis, edit.range()).equals("p")
-                        && isInRule(analysis, edit.range(), "lfp3"));
+                .anyMatch(
+                        edit -> textAt(analysis, edit.range()).equals("p") && isInRule(analysis, edit.range(), "lfp3"));
         assertThat(hasDeclaration)
                 .as("should rename the source alias declaration")
                 .isTrue();
@@ -267,7 +269,9 @@ class IlimapRenameServiceTest {
     void renameSourceAlias_inLfp3_doesNotAffectOtherRules() {
         IlimapAnalysis analysis = analyze(dmavToDm01Lfp3());
         // cursor on 'p' in "source p from dmav" in rule lfp3
-        IlimapIdePosition pos = positionAt(analysis, "source p from dmav class \"DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3\" where p.LFPArt == #LFP3;",
+        IlimapIdePosition pos = positionAt(
+                analysis,
+                "source p from dmav class \"DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3\" where p.LFPArt == #LFP3;",
                 "source p".length());
 
         IlimapRenameResult result = renameService.rename(analysis, pos, "q");
@@ -277,17 +281,19 @@ class IlimapRenameServiceTest {
         // no edit should be in rule lfp3-symbol (which also uses alias p)
         var lfp3SymbolRule = analysis.document().rules().stream()
                 .filter(r -> "lfp3-symbol".equals(r.id()))
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
         int lfp3SymbolStart = lfp3SymbolRule.range().start().offset();
         int lfp3SymbolEnd = lfp3SymbolRule.range().end().offset();
 
         for (IlimapTextEdit edit : result.edits()) {
             int editStart = analysis.lineMap()
-                    .positionToOffset(edit.range().start().line(), edit.range().start().character());
+                    .positionToOffset(
+                            edit.range().start().line(), edit.range().start().character());
             boolean inLfp3Symbol = editStart >= lfp3SymbolStart && editStart <= lfp3SymbolEnd;
             assertThat(inLfp3Symbol)
-                    .as("edit @" + edit.range().start().line() + ":" + edit.range().start().character()
-                            + " should not be in rule lfp3-symbol")
+                    .as("edit @" + edit.range().start().line() + ":"
+                            + edit.range().start().character() + " should not be in rule lfp3-symbol")
                     .isFalse();
         }
     }
@@ -295,7 +301,9 @@ class IlimapRenameServiceTest {
     @Test
     void renameSourceAlias_inLfp3_traceTest() {
         IlimapAnalysis analysis = analyze(dmavToDm01Lfp3());
-        IlimapIdePosition pos = positionAt(analysis, "source p from dmav class \"DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3\" where p.LFPArt == #LFP3;",
+        IlimapIdePosition pos = positionAt(
+                analysis,
+                "source p from dmav class \"DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3\" where p.LFPArt == #LFP3;",
                 "source p".length());
 
         IlimapRenameResult result = renameService.rename(analysis, pos, "newp");
@@ -308,12 +316,16 @@ class IlimapRenameServiceTest {
         for (IlimapTextEdit edit : result.edits()) {
             String original = textAt(analysis, edit.range());
             int offset = analysis.lineMap()
-                    .positionToOffset(edit.range().start().line(), edit.range().start().character());
+                    .positionToOffset(
+                            edit.range().start().line(), edit.range().start().character());
             int endOffset = analysis.lineMap()
-                    .positionToOffset(edit.range().end().line(), edit.range().end().character());
-            String context = analysis.text().substring(Math.max(0, offset - 5), Math.min(analysis.text().length(), offset + 15));
+                    .positionToOffset(
+                            edit.range().end().line(), edit.range().end().character());
+            String context = analysis.text()
+                    .substring(Math.max(0, offset - 5), Math.min(analysis.text().length(), offset + 15));
             System.out.println("  [" + idx + "] " + original + " -> " + edit.newText()
-                    + " @line" + edit.range().start().line() + ":" + edit.range().start().character()
+                    + " @line" + edit.range().start().line() + ":"
+                    + edit.range().start().character()
                     + " offset[" + offset + "," + endOffset + ")"
                     + " context: " + context.replace("\n", "\\n").replace("\r", "\\r"));
             idx++;
@@ -328,16 +340,21 @@ class IlimapRenameServiceTest {
                     int bStart = analysis.lineMap()
                             .positionToOffset(b.start().line(), b.start().character());
                     return Integer.compare(aStart, bStart);
-                }).toList();
+                })
+                .toList();
 
         // Edits should not overlap (sorted by start offset)
         for (int i = 1; i < ranges.size(); i++) {
             int prevEnd = analysis.lineMap()
-                    .positionToOffset(ranges.get(i - 1).end().line(), ranges.get(i - 1).end().character());
+                    .positionToOffset(
+                            ranges.get(i - 1).end().line(),
+                            ranges.get(i - 1).end().character());
             int currStart = analysis.lineMap()
-                    .positionToOffset(ranges.get(i).start().line(), ranges.get(i).start().character());
+                    .positionToOffset(
+                            ranges.get(i).start().line(), ranges.get(i).start().character());
             assertThat(currStart)
-                    .as("edit[" + i + "] at offset " + currStart + " overlaps with edit[" + (i - 1) + "] ending at offset " + prevEnd)
+                    .as("edit[" + i + "] at offset " + currStart + " overlaps with edit[" + (i - 1)
+                            + "] ending at offset " + prevEnd)
                     .isGreaterThanOrEqualTo(prevEnd);
         }
     }
@@ -345,11 +362,13 @@ class IlimapRenameServiceTest {
     private boolean isInRule(IlimapAnalysis analysis, IlimapIdeRange range, String ruleId) {
         var rule = analysis.document().rules().stream()
                 .filter(r -> ruleId.equals(r.id()))
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
         if (rule == null) return false;
         int offset = analysis.lineMap()
                 .positionToOffset(range.start().line(), range.start().character());
-        return offset >= rule.range().start().offset() && offset <= rule.range().end().offset();
+        return offset >= rule.range().start().offset()
+                && offset <= rule.range().end().offset();
     }
 
     private static String dmavToDm01Lfp3() {

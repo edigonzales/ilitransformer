@@ -617,12 +617,15 @@ public final class IlimapParser {
                 if (idx >= 0) {
                     int partStart = blobStart + idx;
                     int partEnd = partStart + stripped.length();
-                    IlimapSourcePosition start = new IlimapSourcePosition(partStart,
-                            blob.range().start().line(), blob.range().start().column());
-                    IlimapSourcePosition end = new IlimapSourcePosition(partEnd,
-                            blob.range().end().line(), blob.range().end().column());
-                    expressions.add(new IlimapExpressionText(stripped,
-                            new IlimapSourceRange(start, end)));
+                    IlimapSourcePosition start = new IlimapSourcePosition(
+                            partStart,
+                            blob.range().start().line(),
+                            blob.range().start().column());
+                    IlimapSourcePosition end = new IlimapSourcePosition(
+                            partEnd,
+                            blob.range().end().line(),
+                            blob.range().end().column());
+                    expressions.add(new IlimapExpressionText(stripped, new IlimapSourceRange(start, end)));
                     searchFrom = idx + stripped.length();
                 }
             }
