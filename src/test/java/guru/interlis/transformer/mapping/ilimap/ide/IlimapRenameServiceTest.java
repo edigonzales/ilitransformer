@@ -3,6 +3,7 @@ package guru.interlis.transformer.mapping.ilimap.ide;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -229,6 +230,272 @@ class IlimapRenameServiceTest {
 
         assertThat(result.available()).isFalse();
         assertThat(result.message()).contains("No renamable symbol");
+    }
+
+    @Test
+    void renameSourceAlias_inLfp3_renamesAllReferencesInScope() {
+        IlimapAnalysis analysis = analyze(dmavToDm01Lfp3());
+        // cursor on 'p' in "source p from dmav" in rule lfp3
+        IlimapIdePosition pos = positionAt(analysis, "source p from dmav class \"DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3\" where p.LFPArt == #LFP3;",
+                "source p".length());
+
+        IlimapRenameResult result = renameService.rename(analysis, pos, "q");
+
+        assertThat(result.available())
+                .as("rename should succeed for source alias p in lfp3")
+                .isTrue();
+
+        assertThat(result.edits())
+                .as("should rename all p references in rule lfp3")
+                .isNotEmpty();
+
+        // all edits should replace with "q"
+        for (IlimapTextEdit edit : result.edits()) {
+            assertThat(edit.newText()).isEqualTo("q");
+        }
+
+        // declaration must be in the edits
+        boolean hasDeclaration = result.edits().stream()
+                .anyMatch(edit -> textAt(analysis, edit.range()).equals("p")
+                        && isInRule(analysis, edit.range(), "lfp3"));
+        assertThat(hasDeclaration)
+                .as("should rename the source alias declaration")
+                .isTrue();
+    }
+
+    @Test
+    void renameSourceAlias_inLfp3_doesNotAffectOtherRules() {
+        IlimapAnalysis analysis = analyze(dmavToDm01Lfp3());
+        // cursor on 'p' in "source p from dmav" in rule lfp3
+        IlimapIdePosition pos = positionAt(analysis, "source p from dmav class \"DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3\" where p.LFPArt == #LFP3;",
+                "source p".length());
+
+        IlimapRenameResult result = renameService.rename(analysis, pos, "q");
+
+        assertThat(result.available()).isTrue();
+
+        // no edit should be in rule lfp3-symbol (which also uses alias p)
+        var lfp3SymbolRule = analysis.document().rules().stream()
+                .filter(r -> "lfp3-symbol".equals(r.id()))
+                .findFirst().orElseThrow();
+        int lfp3SymbolStart = lfp3SymbolRule.range().start().offset();
+        int lfp3SymbolEnd = lfp3SymbolRule.range().end().offset();
+
+        for (IlimapTextEdit edit : result.edits()) {
+            int editStart = analysis.lineMap()
+                    .positionToOffset(edit.range().start().line(), edit.range().start().character());
+            boolean inLfp3Symbol = editStart >= lfp3SymbolStart && editStart <= lfp3SymbolEnd;
+            assertThat(inLfp3Symbol)
+                    .as("edit @" + edit.range().start().line() + ":" + edit.range().start().character()
+                            + " should not be in rule lfp3-symbol")
+                    .isFalse();
+        }
+    }
+
+    @Test
+    void renameSourceAlias_inLfp3_traceTest() {
+        IlimapAnalysis analysis = analyze(dmavToDm01Lfp3());
+        IlimapIdePosition pos = positionAt(analysis, "source p from dmav class \"DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3\" where p.LFPArt == #LFP3;",
+                "source p".length());
+
+        IlimapRenameResult result = renameService.rename(analysis, pos, "newp");
+
+        assertThat(result.available()).isTrue();
+
+        // emit actual edit texts for debugging
+        System.out.println("=== Rename p -> newp edits (" + result.edits().size() + " total) ===");
+        int idx = 0;
+        for (IlimapTextEdit edit : result.edits()) {
+            String original = textAt(analysis, edit.range());
+            int offset = analysis.lineMap()
+                    .positionToOffset(edit.range().start().line(), edit.range().start().character());
+            int endOffset = analysis.lineMap()
+                    .positionToOffset(edit.range().end().line(), edit.range().end().character());
+            String context = analysis.text().substring(Math.max(0, offset - 5), Math.min(analysis.text().length(), offset + 15));
+            System.out.println("  [" + idx + "] " + original + " -> " + edit.newText()
+                    + " @line" + edit.range().start().line() + ":" + edit.range().start().character()
+                    + " offset[" + offset + "," + endOffset + ")"
+                    + " context: " + context.replace("\n", "\\n").replace("\r", "\\r"));
+            idx++;
+        }
+
+        // Collect the edit ranges and verify they don't overlap
+        List<IlimapIdeRange> ranges = result.edits().stream()
+                .map(IlimapTextEdit::range)
+                .sorted((a, b) -> {
+                    int aStart = analysis.lineMap()
+                            .positionToOffset(a.start().line(), a.start().character());
+                    int bStart = analysis.lineMap()
+                            .positionToOffset(b.start().line(), b.start().character());
+                    return Integer.compare(aStart, bStart);
+                }).toList();
+
+        // Edits should not overlap (sorted by start offset)
+        for (int i = 1; i < ranges.size(); i++) {
+            int prevEnd = analysis.lineMap()
+                    .positionToOffset(ranges.get(i - 1).end().line(), ranges.get(i - 1).end().character());
+            int currStart = analysis.lineMap()
+                    .positionToOffset(ranges.get(i).start().line(), ranges.get(i).start().character());
+            assertThat(currStart)
+                    .as("edit[" + i + "] at offset " + currStart + " overlaps with edit[" + (i - 1) + "] ending at offset " + prevEnd)
+                    .isGreaterThanOrEqualTo(prevEnd);
+        }
+    }
+
+    private boolean isInRule(IlimapAnalysis analysis, IlimapIdeRange range, String ruleId) {
+        var rule = analysis.document().rules().stream()
+                .filter(r -> ruleId.equals(r.id()))
+                .findFirst().orElse(null);
+        if (rule == null) return false;
+        int offset = analysis.lineMap()
+                .positionToOffset(range.start().line(), range.start().character());
+        return offset >= rule.range().start().offset() && offset <= rule.range().end().offset();
+    }
+
+    private static String dmavToDm01Lfp3() {
+        return """
+                mapping v2 "dmav-to-dm01-lfp3" {
+                  job {
+                    description "Pilot-Transformation";
+                    direction dmav-to-dm01;
+                    failPolicy strict;
+                    compileMode compatible;
+                    modeldir "https://models.geo.admin.ch/";
+                    modeldir "https://models.interlis.ch";
+                  }
+
+                  input dmav {
+                    path "input/dmav.xtf";
+                    model "DMAV_FixpunkteAVKategorie3_V1_1";
+                    format xtf;
+                  }
+
+                  output dm01 {
+                    path "build/out/dm01-lfp3.itf";
+                    model "DM01AVCH24LV95D";
+                    format itf;
+                  }
+
+                  basket byTopic;
+
+                  enum Zuverlaessigkeit_DMAV_DM01 {
+                    true => "ja";
+                    false => "nein";
+                  }
+
+                  enum Versicherungsart_DMAV_DM01 {
+                    "Stein" => "Stein";
+                    "Kunststoffzeichen" => "Kunststoffzeichen";
+                    "Bolzen" => "Bolzen";
+                    "Rohr" => "Rohr";
+                    "Pfahl" => "Pfahl";
+                    "Kreuz" => "Kreuz";
+                    "unversichert" => "unversichert";
+                    "weitere" => "weitere";
+                  }
+
+                  rule lfp3-nachfuehrung {
+                    target dm01 class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Nachfuehrung";
+                    source nf from dmav class "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3Nachfuehrung";
+                    identity nf.NBIdent, nf.Identifikator;
+
+                    assign {
+                      NBIdent = nf.NBIdent;
+                      Identifikator = nf.Identifikator;
+                      Beschreibung = truncate(nf.Beschreibung, 30);
+                      Perimeter = nf.Perimeter;
+                      GueltigerEintrag = toDate(nf.GueltigerEintrag);
+                    }
+                  }
+
+                  rule lfp3 {
+                    target dm01 class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3";
+                    source p from dmav class "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3" where p.LFPArt == #LFP3;
+                    identity p.NBIdent, p.Nummer;
+
+                    assign {
+                      NBIdent = p.NBIdent;
+                      Nummer = p.Nummer;
+                      Geometrie = p.Geometrie;
+                      HoeheGeom = p.Hoehengeometrie;
+                      LageGen = mul(p.Lagegenauigkeit, 100.0);
+                      LageZuv = enumMap(p.IstLagezuverlaessig, Zuverlaessigkeit_DMAV_DM01);
+                      HoeheGen = mul(p.Hoehengenauigkeit, 100.0);
+                      HoeheZuv = enumMap(p.IstHoehenzuverlaessig, Zuverlaessigkeit_DMAV_DM01);
+                      Punktzeichen = enumMap(p.Punktzeichen, Versicherungsart_DMAV_DM01);
+                      Protokoll = #nein;
+                    }
+
+                    bag Textposition {
+                      from txt in dmav class "DMAVTYM_Grafik_V1_0.Textposition";
+                      structure "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Pos";
+                      mode expand;
+                      maxItems 1;
+                      parentRef role "LFP3Pos_von" parent p;
+                      assign {
+                        Pos = txt.Position;
+                        Ori = txt.Orientierung;
+                        HAli = txt.HReferenzpunkt;
+                        VAli = txt.VReferenzpunkt;
+                      }
+                    }
+
+                    ref Entstehung {
+                      role "Entstehung";
+                      required;
+                      target rule lfp3-nachfuehrung sourceRef p.Entstehung;
+                    }
+
+                    loss {
+                      sourcePath p.LFPArt;
+                      reasonCode "DMAV_ONLY";
+                      description "DM01 LFP3 kennt nur LFP3.";
+                    }
+
+                    loss {
+                      sourcePath p.Schutzart;
+                      reasonCode "DMAV_ONLY";
+                      description "DM01 LFP3 hat kein Attribut fuer Schutzart.";
+                      when defined(p.Schutzart);
+                    }
+
+                    loss {
+                      sourcePath p.Grenzpunktfunktion;
+                      reasonCode "DMAV_ONLY";
+                      description "DM01 LFP3 speichert die Grenzpunktfunktion nicht.";
+                    }
+
+                    loss {
+                      sourcePath p.IstHoheitsgrenzsteinAlt;
+                      reasonCode "DMAV_ONLY";
+                      description "DM01 LFP3 hat kein Attribut fuer IstHoheitsgrenzsteinAlt.";
+                      when defined(p.IstHoheitsgrenzsteinAlt);
+                    }
+
+                    loss {
+                      sourcePath p.AktiverUnterhalt;
+                      reasonCode "DMAV_ONLY";
+                      description "DM01 LFP3 hat kein Attribut fuer AktiverUnterhalt.";
+                    }
+                  }
+
+                  rule lfp3-symbol {
+                    target dm01 class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Symbol";
+                    source p from dmav class "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3" where if(p.LFPArt == #LFP3, defined(p.SymbolOri), false);
+                    identity p.NBIdent, p.Nummer;
+
+                    assign {
+                      Ori = p.SymbolOri;
+                    }
+
+                    ref LFP3Symbol_von {
+                      role "LFP3Symbol_von";
+                      required;
+                      target rule lfp3 sourceRef p;
+                    }
+                  }
+                }
+                """;
     }
 
     private IlimapAnalysis analyze(String source) {

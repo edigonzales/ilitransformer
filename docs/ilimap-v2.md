@@ -415,7 +415,93 @@ join left pos to p on eq(pos.LFP3Pos_von, p);
 identity p.NBIdent, p.Nummer;
 ```
 
-Expression-Pfade die den stabilen Quellschluessel fuer deterministische OIDs bilden.
+`identity` deklariert den fachlichen Geschaeftsschluessel (Business Key) aus Source-Attributen.
+Die Kombination dieser Werte wird gehasht und erzeugt eine **stabile, reproduzierbare
+deterministische UUID** fuer jedes Zielobjekt — der gleiche Quell-Datensatz produziert bei
+jeder Transformation dieselbe Ziel-OID.
+
+#### Motivation
+
+Ohne `identity` faellt `deterministicUuid` auf die Quell-OID zurueck. Bei einer
+Neunummerierung der Quelldaten (z.B. Datenmigration) wuerde sich die Ziel-OID aendern,
+was Referenzen aus anderen Systemen brechen kann. Mit `identity` ist die Ziel-OID
+ausschliesslich aus den fachlichen Schluesselwerten abgeleitet und bleibt bei
+Neunummerierung der Quell-OID stabil.
+
+#### Einschraenkungen
+
+- Pro Rule ist **maximal eine** `identity`-Deklaration erlaubt (Duplikate erzeugen einen
+  Compile-Fehler `ILIMAP_DUPLICATE_ELEMENT`).
+- Identity-Keys muessen das Format `<alias>.<Attribut>` haben (keine Expressions, keine
+  Funktionen).
+- Als Key-Typen sind nur skalare Typen erlaubt: Text, Zahl, Enum, Boolean, Datum — keine
+  Geometrie, keine Referenzen, keine Strukturen (`MAP_IDENTITY_KEY_INVALID_TYPE`).
+
+#### Datenfluss
+
+```
+.ilimap:    identity p.NBIdent, p.Nummer;
+              │
+              ▼  IlimapToJobConfigMapper
+JobConfig:  identity: { sourceKey: ["p.NBIdent", "p.Nummer"] }
+              │
+              ▼  IdentityCompiler (validiert Alias, Klasse, Attribut, Typ)
+ RulePlan:  identitySourceKeys: ["p.NBIdent", "p.Nummer"]
+              │
+              ▼  TargetObjectFactory: Werte aus Source-Objekt extrahieren
+ OID-Req:    identityValues: {NBIdent="123", Nummer="7-42"}
+              │
+              ▼  DefaultOidGenerationService
+   Hash:     UUID.nameUUIDFromBytes(
+                "namespace::ruleId::SourceClass::NBIdent=123::Nummer=7-42"
+            )
+```
+
+Am Ende entsteht aus `namespace`, Rule-Name, Quellklasse und allen Key-Wert-Paaren eine
+UUIDv3 (`MD5`-basiert). Sind nicht alle Identity-Werte gesetzt (z.B. weil ein
+Quellattribut `null` ist), faellt der Service auf eine OID-basierte Fallback-UUID
+zurueck.
+
+#### Beispiel aus einem produktiven Profil
+
+Aus `dm01-to-dmav/lfp3.ilimap`:
+
+```ilimap
+mapping v2 "dm01-to-dmav-lfp3" {
+  oid deterministicUuid { namespace "dm01-to-dmav-lfp3"; }
+
+  rule lfp3 {
+    target dmav class "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3";
+    source p from dm01 class "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3";
+    identity p.NBIdent, p.Nummer;   // ← stabiler Business-Key
+
+    assign {
+      NBIdent = p.NBIdent;
+      Nummer = p.Nummer;
+      // ...
+    }
+  }
+}
+```
+
+Hier bilden `NBIdent` und `Nummer` zusammen den eindeutigen fachlichen Schluessel eines
+LFP3-Punktes — unabhaengig von der technischen OID in der Quelldatei.
+
+#### Compile-Zeit-Prüfungen
+
+Der `IdentityCompiler` (`IdentityCompiler.java:22-137`) validiert beim Laden:
+
+| Pruefung | Diagnostic |
+|---|---|
+| Key ist leer oder fehlt | `MAP_IDENTITY_KEY_MISSING` |
+| Doppelter Key | `MAP_IDENTITY_KEY_DUPLICATE` |
+| Syntax nicht `<alias>.<attr>` | `MAP_IDENTITY_KEY_MISSING` |
+| Alias nicht in Source-Liste | `MAP_IDENTITY_KEY_MISSING` |
+| Attribut existiert nicht auf Quellklasse | `MAP_IDENTITY_KEY_MISSING` |
+| Attribut-Typ ist Geometrie/Referenz/BAG | `MAP_IDENTITY_KEY_INVALID_TYPE` |
+
+Zusaetzlich: ein Bag mit `mode expand` ohne `identity` erzeugt die Warnung
+`MAP_BAG_EXPAND_IDENTITY_MISSING`.
 
 ### assign
 

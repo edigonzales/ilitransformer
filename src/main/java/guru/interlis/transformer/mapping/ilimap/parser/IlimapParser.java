@@ -607,10 +607,24 @@ public final class IlimapParser {
         IlimapExpressionText blob = readExpression();
         List<IlimapExpressionText> expressions = new ArrayList<>();
         String text = blob.text();
+        int blobStart = blob.range().start().offset();
         if (!text.isEmpty()) {
             String[] parts = text.split(",", -1);
+            int searchFrom = 0;
             for (String part : parts) {
-                expressions.add(new IlimapExpressionText(part.strip(), blob.range()));
+                String stripped = part.strip();
+                int idx = text.indexOf(stripped, searchFrom);
+                if (idx >= 0) {
+                    int partStart = blobStart + idx;
+                    int partEnd = partStart + stripped.length();
+                    IlimapSourcePosition start = new IlimapSourcePosition(partStart,
+                            blob.range().start().line(), blob.range().start().column());
+                    IlimapSourcePosition end = new IlimapSourcePosition(partEnd,
+                            blob.range().end().line(), blob.range().end().column());
+                    expressions.add(new IlimapExpressionText(stripped,
+                            new IlimapSourceRange(start, end)));
+                    searchFrom = idx + stripped.length();
+                }
             }
         }
         IlimapSourceRange range = new IlimapSourceRange(
