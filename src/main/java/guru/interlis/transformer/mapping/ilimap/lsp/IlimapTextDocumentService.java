@@ -27,6 +27,9 @@ import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapSymbolDisplayKind;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenamePrepareResult;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenameResult;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenameService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceSummary;
@@ -67,14 +70,19 @@ import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.PrepareRenameDefaultBehavior;
+import org.eclipse.lsp4j.PrepareRenameParams;
+import org.eclipse.lsp4j.PrepareRenameResult;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.RenameParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.jsonrpc.messages.Either3;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 
@@ -95,6 +103,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     private final IlimapCodeActionService codeActionService;
     private final IlimapCodeLensService codeLensService;
     private final IlimapTraceService traceService;
+    private final IlimapRenameService renameService;
     private final Map<String, CompletableFuture<IlimapAnalysis>> runningModelAnalyses = new ConcurrentHashMap<>();
     private IlimapAnalysisOptions analysisOptions;
     private LanguageClient client;
@@ -191,6 +200,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         this.codeActionService = new IlimapCodeActionService(this.formattingService);
         this.codeLensService = new IlimapCodeLensService(this.mappingSummaryService);
         this.traceService = new IlimapTraceService();
+        this.renameService = new IlimapRenameService();
         this.analysisOptions = Objects.requireNonNull(analysisOptions, "analysisOptions");
     }
 
@@ -348,6 +358,42 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                 params.getPosition().getLine(), params.getPosition().getCharacter());
         return CompletableFuture.completedFuture(
                 hoverService.hoverAt(analysis, position).map(this::toLspHover).orElse(null));
+    }
+
+    @Override
+    public CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> prepareRename(
+            PrepareRenameParams params) {
+        String uri = params.getTextDocument().getUri();
+        if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        IlimapAnalysis analysis = analysisForCompletion(uri);
+        IlimapIdePosition position = new IlimapIdePosition(
+                params.getPosition().getLine(), params.getPosition().getCharacter());
+        return CompletableFuture.completedFuture(
+                renameService.prepareRename(analysis, position)
+                        .map(result -> Either3.<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>forSecond(
+                                new PrepareRenameResult(
+                                        rangeMapper.toLspRange(result.range()),
+                                        result.placeholder())))
+                        .orElse(null));
+    }
+
+    @Override
+    public CompletableFuture<WorkspaceEdit> rename(RenameParams params) {
+        String uri = params.getTextDocument().getUri();
+        if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(new WorkspaceEdit());
+        }
+        IlimapAnalysis analysis = analysisForCompletion(uri);
+        IlimapIdePosition position = new IlimapIdePosition(
+                params.getPosition().getLine(), params.getPosition().getCharacter());
+        IlimapRenameResult result = renameService.rename(analysis, position, params.getNewName());
+        if (!result.available()) {
+            return CompletableFuture.failedFuture(new IllegalArgumentException(result.message()));
+        }
+        List<TextEdit> edits = result.edits().stream().map(this::toLspTextEdit).toList();
+        return CompletableFuture.completedFuture(new WorkspaceEdit(Map.of(uri, edits)));
     }
 
     public CompletableFuture<IlimapMappingSummary> mappingSummary(IlimapMappingSummaryParams params) {

@@ -76,6 +76,14 @@ final class IlimapSymbolReferenceResolver {
                     .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
         }
         if (token.surroundingNode() instanceof IlimapSourceStmt source
+                && source.alias().equals(token.text())
+                && tokenBetweenKeywords(analysis, token, source.range().start().offset(), "source", "from")) {
+            return currentRuleAt(analysis, token)
+                    .flatMap(rule -> analysis.symbols().scopeFor(rule).resolve(token.text()))
+                    .filter(symbol -> symbol.kind() == IlimapSymbolKind.SOURCE_ALIAS)
+                    .map(symbol -> new IlimapResolvedSymbol(symbol, token.range()));
+        }
+        if (token.surroundingNode() instanceof IlimapSourceStmt source
                 && source.inputIds().contains(token.text())
                 && tokenBetweenKeywords(analysis, token, source.range().start().offset(), "from", "class")) {
             return analysis.symbols()

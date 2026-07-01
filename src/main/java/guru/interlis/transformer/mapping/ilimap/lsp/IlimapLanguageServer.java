@@ -22,6 +22,7 @@ import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
+import org.eclipse.lsp4j.RenameOptions;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
@@ -69,6 +70,7 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
         capabilities.setCodeActionProvider(
                 new CodeActionOptions(List.of(CodeActionKind.QuickFix, CodeActionKind.Source)));
         capabilities.setCodeLensProvider(new CodeLensOptions(false));
+        capabilities.setRenameProvider(Either.forRight(new RenameOptions(true)));
         CompletionOptions completionOptions = new CompletionOptions();
         completionOptions.setResolveProvider(false);
         completionOptions.setTriggerCharacters(List.of(".", "\""));
