@@ -14,7 +14,8 @@ ilimap adds editor support for `.ilimap` mapping profiles in Visual Studio Code.
 - Hover information for inputs, outputs, rules, and enum maps
 - Go to Definition for ilimap symbol references
 - Quick fixes for selected enum map diagnostics
-- Read-only mapping overview webview
+- Rename refactoring (F2) for local .ilimap symbols: input, output, rule, enum, source alias, join alias, bag, ref
+- Read-only mapping overview webview with trace inspector, coverage matrix, source usage, and diagnostics
 - Language server log output and restart command
 
 ## Getting Started
@@ -79,13 +80,15 @@ Run `ilimap: Open Mapping Overview` while an `.ilimap` editor is active to open 
 - a per-rule target coverage matrix (attribute, status, type, cardinality, source/expression) that highlights missing mandatory attributes
 - a source usage section that lists used and, when models are loaded, unused source attributes and roles grouped by source class
 
-The overview is read-only: it does not edit mappings. It does compute and display class coverage, the rule coverage matrix and source usage. The coverage matrix and source usage sections provide read-only filter links (for example "Missing only" or "Unused only") that only change what is displayed.
+The overview is read-only: it does not edit mappings. It does compute and display class coverage, the rule coverage matrix and source usage. The coverage matrix and source usage sections provide read-only filter links (for example "Missing only" or "Unused only") that only change what is displayed. Clicking on a target attribute in the coverage matrix or a source member in the source usage section opens a **Trace Inspector** below the matrix. The trace shows which source attributes, roles, enum maps, and functions produce the target value — or, in reverse, which target attributes consume a given source member.
 
 The overview stays bound to the document it was opened for and keeps its summary current: it refreshes automatically when that `.ilimap` document is saved and after a short debounce when it is edited. A non-editing **Refresh** link reloads the summary on demand. A status line reports loading, stale, error and last-updated state without adding any editable controls.
 
 ## Editor integration
 
 Each `rule` in an `.ilimap` file shows a CodeLens above its declaration with a `Show in Overview` action and a concise read-only summary such as `Coverage 12/14 · 2 refs · 1 bag · 1 warning`. The CodeLens actions run the `ilimap.showRuleInOverview` and `ilimap.showRuleCoverage` commands, which open (or reuse) the Mapping Overview and select the rule in the read-only Rule Inspector. Moving the cursor into a rule highlights that rule in an already open overview. The coverage segment appears once models are loaded (after save or `ilimap: Validate Mapping`).
+
+**Bidirectional node-level sync**: moving the cursor to a target attribute assignment, a source alias declaration, or an `alias.member` expression highlights the corresponding element in the overview (coverage row, source usage member, etc.). Conversely, clicking any `data-nav-line` link in the overview jumps to the exact editor location.
 
 
 ## Developer notes
@@ -123,7 +126,6 @@ Use this workflow when working on the extension from this repository:
 
 The current extension focuses on editing and understanding ilimap mappings. It does not currently provide:
 
-- rename refactorings
 - semantic tokens
 - workspace-wide symbol search
 - code actions beyond the currently implemented quick fixes and formatting source action
