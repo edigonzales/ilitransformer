@@ -3,6 +3,10 @@ package guru.interlis.transformer.mapping.ilimap.lsp;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapNavigationNode;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapNavigationTarget;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapNavigationTargetParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapNodeAtPositionParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceParams;
@@ -153,6 +157,16 @@ public final class IlimapLanguageServer implements LanguageServer, LanguageClien
     @JsonRequest(value = "ilimap/trace", useSegment = false)
     public CompletableFuture<IlimapTraceSummary> trace(IlimapTraceParams params) {
         return textDocumentService.trace(params);
+    }
+
+    @JsonRequest(value = "ilimap/nodeAtPosition", useSegment = false)
+    public CompletableFuture<IlimapNavigationNode> nodeAtPosition(IlimapNodeAtPositionParams params) {
+        return textDocumentService.nodeAtPosition(params);
+    }
+
+    @JsonRequest(value = "ilimap/navigationTarget", useSegment = false)
+    public CompletableFuture<IlimapNavigationTarget> navigationTarget(IlimapNavigationTargetParams params) {
+        return textDocumentService.navigationTarget(params);
     }
 
     @Override

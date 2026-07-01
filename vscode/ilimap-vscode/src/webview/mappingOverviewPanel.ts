@@ -153,19 +153,38 @@ export function getOpenOverviewUri(): string | undefined {
   return currentPanelState?.uri;
 }
 
-export async function revealRuleInOpenOverview(
+export async function revealNodeInOpenOverview(
   nodeId: string,
   outputChannel: vscode.OutputChannel
 ): Promise<void> {
   const state = currentPanelState;
-  if (!state || state.disposed || !nodeId.startsWith('rule:')) {
+  if (!state || state.disposed) {
     return;
   }
-  const ruleId = nodeId.substring('rule:'.length);
-  if (!ruleId || state.activeRuleId === ruleId) {
-    return;
+
+  state.activeNodeId = nodeId;
+
+  if (nodeId.startsWith('rule:')) {
+    const ruleId = extractRuleId(nodeId);
+    if (ruleId && (!state.activeRuleId || state.activeRuleId !== ruleId)) {
+      await requestRuleDetail(state, ruleId, outputChannel);
+    }
   }
-  await requestRuleDetail(state, ruleId, outputChannel);
+
+  renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
+  void state.panel.webview.postMessage({ type: 'revealNode', nodeId });
+}
+
+function extractRuleId(nodeId: string): string | undefined {
+  if (!nodeId.startsWith('rule:')) {
+    return undefined;
+  }
+  const afterPrefix = nodeId.substring('rule:'.length);
+  const colonIdx = afterPrefix.indexOf(':');
+  if (colonIdx >= 0) {
+    return afterPrefix.substring(0, colonIdx);
+  }
+  return afterPrefix;
 }
 
 function createOrRevealPanelState(
@@ -498,7 +517,8 @@ function renderPanel(state: MappingOverviewPanelState, renderState: MappingOverv
     renderState,
     Array.from(state.ruleDetailsById.values()),
     state.activeRuleId,
-    state.activeTrace
+    state.activeTrace,
+    state.activeNodeId
   );
 }
 

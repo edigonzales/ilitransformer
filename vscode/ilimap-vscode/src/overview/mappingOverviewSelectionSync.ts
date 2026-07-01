@@ -11,17 +11,33 @@ export class MappingOverviewSelectionSync {
 
   constructor(
     private readonly getCurrentSummary: () => IlimapMappingSummary | undefined,
+    private readonly requestNodeAtPosition: (uri: string, line: number, character: number) => Promise<string | undefined>,
     private readonly revealInWebview: (nodeId: string) => void
   ) {}
 
-  handleSelectionChange(event: vscode.TextEditorSelectionChangeEvent): void {
+  async handleSelectionChange(event: vscode.TextEditorSelectionChangeEvent): Promise<void> {
     const editor = event?.textEditor;
     const selection = event?.selections?.[0];
     if (!editor || !selection) {
       return;
     }
     const uri = editor.document?.uri?.toString();
-    const nodeId = this.findNodeAtPosition(uri, selection.active);
+
+    let nodeId: string | undefined;
+    try {
+      nodeId = await this.requestNodeAtPosition(
+        uri,
+        selection.active.line,
+        selection.active.character
+      );
+    } catch {
+      nodeId = undefined;
+    }
+
+    if (!nodeId) {
+      nodeId = this.findNodeAtPosition(uri, selection.active);
+    }
+
     if (!nodeId || nodeId === this.lastNodeId) {
       return;
     }

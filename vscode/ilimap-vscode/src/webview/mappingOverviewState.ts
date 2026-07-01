@@ -9,6 +9,7 @@ export interface MappingOverviewPanelState {
   summary?: IlimapMappingSummary;
   ruleDetailsById: Map<string, IlimapRuleDetailSummary>;
   activeRuleId?: string;
+  activeNodeId?: string;
   activeTrace?: IlimapTraceSummary;
   lastUpdated?: string;
   refreshTimer?: ReturnType<typeof setTimeout>;

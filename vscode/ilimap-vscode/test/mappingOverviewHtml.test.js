@@ -95,7 +95,7 @@ test('uses server-provided status when present', () => {
 test('marks missing mandatory attributes with a warning row class and data attributes', () => {
   const html = renderMappingOverviewHtml(summary(), 'test-nonce');
 
-  assert.match(html, /<tr class="coverage-row-missing" data-missing="true" data-mandatory="true">/);
+  assert.match(html, /<tr class="coverage-row-missing" data-missing="true" data-mandatory="true" data-node-id="/);
   assert.match(html, /class="req-marker"/);
 });
 

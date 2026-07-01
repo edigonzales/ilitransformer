@@ -38,7 +38,8 @@ export function renderMappingOverviewHtml(
   renderState?: MappingOverviewRenderState,
   ruleDetails?: IlimapRuleDetailSummary | IlimapRuleDetailSummary[],
   activeRuleId?: string,
-  activeTrace?: IlimapTraceSummary
+  activeTrace?: IlimapTraceSummary,
+  activeNodeId?: string
 ): string {
   const title = summary.available ? summary.mappingName || 'mapping' : 'Mapping unavailable';
   const diagnosticText = diagnosticsLabel(summary);
@@ -626,6 +627,12 @@ export function renderMappingOverviewHtml(
       border-top-color: var(--vscode-focusBorder);
     }
 
+    .is-active-node {
+      outline: 1px solid var(--vscode-focusBorder);
+      outline-offset: 2px;
+      background: color-mix(in srgb, var(--vscode-focusBorder) 12%, transparent);
+    }
+
     .trace-inspector {
       margin-top: 24px;
       padding-top: 12px;
@@ -844,6 +851,25 @@ export function renderMappingOverviewHtml(
         }
       });
     }
+    window.addEventListener('message', event => {
+      const message = event.data;
+      if (!message || message.type !== 'revealNode') {
+        return;
+      }
+      const nodeId = message.nodeId;
+      const target = document.querySelector(attributeMatches('data-node-id', nodeId));
+      if (target) {
+        document.querySelectorAll('.is-active-node').forEach(el => el.classList.remove('is-active-node'));
+        target.classList.add('is-active-node');
+        target.scrollIntoView({ block: 'center' });
+      }
+    });
+    function attributeMatches(name, value) {
+      var escaped = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+        ? CSS.escape(value)
+        : String(value).replace(/"/g, '\\\\"');
+      return '[' + name + '="' + escaped + '"]';
+    }
   </script>
 </body>
 </html>`;
@@ -933,7 +959,8 @@ function renderInputs(summary: IlimapMappingSummary): string {
     summary.inputs,
     input => renderNavName(input.id, input),
     input => [input.path, input.model, input.format].filter(Boolean).join(' · '),
-    input => renderDiagnosticBadges(diagnosticsForInput(summary, input.id, input.nodeId))
+    input => renderDiagnosticBadges(diagnosticsForInput(summary, input.id, input.nodeId)),
+    input => input.nodeId
   );
 }
 
@@ -943,7 +970,8 @@ function renderOutputs(summary: IlimapMappingSummary): string {
     summary.outputs,
     output => renderNavName(output.id, output),
     output => [output.path, output.model, output.format].filter(Boolean).join(' · '),
-    output => renderDiagnosticBadges(diagnosticsForOutput(summary, output.id, output.nodeId))
+    output => renderDiagnosticBadges(diagnosticsForOutput(summary, output.id, output.nodeId)),
+    output => output.nodeId
   );
 }
 
@@ -953,7 +981,8 @@ function renderEnumMaps(enumMaps: IlimapEnumMapSummary[]): string {
     enumMaps,
     enumMap => renderNavName(enumMap.id, enumMap),
     enumMap => `${enumMap.entryCount} entries`,
-    () => ''
+    () => '',
+    enumMap => enumMap.nodeId
   );
 }
 
@@ -974,7 +1003,8 @@ function renderRules(summary: IlimapMappingSummary): string {
         .join(' · '),
     rule =>
       `<span class="tag ${statusClass(rule.status)}">${escapeHtml(rule.status)}</span>` +
-      renderDiagnosticBadges(diagnosticsForRule(summary, rule.id))
+      renderDiagnosticBadges(diagnosticsForRule(summary, rule.id)),
+    rule => rule.nodeId
   );
 }
 
@@ -984,7 +1014,8 @@ function renderDiagnostics(diagnostics: IlimapDiagnosticSummary[]): string {
     diagnostics,
     diagnostic => renderNavName(diagnostic.message, diagnostic),
     diagnostic => `${diagnostic.code} · ${diagnostic.severity} · ${diagnostic.line + 1}:${diagnostic.character + 1}`,
-    diagnostic => `<span class="tag ${statusClass(diagnostic.severity)}">${escapeHtml(diagnostic.severity)}</span>`
+    diagnostic => `<span class="tag ${statusClass(diagnostic.severity)}">${escapeHtml(diagnostic.severity)}</span>`,
+    diagnostic => diagnostic.nodeId
   );
 }
 
@@ -1180,7 +1211,8 @@ function renderClassCoverage(classes: IlimapCoverageClassSummary[]): string {
     item =>
       `<span class="tag ${
         item.mandatoryMissingCount > 0 ? 'warning' : item.targeted ? 'tag-mapped' : 'tag-unknown'
-      }">${item.targeted ? 'mapped' : 'open'}</span>`
+      }">${item.targeted ? 'mapped' : 'open'}</span>`,
+    item => item.nodeId
   );
 }
 
@@ -1265,7 +1297,8 @@ function renderCoverageAttributeRow(
   const source = attribute.sourceSummary || attribute.expression || '';
   const diagnosticBadges = renderDiagnosticBadges(diagnosticsForAttribute(summary, ruleId, attribute));
   const traceLink = `<a href="#" class="trace-link" data-action="request-trace" data-trace-mode="targetAttribute" data-rule-id="${escapeAttribute(ruleId)}" data-target-attribute="${escapeAttribute(attribute.name)}">Trace</a>`;
-  return `<tr class="${missing ? 'coverage-row-missing' : ''}"${rowAttrs}>
+  const nodeId = `rule:${escapeAttribute(ruleId)}:target:${escapeAttribute(attribute.name)}`;
+  return `<tr class="${missing ? 'coverage-row-missing' : ''}"${rowAttrs} data-node-id="${nodeId}">
             <td>${renderNavName(attribute.name, attribute)}${traceLink}${
               attribute.mandatory ? ' <span class="req-marker" title="mandatory">*</span>' : ''
             }</td>
@@ -1892,7 +1925,8 @@ function renderSection<T>(
   items: T[],
   name: (item: T) => string,
   detail: (item: T) => string,
-  tag: (item: T) => string
+  tag: (item: T) => string,
+  nodeId?: (item: T) => string | undefined
 ): string {
   return `<section>
       <h2>${escapeHtml(title)}</h2>
@@ -1901,7 +1935,7 @@ function renderSection<T>(
           ? '<p class="empty">None</p>'
           : `<ul>${items
               .map(
-                item => `<li>
+                item => `<li${nodeId ? ` data-node-id="${escapeAttribute(nodeId(item) ?? '')}"` : ''}>
         <div>
           <div class="name">${name(item)}</div>
           <div class="detail">${escapeHtml(detail(item))}</div>

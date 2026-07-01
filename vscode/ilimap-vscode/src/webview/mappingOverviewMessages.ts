@@ -1,6 +1,8 @@
 export const mappingSummaryRequest = 'ilimap/mappingSummary';
 export const ruleDetailRequest = 'ilimap/ruleDetail';
 export const traceRequest = 'ilimap/trace';
+export const nodeAtPositionRequest = 'ilimap/nodeAtPosition';
+export const navigationTargetRequest = 'ilimap/navigationTarget';
 
 export interface IlimapLocation {
   line: number;
@@ -395,4 +397,31 @@ export interface IlimapTraceStep {
   detail?: string;
   status?: string;
   location?: IlimapLocation;
+}
+
+export interface IlimapNavigationNode {
+  nodeId: string;
+  kind: string;
+  label: string;
+  detail?: string;
+  location?: IlimapLocation;
+  relatedNodeIds: string[];
+}
+
+export interface IlimapNodeAtPositionParams {
+  uri: string;
+  position: { line: number; character: number };
+}
+
+export interface IlimapNavigationTargetParams {
+  uri: string;
+  nodeId: string;
+}
+
+export interface IlimapNavigationTarget {
+  available: boolean;
+  message: string;
+  nodeId: string;
+  location?: IlimapLocation;
+  related: IlimapNavigationNode[];
 }

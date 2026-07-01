@@ -11,10 +11,10 @@ import {
   revealLocation,
   isIlimapDocument,
   getOpenOverviewSummary,
-  revealRuleInOpenOverview
+  revealNodeInOpenOverview
 } from './webview/mappingOverviewPanel';
 import { MappingOverviewSelectionSync } from './overview/mappingOverviewSelectionSync';
-import type { IlimapLocation } from './webview/mappingOverviewMessages';
+import type { IlimapLocation, IlimapNavigationNode } from './webview/mappingOverviewMessages';
 
 let outputChannel: vscode.OutputChannel | undefined;
 
@@ -37,8 +37,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 function registerSelectionSync(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): void {
   const sync = new MappingOverviewSelectionSync(
     () => getOpenOverviewSummary(),
+    async (uri, line, character) => {
+      const client = getLanguageClient();
+      if (!client) {
+        return undefined;
+      }
+      try {
+        const node = await client.sendRequest<IlimapNavigationNode>('ilimap/nodeAtPosition', {
+          uri,
+          position: { line, character }
+        });
+        return node?.nodeId;
+      } catch {
+        return undefined;
+      }
+    },
     nodeId => {
-      void revealRuleInOpenOverview(nodeId, outputChannel);
+      void revealNodeInOpenOverview(nodeId, outputChannel);
     }
   );
 

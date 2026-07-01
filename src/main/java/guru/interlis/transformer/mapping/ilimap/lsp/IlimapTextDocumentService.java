@@ -30,6 +30,11 @@ import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenamePrepareResult;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenameResult;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenameService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapNavigationNode;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapNavigationService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapNavigationTarget;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapNavigationTargetParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapNodeAtPositionParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceSummary;
@@ -104,6 +109,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     private final IlimapCodeLensService codeLensService;
     private final IlimapTraceService traceService;
     private final IlimapRenameService renameService;
+    private final IlimapNavigationService navigationService;
     private final Map<String, CompletableFuture<IlimapAnalysis>> runningModelAnalyses = new ConcurrentHashMap<>();
     private IlimapAnalysisOptions analysisOptions;
     private LanguageClient client;
@@ -201,6 +207,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         this.codeLensService = new IlimapCodeLensService(this.mappingSummaryService);
         this.traceService = new IlimapTraceService();
         this.renameService = new IlimapRenameService();
+        this.navigationService = new IlimapNavigationService();
         this.analysisOptions = Objects.requireNonNull(analysisOptions, "analysisOptions");
     }
 
@@ -460,6 +467,37 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         }
         IlimapAnalysis analysis = analysisForCompletion(uri);
         return CompletableFuture.completedFuture(traceService.trace(analysis, params));
+    }
+
+    public CompletableFuture<IlimapNavigationNode> nodeAtPosition(IlimapNodeAtPositionParams params) {
+        if (params == null || params.uri() == null || params.uri().isBlank()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        String uri = params.uri();
+        if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        if (params.position() == null) {
+            return CompletableFuture.completedFuture(null);
+        }
+        IlimapAnalysis analysis = analysisForCompletion(uri);
+        return CompletableFuture.completedFuture(
+                navigationService.nodeAtPosition(analysis, params.position()).orElse(null));
+    }
+
+    public CompletableFuture<IlimapNavigationTarget> navigationTarget(IlimapNavigationTargetParams params) {
+        if (params == null || params.uri() == null || params.uri().isBlank()) {
+            return CompletableFuture.completedFuture(
+                    IlimapNavigationTarget.unavailable("", "No ILIMAP document URI provided."));
+        }
+        String uri = params.uri();
+        if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(
+                    IlimapNavigationTarget.unavailable(params.nodeId(), "No open ILIMAP document for URI: " + uri));
+        }
+        IlimapAnalysis analysis = analysisForCompletion(uri);
+        return CompletableFuture.completedFuture(
+                navigationService.targetForNodeId(analysis, params.nodeId()));
     }
 
     public void invalidateModelCache() {

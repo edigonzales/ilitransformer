@@ -6,6 +6,10 @@ const extensionRoot = path.resolve(__dirname, '..');
 const distPath = path.join(extensionRoot, 'dist', 'overview', 'mappingOverviewSelectionSync.js');
 const { MappingOverviewSelectionSync } = require(distPath);
 
+function noLsp() {
+  return Promise.resolve(undefined);
+}
+
 function summaryWithRules(rules) {
   return {
     available: true,
@@ -57,7 +61,7 @@ function selectionEvent(uri, line) {
 
 test('findNodeAtPosition matches the rule whose explicit range contains the line', () => {
   const summary = summaryWithRules([rule('r1', 3, 8), rule('r2', 10, 15)]);
-  const sync = new MappingOverviewSelectionSync(() => summary, () => {});
+  const sync = new MappingOverviewSelectionSync(() => summary, noLsp, () => {});
 
   assert.equal(sync.findNodeAtPosition('file:///x.ilimap', { line: 5 }), 'rule:r1');
   assert.equal(sync.findNodeAtPosition('file:///x.ilimap', { line: 12 }), 'rule:r2');
@@ -65,14 +69,14 @@ test('findNodeAtPosition matches the rule whose explicit range contains the line
 
 test('findNodeAtPosition returns undefined between explicit rule ranges', () => {
   const summary = summaryWithRules([rule('r1', 3, 8), rule('r2', 10, 15)]);
-  const sync = new MappingOverviewSelectionSync(() => summary, () => {});
+  const sync = new MappingOverviewSelectionSync(() => summary, noLsp, () => {});
 
   assert.equal(sync.findNodeAtPosition('file:///x.ilimap', { line: 9 }), undefined);
 });
 
 test('findNodeAtPosition falls back to next-rule boundary without explicit end', () => {
   const summary = summaryWithRules([rule('r1', 3), rule('r2', 10)]);
-  const sync = new MappingOverviewSelectionSync(() => summary, () => {});
+  const sync = new MappingOverviewSelectionSync(() => summary, noLsp, () => {});
 
   assert.equal(sync.findNodeAtPosition('file:///x.ilimap', { line: 5 }), 'rule:r1');
   assert.equal(sync.findNodeAtPosition('file:///x.ilimap', { line: 9 }), 'rule:r1');
@@ -81,34 +85,56 @@ test('findNodeAtPosition falls back to next-rule boundary without explicit end',
 });
 
 test('findNodeAtPosition returns undefined without summary, rules, or uri', () => {
-  const empty = new MappingOverviewSelectionSync(() => undefined, () => {});
+  const empty = new MappingOverviewSelectionSync(() => undefined, noLsp, () => {});
   assert.equal(empty.findNodeAtPosition('file:///x.ilimap', { line: 5 }), undefined);
 
-  const noRules = new MappingOverviewSelectionSync(() => summaryWithRules([]), () => {});
+  const noRules = new MappingOverviewSelectionSync(() => summaryWithRules([]), noLsp, () => {});
   assert.equal(noRules.findNodeAtPosition('file:///x.ilimap', { line: 5 }), undefined);
 
-  const withRules = new MappingOverviewSelectionSync(() => summaryWithRules([rule('r1', 3, 8)]), () => {});
+  const withRules = new MappingOverviewSelectionSync(() => summaryWithRules([rule('r1', 3, 8)]), noLsp, () => {});
   assert.equal(withRules.findNodeAtPosition(undefined, { line: 5 }), undefined);
 });
 
-test('handleSelectionChange reveals the rule node and deduplicates repeated selections', () => {
+test('handleSelectionChange reveals the rule node and deduplicates repeated selections', async () => {
   const summary = summaryWithRules([rule('r1', 3, 8), rule('r2', 10, 15)]);
   const revealed = [];
-  const sync = new MappingOverviewSelectionSync(() => summary, nodeId => revealed.push(nodeId));
+  const sync = new MappingOverviewSelectionSync(() => summary, noLsp, nodeId => revealed.push(nodeId));
 
-  sync.handleSelectionChange(selectionEvent('file:///x.ilimap', 5));
-  sync.handleSelectionChange(selectionEvent('file:///x.ilimap', 6));
+  await sync.handleSelectionChange(selectionEvent('file:///x.ilimap', 5));
+  await sync.handleSelectionChange(selectionEvent('file:///x.ilimap', 6));
   assert.deepEqual(revealed, ['rule:r1']);
 
-  sync.handleSelectionChange(selectionEvent('file:///x.ilimap', 12));
+  await sync.handleSelectionChange(selectionEvent('file:///x.ilimap', 12));
   assert.deepEqual(revealed, ['rule:r1', 'rule:r2']);
 });
 
-test('handleSelectionChange ignores selections outside any rule', () => {
+test('handleSelectionChange ignores selections outside any rule', async () => {
   const summary = summaryWithRules([rule('r1', 3, 8)]);
   const revealed = [];
-  const sync = new MappingOverviewSelectionSync(() => summary, nodeId => revealed.push(nodeId));
+  const sync = new MappingOverviewSelectionSync(() => summary, noLsp, nodeId => revealed.push(nodeId));
 
-  sync.handleSelectionChange(selectionEvent('file:///x.ilimap', 100));
+  await sync.handleSelectionChange(selectionEvent('file:///x.ilimap', 100));
   assert.deepEqual(revealed, []);
+});
+
+test('handleSelectionChange uses LSP node when available and falls back to heuristic when not', async () => {
+  const summary = summaryWithRules([rule('r1', 3, 8), rule('r2', 10, 15)]);
+  const revealed = [];
+
+  let callCount = 0;
+  const lspMock = async (uri, line, character) => {
+    callCount++;
+    if (callCount === 1) {
+      return 'rule:r1'; // LSP finds the rule at line 5
+    }
+    return undefined; // fall back to heuristic
+  };
+
+  const sync = new MappingOverviewSelectionSync(() => summary, lspMock, nodeId => revealed.push(nodeId));
+
+  await sync.handleSelectionChange(selectionEvent('file:///x.ilimap', 5));
+  assert.deepEqual(revealed, ['rule:r1']); // LSP returned node
+
+  await sync.handleSelectionChange(selectionEvent('file:///x.ilimap', 12));
+  assert.deepEqual(revealed, ['rule:r1', 'rule:r2']); // heuristic fallback
 });
