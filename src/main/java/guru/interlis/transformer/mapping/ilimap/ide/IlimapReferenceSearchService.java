@@ -3,7 +3,6 @@ package guru.interlis.transformer.mapping.ilimap.ide;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapAssignment;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapAssignmentBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapBagBlock;
-import guru.interlis.transformer.mapping.ilimap.ast.IlimapBagElement;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapDefaultsBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapEnumBlock;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapExpressionText;
@@ -54,11 +53,10 @@ public final class IlimapReferenceSearchService {
     }
 
     private List<IlimapIdeRange> scopedReferences(
-            IlimapAnalysis analysis,
-            IlimapResolvedSymbol resolved,
-            ScopedReferenceCollector collector) {
+            IlimapAnalysis analysis, IlimapResolvedSymbol resolved, ScopedReferenceCollector collector) {
         return currentRuleForSymbol(analysis, resolved)
-                .map(rule -> collector.references(analysis, rule, resolved.symbol().name()))
+                .map(rule ->
+                        collector.references(analysis, rule, resolved.symbol().name()))
                 .orElse(List.of());
     }
 
@@ -77,7 +75,8 @@ public final class IlimapReferenceSearchService {
 
         for (IlimapRuleBlock rule : analysis.document().rules()) {
             for (IlimapRuleElement element : rule.elements()) {
-                if (element instanceof IlimapSourceStmt source && source.inputIds().contains(inputId)) {
+                if (element instanceof IlimapSourceStmt source
+                        && source.inputIds().contains(inputId)) {
                     findIdentifierAfterKeyword(analysis, source.range(), "from", inputId)
                             .ifPresent(ranges::add);
                 }
@@ -166,15 +165,15 @@ public final class IlimapReferenceSearchService {
         return List.copyOf(ranges);
     }
 
-    private List<IlimapIdeRange> joinAliasReferences(
-            IlimapAnalysis analysis, IlimapRuleBlock scopeRule, String alias) {
+    private List<IlimapIdeRange> joinAliasReferences(IlimapAnalysis analysis, IlimapRuleBlock scopeRule, String alias) {
         if (!analysis.hasDocument() || scopeRule == null || alias == null) {
             return List.of();
         }
         List<IlimapIdeRange> ranges = new ArrayList<>();
 
         for (IlimapRuleElement element : scopeRule.elements()) {
-            if (element instanceof IlimapJoinStmt join && (alias.equals(join.leftAlias()) || alias.equals(join.rightAlias()))) {
+            if (element instanceof IlimapJoinStmt join
+                    && (alias.equals(join.leftAlias()) || alias.equals(join.rightAlias()))) {
                 if (alias.equals(join.leftAlias())) {
                     joinLeftAliasDeclarationRange(analysis, join, alias).ifPresent(ranges::add);
                 } else {
@@ -191,8 +190,7 @@ public final class IlimapReferenceSearchService {
         return List.copyOf(ranges);
     }
 
-    private List<IlimapIdeRange> bagReferences(
-            IlimapAnalysis analysis, IlimapRuleBlock scopeRule, String bagId) {
+    private List<IlimapIdeRange> bagReferences(IlimapAnalysis analysis, IlimapRuleBlock scopeRule, String bagId) {
         if (!analysis.hasDocument() || scopeRule == null || bagId == null) {
             return List.of();
         }
@@ -200,16 +198,14 @@ public final class IlimapReferenceSearchService {
 
         for (IlimapRuleElement element : scopeRule.elements()) {
             if (element instanceof IlimapBagBlock bag && bagId.equals(bag.id())) {
-                findIdentifierAfterKeyword(analysis, bag.range(), "bag", bagId)
-                        .ifPresent(ranges::add);
+                findIdentifierAfterKeyword(analysis, bag.range(), "bag", bagId).ifPresent(ranges::add);
                 break;
             }
         }
         return List.copyOf(ranges);
     }
 
-    private List<IlimapIdeRange> refReferences(
-            IlimapAnalysis analysis, IlimapRuleBlock scopeRule, String refId) {
+    private List<IlimapIdeRange> refReferences(IlimapAnalysis analysis, IlimapRuleBlock scopeRule, String refId) {
         if (!analysis.hasDocument() || scopeRule == null || refId == null) {
             return List.of();
         }
@@ -217,8 +213,7 @@ public final class IlimapReferenceSearchService {
 
         for (IlimapRuleElement element : scopeRule.elements()) {
             if (element instanceof IlimapRefBlock ref && refId.equals(ref.id())) {
-                findIdentifierAfterKeyword(analysis, ref.range(), "ref", refId)
-                        .ifPresent(ranges::add);
+                findIdentifierAfterKeyword(analysis, ref.range(), "ref", refId).ifPresent(ranges::add);
                 break;
             }
         }
@@ -297,8 +292,8 @@ public final class IlimapReferenceSearchService {
         if (afterKeyword >= text.length() || !text.startsWith(alias, afterKeyword)) {
             return Optional.empty();
         }
-        return Optional.of(offsetRange(analysis, rangeStart + afterKeyword,
-                rangeStart + afterKeyword + alias.length()));
+        return Optional.of(
+                offsetRange(analysis, rangeStart + afterKeyword, rangeStart + afterKeyword + alias.length()));
     }
 
     private Optional<IlimapIdeRange> joinRightAliasDeclarationRange(
@@ -316,8 +311,7 @@ public final class IlimapReferenceSearchService {
         if (afterLeft >= text.length() || !text.startsWith(alias, afterLeft)) {
             return Optional.empty();
         }
-        return Optional.of(offsetRange(analysis, rangeStart + afterLeft,
-                rangeStart + afterLeft + alias.length()));
+        return Optional.of(offsetRange(analysis, rangeStart + afterLeft, rangeStart + afterLeft + alias.length()));
     }
 
     private void collectBagInputReferences(
@@ -352,8 +346,7 @@ public final class IlimapReferenceSearchService {
             if (afterKw >= rangeEnd) {
                 break;
             }
-            if (text.startsWith(identifier, afterKw)
-                    && isWordBoundary(text, afterKw + identifier.length())) {
+            if (text.startsWith(identifier, afterKw) && isWordBoundary(text, afterKw + identifier.length())) {
                 return Optional.of(offsetRange(analysis, afterKw, afterKw + identifier.length()));
             }
             searchFrom = afterKw;
@@ -380,8 +373,8 @@ public final class IlimapReferenceSearchService {
             searchFrom = idx + identifier.length();
         }
         if (lastIndex >= 0) {
-            return Optional.of(offsetRange(analysis, rangeStart + lastIndex,
-                    rangeStart + lastIndex + identifier.length()));
+            return Optional.of(
+                    offsetRange(analysis, rangeStart + lastIndex, rangeStart + lastIndex + identifier.length()));
         }
         return Optional.empty();
     }
@@ -421,7 +414,9 @@ public final class IlimapReferenceSearchService {
                     String unquoted = arg;
                     int actualStart = text.indexOf(unquoted.strip(), argStart);
                     if (actualStart >= 0) {
-                        ranges.add(offsetRange(analysis, baseOffset + actualStart,
+                        ranges.add(offsetRange(
+                                analysis,
+                                baseOffset + actualStart,
                                 baseOffset + actualStart + unquoted.strip().length()));
                     }
                 }
@@ -445,7 +440,7 @@ public final class IlimapReferenceSearchService {
                     if (comma < 0) {
                         return Optional.empty();
                     }
-                    return Optional.of(new int[]{comma + 1, i});
+                    return Optional.of(new int[] {comma + 1, i});
                 }
             } else if (c == ',' && depth == 1 && comma < 0) {
                 comma = i;
@@ -471,8 +466,7 @@ public final class IlimapReferenceSearchService {
             int afterAlias = aliasIndex + alias.length();
             boolean rightDot = afterAlias < text.length() && text.charAt(afterAlias) == '.';
             if (leftBoundary && rightDot) {
-                ranges.add(offsetRange(analysis, baseOffset + aliasIndex,
-                        baseOffset + afterAlias));
+                ranges.add(offsetRange(analysis, baseOffset + aliasIndex, baseOffset + afterAlias));
             }
             searchFrom = afterAlias;
         }

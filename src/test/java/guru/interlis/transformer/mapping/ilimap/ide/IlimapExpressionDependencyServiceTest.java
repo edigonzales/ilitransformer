@@ -2,12 +2,11 @@ package guru.interlis.transformer.mapping.ilimap.ide;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.file.Path;
-import java.util.List;
-
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapExpressionText;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapRuleBlock;
-import guru.interlis.transformer.mapping.ilimap.lexer.IlimapSourceRange;
+
+import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -20,8 +19,7 @@ class IlimapExpressionDependencyServiceTest {
 
     @Test
     void dependenciesForSingleSourceMember() {
-        List<IlimapExpressionDependencySummary> deps =
-                dependencyService.dependencies("src.Name");
+        List<IlimapExpressionDependencySummary> deps = dependencyService.dependencies("src.Name");
 
         assertThat(deps).singleElement().satisfies(dep -> {
             assertThat(dep.kind()).isEqualTo("sourceAttribute");
@@ -32,20 +30,16 @@ class IlimapExpressionDependencyServiceTest {
 
     @Test
     void dependenciesForMultipleSourceMembers() {
-        List<IlimapExpressionDependencySummary> deps =
-                dependencyService.dependencies("s.First + s.Last");
+        List<IlimapExpressionDependencySummary> deps = dependencyService.dependencies("s.First + s.Last");
 
         assertThat(deps).hasSize(2);
-        assertThat(deps).extracting(IlimapExpressionDependencySummary::alias)
-                .containsExactly("s", "s");
-        assertThat(deps).extracting(IlimapExpressionDependencySummary::member)
-                .containsExactly("First", "Last");
+        assertThat(deps).extracting(IlimapExpressionDependencySummary::alias).containsExactly("s", "s");
+        assertThat(deps).extracting(IlimapExpressionDependencySummary::member).containsExactly("First", "Last");
     }
 
     @Test
     void ignoresEnumMapAsAlias() {
-        List<IlimapExpressionDependencySummary> deps =
-                dependencyService.dependencies("enumMap(Quality)");
+        List<IlimapExpressionDependencySummary> deps = dependencyService.dependencies("enumMap(Quality)");
 
         assertThat(deps).singleElement().satisfies(dep -> {
             assertThat(dep.kind()).isEqualTo("enumMap");
@@ -56,8 +50,7 @@ class IlimapExpressionDependencyServiceTest {
 
     @Test
     void detectsEnumMapSimpleCall() {
-        List<IlimapExpressionDependencySummary> deps =
-                dependencyService.dependencies("enumMap(MyEnum)");
+        List<IlimapExpressionDependencySummary> deps = dependencyService.dependencies("enumMap(MyEnum)");
 
         assertThat(deps).singleElement().satisfies(dep -> {
             assertThat(dep.kind()).isEqualTo("enumMap");
@@ -67,8 +60,7 @@ class IlimapExpressionDependencyServiceTest {
 
     @Test
     void matchesTextInStrings() {
-        List<IlimapExpressionDependencySummary> deps =
-                dependencyService.dependencies("\"something.else\"");
+        List<IlimapExpressionDependencySummary> deps = dependencyService.dependencies("\"something.else\"");
 
         assertThat(deps).singleElement().satisfies(dep -> {
             assertThat(dep.alias()).isEqualTo("something");
@@ -112,9 +104,11 @@ class IlimapExpressionDependencyServiceTest {
                 .filter(e -> e instanceof guru.interlis.transformer.mapping.ilimap.ast.IlimapAssignmentBlock)
                 .findFirst()
                 .orElseThrow();
-        IlimapExpressionText expression =
-                ((guru.interlis.transformer.mapping.ilimap.ast.IlimapAssignmentBlock) assignBlock)
-                        .assignments().get(0).expression();
+        IlimapExpressionText expression = ((guru.interlis.transformer.mapping.ilimap.ast.IlimapAssignmentBlock)
+                        assignBlock)
+                .assignments()
+                .get(0)
+                .expression();
 
         List<IlimapTraceDependency> deps = dependencyService.dependenciesWithLocations(analysis, expression, rule);
 

@@ -19,9 +19,7 @@ public final class IlimapExpressionDependencyService {
             Pattern.compile("\\b([A-Za-z_][A-Za-z0-9_-]*)\\.([A-Za-z_][A-Za-z0-9_-]*)\\b");
 
     public List<IlimapExpressionDependencySummary> dependencies(
-            IlimapAnalysis analysis,
-            IlimapExpressionText expression,
-            IlimapRuleBlock rule) {
+            IlimapAnalysis analysis, IlimapExpressionText expression, IlimapRuleBlock rule) {
         return IlimapRuleDetailService.extractDependencies(expression.text());
     }
 
@@ -30,9 +28,7 @@ public final class IlimapExpressionDependencyService {
     }
 
     public List<IlimapTraceDependency> dependenciesWithLocations(
-            IlimapAnalysis analysis,
-            IlimapExpressionText expression,
-            IlimapRuleBlock rule) {
+            IlimapAnalysis analysis, IlimapExpressionText expression, IlimapRuleBlock rule) {
         if (expression == null || expression.text() == null || expression.text().isBlank()) {
             return List.of();
         }
@@ -117,8 +113,7 @@ public final class IlimapExpressionDependencyService {
         return Optional.empty();
     }
 
-    private static IlimapOverviewLocation rangeFromOffsets(
-            IlimapAnalysis analysis, int startOffset, int endOffset) {
+    private static IlimapOverviewLocation rangeFromOffsets(IlimapAnalysis analysis, int startOffset, int endOffset) {
         if (analysis == null || startOffset < 0 || endOffset < startOffset) {
             return null;
         }

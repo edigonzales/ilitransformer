@@ -19,8 +19,8 @@ class IlimapNavigationServiceTest {
     void nodeAtPosition_onRuleId_returnsRuleNode() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapNavigationNode> node = navigationService.nodeAtPosition(
-                analysis, positionAt(analysis, "rule r1", "rule ".length()));
+        Optional<IlimapNavigationNode> node =
+                navigationService.nodeAtPosition(analysis, positionAt(analysis, "rule r1", "rule ".length()));
 
         assertThat(node).isPresent();
         assertThat(node.get().nodeId()).isEqualTo("rule:r1");
@@ -31,8 +31,8 @@ class IlimapNavigationServiceTest {
     void nodeAtPosition_onInputId_returnsInputNode() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapNavigationNode> node = navigationService.nodeAtPosition(
-                analysis, positionAt(analysis, "input src", "input ".length()));
+        Optional<IlimapNavigationNode> node =
+                navigationService.nodeAtPosition(analysis, positionAt(analysis, "input src", "input ".length()));
 
         assertThat(node).isPresent();
         assertThat(node.get().nodeId()).isEqualTo("input:src");
@@ -43,8 +43,8 @@ class IlimapNavigationServiceTest {
     void nodeAtPosition_onOutputId_returnsOutputNode() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapNavigationNode> node = navigationService.nodeAtPosition(
-                analysis, positionAt(analysis, "output out", "output ".length()));
+        Optional<IlimapNavigationNode> node =
+                navigationService.nodeAtPosition(analysis, positionAt(analysis, "output out", "output ".length()));
 
         assertThat(node).isPresent();
         assertThat(node.get().nodeId()).isEqualTo("output:out");
@@ -55,8 +55,8 @@ class IlimapNavigationServiceTest {
     void nodeAtPosition_onEnumMapId_returnsEnumNode() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapNavigationNode> node = navigationService.nodeAtPosition(
-                analysis, positionAt(analysis, "enum Quality", "enum ".length()));
+        Optional<IlimapNavigationNode> node =
+                navigationService.nodeAtPosition(analysis, positionAt(analysis, "enum Quality", "enum ".length()));
 
         assertThat(node).isPresent();
         assertThat(node.get().nodeId()).isEqualTo("enum:Quality");
@@ -67,8 +67,8 @@ class IlimapNavigationServiceTest {
     void nodeAtPosition_onSourceAliasDeclaration_returnsSourceNode() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapNavigationNode> node = navigationService.nodeAtPosition(
-                analysis, positionAt(analysis, "source s from", "source ".length()));
+        Optional<IlimapNavigationNode> node =
+                navigationService.nodeAtPosition(analysis, positionAt(analysis, "source s from", "source ".length()));
 
         assertThat(node).isPresent();
         assertThat(node.get().nodeId()).isEqualTo("rule:r1:source:s");
@@ -79,8 +79,8 @@ class IlimapNavigationServiceTest {
     void nodeAtPosition_onSourceMemberExpression_returnsSourceMemberNode() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapNavigationNode> node = navigationService.nodeAtPosition(
-                analysis, positionAt(analysis, "s.X", 0));
+        Optional<IlimapNavigationNode> node =
+                navigationService.nodeAtPosition(analysis, positionAt(analysis, "s.X", 0));
 
         assertThat(node).isPresent();
         assertThat(node.get().nodeId()).isEqualTo("rule:r1:source:s:member:X");
@@ -91,8 +91,8 @@ class IlimapNavigationServiceTest {
     void nodeAtPosition_onTargetAttributeAssignmentLeftSide_returnsAssignmentNode() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapNavigationNode> node = navigationService.nodeAtPosition(
-                analysis, positionAt(analysis, "X = s.X", "X".length() / 2));
+        Optional<IlimapNavigationNode> node =
+                navigationService.nodeAtPosition(analysis, positionAt(analysis, "X = s.X", "X".length() / 2));
 
         assertThat(node).isPresent();
         assertThat(node.get().nodeId()).isEqualTo("rule:r1:assign:X");
@@ -103,8 +103,8 @@ class IlimapNavigationServiceTest {
     void nodeAtPosition_onRefBlock_returnsRefNode() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapNavigationNode> node = navigationService.nodeAtPosition(
-                analysis, positionAt(analysis, "ref Parent", "ref ".length()));
+        Optional<IlimapNavigationNode> node =
+                navigationService.nodeAtPosition(analysis, positionAt(analysis, "ref Parent", "ref ".length()));
 
         assertThat(node).isPresent();
         assertThat(node.get().nodeId()).isEqualTo("rule:r1:ref:Parent");
@@ -186,8 +186,7 @@ class IlimapNavigationServiceTest {
     void nodeAtPosition_outsideOfAnyNode_returnsEmpty() {
         IlimapAnalysis analysis = analyze(validMapping());
 
-        Optional<IlimapNavigationNode> node = navigationService.nodeAtPosition(
-                analysis, new IlimapIdePosition(999, 0));
+        Optional<IlimapNavigationNode> node = navigationService.nodeAtPosition(analysis, new IlimapIdePosition(999, 0));
 
         assertThat(node).isEmpty();
     }

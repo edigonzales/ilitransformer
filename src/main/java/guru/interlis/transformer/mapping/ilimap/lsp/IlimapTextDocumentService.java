@@ -21,20 +21,19 @@ import guru.interlis.transformer.mapping.ilimap.ide.IlimapIdeRange;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapMappingSummaryService;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapOverviewLocation;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailParams;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailService;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailSummary;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapSymbolDisplayKind;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenamePrepareResult;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenameResult;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenameService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapNavigationNode;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapNavigationService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapNavigationTarget;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapNavigationTargetParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapNodeAtPositionParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapOverviewLocation;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenameResult;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenameService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailSummary;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapSymbolDisplayKind;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceSummary;
@@ -377,13 +376,11 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         IlimapAnalysis analysis = analysisForCompletion(uri);
         IlimapIdePosition position = new IlimapIdePosition(
                 params.getPosition().getLine(), params.getPosition().getCharacter());
-        return CompletableFuture.completedFuture(
-                renameService.prepareRename(analysis, position)
-                        .map(result -> Either3.<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>forSecond(
-                                new PrepareRenameResult(
-                                        rangeMapper.toLspRange(result.range()),
-                                        result.placeholder())))
-                        .orElse(null));
+        return CompletableFuture.completedFuture(renameService
+                .prepareRename(analysis, position)
+                .map(result -> Either3.<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>forSecond(
+                        new PrepareRenameResult(rangeMapper.toLspRange(result.range()), result.placeholder())))
+                .orElse(null));
     }
 
     @Override
@@ -456,9 +453,8 @@ public final class IlimapTextDocumentService implements TextDocumentService {
 
     public CompletableFuture<IlimapTraceSummary> trace(IlimapTraceParams params) {
         if (params == null || params.uri() == null || params.uri().isBlank()) {
-            return CompletableFuture.completedFuture(
-                    IlimapTraceSummary.unavailable(params != null ? params.mode() : "unknown",
-                            "No ILIMAP document URI provided."));
+            return CompletableFuture.completedFuture(IlimapTraceSummary.unavailable(
+                    params != null ? params.mode() : "unknown", "No ILIMAP document URI provided."));
         }
         String uri = params.uri();
         if (documentStore.get(uri).isEmpty()) {
@@ -496,8 +492,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                     IlimapNavigationTarget.unavailable(params.nodeId(), "No open ILIMAP document for URI: " + uri));
         }
         IlimapAnalysis analysis = analysisForCompletion(uri);
-        return CompletableFuture.completedFuture(
-                navigationService.targetForNodeId(analysis, params.nodeId()));
+        return CompletableFuture.completedFuture(navigationService.targetForNodeId(analysis, params.nodeId()));
     }
 
     public void invalidateModelCache() {

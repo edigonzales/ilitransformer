@@ -33,7 +33,7 @@ class IlimapTextDocumentServiceTraceTest {
                 new IlimapLanguageServer(new IlimapTextDocumentService(), new IlimapWorkspaceService());
 
         IlimapTraceSummary trace = server.trace(new IlimapTraceParams(
-                "file:///nonexistent.ilimap", "targetAttribute", "r1", "X", null, null, null))
+                        "file:///nonexistent.ilimap", "targetAttribute", "r1", "X", null, null, null))
                 .join();
 
         assertThat(trace.available()).isFalse();
@@ -43,13 +43,12 @@ class IlimapTextDocumentServiceTraceTest {
     @Test
     void requestForOpenDocReturnsTrace() {
         IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
-        IlimapLanguageServer server =
-                new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
+        IlimapLanguageServer server = new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
         textDocumentService.didOpen(
                 new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, copyAssignmentMapping())));
 
-        IlimapTraceSummary trace = server.trace(new IlimapTraceParams(
-                URI, "targetAttribute", "r1", "X", null, null, null))
+        IlimapTraceSummary trace = server.trace(
+                        new IlimapTraceParams(URI, "targetAttribute", "r1", "X", null, null, null))
                 .join();
 
         assertThat(trace.available()).isTrue();
@@ -63,19 +62,16 @@ class IlimapTextDocumentServiceTraceTest {
     @Test
     void unsavedDocumentChangesAreReflected() {
         IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
-        IlimapLanguageServer server =
-                new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
+        IlimapLanguageServer server = new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
         textDocumentService.didOpen(
                 new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, copyAssignmentMapping())));
 
-        textDocumentService.didChange(
-                new org.eclipse.lsp4j.DidChangeTextDocumentParams(
-                        new org.eclipse.lsp4j.VersionedTextDocumentIdentifier(URI, 2),
-                        List.of(new org.eclipse.lsp4j.TextDocumentContentChangeEvent(
-                                computedMapping()))));
+        textDocumentService.didChange(new org.eclipse.lsp4j.DidChangeTextDocumentParams(
+                new org.eclipse.lsp4j.VersionedTextDocumentIdentifier(URI, 2),
+                List.of(new org.eclipse.lsp4j.TextDocumentContentChangeEvent(computedMapping()))));
 
-        IlimapTraceSummary trace = server.trace(new IlimapTraceParams(
-                URI, "targetAttribute", "r1", "Z", null, null, null))
+        IlimapTraceSummary trace = server.trace(
+                        new IlimapTraceParams(URI, "targetAttribute", "r1", "Z", null, null, null))
                 .join();
 
         assertThat(trace.available()).isTrue();

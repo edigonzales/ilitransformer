@@ -17,7 +17,6 @@ import guru.interlis.transformer.mapping.ilimap.ast.IlimapSourceStmt;
 import guru.interlis.transformer.mapping.ilimap.ast.IlimapTargetStmt;
 import guru.interlis.transformer.mapping.ilimap.lexer.IlimapSourceRange;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,7 +25,8 @@ import java.util.regex.Pattern;
 
 public final class IlimapNavigationService {
 
-    private static final Pattern ALIAS_MEMBER_PATTERN = Pattern.compile("\\b([a-zA-Z_][a-zA-Z0-9_-]*)\\.([a-zA-Z_][a-zA-Z0-9_-]*)");
+    private static final Pattern ALIAS_MEMBER_PATTERN =
+            Pattern.compile("\\b([a-zA-Z_][a-zA-Z0-9_-]*)\\.([a-zA-Z_][a-zA-Z0-9_-]*)");
 
     private final IlimapPositionResolver positionResolver;
 
@@ -55,20 +55,36 @@ public final class IlimapNavigationService {
         int offset = analysis.lineMap().positionToOffset(position.line(), position.character());
 
         if (node instanceof IlimapInputBlock input) {
-            return Optional.of(buildNode(IlimapOverviewNodeIds.input(input.id()), "input",
-                    "input " + input.id(), null, toOverviewLocation(analysis, input.range())));
+            return Optional.of(buildNode(
+                    IlimapOverviewNodeIds.input(input.id()),
+                    "input",
+                    "input " + input.id(),
+                    null,
+                    toOverviewLocation(analysis, input.range())));
         }
         if (node instanceof IlimapOutputBlock output) {
-            return Optional.of(buildNode(IlimapOverviewNodeIds.output(output.id()), "output",
-                    "output " + output.id(), null, toOverviewLocation(analysis, output.range())));
+            return Optional.of(buildNode(
+                    IlimapOverviewNodeIds.output(output.id()),
+                    "output",
+                    "output " + output.id(),
+                    null,
+                    toOverviewLocation(analysis, output.range())));
         }
         if (node instanceof IlimapEnumBlock enumBlock) {
-            return Optional.of(buildNode(IlimapOverviewNodeIds.enumMap(enumBlock.id()), "enum",
-                    "enum " + enumBlock.id(), null, toOverviewLocation(analysis, enumBlock.range())));
+            return Optional.of(buildNode(
+                    IlimapOverviewNodeIds.enumMap(enumBlock.id()),
+                    "enum",
+                    "enum " + enumBlock.id(),
+                    null,
+                    toOverviewLocation(analysis, enumBlock.range())));
         }
         if (node instanceof IlimapRuleBlock rule) {
-            return Optional.of(buildNode(IlimapOverviewNodeIds.rule(rule.id()), "rule",
-                    "rule " + rule.id(), null, toOverviewLocation(analysis, rule.range())));
+            return Optional.of(buildNode(
+                    IlimapOverviewNodeIds.rule(rule.id()),
+                    "rule",
+                    "rule " + rule.id(),
+                    null,
+                    toOverviewLocation(analysis, rule.range())));
         }
 
         String parentRuleId = findParentRuleId(analysis.document(), node);
@@ -104,18 +120,22 @@ public final class IlimapNavigationService {
         return List.of();
     }
 
-    private Optional<IlimapNavigationNode> nodeInRule(IlimapAnalysis analysis, IlimapAstNode node,
-                                                       String parentRuleId, int offset) {
+    private Optional<IlimapNavigationNode> nodeInRule(
+            IlimapAnalysis analysis, IlimapAstNode node, String parentRuleId, int offset) {
         if (node instanceof IlimapTargetStmt target) {
             return Optional.of(buildNode(
-                    IlimapOverviewNodeIds.ruleTarget(parentRuleId), "target",
-                    "target " + target.outputId(), null,
+                    IlimapOverviewNodeIds.ruleTarget(parentRuleId),
+                    "target",
+                    "target " + target.outputId(),
+                    null,
                     toOverviewLocation(analysis, target.range())));
         }
         if (node instanceof IlimapSourceStmt source) {
             return Optional.of(buildNode(
-                    IlimapOverviewNodeIds.ruleSource(parentRuleId, source.alias()), "source",
-                    "source " + source.alias(), source.inputIds() + " -> " + source.sourceClass(),
+                    IlimapOverviewNodeIds.ruleSource(parentRuleId, source.alias()),
+                    "source",
+                    "source " + source.alias(),
+                    source.inputIds() + " -> " + source.sourceClass(),
                     toOverviewLocation(analysis, source.range())));
         }
         if (node instanceof IlimapAssignment assignment) {
@@ -123,35 +143,46 @@ public final class IlimapNavigationService {
         }
         if (node instanceof IlimapRefBlock ref) {
             return Optional.of(buildNode(
-                    IlimapOverviewNodeIds.ruleRef(parentRuleId, ref.id()), "ref",
-                    "ref " + ref.id(), ref.targetRuleId() != null ? "-> rule " + ref.targetRuleId() : null,
+                    IlimapOverviewNodeIds.ruleRef(parentRuleId, ref.id()),
+                    "ref",
+                    "ref " + ref.id(),
+                    ref.targetRuleId() != null ? "-> rule " + ref.targetRuleId() : null,
                     toOverviewLocation(analysis, ref.range())));
         }
         if (node instanceof IlimapBagBlock bag) {
             return Optional.of(buildNode(
-                    IlimapOverviewNodeIds.ruleBag(parentRuleId, bag.id()), "bag",
-                    "bag " + bag.id(), null, toOverviewLocation(analysis, bag.range())));
+                    IlimapOverviewNodeIds.ruleBag(parentRuleId, bag.id()),
+                    "bag",
+                    "bag " + bag.id(),
+                    null,
+                    toOverviewLocation(analysis, bag.range())));
         }
         if (node instanceof IlimapLossBlock loss) {
             int lossIdx = lossIndex(analysis.document(), parentRuleId, loss);
             return Optional.of(buildNode(
-                    IlimapOverviewNodeIds.ruleLoss(parentRuleId, lossIdx), "loss",
-                    "loss", null, toOverviewLocation(analysis, loss.range())));
+                    IlimapOverviewNodeIds.ruleLoss(parentRuleId, lossIdx),
+                    "loss",
+                    "loss",
+                    null,
+                    toOverviewLocation(analysis, loss.range())));
         }
         return Optional.empty();
     }
 
-    private Optional<IlimapNavigationNode> assignmentNode(IlimapAnalysis analysis, IlimapAssignment assignment,
-                                                           String parentRuleId, int offset) {
+    private Optional<IlimapNavigationNode> assignmentNode(
+            IlimapAnalysis analysis, IlimapAssignment assignment, String parentRuleId, int offset) {
         int exprStart = assignment.expression().range().start().offset();
         if (offset < exprStart) {
             return Optional.of(buildNode(
                     IlimapOverviewNodeIds.ruleAssignment(parentRuleId, assignment.targetAttribute()),
-                    "assignment", assignment.targetAttribute(), null,
+                    "assignment",
+                    assignment.targetAttribute(),
+                    null,
                     toOverviewLocation(analysis, assignment.range())));
         }
 
-        String exprText = analysis.text().substring(exprStart, assignment.expression().range().end().offset());
+        String exprText = analysis.text()
+                .substring(exprStart, assignment.expression().range().end().offset());
         String identifier = identifierAtOffset(analysis, offset);
         if (identifier == null) {
             return Optional.empty();
@@ -162,8 +193,10 @@ public final class IlimapNavigationService {
             if (matcher.group(1).equals(identifier) || matcher.group(2).equals(identifier)) {
                 return Optional.of(buildNode(
                         IlimapOverviewNodeIds.ruleSourceMember(parentRuleId, matcher.group(1), matcher.group(2)),
-                        "sourceMember", matcher.group(1) + "." + matcher.group(2),
-                        assignment.targetAttribute(), toOverviewLocation(analysis, assignment.range())));
+                        "sourceMember",
+                        matcher.group(1) + "." + matcher.group(2),
+                        assignment.targetAttribute(),
+                        toOverviewLocation(analysis, assignment.range())));
             }
         }
         return Optional.empty();
@@ -180,21 +213,24 @@ public final class IlimapNavigationService {
             return document.inputs().stream()
                     .filter(i -> i.id().equals(id))
                     .map(i -> toOverviewLocation(analysis, i.range()))
-                    .findFirst().orElse(null);
+                    .findFirst()
+                    .orElse(null);
         }
         if (nodeId.startsWith("output:")) {
             String id = nodeId.substring("output:".length());
             return document.outputs().stream()
                     .filter(o -> o.id().equals(id))
                     .map(o -> toOverviewLocation(analysis, o.range()))
-                    .findFirst().orElse(null);
+                    .findFirst()
+                    .orElse(null);
         }
         if (nodeId.startsWith("enum:")) {
             String id = nodeId.substring("enum:".length());
             return document.enums().stream()
                     .filter(e -> e.id().equals(id))
                     .map(e -> toOverviewLocation(analysis, e.range()))
-                    .findFirst().orElse(null);
+                    .findFirst()
+                    .orElse(null);
         }
 
         String remaining = nodeId;
@@ -206,7 +242,8 @@ public final class IlimapNavigationService {
         String ruleId = prefixBeforeColon(remaining);
         IlimapRuleBlock rule = document.rules().stream()
                 .filter(r -> r.id().equals(ruleId))
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
         if (rule == null) {
             return null;
         }
@@ -220,12 +257,14 @@ public final class IlimapNavigationService {
         return resolveRuleSuffixLocation(analysis, rule, suffix);
     }
 
-    private IlimapOverviewLocation resolveRuleSuffixLocation(IlimapAnalysis analysis, IlimapRuleBlock rule, String suffix) {
+    private IlimapOverviewLocation resolveRuleSuffixLocation(
+            IlimapAnalysis analysis, IlimapRuleBlock rule, String suffix) {
         if (suffix.equals(":target")) {
             return rule.elements().stream()
                     .filter(e -> e instanceof IlimapTargetStmt)
                     .map(e -> toOverviewLocation(analysis, ((IlimapTargetStmt) e).range()))
-                    .findFirst().orElse(null);
+                    .findFirst()
+                    .orElse(null);
         }
 
         if (suffix.startsWith(":target:")) {
@@ -254,14 +293,18 @@ public final class IlimapNavigationService {
             if (afterSource.contains(":member:")) {
                 String alias = afterSource.substring(0, afterSource.indexOf(":member:"));
                 return rule.elements().stream()
-                        .filter(e -> e instanceof IlimapSourceStmt && ((IlimapSourceStmt) e).alias().equals(alias))
+                        .filter(e -> e instanceof IlimapSourceStmt
+                                && ((IlimapSourceStmt) e).alias().equals(alias))
                         .map(e -> toOverviewLocation(analysis, ((IlimapSourceStmt) e).range()))
-                        .findFirst().orElse(null);
+                        .findFirst()
+                        .orElse(null);
             }
             return rule.elements().stream()
-                    .filter(e -> e instanceof IlimapSourceStmt && ((IlimapSourceStmt) e).alias().equals(afterSource))
+                    .filter(e -> e instanceof IlimapSourceStmt
+                            && ((IlimapSourceStmt) e).alias().equals(afterSource))
                     .map(e -> toOverviewLocation(analysis, ((IlimapSourceStmt) e).range()))
-                    .findFirst().orElse(null);
+                    .findFirst()
+                    .orElse(null);
         }
 
         if (suffix.startsWith(":assign:")) {
@@ -277,16 +320,18 @@ public final class IlimapNavigationService {
         if (suffix.startsWith(":ref:")) {
             String refId = suffix.substring(":ref:".length());
             return rule.elements().stream()
-                    .filter(e -> e instanceof IlimapRefBlock && ((IlimapRefBlock) e).id().equals(refId))
+                    .filter(e -> e instanceof IlimapRefBlock
+                            && ((IlimapRefBlock) e).id().equals(refId))
                     .map(e -> toOverviewLocation(analysis, ((IlimapRefBlock) e).range()))
-                    .findFirst().orElse(null);
+                    .findFirst()
+                    .orElse(null);
         }
 
         return null;
     }
 
-    private IlimapOverviewLocation findAssignmentInRule(IlimapAnalysis analysis, IlimapRuleBlock rule,
-                                                         String targetAttribute) {
+    private IlimapOverviewLocation findAssignmentInRule(
+            IlimapAnalysis analysis, IlimapRuleBlock rule, String targetAttribute) {
         for (IlimapRuleElement element : rule.elements()) {
             if (element instanceof IlimapAssignmentBlock assign) {
                 for (IlimapAssignment a : assign.assignments()) {
@@ -312,8 +357,8 @@ public final class IlimapNavigationService {
         return null;
     }
 
-    private IlimapOverviewLocation findAssignmentInBag(IlimapAnalysis analysis, IlimapBagBlock bag,
-                                                        String targetAttribute) {
+    private IlimapOverviewLocation findAssignmentInBag(
+            IlimapAnalysis analysis, IlimapBagBlock bag, String targetAttribute) {
         if (bag.assign() != null) {
             for (IlimapAssignment a : bag.assign().assignments()) {
                 if (a.targetAttribute().equals(targetAttribute)) {
@@ -394,8 +439,7 @@ public final class IlimapNavigationService {
                         && defs.assignments().contains(node)) {
                     return true;
                 }
-                if (element instanceof IlimapBagBlock rbag
-                        && containsAssignment(rbag, (IlimapAssignment) node)) {
+                if (element instanceof IlimapBagBlock rbag && containsAssignment(rbag, (IlimapAssignment) node)) {
                     return true;
                 }
             }
@@ -486,8 +530,8 @@ public final class IlimapNavigationService {
         return s;
     }
 
-    private static IlimapNavigationNode buildNode(String nodeId, String kind, String label,
-                                                   String detail, IlimapOverviewLocation location) {
+    private static IlimapNavigationNode buildNode(
+            String nodeId, String kind, String label, String detail, IlimapOverviewLocation location) {
         return new IlimapNavigationNode(nodeId, kind, label, detail, location, List.of());
     }
 }

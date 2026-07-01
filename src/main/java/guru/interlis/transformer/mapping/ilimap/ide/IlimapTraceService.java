@@ -43,16 +43,15 @@ public final class IlimapTraceService {
         String mode = params.mode() != null ? params.mode() : "targetAttribute";
         return switch (mode) {
             case "targetAttribute" -> traceTargetAttribute(analysis, params.ruleId(), params.targetAttribute());
-            case "sourceMember" -> traceSourceMember(
-                    analysis, params.ruleId(), params.sourceAlias(), params.sourceMember());
+            case "sourceMember" ->
+                traceSourceMember(analysis, params.ruleId(), params.sourceAlias(), params.sourceMember());
             case "rule" -> traceRule(analysis, params.ruleId());
             case "position" -> tracePosition(analysis, params.position());
             default -> IlimapTraceSummary.unavailable(mode, "Unknown trace mode: " + mode);
         };
     }
 
-    public IlimapTraceSummary traceTargetAttribute(
-            IlimapAnalysis analysis, String ruleId, String targetAttribute) {
+    public IlimapTraceSummary traceTargetAttribute(IlimapAnalysis analysis, String ruleId, String targetAttribute) {
         IlimapRuleBlock rule = findRule(analysis, ruleId).orElse(null);
         if (rule == null) {
             return IlimapTraceSummary.unavailable("targetAttribute", "Rule not found: " + ruleId);
@@ -75,10 +74,10 @@ public final class IlimapTraceService {
         if (assignmentContext != null && assignmentContext.expression != null) {
             String text = assignmentContext.expression.text();
             String kind = IlimapRuleDetailService.classifyAssignmentKind(text);
-            traceExpression = new IlimapTraceExpression(
-                    text, kind, toLocation(analysis, assignmentContext.expression.range()));
-            traceDependencies = dependencyService.dependenciesWithLocations(
-                    analysis, assignmentContext.expression, rule);
+            traceExpression =
+                    new IlimapTraceExpression(text, kind, toLocation(analysis, assignmentContext.expression.range()));
+            traceDependencies =
+                    dependencyService.dependenciesWithLocations(analysis, assignmentContext.expression, rule);
         }
 
         traceSteps.add(buildInputStep(analysis, rule));
@@ -90,8 +89,7 @@ public final class IlimapTraceService {
         }
         traceSteps.add(buildTargetStep(traceTarget));
 
-        List<IlimapTraceUsage> usages = findUsagesOfSourceMembers(
-                analysis, traceDependencies, ruleId);
+        List<IlimapTraceUsage> usages = findUsagesOfSourceMembers(analysis, traceDependencies, ruleId);
 
         List<IlimapDiagnosticSummary> diagnostics = ruleDiagnostics(analysis, rule, targetAttribute);
 
@@ -113,19 +111,9 @@ public final class IlimapTraceService {
         if (sourceAlias == null && sourceMember == null) {
             return IlimapTraceSummary.unavailable("sourceMember", "No source alias or member provided.");
         }
-        List<IlimapTraceUsage> usages = usagesOfSourceMember(
-                analysis, sourceAlias, sourceMember, ruleId);
+        List<IlimapTraceUsage> usages = usagesOfSourceMember(analysis, sourceAlias, sourceMember, ruleId);
         return new IlimapTraceSummary(
-                true,
-                "",
-                "sourceMember",
-                ruleId,
-                null,
-                null,
-                List.of(),
-                usages,
-                List.of(),
-                List.of());
+                true, "", "sourceMember", ruleId, null, null, List.of(), usages, List.of(), List.of());
     }
 
     public IlimapTraceSummary traceRule(IlimapAnalysis analysis, String ruleId) {
@@ -226,10 +214,7 @@ public final class IlimapTraceService {
         return null;
     }
 
-    private record AssignmentEntry(
-            IlimapAssignment assignment,
-            String context,
-            IlimapRuleElement owner) {}
+    private record AssignmentEntry(IlimapAssignment assignment, String context, IlimapRuleElement owner) {}
 
     private List<AssignmentEntry> allAssignments(IlimapRuleBlock rule) {
         List<AssignmentEntry> result = new ArrayList<>();
@@ -241,14 +226,13 @@ public final class IlimapTraceService {
             List<IlimapRuleElement> elements, List<AssignmentEntry> result, String defaultContext) {
         for (IlimapRuleElement element : elements) {
             switch (element) {
-                case IlimapAssignmentBlock block -> block.assignments().forEach(
-                        a -> result.add(new AssignmentEntry(a, defaultContext, block)));
-                case IlimapDefaultsBlock block -> block.assignments().forEach(
-                        a -> result.add(new AssignmentEntry(a, "default", block)));
+                case IlimapAssignmentBlock block ->
+                    block.assignments().forEach(a -> result.add(new AssignmentEntry(a, defaultContext, block)));
+                case IlimapDefaultsBlock block ->
+                    block.assignments().forEach(a -> result.add(new AssignmentEntry(a, "default", block)));
                 case IlimapBagBlock bag -> {
                     if (bag.assign() != null) {
-                        bag.assign().assignments().forEach(
-                                a -> result.add(new AssignmentEntry(a, "bag", bag)));
+                        bag.assign().assignments().forEach(a -> result.add(new AssignmentEntry(a, "bag", bag)));
                     }
                     for (IlimapBagBlock nested : bag.nestedBags()) {
                         collectBagAssignments(nested, result);
@@ -268,21 +252,13 @@ public final class IlimapTraceService {
                 case IlimapLossBlock loss -> {
                     if (loss.sourcePath() != null) {
                         result.add(new AssignmentEntry(
-                                new IlimapAssignment(
-                                        "loss.sourcePath",
-                                        loss.sourcePath(),
-                                        loss.range()),
+                                new IlimapAssignment("loss.sourcePath", loss.sourcePath(), loss.range()),
                                 "loss",
                                 loss));
                     }
                     if (loss.when() != null) {
                         result.add(new AssignmentEntry(
-                                new IlimapAssignment(
-                                        "loss.when",
-                                        loss.when(),
-                                        loss.range()),
-                                "loss",
-                                loss));
+                                new IlimapAssignment("loss.when", loss.when(), loss.range()), "loss", loss));
                     }
                 }
                 default -> {}
@@ -292,8 +268,7 @@ public final class IlimapTraceService {
 
     private void collectBagAssignments(IlimapBagBlock bag, List<AssignmentEntry> result) {
         if (bag.assign() != null) {
-            bag.assign().assignments().forEach(
-                    a -> result.add(new AssignmentEntry(a, "bag", bag)));
+            bag.assign().assignments().forEach(a -> result.add(new AssignmentEntry(a, "bag", bag)));
         }
         for (IlimapBagBlock nested : bag.nestedBags()) {
             collectBagAssignments(nested, result);
@@ -301,13 +276,14 @@ public final class IlimapTraceService {
     }
 
     private record IlimapAssignmentWithContext(
-            IlimapAssignment assignment,
-            IlimapExpressionText expression,
-            String context) {}
+            IlimapAssignment assignment, IlimapExpressionText expression, String context) {}
 
     private IlimapTraceTarget buildTraceTarget(
-            IlimapAnalysis analysis, IlimapTargetStmt target, String targetAttribute,
-            String ruleId, IlimapAssignmentWithContext assignmentContext) {
+            IlimapAnalysis analysis,
+            IlimapTargetStmt target,
+            String targetAttribute,
+            String ruleId,
+            IlimapAssignmentWithContext assignmentContext) {
         String assignmentKind = null;
         IlimapOverviewLocation location = null;
 
@@ -357,12 +333,7 @@ public final class IlimapTraceService {
 
     private IlimapTraceStep buildInputStep(IlimapAnalysis analysis, IlimapRuleBlock rule) {
         return new IlimapTraceStep(
-                "rule:" + rule.id() + ":input",
-                "input",
-                "Input",
-                "",
-                "ok",
-                toLocation(analysis, rule.range()));
+                "rule:" + rule.id() + ":input", "input", "Input", "", "ok", toLocation(analysis, rule.range()));
     }
 
     private IlimapTraceStep buildSourceStep(IlimapAnalysis analysis, IlimapSourceStmt source) {
@@ -377,12 +348,7 @@ public final class IlimapTraceService {
 
     private IlimapTraceStep buildExpressionStep(IlimapTraceExpression expression) {
         return new IlimapTraceStep(
-                null,
-                "expression",
-                "Expression",
-                expression.text(),
-                expression.kind(),
-                expression.location());
+                null, "expression", "Expression", expression.text(), expression.kind(), expression.location());
     }
 
     private IlimapTraceStep buildTargetStep(IlimapTraceTarget target) {
@@ -414,8 +380,7 @@ public final class IlimapTraceService {
                     continue;
                 }
                 for (AssignmentEntry entry : allAssignments(rule)) {
-                    if (expressionUsesSourceMember(
-                            entry.assignment.expression().text(), dep.alias(), dep.member())) {
+                    if (expressionUsesSourceMember(entry.assignment.expression().text(), dep.alias(), dep.member())) {
                         result.add(new IlimapTraceUsage(
                                 rule.id(),
                                 target.outputId(),
@@ -431,8 +396,7 @@ public final class IlimapTraceService {
         return result;
     }
 
-    private boolean expressionUsesSourceMember(
-            String expression, String sourceAlias, String sourceMember) {
+    private boolean expressionUsesSourceMember(String expression, String sourceAlias, String sourceMember) {
         if (expression == null) {
             return false;
         }
@@ -470,7 +434,8 @@ public final class IlimapTraceService {
         Map<String, IlimapAssignment> result = new LinkedHashMap<>();
         for (IlimapRuleElement element : rule.elements()) {
             if (element instanceof IlimapAssignmentBlock assignments) {
-                assignments.assignments()
+                assignments
+                        .assignments()
                         .forEach(assignment -> result.putIfAbsent(assignment.targetAttribute(), assignment));
             } else if (element instanceof IlimapDefaultsBlock defaults) {
                 defaults.assignments()
@@ -515,8 +480,10 @@ public final class IlimapTraceService {
     }
 
     private static boolean diagnosticTargetAttribute(
-            IlimapIdeDiagnostic diagnostic, IlimapAnalysis analysis,
-            IlimapDiagnosticOwnerResolver resolver, String targetAttribute) {
+            IlimapIdeDiagnostic diagnostic,
+            IlimapAnalysis analysis,
+            IlimapDiagnosticOwnerResolver resolver,
+            String targetAttribute) {
         IlimapDiagnosticOwner owner = resolver.resolve(analysis, diagnostic);
         return targetAttribute.equals(owner.targetAttribute());
     }
@@ -524,7 +491,8 @@ public final class IlimapTraceService {
     private static boolean inside(
             IlimapAnalysis analysis, IlimapIdeRange diagnosticRange, IlimapSourceRange sourceRange) {
         int diagnosticStart = analysis.lineMap()
-                .positionToOffset(diagnosticRange.start().line(), diagnosticRange.start().character());
+                .positionToOffset(
+                        diagnosticRange.start().line(), diagnosticRange.start().character());
         return sourceRange.start().offset() <= diagnosticStart
                 && diagnosticStart <= sourceRange.end().offset();
     }

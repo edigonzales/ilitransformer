@@ -242,8 +242,10 @@ class IlimapRenameServiceTest {
     }
 
     private static String textAt(IlimapAnalysis analysis, IlimapIdeRange range) {
-        int start = analysis.lineMap().positionToOffset(range.start().line(), range.start().character());
-        int end = analysis.lineMap().positionToOffset(range.end().line(), range.end().character());
+        int start = analysis.lineMap()
+                .positionToOffset(range.start().line(), range.start().character());
+        int end = analysis.lineMap()
+                .positionToOffset(range.end().line(), range.end().character());
         return analysis.text().substring(start, end);
     }
 

@@ -6,7 +6,6 @@ mapping v2 "dmav-to-dm01-lfp3" {
     compileMode compatible;
     modeldir "https://models.geo.admin.ch/";
     modeldir "https://models.interlis.ch";
-    modeldir "models/";
   }
 
   input dmav {

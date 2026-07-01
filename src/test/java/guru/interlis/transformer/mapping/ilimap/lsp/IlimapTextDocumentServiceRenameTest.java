@@ -1,15 +1,8 @@
 package guru.interlis.transformer.mapping.ilimap.lsp;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapAnalysisOptions;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapIdeRange;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenamePrepareResult;
-import guru.interlis.transformer.mapping.ilimap.ide.IlimapRenameResult;
 
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.Position;
@@ -17,7 +10,6 @@ import org.eclipse.lsp4j.PrepareRenameParams;
 import org.eclipse.lsp4j.RenameParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
-import org.eclipse.lsp4j.jsonrpc.messages.Either3;
 import org.junit.jupiter.api.Test;
 
 class IlimapTextDocumentServiceRenameTest {
@@ -30,8 +22,9 @@ class IlimapTextDocumentServiceRenameTest {
         textDocumentService.didOpen(
                 new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, validMapping())));
 
-        var result = textDocumentService.prepareRename(
-                new PrepareRenameParams(new TextDocumentIdentifier(URI), new Position(3, 11))).join();
+        var result = textDocumentService
+                .prepareRename(new PrepareRenameParams(new TextDocumentIdentifier(URI), new Position(3, 11)))
+                .join();
 
         assertThat(result).isNotNull();
         assertThat(result.getSecond()).isNotNull();
@@ -43,8 +36,9 @@ class IlimapTextDocumentServiceRenameTest {
     void prepareRenameReturnsNullForClosedDocument() {
         IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
 
-        var result = textDocumentService.prepareRename(
-                new PrepareRenameParams(new TextDocumentIdentifier(URI), new Position(0, 0))).join();
+        var result = textDocumentService
+                .prepareRename(new PrepareRenameParams(new TextDocumentIdentifier(URI), new Position(0, 0)))
+                .join();
 
         assertThat(result).isNull();
     }
@@ -55,8 +49,9 @@ class IlimapTextDocumentServiceRenameTest {
         textDocumentService.didOpen(
                 new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, validMapping())));
 
-        var edit = textDocumentService.rename(
-                new RenameParams(new TextDocumentIdentifier(URI), new Position(3, 11), "myoutput")).join();
+        var edit = textDocumentService
+                .rename(new RenameParams(new TextDocumentIdentifier(URI), new Position(3, 11), "myoutput"))
+                .join();
 
         assertThat(edit).isNotNull();
         assertThat(edit.getChanges()).containsKey(URI);
@@ -70,8 +65,9 @@ class IlimapTextDocumentServiceRenameTest {
     void renameReturnsEmptyWorkspaceEditForClosedDocument() {
         IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
 
-        var edit = textDocumentService.rename(
-                new RenameParams(new TextDocumentIdentifier(URI), new Position(0, 0), "anything")).join();
+        var edit = textDocumentService
+                .rename(new RenameParams(new TextDocumentIdentifier(URI), new Position(0, 0), "anything"))
+                .join();
 
         assertThat(edit).isNotNull();
         assertThat(edit.getChanges()).isNullOrEmpty();
@@ -83,14 +79,13 @@ class IlimapTextDocumentServiceRenameTest {
         textDocumentService.didOpen(
                 new DidOpenTextDocumentParams(new TextDocumentItem(URI, "ilimap", 1, validMapping())));
 
-        textDocumentService.didChange(
-                new org.eclipse.lsp4j.DidChangeTextDocumentParams(
-                        new org.eclipse.lsp4j.VersionedTextDocumentIdentifier(URI, 2),
-                        List.of(new org.eclipse.lsp4j.TextDocumentContentChangeEvent(
-                                mappingWithAdditionalInput()))));
+        textDocumentService.didChange(new org.eclipse.lsp4j.DidChangeTextDocumentParams(
+                new org.eclipse.lsp4j.VersionedTextDocumentIdentifier(URI, 2),
+                List.of(new org.eclipse.lsp4j.TextDocumentContentChangeEvent(mappingWithAdditionalInput()))));
 
-        var edit = textDocumentService.rename(
-                new RenameParams(new TextDocumentIdentifier(URI), new Position(3, 11), "myoutput")).join();
+        var edit = textDocumentService
+                .rename(new RenameParams(new TextDocumentIdentifier(URI), new Position(3, 11), "myoutput"))
+                .join();
 
         assertThat(edit).isNotNull();
         assertThat(edit.getChanges()).containsKey(URI);
@@ -100,14 +95,15 @@ class IlimapTextDocumentServiceRenameTest {
     @Test
     void renameServerExposesRenameCapability() {
         IlimapTextDocumentService textDocumentService = new IlimapTextDocumentService();
-        IlimapLanguageServer server =
-                new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
+        IlimapLanguageServer server = new IlimapLanguageServer(textDocumentService, new IlimapWorkspaceService());
 
-        var initResult = server.initialize(new org.eclipse.lsp4j.InitializeParams()).join();
+        var initResult =
+                server.initialize(new org.eclipse.lsp4j.InitializeParams()).join();
 
         assertThat(initResult.getCapabilities().getRenameProvider()).isNotNull();
         assertThat(initResult.getCapabilities().getRenameProvider().isRight()).isTrue();
-        assertThat(initResult.getCapabilities().getRenameProvider().getRight().getPrepareProvider()).isTrue();
+        assertThat(initResult.getCapabilities().getRenameProvider().getRight().getPrepareProvider())
+                .isTrue();
     }
 
     private static String validMapping() {

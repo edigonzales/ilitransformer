@@ -89,8 +89,7 @@ public final class IlimapRenameService {
     }
 
     private String validateNewName(IlimapSymbol symbol, String newName) {
-        if (symbol.kind() == IlimapSymbolKind.SOURCE_ALIAS
-                || symbol.kind() == IlimapSymbolKind.JOIN_ALIAS) {
+        if (symbol.kind() == IlimapSymbolKind.SOURCE_ALIAS || symbol.kind() == IlimapSymbolKind.JOIN_ALIAS) {
             if (!IlimapIdentifierRules.isValidAliasId(newName)) {
                 return "'" + newName + "' is not a valid alias ID (must start with a letter, "
                         + "contain only letters, digits, underscores; no hyphens).";
@@ -105,8 +104,7 @@ public final class IlimapRenameService {
     }
 
     private String checkCollision(IlimapAnalysis analysis, IlimapSymbol symbol, String newName) {
-        if (symbol.kind() == IlimapSymbolKind.SOURCE_ALIAS
-                || symbol.kind() == IlimapSymbolKind.JOIN_ALIAS) {
+        if (symbol.kind() == IlimapSymbolKind.SOURCE_ALIAS || symbol.kind() == IlimapSymbolKind.JOIN_ALIAS) {
             return checkAliasScopeCollision(analysis, symbol, newName);
         }
         return checkTopLevelCollision(analysis, symbol, newName);

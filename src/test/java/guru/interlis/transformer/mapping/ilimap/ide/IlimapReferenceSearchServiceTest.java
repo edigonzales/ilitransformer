@@ -118,7 +118,8 @@ class IlimapReferenceSearchServiceTest {
     void references_resolvesInputSymbol() {
         IlimapAnalysis analysis = analyze(validMapping());
         IlimapIdePosition pos = positionAt(analysis, "input src", "input s".length());
-        IlimapResolvedSymbol resolved = new IlimapSymbolReferenceResolver().resolve(analysis, pos).orElseThrow();
+        IlimapResolvedSymbol resolved =
+                new IlimapSymbolReferenceResolver().resolve(analysis, pos).orElseThrow();
 
         List<IlimapIdeRange> refs = searchService.references(analysis, resolved);
 
@@ -129,7 +130,8 @@ class IlimapReferenceSearchServiceTest {
     void references_resolvesSourceAliasSymbol() {
         IlimapAnalysis analysis = analyze(validMapping());
         IlimapIdePosition pos = positionAt(analysis, "sourceRef s.Parent", "sourceRef s".length());
-        IlimapResolvedSymbol resolved = new IlimapSymbolReferenceResolver().resolve(analysis, pos).orElseThrow();
+        IlimapResolvedSymbol resolved =
+                new IlimapSymbolReferenceResolver().resolve(analysis, pos).orElseThrow();
 
         List<IlimapIdeRange> refs = searchService.references(analysis, resolved);
 
@@ -147,8 +149,10 @@ class IlimapReferenceSearchServiceTest {
     }
 
     private static String textAt(IlimapAnalysis analysis, IlimapIdeRange range) {
-        int start = analysis.lineMap().positionToOffset(range.start().line(), range.start().character());
-        int end = analysis.lineMap().positionToOffset(range.end().line(), range.end().character());
+        int start = analysis.lineMap()
+                .positionToOffset(range.start().line(), range.start().character());
+        int end = analysis.lineMap()
+                .positionToOffset(range.end().line(), range.end().character());
         return analysis.text().substring(start, end);
     }
 

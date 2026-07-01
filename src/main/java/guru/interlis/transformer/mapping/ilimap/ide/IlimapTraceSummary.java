@@ -25,15 +25,6 @@ public record IlimapTraceSummary(
 
     public static IlimapTraceSummary unavailable(String mode, String message) {
         return new IlimapTraceSummary(
-                false,
-                message,
-                mode,
-                null,
-                null,
-                null,
-                List.of(),
-                List.of(),
-                List.of(),
-                List.of());
+                false, message, mode, null, null, null, List.of(), List.of(), List.of(), List.of());
     }
 }

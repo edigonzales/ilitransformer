@@ -17,8 +17,8 @@ class IlimapTraceServiceTest {
     @Test
     void traceDirectCopyAssignment() {
         IlimapAnalysis analysis = analyze(copyAssignmentMapping());
-        IlimapTraceParams params = new IlimapTraceParams(
-                "file:///test.ilimap", "targetAttribute", "r1", "X", null, null, null);
+        IlimapTraceParams params =
+                new IlimapTraceParams("file:///test.ilimap", "targetAttribute", "r1", "X", null, null, null);
 
         IlimapTraceSummary trace = traceService.trace(analysis, params);
 
@@ -42,8 +42,8 @@ class IlimapTraceServiceTest {
     @Test
     void traceComputedExpression() {
         IlimapAnalysis analysis = analyze(computedMapping());
-        IlimapTraceParams params = new IlimapTraceParams(
-                "file:///test.ilimap", "targetAttribute", "r1", "Z", null, null, null);
+        IlimapTraceParams params =
+                new IlimapTraceParams("file:///test.ilimap", "targetAttribute", "r1", "Z", null, null, null);
 
         IlimapTraceSummary trace = traceService.trace(analysis, params);
 
@@ -56,8 +56,8 @@ class IlimapTraceServiceTest {
     @Test
     void traceEnumMapExpression() {
         IlimapAnalysis analysis = analyze(enumMapMapping());
-        IlimapTraceParams params = new IlimapTraceParams(
-                "file:///test.ilimap", "targetAttribute", "r1", "Quality", null, null, null);
+        IlimapTraceParams params =
+                new IlimapTraceParams("file:///test.ilimap", "targetAttribute", "r1", "Quality", null, null, null);
 
         IlimapTraceSummary trace = traceService.trace(analysis, params);
 
@@ -74,8 +74,8 @@ class IlimapTraceServiceTest {
     void traceMissingMandatoryTargetAttribute() {
         IlimapAnalysis analysis = analyze(copyAssignmentMapping());
 
-        IlimapTraceParams params = new IlimapTraceParams(
-                "file:///test.ilimap", "targetAttribute", "r1", "Missing", null, null, null);
+        IlimapTraceParams params =
+                new IlimapTraceParams("file:///test.ilimap", "targetAttribute", "r1", "Missing", null, null, null);
 
         IlimapTraceSummary trace = traceService.trace(analysis, params);
 
@@ -90,8 +90,8 @@ class IlimapTraceServiceTest {
     void traceSourceMemberReverseUsages() {
         IlimapAnalysis analysis = analyze(twoRulesSameSourceMapping());
 
-        IlimapTraceParams params = new IlimapTraceParams(
-                "file:///test.ilimap", "sourceMember", null, null, "s", "X", null);
+        IlimapTraceParams params =
+                new IlimapTraceParams("file:///test.ilimap", "sourceMember", null, null, "s", "X", null);
 
         IlimapTraceSummary trace = traceService.trace(analysis, params);
 
@@ -104,8 +104,8 @@ class IlimapTraceServiceTest {
     void traceSourceMemberInSpecificRule() {
         IlimapAnalysis analysis = analyze(twoRulesSameSourceMapping());
 
-        IlimapTraceParams params = new IlimapTraceParams(
-                "file:///test.ilimap", "sourceMember", "r1", null, "s", "X", null);
+        IlimapTraceParams params =
+                new IlimapTraceParams("file:///test.ilimap", "sourceMember", "r1", null, "s", "X", null);
 
         IlimapTraceSummary trace = traceService.trace(analysis, params);
 
@@ -118,8 +118,8 @@ class IlimapTraceServiceTest {
     void traceBagAssignment() {
         IlimapAnalysis analysis = analyze(bagMapping());
 
-        IlimapTraceParams params = new IlimapTraceParams(
-                "file:///test.ilimap", "targetAttribute", "r1", "O", null, null, null);
+        IlimapTraceParams params =
+                new IlimapTraceParams("file:///test.ilimap", "targetAttribute", "r1", "O", null, null, null);
 
         IlimapTraceSummary trace = traceService.trace(analysis, params);
 
@@ -148,23 +148,21 @@ class IlimapTraceServiceTest {
     @Test
     void traceRuleReturnsSteps() {
         IlimapAnalysis analysis = analyze(copyAssignmentMapping());
-        IlimapTraceParams params = new IlimapTraceParams(
-                "file:///test.ilimap", "rule", "r1", null, null, null, null);
+        IlimapTraceParams params = new IlimapTraceParams("file:///test.ilimap", "rule", "r1", null, null, null, null);
 
         IlimapTraceSummary trace = traceService.trace(analysis, params);
 
         assertThat(trace.available()).isTrue();
         assertThat(trace.mode()).isEqualTo("rule");
         assertThat(trace.steps()).isNotEmpty();
-        assertThat(trace.steps()).anySatisfy(step ->
-                assertThat(step.kind()).isEqualTo("expression"));
+        assertThat(trace.steps()).anySatisfy(step -> assertThat(step.kind()).isEqualTo("expression"));
     }
 
     @Test
     void traceUnknownRuleReturnsUnavailable() {
         IlimapAnalysis analysis = analyze(copyAssignmentMapping());
-        IlimapTraceParams params = new IlimapTraceParams(
-                "file:///test.ilimap", "targetAttribute", "nonexistent", "X", null, null, null);
+        IlimapTraceParams params =
+                new IlimapTraceParams("file:///test.ilimap", "targetAttribute", "nonexistent", "X", null, null, null);
 
         IlimapTraceSummary trace = traceService.trace(analysis, params);
 
@@ -175,8 +173,7 @@ class IlimapTraceServiceTest {
     @Test
     void traceUnparseableMappingReturnsUnavailable() {
         IlimapAnalysis analysis = analyze("invalid {{");
-        IlimapTraceParams params = new IlimapTraceParams(
-                "file:///test.ilimap", "rule", "r1", null, null, null, null);
+        IlimapTraceParams params = new IlimapTraceParams("file:///test.ilimap", "rule", "r1", null, null, null, null);
 
         IlimapTraceSummary trace = traceService.trace(analysis, params);
 
@@ -188,20 +185,17 @@ class IlimapTraceServiceTest {
     void usageOfSourceMemberAcrossRules() {
         IlimapAnalysis analysis = analyze(twoRulesSameSourceMapping());
 
-        List<IlimapTraceUsage> usages =
-                traceService.usagesOfSourceMember(analysis, "s", "X", null);
+        List<IlimapTraceUsage> usages = traceService.usagesOfSourceMember(analysis, "s", "X", null);
 
         assertThat(usages).hasSize(2);
-        assertThat(usages).extracting(IlimapTraceUsage::ruleId)
-                .containsExactlyInAnyOrder("r1", "r2");
+        assertThat(usages).extracting(IlimapTraceUsage::ruleId).containsExactlyInAnyOrder("r1", "r2");
     }
 
     @Test
     void usageOfSourceMemberInSpecificRuleOnly() {
         IlimapAnalysis analysis = analyze(twoRulesSameSourceMapping());
 
-        List<IlimapTraceUsage> usages =
-                traceService.usagesOfSourceMember(analysis, "s", "X", "r1");
+        List<IlimapTraceUsage> usages = traceService.usagesOfSourceMember(analysis, "s", "X", "r1");
 
         assertThat(usages).singleElement();
         assertThat(usages.get(0).ruleId()).isEqualTo("r1");
