@@ -7,11 +7,14 @@ import { renderMappingOverviewHtml } from './mappingOverviewHtml';
 import {
   mappingSummaryRequest,
   ruleDetailRequest,
+  traceRequest,
   type IlimapLocation,
   type IlimapMappingSummary,
   type IlimapMappingSummaryParams,
   type IlimapRuleDetailParams,
-  type IlimapRuleDetailSummary
+  type IlimapRuleDetailSummary,
+  type IlimapTraceParams,
+  type IlimapTraceSummary
 } from './mappingOverviewMessages';
 import type {
   MappingOverviewPanelState,
@@ -244,6 +247,10 @@ function registerMessageHandler(
       if (typeof nodeId === 'string' && nodeId.startsWith('rule:')) {
         await requestRuleDetail(state, nodeId.substring(5), outputChannel);
       }
+      return;
+    }
+    if (message && typeof message === 'object' && (message as { type?: unknown }).type === 'requestTrace') {
+      await requestTrace(state, message as TraceMessage, outputChannel);
       return;
     }
     const location = parseNavigationMessage(message);
@@ -490,7 +497,8 @@ function renderPanel(state: MappingOverviewPanelState, renderState: MappingOverv
     nonce(),
     renderState,
     Array.from(state.ruleDetailsById.values()),
-    state.activeRuleId
+    state.activeRuleId,
+    state.activeTrace
   );
 }
 
@@ -620,4 +628,59 @@ function formatTime(date: Date): string {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+interface TraceMessage {
+  mode?: unknown;
+  ruleId?: unknown;
+  targetAttribute?: unknown;
+  sourceAlias?: unknown;
+  sourceMember?: unknown;
+}
+
+async function requestTrace(
+  state: MappingOverviewPanelState,
+  message: TraceMessage,
+  outputChannel: vscode.OutputChannel
+): Promise<void> {
+  const client = getLanguageClient();
+  if (!client) {
+    state.activeTrace = {
+      available: false,
+      message: 'ilimap language server is not running.',
+      mode: typeof message.mode === 'string' ? message.mode : 'targetAttribute',
+      dependencies: [],
+      usages: [],
+      steps: [],
+      diagnostics: []
+    };
+    renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
+    return;
+  }
+
+  const params: IlimapTraceParams = {
+    uri: state.uri,
+    mode: typeof message.mode === 'string' ? message.mode : 'targetAttribute',
+    ruleId: typeof message.ruleId === 'string' ? message.ruleId : undefined,
+    targetAttribute: typeof message.targetAttribute === 'string' ? message.targetAttribute : undefined,
+    sourceAlias: typeof message.sourceAlias === 'string' ? message.sourceAlias : undefined,
+    sourceMember: typeof message.sourceMember === 'string' ? message.sourceMember : undefined
+  };
+
+  try {
+    state.activeTrace = await client.sendRequest<IlimapTraceSummary>(traceRequest, params);
+    renderPanel(state, { refreshState: 'idle', lastUpdated: state.lastUpdated });
+  } catch (error) {
+    outputChannel.appendLine(`Failed to request ilimap trace: ${errorMessage(error)}`);
+    state.activeTrace = {
+      available: false,
+      message: errorMessage(error),
+      mode: params.mode,
+      dependencies: [],
+      usages: [],
+      steps: [],
+      diagnostics: []
+    };
+    renderPanel(state, { refreshState: 'error', errorMessage: 'Failed to load trace.', lastUpdated: state.lastUpdated });
+  }
 }

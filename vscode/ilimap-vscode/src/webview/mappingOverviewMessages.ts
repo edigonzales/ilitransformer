@@ -1,5 +1,6 @@
 export const mappingSummaryRequest = 'ilimap/mappingSummary';
 export const ruleDetailRequest = 'ilimap/ruleDetail';
+export const traceRequest = 'ilimap/trace';
 
 export interface IlimapLocation {
   line: number;
@@ -322,5 +323,76 @@ export interface IlimapMetadataSummary {
   direction?: string;
   roundtrip?: string;
   lossiness?: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapTraceParams {
+  uri: string;
+  mode: 'targetAttribute' | 'sourceMember' | 'rule' | 'position' | string;
+  ruleId?: string;
+  targetAttribute?: string;
+  sourceAlias?: string;
+  sourceMember?: string;
+  position?: { line: number; character: number };
+}
+
+export interface IlimapTraceSummary {
+  available: boolean;
+  message: string;
+  mode: string;
+  ruleId?: string;
+  target?: IlimapTraceTarget;
+  expression?: IlimapTraceExpression;
+  dependencies: IlimapTraceDependency[];
+  usages: IlimapTraceUsage[];
+  steps: IlimapTraceStep[];
+  diagnostics: IlimapDiagnosticSummary[];
+}
+
+export interface IlimapTraceTarget {
+  outputId?: string;
+  targetClass?: string;
+  targetAttribute?: string;
+  type?: string;
+  cardinality?: string;
+  mandatory?: boolean;
+  assignmentKind?: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapTraceExpression {
+  text: string;
+  kind: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapTraceDependency {
+  kind: string;
+  alias?: string;
+  member?: string;
+  sourceClass?: string;
+  enumMapId?: string;
+  functionName?: string;
+  literal?: string;
+  location?: IlimapLocation;
+  definitionLocation?: IlimapLocation;
+}
+
+export interface IlimapTraceUsage {
+  ruleId: string;
+  targetOutput?: string;
+  targetClass?: string;
+  targetAttribute?: string;
+  context: string;
+  expression?: string;
+  location?: IlimapLocation;
+}
+
+export interface IlimapTraceStep {
+  nodeId?: string;
+  kind: string;
+  label: string;
+  detail?: string;
+  status?: string;
   location?: IlimapLocation;
 }

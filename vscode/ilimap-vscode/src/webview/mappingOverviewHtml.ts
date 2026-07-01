@@ -22,6 +22,12 @@ import type {
   IlimapSourceUsageSummary,
   IlimapSourceDetailSummary,
   IlimapTargetDetailSummary,
+  IlimapTraceDependency,
+  IlimapTraceExpression,
+  IlimapTraceStep,
+  IlimapTraceSummary,
+  IlimapTraceTarget,
+  IlimapTraceUsage,
   IlimapWithLocation
 } from './mappingOverviewMessages';
 import type { MappingOverviewRenderState } from './mappingOverviewState';
@@ -31,7 +37,8 @@ export function renderMappingOverviewHtml(
   nonce: string,
   renderState?: MappingOverviewRenderState,
   ruleDetails?: IlimapRuleDetailSummary | IlimapRuleDetailSummary[],
-  activeRuleId?: string
+  activeRuleId?: string,
+  activeTrace?: IlimapTraceSummary
 ): string {
   const title = summary.available ? summary.mappingName || 'mapping' : 'Mapping unavailable';
   const diagnosticText = diagnosticsLabel(summary);
@@ -619,6 +626,74 @@ export function renderMappingOverviewHtml(
       border-top-color: var(--vscode-focusBorder);
     }
 
+    .trace-inspector {
+      margin-top: 24px;
+      padding-top: 12px;
+      border-top: 2px solid var(--vscode-panel-border);
+    }
+
+    .trace-inspector h2 {
+      margin-bottom: 12px;
+    }
+
+    .trace-link {
+      font-size: 11px;
+      margin-left: 6px;
+      color: var(--vscode-textLink-foreground);
+      text-decoration: none;
+    }
+
+    .trace-link:hover {
+      text-decoration: underline;
+    }
+
+    .trace-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 4px 12px;
+      margin-bottom: 12px;
+      padding: 8px;
+      background: var(--vscode-sideBar-background);
+      border-radius: 4px;
+    }
+
+    .trace-grid dt {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .trace-grid dd {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    .trace-grid dd code {
+      font-size: 12px;
+    }
+
+    .trace-step {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 4px 8px;
+      margin-bottom: 4px;
+      border-left: 3px solid var(--vscode-panel-border);
+      font-size: 13px;
+    }
+
+    .trace-step .tag {
+      flex-shrink: 0;
+    }
+
+    .trace-dependency,
+    .trace-usage {
+      padding: 4px 8px;
+      margin-bottom: 4px;
+      border-left: 2px solid var(--vscode-textLink-foreground);
+      font-size: 13px;
+    }
+
     .flow-arrow-cell {
       display: flex;
       align-items: center;
@@ -647,7 +722,7 @@ export function renderMappingOverviewHtml(
       <div class="muted">${escapeHtml(diagnosticText)}</div>
     </div>
     ${renderStatusBar(renderState)}
-    ${summary.available ? renderAvailableSummary(summary, normalizedRuleDetails, activeRuleId) : renderUnavailable(summary)}
+    ${summary.available ? renderAvailableSummary(summary, normalizedRuleDetails, activeRuleId, activeTrace) : renderUnavailable(summary)}
   </main>
   <script nonce="${escapeAttribute(nonce)}">
     const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
@@ -717,6 +792,19 @@ export function renderMappingOverviewHtml(
         vscode.postMessage({
           type: 'requestRuleDetail',
           ruleId: inspectTarget.getAttribute('data-rule-id')
+        });
+        return;
+      }
+      const traceTarget = event.target.closest('[data-action="request-trace"]');
+      if (traceTarget) {
+        event.preventDefault();
+        vscode.postMessage({
+          type: 'requestTrace',
+          mode: traceTarget.getAttribute('data-trace-mode'),
+          ruleId: traceTarget.getAttribute('data-rule-id'),
+          targetAttribute: traceTarget.getAttribute('data-target-attribute'),
+          sourceAlias: traceTarget.getAttribute('data-source-alias'),
+          sourceMember: traceTarget.getAttribute('data-source-member')
         });
         return;
       }
@@ -791,7 +879,8 @@ function normalizeRuleDetails(ruleDetails?: IlimapRuleDetailSummary | IlimapRule
 function renderAvailableSummary(
   summary: IlimapMappingSummary,
   ruleDetails: IlimapRuleDetailSummary[],
-  activeRuleId?: string
+  activeRuleId?: string,
+  activeTrace?: IlimapTraceSummary
 ): string {
   return `${renderMetrics(summary)}
     <div class="sections">
@@ -805,7 +894,8 @@ function renderAvailableSummary(
     ${renderRuleCoverageSection(summary)}
     ${renderSourceUsage(summary)}
     ${renderFlowMap(summary)}
-    ${renderRuleInspectors(summary, ruleDetails, activeRuleId)}`;
+    ${renderRuleInspectors(summary, ruleDetails, activeRuleId)}
+    ${renderTraceInspector(activeTrace)}`;
 }
 
 function renderUnavailable(summary: IlimapMappingSummary): string {
@@ -1174,8 +1264,9 @@ function renderCoverageAttributeRow(
   const rowAttrs = `${missing ? ' data-missing="true"' : ''}${attribute.mandatory ? ' data-mandatory="true"' : ''}`;
   const source = attribute.sourceSummary || attribute.expression || '';
   const diagnosticBadges = renderDiagnosticBadges(diagnosticsForAttribute(summary, ruleId, attribute));
+  const traceLink = `<a href="#" class="trace-link" data-action="request-trace" data-trace-mode="targetAttribute" data-rule-id="${escapeAttribute(ruleId)}" data-target-attribute="${escapeAttribute(attribute.name)}">Trace</a>`;
   return `<tr class="${missing ? 'coverage-row-missing' : ''}"${rowAttrs}>
-            <td>${renderNavName(attribute.name, attribute)}${
+            <td>${renderNavName(attribute.name, attribute)}${traceLink}${
               attribute.mandatory ? ' <span class="req-marker" title="mandatory">*</span>' : ''
             }</td>
             <td class="coverage-status-cell"><span class="tag ${escapeAttribute(coverageStatusClass(status))}">${escapeHtml(status)}</span>${diagnosticBadges}</td>
@@ -1902,4 +1993,97 @@ function statusClass(status: string): string {
     return 'warning';
   }
   return '';
+}
+
+function renderTraceInspector(trace?: IlimapTraceSummary): string {
+  if (!trace) {
+    return '';
+  }
+  if (!trace.available) {
+    return `<section class="trace-inspector"><h2>Trace</h2><p class="empty">${escapeHtml(trace.message)}</p></section>`;
+  }
+  return `<section class="trace-inspector">
+    <h2>Trace</h2>
+    ${renderTraceTarget(trace.target)}
+    ${renderTraceExpression(trace.expression)}
+    ${renderTraceDependencies(trace.dependencies)}
+    ${renderTraceUsages(trace.usages)}
+    ${renderTraceSteps(trace.steps)}
+  </section>`;
+}
+
+function renderTraceTarget(target?: IlimapTraceTarget): string {
+  if (!target) {
+    return '';
+  }
+  const kind = target.assignmentKind ? `<span class="tag tag-${escapeAttribute(target.assignmentKind)}">${escapeHtml(target.assignmentKind)}</span>` : '';
+  return `<div class="inspector-section">
+    <h3>Target</h3>
+    <dl class="trace-grid">
+      <dt>Output</dt><dd>${renderNavName(target.outputId ?? '', target)}</dd>
+      <dt>Class</dt><dd>${escapeHtml(target.targetClass ?? '')}</dd>
+      <dt>Attribute</dt><dd>${escapeHtml(target.targetAttribute ?? '')} ${kind}</dd>
+      ${target.type ? `<dt>Type</dt><dd>${escapeHtml(target.type)}</dd>` : ''}
+      ${target.cardinality ? `<dt>Cardinality</dt><dd>${escapeHtml(target.cardinality)}</dd>` : ''}
+      ${target.mandatory ? '<dt>Mandatory</dt><dd>yes</dd>' : ''}
+    </dl>
+  </div>`;
+}
+
+function renderTraceExpression(expression?: IlimapTraceExpression): string {
+  if (!expression) {
+    return '';
+  }
+  return `<div class="inspector-section">
+    <h3>Expression</h3>
+    <dl class="trace-grid">
+      <dt>Expression</dt><dd><code>${escapeHtml(expression.text)}</code></dd>
+      <dt>Kind</dt><dd><span class="tag tag-${escapeAttribute(expression.kind)}">${escapeHtml(expression.kind)}</span></dd>
+    </dl>
+  </div>`;
+}
+
+function renderTraceDependencies(dependencies: IlimapTraceDependency[]): string {
+  if (!dependencies || dependencies.length === 0) {
+    return '';
+  }
+  return `<div class="inspector-section">
+    <h3>Dependencies</h3>
+    ${dependencies.map(dep => `<div class="trace-dependency">
+      <span class="tag tag-${escapeAttribute(dep.kind)}">${escapeHtml(dep.kind)}</span>
+      ${dep.alias ? `${escapeHtml(dep.alias)}.` : ''}${dep.member ? escapeHtml(dep.member) : ''}
+      ${dep.enumMapId ? `enumMap(${escapeHtml(dep.enumMapId)})` : ''}
+      ${dep.literal ? escapeHtml(dep.literal) : ''}
+      ${dep.sourceClass ? `<span class="detail">(${escapeHtml(dep.sourceClass)})</span>` : ''}
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderTraceUsages(usages: IlimapTraceUsage[]): string {
+  if (!usages || usages.length === 0) {
+    return '';
+  }
+  return `<div class="inspector-section">
+    <h3>Usages</h3>
+    ${usages.map(usage => `<div class="trace-usage">
+      <span class="tag">${escapeHtml(usage.context)}</span>
+      Rule ${renderNavName(usage.ruleId, usage)}:
+      ${usage.targetAttribute ? escapeHtml(usage.targetAttribute) : ''}
+      ${usage.expression ? `<code>${escapeHtml(usage.expression)}</code>` : ''}
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderTraceSteps(steps: IlimapTraceStep[]): string {
+  if (!steps || steps.length === 0) {
+    return '';
+  }
+  return `<div class="inspector-section">
+    <h3>Flow</h3>
+    ${steps.map(step => `<div class="trace-step">
+      <span class="tag tag-${escapeAttribute(step.kind)}">${escapeHtml(step.kind)}</span>
+      ${renderNavName(step.label, step)}
+      ${step.detail ? `<code>${escapeHtml(step.detail)}</code>` : ''}
+    </div>`).join('')}
+  </div>`;
 }

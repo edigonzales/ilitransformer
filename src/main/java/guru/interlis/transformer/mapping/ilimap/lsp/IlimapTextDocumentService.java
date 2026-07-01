@@ -27,6 +27,9 @@ import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailService;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapRuleDetailSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapSymbolDisplayKind;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapTextEdit;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceParams;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceService;
+import guru.interlis.transformer.mapping.ilimap.ide.IlimapTraceSummary;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingParams;
 import guru.interlis.transformer.mapping.ilimap.ide.IlimapValidateMappingResult;
 
@@ -91,6 +94,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
     private final IlimapLspRangeMapper rangeMapper;
     private final IlimapCodeActionService codeActionService;
     private final IlimapCodeLensService codeLensService;
+    private final IlimapTraceService traceService;
     private final Map<String, CompletableFuture<IlimapAnalysis>> runningModelAnalyses = new ConcurrentHashMap<>();
     private IlimapAnalysisOptions analysisOptions;
     private LanguageClient client;
@@ -186,6 +190,7 @@ public final class IlimapTextDocumentService implements TextDocumentService {
         this.rangeMapper = Objects.requireNonNull(rangeMapper, "rangeMapper");
         this.codeActionService = new IlimapCodeActionService(this.formattingService);
         this.codeLensService = new IlimapCodeLensService(this.mappingSummaryService);
+        this.traceService = new IlimapTraceService();
         this.analysisOptions = Objects.requireNonNull(analysisOptions, "analysisOptions");
     }
 
@@ -394,6 +399,21 @@ public final class IlimapTextDocumentService implements TextDocumentService {
                         analysis.diagnostics().size()))
                 .exceptionally(error -> IlimapValidateMappingResult.unavailable(
                         "Failed to validate ILIMAP document: " + errorMessage(error)));
+    }
+
+    public CompletableFuture<IlimapTraceSummary> trace(IlimapTraceParams params) {
+        if (params == null || params.uri() == null || params.uri().isBlank()) {
+            return CompletableFuture.completedFuture(
+                    IlimapTraceSummary.unavailable(params != null ? params.mode() : "unknown",
+                            "No ILIMAP document URI provided."));
+        }
+        String uri = params.uri();
+        if (documentStore.get(uri).isEmpty()) {
+            return CompletableFuture.completedFuture(
+                    IlimapTraceSummary.unavailable(params.mode(), "No open ILIMAP document for URI: " + uri));
+        }
+        IlimapAnalysis analysis = analysisForCompletion(uri);
+        return CompletableFuture.completedFuture(traceService.trace(analysis, params));
     }
 
     public void invalidateModelCache() {

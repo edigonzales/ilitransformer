@@ -1337,3 +1337,131 @@ test('renders Export report link in header without inline handler', () => {
   assert.doesNotMatch(html, /<a[^>]*onclick/i);
   assert.doesNotMatch(html, /<a[^>]*href="javascript:/i);
 });
+
+test('coverage row contains trace link', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.match(html, /data-action="request-trace"/);
+  assert.match(html, /data-trace-mode="targetAttribute"/);
+  assert.match(html, /data-rule-id="r1"/);
+  assert.match(html, /data-target-attribute="Name"/);
+  assert.match(html, /class="trace-link"/);
+});
+
+test('trace inspector renders when activeTrace is provided', () => {
+  const trace = {
+    available: true,
+    message: '',
+    mode: 'targetAttribute',
+    ruleId: 'r1',
+    target: {
+      outputId: 'out',
+      targetClass: 'M.A',
+      targetAttribute: 'Name',
+      type: 'TEXT*60',
+      cardinality: '1',
+      mandatory: true,
+      assignmentKind: 'assign'
+    },
+    expression: {
+      text: 's.Name',
+      kind: 'copy'
+    },
+    dependencies: [
+      { kind: 'sourceAttribute', alias: 's', member: 'Name', sourceClass: 'M.A' }
+    ],
+    usages: [],
+    steps: [],
+    diagnostics: []
+  };
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, undefined, undefined, trace);
+
+  assert.match(html, /Trace/);
+  assert.match(html, /class="trace-inspector"/);
+  assert.match(html, /Target/);
+  assert.match(html, />Name</);
+  assert.match(html, />s\.Name</);
+  assert.match(html, />sourceAttribute</);
+});
+
+test('unavailable trace shows error message', () => {
+  const trace = {
+    available: false,
+    message: 'Rule not found: r99',
+    mode: 'targetAttribute',
+    dependencies: [],
+    usages: [],
+    steps: [],
+    diagnostics: []
+  };
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, undefined, undefined, trace);
+
+  assert.match(html, /class="trace-inspector"/);
+  assert.match(html, /Rule not found: r99/);
+  const inspectorIndex = html.indexOf('class="trace-inspector"');
+  const inspectorContent = html.substring(inspectorIndex);
+  assert.doesNotMatch(inspectorContent, /<h3>Target<\/h3>/);
+  assert.doesNotMatch(inspectorContent, /<h3>Expression<\/h3>/);
+});
+
+test('trace inspector renders usages', () => {
+  const trace = {
+    available: true,
+    message: '',
+    mode: 'sourceMember',
+    usages: [
+      { ruleId: 'r1', targetOutput: 'out', targetClass: 'M.A', targetAttribute: 'Name', context: 'assign', expression: 's.Name' },
+      { ruleId: 'r2', targetOutput: 'out', targetClass: 'M.B', targetAttribute: 'Title', context: 'assign', expression: 's.Name' }
+    ],
+    dependencies: [],
+    steps: [],
+    diagnostics: []
+  };
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, undefined, undefined, trace);
+
+  assert.match(html, /Usages/);
+  assert.match(html, /assign/);
+  assert.match(html, /r1/);
+  const traceUsagesIndex = html.indexOf('Usages');
+  const traceUsagesContent = html.substring(traceUsagesIndex);
+  assert.match(traceUsagesContent, /r2/);
+  assert.match(traceUsagesContent, /Name/);
+  assert.match(traceUsagesContent, /Title/);
+});
+
+test('trace inspector renders flow steps', () => {
+  const trace = {
+    available: true,
+    message: '',
+    mode: 'targetAttribute',
+    ruleId: 'r1',
+    target: {
+      outputId: 'out',
+      targetClass: 'M.A',
+      targetAttribute: 'Name',
+      assignmentKind: 'assign'
+    },
+    expression: { text: 's.Name', kind: 'copy' },
+    dependencies: [],
+    usages: [],
+    steps: [
+      { kind: 'input', label: 'Input', status: 'ok' },
+      { kind: 'source', label: 's', detail: 'M.A', status: 'ok' },
+      { kind: 'expression', label: 'Expression', detail: 's.Name', status: 'copy' },
+      { kind: 'target', label: 'Name', detail: 'M.A', status: 'assign' }
+    ],
+    diagnostics: []
+  };
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce', undefined, undefined, undefined, trace);
+
+  assert.match(html, /Flow/);
+  assert.match(html, /class="trace-step"/);
+  assert.match(html, />input</);
+  assert.match(html, />source</);
+});
+
+test('missing trace results in no trace html', () => {
+  const html = renderMappingOverviewHtml(summary(), 'test-nonce');
+
+  assert.doesNotMatch(html, /class="trace-inspector"/);
+});
