@@ -1,0 +1,23 @@
+---
+title: "Architektur"
+---
+
+Die Architektur ist in vier Schichten gegliedert:
+
+| Schicht | Rolle |
+|---|---|
+| CLI | startet Transformationen, Prüfungen und Reports |
+| Mapping Compiler | lädt `.ilimap`, prüft Modelle und erstellt einen typisierten Plan |
+| Transformation Engine | liest Quellen, erzeugt Zielobjekte, löst Referenzen auf |
+| Format Provider | kapseln formatspezifische Reader und Writer |
+
+Die Engine soll keine DM01- oder DMAV-Sonderlogik enthalten. Produktive Profile wie DM01 ↔ DMAV liegen als Mappings ausserhalb des generischen Kerns.
+
+## Designprinzipien
+
+- Modellprüfung vor Laufzeit
+- deklarative Regeln statt Skriptlogik
+- reproduzierbare OIDs und stabile Ausgabe
+- strukturierte Diagnose statt Log-Suche
+- klare Grenzen zwischen Format, Modell und Mapping
+

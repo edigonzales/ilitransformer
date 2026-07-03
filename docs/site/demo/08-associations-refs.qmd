@@ -1,0 +1,17 @@
+---
+title: "08 – Assoziationen und Referenzen"
+---
+
+Referenzen sind für modellbewusste Transformationen zentral. Dieses Beispiel zeigt, wie Zielobjekte erzeugt und danach über Rollen oder Assoziationen verbunden werden.
+
+## Lernziel
+
+- Quellobjekte über `join` zusammenführen
+- Werte über `lookup` und `lookupIn` nachschlagen
+- Zielreferenzen mit `ref` erzeugen
+- Pflichtreferenzen prüfen
+
+## Warum wichtig?
+
+Bei echten Modellumbauten ist selten nur ein Attribut umzubenennen. Häufig entstehen neue Objektbeziehungen. Genau dort zeigt sich der Unterschied zwischen Formatumbau und Datenumbau.
+

@@ -1,0 +1,22 @@
+---
+title: "Grundlagen"
+---
+
+Der INTERLIS Transformer verbindet drei Dinge:
+
+| Baustein | Aufgabe |
+|---|---|
+| **I/O-Provider** | lesen und schreiben Formate wie XTF, ITF, CSV, GeoPackage, JDBC oder Shapefile |
+| **IOM / iox-ili** | stellt die gemeinsame Objektwelt bereit |
+| **ilimap** | beschreibt, wie aus Quellobjekten Zielobjekte werden |
+
+Wichtig ist die Trennung zwischen Format und Bedeutung. Ein Format beschreibt, wie Daten technisch gespeichert oder übertragen werden. Ein Modell beschreibt, welche Objekte, Attribute, Beziehungen und Werte fachlich erlaubt sind.
+
+## Zwei Arten von Umbau
+
+**Formatumbau** bedeutet: Die fachliche Struktur bleibt im Wesentlichen gleich, aber die technische Repräsentation ändert sich.
+
+**Datenumbau** bedeutet: Die fachliche Struktur ändert sich. Klassen, Attribute, Werte, Einheiten, Referenzen oder Objektbildung werden neu abgebildet.
+
+In der Praxis treten beide Fälle oft gemeinsam auf, zum Beispiel bei `DM01 ITF → DMAV XTF`.
+

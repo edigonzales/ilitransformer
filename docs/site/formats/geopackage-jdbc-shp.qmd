@@ -1,0 +1,18 @@
+---
+title: "GeoPackage, JDBC und Shapefile"
+---
+
+GeoPackage und JDBC sind wichtige Eingabewege für bestehende Datenbestände. Shapefile ist zusätzlich als Ausgabeformat verfügbar.
+
+## GeoPackage
+
+GeoPackage kann Tabellen und einfache Geometrien liefern. Es ist nützlich, wenn Quelldaten bereits als Geodatenpaket vorliegen, aber in ein INTERLIS-Zielmodell überführt werden sollen.
+
+## JDBC
+
+JDBC erlaubt Query-basierte Quellen. Damit kann eine Datenbankabfrage direkt als Quellklasse für das Mapping dienen.
+
+## Shapefile
+
+Shapefile ist einfach, weit verbreitet und begrenzt. Der Transformer behandelt es streng: ein Dataset, eine Klasse, ein Geometrietyp.
+

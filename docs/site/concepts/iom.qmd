@@ -1,0 +1,14 @@
+---
+title: "IOM und iox-ili"
+---
+
+IOM ist die gemeinsame Mitte des Transformers. Reader erzeugen Ereignisse und Objekte, die nicht mehr an das konkrete Eingabeformat gebunden sind. Writer können daraus wieder formatgerechte Transfers erzeugen.
+
+Das ist der Grund, warum der Transformer nicht als Sammlung einzelner Konverter verstanden werden sollte. Er arbeitet über eine einheitliche Objektwelt:
+
+- Eingabeformate werden in eine IOM-nahe Darstellung gelesen.
+- Mapping-Regeln erzeugen daraus Zielobjekte.
+- Ausgabeformate serialisieren diese Zielobjekte wieder.
+
+Modelle bleiben dabei zentral. Sie liefern die Semantik: Klassen, Attribute, Typen, Kardinalitäten, Referenzen und zulässige Werte.
+

@@ -1,0 +1,28 @@
+---
+title: "CLI"
+---
+
+## `transform`
+
+```bash
+ilitransformer transform -m profile.ilimap --validate --report build/report
+```
+
+Führt eine Transformation aus. Die Mapping-Datei kann YAML oder `.ilimap` sein.
+
+## `validate-mapping`
+
+```bash
+ilitransformer validate-mapping -m profile.ilimap
+```
+
+Prüft ein Mapping, ohne Daten zu transformieren. Für `.ilimap` werden Fehler mit Datei, Zeile und Spalte gemeldet.
+
+## `inspect-model`
+
+```bash
+ilitransformer inspect-model --model MyModel --modeldir models --format both
+```
+
+Erzeugt eine Modellinventur als JSON und/oder Markdown.
+

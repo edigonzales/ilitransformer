@@ -1,0 +1,31 @@
+---
+title: "Schnellstart"
+---
+
+Der schnellste Einstieg ist ein kleines Demo-Verzeichnis: Modell kompilieren, Mapping prüfen, Transformation ausführen und das Ergebnis validieren.
+
+```bash
+./gradlew installDist
+./build/install/ilitransformer/bin/ilitransformer validate-mapping -m demo/01-hello-copy/profile.ilimap
+./build/install/ilitransformer/bin/ilitransformer transform -m demo/01-hello-copy/profile.ilimap --validate
+```
+
+Für Release-Builds sieht der Ablauf gleich aus, nur der Pfad zum Programm ist kürzer:
+
+```bash
+./bin/ilitransformer transform -m demo/01-hello-copy/profile.ilimap --validate
+```
+
+## Was passiert dabei?
+
+1. Das Quell- und Zielmodell wird mit `ili2c` gelesen.
+2. Die `.ilimap`-Datei wird syntaktisch und semantisch geprüft.
+3. Die Eingabedaten werden als `IomObject`-Welt gelesen.
+4. Die Mapping-Regeln erzeugen Zielobjekte.
+5. Der Writer schreibt einen Transfer im Zielformat.
+6. Optional prüft `ilivalidator` das Ergebnis.
+
+## Nächster Schritt
+
+Öffnen Sie danach die Demo-Suite. Sie ist als Lernpfad aufgebaut und steigert sich von einfachen Kopierregeln bis zu Referenzen, `BAG OF STRUCTURE`, OID-Strategien und dokumentiertem Informationsverlust.
+

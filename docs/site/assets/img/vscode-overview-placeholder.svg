@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" role="img" aria-labelledby="title desc">
+  <title id="title">Platzhalter für VS-Code-Mapping-Overview</title>
+  <desc id="desc">Platzhalter für einen Screenshot der Mapping Overview in VS Code.</desc>
+  <rect width="900" height="480" fill="#fff"/>
+  <rect x="40" y="40" width="820" height="400" fill="#fff" stroke="#d9dee6" stroke-width="2"/>
+  <line x1="430" y1="40" x2="430" y2="440" stroke="#d9dee6" stroke-width="2"/>
+  <text x="70" y="85" font-family="Frutiger, Segoe UI, sans-serif" font-size="26" font-weight="700" fill="#20242a">.ilimap</text>
+  <text x="460" y="85" font-family="Frutiger, Segoe UI, sans-serif" font-size="26" font-weight="700" fill="#20242a">Mapping Overview</text>
+  <rect x="70" y="125" width="300" height="18" fill="#064b96" opacity=".18"/>
+  <rect x="70" y="165" width="250" height="18" fill="#d51f26" opacity=".16"/>
+  <rect x="70" y="205" width="330" height="18" fill="#064b96" opacity=".18"/>
+  <rect x="460" y="125" width="340" height="18" fill="#064b96" opacity=".18"/>
+  <rect x="460" y="180" width="280" height="12" fill="#d9dee6"/>
+  <rect x="460" y="180" width="220" height="12" fill="#064b96"/>
+  <path d="M340 214 C410 214, 410 260, 480 260" fill="none" stroke="#d51f26" stroke-width="3"/>
+  <circle cx="340" cy="214" r="7" fill="#064b96"/>
+  <circle cx="480" cy="260" r="7" fill="#d51f26"/>
+  <text x="70" y="405" font-family="Frutiger, Segoe UI, sans-serif" font-size="18" fill="#656d78">Bildplatzhalter: Screenshot aus VS Code einsetzen</text>
+</svg>
+

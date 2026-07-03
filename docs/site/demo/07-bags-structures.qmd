@@ -1,0 +1,17 @@
+---
+title: "07 – Bags und Structures"
+---
+
+INTERLIS-Strukturen sind oft der Punkt, an dem einfache Tabellenlogik nicht mehr reicht. Dieses Beispiel zeigt, wie `BAG OF STRUCTURE` und `LIST OF` aus Quellobjekten aufgebaut werden.
+
+## Lernziel
+
+- Strukturen im Zielmodell erzeugen
+- Kindobjekte mit dem Parent verbinden
+- `parentRef` korrekt einsetzen
+- Geometrie- und Strukturwerte nicht als flache Spalten missverstehen
+
+## Hinweis
+
+Dieses Beispiel eignet sich gut, um später in der VS-Code-Erweiterung die Mapping Overview und den Trace Inspector zu zeigen.
+

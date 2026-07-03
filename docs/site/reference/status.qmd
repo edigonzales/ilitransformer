@@ -1,0 +1,21 @@
+---
+title: "Status und Grenzen"
+---
+
+Der Transformer ist in vielen Kernbereichen stabil, einige Bereiche sind bewusst enger geführt oder noch experimentell.
+
+| Bereich | Status |
+|---|---|
+| CLI `transform` | stabil |
+| CLI `validate-mapping` | stabil |
+| `.ilimap` Parser und Formatter | stabil |
+| XTF / ITF / XML | stabil, modellabhängige Grenzen beachten |
+| CSV / GeoPackage / JDBC als Quelle | unterstützt |
+| Shapefile | Eingabe und Ausgabe unterstützt |
+| Joins und komplexe Mehrquellenregeln | experimentell |
+| Disk-backed StateStore | nicht unterstützt |
+
+## Grundsatz
+
+Unklare oder verlustbehaftete Transformationen sollen nicht versteckt werden. Wo Informationen nicht abbildbar sind, sollte das Mapping dies mit `loss` dokumentieren.
+

@@ -1,0 +1,44 @@
+---
+title: "ilimap"
+---
+
+`.ilimap` ist die deklarative Mapping-Sprache des Transformers. Sie beschreibt nicht, **wie** ein Programm Zeile für Zeile laufen soll, sondern **welche** Zielobjekte aus welchen Quellobjekten entstehen.
+
+Ein Mapping enthält typischerweise:
+
+- Eingaben und Ausgaben
+- Modellverzeichnisse
+- OID- und Basket-Strategien
+- Regeln pro Zielklasse
+- Attributzuweisungen
+- Enum-Mappings
+- Referenzen und Assoziationen
+- `BAG OF STRUCTURE`-Abbildungen
+- dokumentierten Informationsverlust
+
+```ilimap
+mapping v2 "example" {
+  input src {
+    path "data/input.xtf";
+    model "SourceModel";
+  }
+
+  output tgt {
+    path "build/output.xtf";
+    model "TargetModel";
+  }
+
+  rule zielobjekt {
+    target tgt class "TargetModel.Topic.Target";
+    source s from src class "SourceModel.Topic.Source";
+
+    assign {
+      Name = trim(s.Name);
+      Nummer = s.Nummer;
+    }
+  }
+}
+```
+
+Die Sprache ist absichtlich eng geführt. Das macht Mappings prüfbar und eröffnet gute IDE-Funktionen: Formatierung, Diagnose, Navigation und Trace.
+
