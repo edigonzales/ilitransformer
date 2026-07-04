@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<!-- INTERLIS 2 syntax highlighting for Pandoc -->
+<language version="1" kateversion="5.0" name="interlis" section="Sources" extensions="*.ili" license="MIT">
+<highlighting>
+
+  <list name="keywords">
+    <item>MODEL</item>
+    <item>TOPIC</item>
+    <item>CLASS</item>
+    <item>STRUCTURE</item>
+    <item>ASSOCIATION</item>
+    <item>DOMAIN</item>
+    <item>TABLE</item>
+    <item>VIEW</item>
+    <item>BASKET</item>
+    <item>OID</item>
+    <item>MANDATORY</item>
+    <item>OPTIONAL</item>
+    <item>NOINCREMENTALTRANSFER</item>
+    <item>ANYSTRUCTURE</item>
+    <item>AGGREGATION</item>
+    <item>CARDINALITY</item>
+    <item>CONSTRAINTS</item>
+    <item>DERIVATIVES</item>
+    <item>INHERITANCE</item>
+    <item>RESTRICTION</item>
+    <item>TRANSLATION</item>
+    <item>UNQUALIFIED</item>
+    <item>CONTINUOUS</item>
+    <item>CONTRACTED</item>
+    <item>ABSTRACT</item>
+    <item>EXTENDED</item>
+    <item>EXTERNAL</item>
+    <item>FINAL</item>
+    <item>TRANSIENT</item>
+    <item>UNDEFINED</item>
+    <item>REFERENCE</item>
+    <item>REFSYSTEM</item>
+    <item>ATTRIBUTE</item>
+    <item>EXISTENCE</item>
+    <item>CONSTRAINT</item>
+    <item>INSPECTION</item>
+    <item>EXTENDS</item>
+    <item>DEPENDS</item>
+    <item>HIDING</item>
+    <item>SUBDIVISION</item>
+    <item>TRANSFER</item>
+    <item>CONTINUE</item>
+    <item>DEFERRED</item>
+    <item>GENERICS</item>
+    <item>FUNCTION</item>
+    <item>CONTEXT</item>
+    <item>OBJECT</item>
+    <item>OBJECTS</item>
+    <item>ORDERED</item>
+    <item>GRAPHIC</item>
+    <item>SYMBOLOGY</item>
+    <item>AGGREGATES</item>
+    <item>ATTRIBUTES</item>
+    <item>PARAMETER</item>
+    <item>PERIPHERY</item>
+    <item>METAOBJECT</item>
+    <item>LINEATTR</item>
+    <item>LINESIZE</item>
+    <item>CLOCKWISE</item>
+    <item>COUNTERCLOCKWISE</item>
+    <item>HALIGNMENT</item>
+    <item>VALIGNMENT</item>
+    <item>VERTEXINFO</item>
+    <item>PROJECTION</item>
+    <item>ACCORDING</item>
+    <item>INTERLIS</item>
+    <item>VERSION</item>
+    <item>IMPORTS</item>
+    <item>FORMAT</item>
+    <item>UNIQUE</item>
+    <item>LOCAL</item>
+    <item>WITHOUT</item>
+    <item>ROTATION</item>
+    <item>THATAREA</item>
+    <item>THISAREA</item>
+    <item>OVERLAPS</item>
+    <item>REQUIRED</item>
+    <item>DEFAULT</item>
+    <item>DEFINED</item>
+    <item>DEGREES</item>
+    <item>RADIANS</item>
+    <item>GRADS</item>
+    <item>OTHERS</item>
+    <item>PARENT</item>
+    <item>GENERIC</item>
+    <item>DERIVED</item>
+    <item>ENUMVAL</item>
+    <item>ENUMTREEVAL</item>
+    <item>LNBASE</item>
+    <item>TIDSIZE</item>
+    <item>BLANK</item>
+    <item>XMLNS</item>
+    <item>CIRCULAR</item>
+    <item>ANYCLASS</item>
+    <item>EQUAL</item>
+    <item>CONTEXT</item>
+    <item>CONTOUR</item>
+    <item>VERTEX</item>
+    <item>SIGN</item>
+    <item>NAME</item>
+    <item>UNION</item>
+    <item>WHERE</item>
+    <item>FROM</item>
+    <item>JOIN</item>
+    <item>ALL</item>
+    <item>AND</item>
+    <item>ANY</item>
+    <item>BAG</item>
+    <item>END</item>
+    <item>FIX</item>
+    <item>I16</item>
+    <item>I32</item>
+    <item>NOT</item>
+    <item>SET</item>
+    <item>TID</item>
+    <item>URI</item>
+    <item>AS</item>
+    <item>AT</item>
+    <item>BY</item>
+    <item>IN</item>
+    <item>NO</item>
+    <item>OF</item>
+    <item>ON</item>
+    <item>OR</item>
+    <item>PI</item>
+    <item>TO</item>
+    <item>FREE</item>
+    <item>FIRST</item>
+    <item>LAST</item>
+    <item>LINE</item>
+    <item>LIST</item>
+    <item>CODE</item>
+    <item>FONT</item>
+    <item>FORM</item>
+    <item>UNIT</item>
+    <item>VIEW</item>
+    <item>WHEN</item>
+    <item>WITH</item>
+    <item>DIM1</item>
+    <item>DIM2</item>
+    <item>BASED</item>
+    <item>BASE</item>
+    <item>IDENT</item>
+    <item>TABLE</item>
+    <item>TYPE</item>
+    <item>NULL</item>
+    <item>THIS</item>
+  </list>
+
+  <list name="types">
+    <item>TEXT</item>
+    <item>BOOLEAN</item>
+    <item>NUMERIC</item>
+    <item>DATE</item>
+    <item>DATETIME</item>
+    <item>TIMEOFDAY</item>
+    <item>BINARY</item>
+    <item>BLACKBOX</item>
+    <item>ARCS</item>
+    <item>AREA</item>
+    <item>COORD</item>
+    <item>COORD2</item>
+    <item>COORD3</item>
+    <item>DIRECTED</item>
+    <item>MTEXT</item>
+    <item>MULTIAREA</item>
+    <item>MULTICOORD</item>
+    <item>MULTIPOLYLINE</item>
+    <item>MULTISURFACE</item>
+    <item>POLYLINE</item>
+    <item>STRAIGHTS</item>
+    <item>SURFACE</item>
+    <item>XML</item>
+  </list>
+
+  <contexts>
+    <context attribute="Normal Text" lineEndContext="#stay" name="Normal">
+      <Detect2Chars attribute="Comment" context="LineComment" char="!" char1="!" />
+      <Detect2Chars attribute="Comment" context="BlockComment" char="/" char1="*" />
+      <DetectChar attribute="String" context="String" char="&quot;" />
+      <keyword attribute="Keyword" context="#stay" String="keywords" />
+      <keyword attribute="DataType" context="#stay" String="types" />
+      <RegExpr attribute="DecVal" context="#stay" String="\b-?\d+\.?\d*[Ee]?[+-]?\d*\b" />
+      <RegExpr attribute="Operator" context="#stay" String="(--)" />
+      <AnyChar attribute="Operator" context="#stay" String=";=:" />
+    </context>
+
+    <context attribute="Comment" lineEndContext="#pop" name="LineComment" />
+
+    <context attribute="Comment" lineEndContext="#stay" name="BlockComment">
+      <Detect2Chars attribute="Comment" context="#pop" char="*" char1="/" />
+    </context>
+
+    <context attribute="String" lineEndContext="#stay" name="String">
+      <DetectChar attribute="String" context="#pop" char="&quot;" />
+    </context>
+  </contexts>
+
+  <itemDatas>
+    <itemData name="Normal Text" defStyleNum="dsNormal" />
+    <itemData name="Keyword" defStyleNum="dsKeyword" />
+    <itemData name="DataType" defStyleNum="dsDataType" />
+    <itemData name="Comment" defStyleNum="dsComment" />
+    <itemData name="String" defStyleNum="dsString" />
+    <itemData name="DecVal" defStyleNum="dsDecVal" />
+    <itemData name="Operator" defStyleNum="dsOperator" />
+  </itemDatas>
+
+</highlighting>
+</language>

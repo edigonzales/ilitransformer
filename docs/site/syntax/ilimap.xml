@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<!-- ilimap mapping DSL syntax highlighting for Pandoc -->
+<language version="1" kateversion="5.0" name="ilimap" section="Sources" extensions="*.ilimap" license="MIT">
+<highlighting>
+
+  <list name="keywords">
+    <item>mapping</item>
+    <item>v2</item>
+    <item>job</item>
+    <item>input</item>
+    <item>output</item>
+    <item>oid</item>
+    <item>basket</item>
+    <item>enum</item>
+    <item>defaults</item>
+    <item>rule</item>
+    <item>target</item>
+    <item>source</item>
+    <item>from</item>
+    <item>class</item>
+    <item>where</item>
+    <item>join</item>
+    <item>inner</item>
+    <item>left</item>
+    <item>identity</item>
+    <item>assign</item>
+    <item>bag</item>
+    <item>ref</item>
+    <item>association</item>
+    <item>role</item>
+    <item>required</item>
+    <item>create</item>
+    <item>loss</item>
+    <item>metadata</item>
+    <item>option</item>
+    <item>connection</item>
+    <item>query</item>
+    <item>geometry</item>
+    <item>driver</item>
+    <item>url</item>
+    <item>user</item>
+    <item>password</item>
+    <item>userEnv</item>
+    <item>passwordEnv</item>
+    <item>property</item>
+    <item>topic</item>
+    <item>basketId</item>
+    <item>oidColumn</item>
+    <item>sql</item>
+    <item>columns</item>
+    <item>column</item>
+    <item>encoding</item>
+    <item>type</item>
+    <item>srid</item>
+    <item>attribute</item>
+    <item>structure</item>
+    <item>mode</item>
+    <item>embed</item>
+    <item>expand</item>
+    <item>maxItems</item>
+    <item>parentRef</item>
+    <item>parent</item>
+    <item>sourcePath</item>
+    <item>reasonCode</item>
+    <item>description</item>
+    <item>when</item>
+    <item>direction</item>
+    <item>roundtrip</item>
+    <item>lossiness</item>
+    <item>name</item>
+    <item>modeldir</item>
+    <item>path</item>
+    <item>model</item>
+    <item>format</item>
+    <item>namespace</item>
+    <item>failPolicy</item>
+    <item>compileMode</item>
+    <item>strategy</item>
+  </list>
+
+  <list name="literals">
+    <item>true</item>
+    <item>false</item>
+    <item>null</item>
+  </list>
+
+  <contexts>
+    <context attribute="Normal Text" lineEndContext="#stay" name="Normal">
+      <Detect2Chars attribute="Comment" context="LineComment" char="/" char1="/" />
+      <Detect2Chars attribute="Comment" context="BlockComment" char="/" char1="*" />
+      <DetectChar attribute="String" context="String" char="&quot;" />
+      <keyword attribute="Keyword" context="#stay" String="keywords" />
+      <keyword attribute="BuiltIn" context="#stay" String="literals" />
+      <RegExpr attribute="DecVal" context="#stay" String="\b-?\d+\.?\d*\b" />
+      <RegExpr attribute="SpecialChar" context="#stay" String="#[A-Za-z_][A-Za-z0-9_]*" />
+      <StringDetect attribute="Operator" context="#stay" String="=>" />
+    </context>
+
+    <context attribute="Comment" lineEndContext="#pop" name="LineComment" />
+
+    <context attribute="Comment" lineEndContext="#stay" name="BlockComment">
+      <Detect2Chars attribute="Comment" context="#pop" char="*" char1="/" />
+    </context>
+
+    <context attribute="String" lineEndContext="#stay" name="String">
+      <DetectChar attribute="String" context="#pop" char="&quot;" />
+    </context>
+  </contexts>
+
+  <itemDatas>
+    <itemData name="Normal Text" defStyleNum="dsNormal" />
+    <itemData name="Keyword" defStyleNum="dsKeyword" />
+    <itemData name="BuiltIn" defStyleNum="dsBuiltIn" />
+    <itemData name="Comment" defStyleNum="dsComment" />
+    <itemData name="String" defStyleNum="dsString" />
+    <itemData name="DecVal" defStyleNum="dsDecVal" />
+    <itemData name="SpecialChar" defStyleNum="dsSpecialChar" />
+    <itemData name="Operator" defStyleNum="dsOperator" />
+  </itemDatas>
+
+</highlighting>
+</language>

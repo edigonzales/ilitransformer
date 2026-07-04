@@ -20,65 +20,22 @@ website:
         href: erste_schritte.qmd
       - text: Demo
         href: demo.qmd
-
-      - href: quickstart.qmd
-        text: Schnellstart
-      - href: formats/index.qmd
-        text: Formate
-      - href: vscode/index.qmd
-        text: VS Code
-      - href: reference/index.qmd
-        text: Referenz
+      - text: Editor 
+        href: editor.qmd
+      - text: Referenz
+        href: reference/index.qmd
     right:
       - icon: github
         href: https://github.com/edigonzales/ilitransformer
-  sidebar:
-    - title: "Grundlagen"
-      contents:
-        - quickstart.qmd
-        - concepts/index.qmd
-        - concepts/iom.qmd
-        - concepts/ilimap.qmd
-        - concepts/architecture.qmd
-    - title: "Demo"
-      contents:
-        - demo/index.qmd
-        - demo/01-hello-copy.qmd
-        - demo/07-bags-structures.qmd
-        - demo/08-associations-refs.qmd
-        - demo/09-oid-basket-loss-metadata.qmd
-    - title: "Formate"
-      contents:
-        - formats/index.qmd
-        - formats/csv.qmd
-        - formats/geopackage-jdbc-shp.qmd
-    - title: "VS Code"
-      contents:
-        - vscode/index.qmd
-        - vscode/mapping-overview.qmd
-    - title: "Referenz"
-      contents:
-        - reference/index.qmd
-        - reference/cli.qmd
-        - reference/expressions.qmd
-        - reference/status.qmd
   page-footer:
     left: "Copyright 2026, INTERLIS Transformer contributors"
 
-# format:
-#   html:
-#     lang: de
-#     toc: true
-#     code-copy: true
-#     code-overflow: wrap
-#     css:
-#       - styles.css
-#     theme:
-#       - cosmo
-#       - styles/ilitransformer.scss
-
 format:
   html:
+    pandoc:
+      syntax-definitions:
+        - syntax/interlis.xml
+        - syntax/ilimap.xml
     theme:
       - default
       - inter-theme.scss

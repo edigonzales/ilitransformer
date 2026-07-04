@@ -5,7 +5,7 @@ order: 2
 
 ## Demo-Suite
 
-Die Demo-Suite wird mit `ilitransformer` mitgeliefert (Ordner `demo`) und ist der beste Einstieg. Jedes Beispiel ist in sich geschlossen und enthält Modell, Eingabedaten, Mapping und erwartetes Ergebnis.
+Die Demo-Suite wird mit `ilitransformer` ausgeliefert (Ordner `demo`) und ist der beste Einstieg. Jedes der neun Beispiele ist in sich geschlossen und enthält Modell, Eingabedaten, Mapping und erwartetes Ergebnis.
 
 | Demo | Thema | Schwerpunkt |
 |---|---|---|
@@ -19,7 +19,161 @@ Die Demo-Suite wird mit `ilitransformer` mitgeliefert (Ordner `demo`) und ist de
 | 08 | Assoziationen und Referenzen | `ref`, `join`, `lookup`, `existsIn` |
 | 09 | OID, Basket, Loss | OID-Strategien, Metadaten, `create`, dokumentierter Verlust |
 
-## Empfehlung
+### Empfehlung
 
 Lesen Sie die Beispiele in Reihenfolge. Die ersten sechs Demos erklären die Ausdruckssprache. Die letzten drei zeigen die Teile, die für echte INTERLIS-Transformationen besonders wichtig sind.
 
+### Demo 01 – Hello Copy
+
+Das erste Beispiel kopiert zwei `Source`-Objekte in `Target`-Objekte und demonstriert den grundlegenden Aufbau eines `.ilimap`-Profils.
+
+#### INTERLIS-Modell (`models/hello.ili`)
+
+```interlis
+INTERLIS 2.4;
+
+MODEL HelloDemo (en)
+  AT "https://demo.ilinexus.ch" VERSION "2026-06-22" =
+  TOPIC Persons =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Source =
+      Name: MANDATORY TEXT*60;
+      Anzahl: 0 .. 9999;
+      Aktiv: BOOLEAN;
+    END Source;
+
+    CLASS Target =
+      Label: MANDATORY TEXT*60;
+      LabelGross: TEXT*60;
+      Anzahl: 0 .. 9999;
+      Aktiv: BOOLEAN;
+    END Target;
+
+  END Persons;
+END HelloDemo.
+```
+
+#### Eingabedaten (`data/input.xtf`)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<ili:transfer
+    xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS"
+    xmlns:HelloDemo="http://www.interlis.ch/xtf/2.4/HelloDemo">
+  <ili:headersection>
+    <ili:models>
+      <ili:model>HelloDemo</ili:model>
+    </ili:models>
+    <ili:sender>demo</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <HelloDemo:Persons ili:bid="00000000-0000-0000-0000-0000000000b1">
+      <HelloDemo:Source ili:tid="00000000-0000-0000-0000-000000000001">
+        <HelloDemo:Name>  Alice Mueller  </HelloDemo:Name>
+        <HelloDemo:Anzahl>42</HelloDemo:Anzahl>
+        <HelloDemo:Aktiv>true</HelloDemo:Aktiv>
+      </HelloDemo:Source>
+      <HelloDemo:Source ili:tid="00000000-0000-0000-0000-000000000002">
+        <HelloDemo:Name>Bob Meier</HelloDemo:Name>
+        <HelloDemo:Anzahl>7</HelloDemo:Anzahl>
+        <HelloDemo:Aktiv>false</HelloDemo:Aktiv>
+      </HelloDemo:Source>
+    </HelloDemo:Persons>
+  </ili:datasection>
+</ili:transfer>
+```
+
+#### Mapping-Profil (`profile.ilimap`)
+
+```ilimap
+mapping v2 "demo-01-hello-copy" {
+  job {
+    description "1:1-Kopie mit skalaren Attributen und einfachen String-Expressions";
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "HelloDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "HelloDemo";
+  }
+
+  oid {
+    strategy uuid;
+  }
+
+  rule copy {
+    target tgt class "HelloDemo.Persons.Target";
+    source s from src class "HelloDemo.Persons.Source";
+
+    assign {
+      Label = trim(s.Name);
+      LabelGross = upper(trim(s.Name));
+      Anzahl = s.Anzahl;
+      Aktiv = s.Aktiv;
+    }
+  }
+}
+```
+
+#### Erwartete Ausgabe (`output.xtf`)
+
+Die Transformation erzeugt zwei `Target`-Objekte mit bereinigten Namen. Die OIDs werden automatisch vergeben (UUID-Strategie) und variieren bei jedem Lauf.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<ili:transfer
+    xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS"
+    xmlns:HelloDemo="http://www.interlis.ch/xtf/2.4/HelloDemo">
+  <ili:headersection>
+    <ili:models>
+      <ili:model>HelloDemo</ili:model>
+    </ili:models>
+    <ili:sender>ilitransformer</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <HelloDemo:Persons ili:bid="4e5a1c80-0000-0000-0000-0000000000b1">
+      <HelloDemo:Target ili:tid="a1b2c3d4-0000-0000-0000-000000000001">
+        <HelloDemo:Label>Alice Mueller</HelloDemo:Label>
+        <HelloDemo:LabelGross>ALICE MUELLER</HelloDemo:LabelGross>
+        <HelloDemo:Anzahl>42</HelloDemo:Anzahl>
+        <HelloDemo:Aktiv>true</HelloDemo:Aktiv>
+      </HelloDemo:Target>
+      <HelloDemo:Target ili:tid="e5f6g7h8-0000-0000-0000-000000000002">
+        <HelloDemo:Label>Bob Meier</HelloDemo:Label>
+        <HelloDemo:LabelGross>BOB MEIER</HelloDemo:LabelGross>
+        <HelloDemo:Anzahl>7</HelloDemo:Anzahl>
+        <HelloDemo:Aktiv>false</HelloDemo:Aktiv>
+      </HelloDemo:Target>
+    </HelloDemo:Persons>
+  </ili:datasection>
+</ili:transfer>
+```
+
+### Die gesamte Demo-Suite
+
+Alle neun Beispiele befinden sich im Ordner `demo/` der ilitransformer-Distribution. Jedes Unterverzeichnis enthält ein eigenes Modell, Eingabedaten, ein Mapping-Profil und eine ausführliche README mit allen Aufrufen.
+
+```bash
+demo/
+  01-hello-copy/
+  02-string-functions/
+  03-numbers-units/
+  04-enumerations/
+  05-conditionals-nulls/
+  06-dates/
+  07-bags-structures/
+  08-associations-refs/
+  09-oid-basket-loss-metadata/
+```
+
+### Hinweise
+
+- Die Pfade zu `ilitransformer`, `ili2c.jar` und `ilivalidator.jar` müssen an Ihre Umgebung angepasst werden. In den READMEs und Skripten sind Platzhalter wie `/pfad/zu/ili2c.jar` verwendet.
+- Mit `demo/validate.sh <verzeichnis>` lässt sich ein einzelnes Beispiel komplett durchlaufen (Modell kompilieren, Eingabe validieren, transformieren, Ausgabe validieren).
