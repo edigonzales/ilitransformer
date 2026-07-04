@@ -141,6 +141,10 @@ distributions {
         contents {
             from('examples') { into 'examples' }
             from('profiles') { into 'profiles' }
+            from('demo') {
+                into 'demo'
+                exclude 'demo-suite.zip'
+            }
             from('docs/cli.md') { into 'docs' }
             from('docs/mapping-dsl.md') { into 'docs' }
             from('docs/ilimap-v2.md') { into 'docs' }
