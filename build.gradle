@@ -92,7 +92,7 @@ java {
 repositories {
     mavenCentral()
     maven {
-        url = uri('https://jars.interlis.guru/')
+        url = uri('https://jars.interlis.guru/mirror')
     }
     maven {
         url = uri('https://jars.interlis.ch/')
