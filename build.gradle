@@ -92,6 +92,9 @@ java {
 repositories {
     mavenCentral()
     maven {
+        url = uri('https://jars.interlis.guru/')
+    }
+    maven {
         url = uri('https://jars.interlis.ch/')
     }
 }

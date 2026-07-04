@@ -1,0 +1,92 @@
+---
+title: Erste Schritte
+order: 1
+---
+
+## Grundlagen
+
+Der INTERLIS Transformer ist ein Werkzeug, um INTERLIS-Daten kontrolliert von einer Form in eine andere zu überführen. Er hilft dort, wo Daten nicht einfach nur kopiert werden sollen, sondern wo Format, Modell oder fachliche Struktur bewusst angepasst werden müssen.
+
+Typische Anwendungsfälle sind:
+
+- ein XTF in ein GeoPackage, eine Datenbank oder ein Shapefile schreiben
+- bestehende INTERLIS-Daten in ein anderes INTERLIS-Modell überführen
+- Attribute umbenennen, Werte umcodieren oder Einheiten anpassen
+- Objekte neu bilden, Referenzen auflösen oder Beziehungen anders strukturieren
+- Migrationen zwischen älteren und neueren Datenmodellen nachvollziehbar beschreiben
+
+Dabei trennt der Transformer bewusst zwischen technischer Repräsentation und fachlicher Bedeutung. Ein Format beschreibt, wie Daten gespeichert oder übertragen werden, zum Beispiel als XTF, CSV, GeoPackage oder Datenbanktabelle. Ein Modell beschreibt dagegen, welche Objekte, Attribute, Beziehungen und Werte fachlich erlaubt sind.
+
+Daraus ergeben sich zwei Arten von Transformation:
+
+**Formatumbau** bedeutet: Die fachliche Bedeutung bleibt im Wesentlichen gleich, aber die technische Repräsentation ändert sich. Ein Beispiel ist die Ausgabe derselben Daten als XTF, GeoPackage oder JDBC-Tabelle.
+
+**Datenumbau** bedeutet: Die fachliche Struktur ändert sich. Klassen, Attribute, Werte, Einheiten, Referenzen oder Objektbildung werden neu abgebildet. Ein Beispiel ist die Überführung von Daten aus einem Quellmodell in ein anderes Zielmodell.
+
+Technisch verbindet der INTERLIS Transformer drei Bausteine:
+
+- **I/O-Provider** lesen und schreiben Formate wie XTF, ITF, CSV, GeoPackage, JDBC oder Shapefile.
+- **IOM / iox-ili** stellt die gemeinsame Objektwelt bereit, in der die Daten modellbewusst verarbeitet werden.
+- **ilimap** beschreibt deklarativ, wie aus Quellobjekten Zielobjekte entstehen.
+
+## Installation
+
+`ilitransformer` wird als Java-Anwendung verteilt. Die aktuellen Snapshot-Builds sind im INTERLIS-Maven-Repository verfügbar:
+
+<https://jars.interlis.guru/#/snapshots/guru/interlis/ilitransformer/0.1.0-SNAPSHOT>
+
+Dort kann die gewünschte Version heruntergeladen werden. Je nach Build werden ein ausführbares JAR oder weitere Artefakte publiziert.
+
+### Voraussetzungen
+
+Für die Ausführung wird eine installierte Java-Laufzeitumgebung benötigt:
+
+- Java 17 oder neuer
+- Zugriff auf die benötigten INTERLIS-Modelle
+- Eingabedaten in einem unterstützten Format, zum Beispiel XTF, ITF, CSV, GeoPackage oder Datenbanktabellen
+- optional: VS Code mit der `ilitransformer`-Erweiterung für komfortables Arbeiten mit `.ilimap`-Dateien
+
+Die installierte Java-Version kann mit folgendem Befehl geprüft werden:
+
+```bash
+java -version
+```
+
+### Download
+
+Das aktuelle Artefakt kann aus dem Snapshot-Repository heruntergeladen werden, zum Beispiel:
+
+```bash
+curl -L -o ilitransformer-0.1.0-SNAPSHOT.zip \
+  "https://jars.interlis.guru/snapshots/guru/interlis/ilitransformer/0.1.0-SNAPSHOT/ilitransformer-0.1.0-20260703.195334-8.zip"
+```
+
+Der genaue Dateiname kann je nach publiziertem Snapshot-Build abweichen. Im Zweifel sollte der Dateiname direkt aus der Artefaktliste des Repositories übernommen werden.
+
+### Ausführen
+
+Nach dem Download kann `ilitransformer` mittels Bash- oder Windows-Bat-Datei gestartet werden:
+
+```bash
+./bin/ilitransformer --help --help
+```
+
+Ein typischer Transformationslauf verwendet eine Mapping-Datei sowie Eingabe- und Ausgabedaten:
+
+```bash
+./bin/ilitransformer \
+  --mapping mapping.ilimap XXXXXXxxxxxxxxxxxxX \
+  --input input.xtf \
+  --output output.xtf
+```
+
+Konkrete Beispiele finden sich im [Demo-Kapitel](demo.qmd).
+
+Die konkreten Optionen hängen von der verwendeten Version ab. Die verfügbaren Parameter zeigt:
+
+```bash
+./bin/ilitransformer  --help
+```
+
+
+

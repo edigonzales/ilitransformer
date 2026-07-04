@@ -1,0 +1,138 @@
+:root {
+  --ili-primary: #0564a9;
+  --ili-primary-dark: #045990;
+  --ili-primary-light: #0674c4;
+  --ili-bg: #f6f9fc;
+  --ili-surface: #ffffff;
+  --ili-text: #1f2a37;
+  --ili-muted: #5f6b7a;
+  --ili-font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("fonts/Inter-roman.var.woff2") format("woff2");
+}
+
+body {
+  font-family: var(--ili-font-sans);
+  background: var(--ili-bg);
+  color: var(--ili-text);
+}
+
+.navbar {
+  background: var(--ili-surface);
+  border-bottom: 1px solid rgba(5, 100, 169, 0.12);
+  box-shadow: 0 1px 8px rgba(5, 100, 169, 0.07);
+}
+
+.navbar .navbar-title {
+  font-weight: 700;
+}
+
+.navbar .navbar-brand,
+.navbar .navbar-title,
+.navbar .nav-link,
+.navbar .quarto-navbar-tools a,
+.navbar .quarto-navbar-tools a[aria-label],
+.navbar .navbar-toggler,
+.navbar .navbar-toggler .navbar-toggler-icon {
+  color: var(--ili-text);
+}
+
+.navbar .navbar-brand:hover,
+.navbar .navbar-brand:focus,
+.navbar .navbar-title:hover,
+.navbar .navbar-title:focus,
+.navbar .nav-link:hover,
+.navbar .nav-link:focus,
+.navbar .nav-link.active,
+.navbar .quarto-navbar-tools a:hover,
+.navbar .quarto-navbar-tools a:focus,
+.navbar .navbar-toggler:hover,
+.navbar .navbar-toggler:focus {
+  color: var(--ili-text);
+}
+
+.navbar .navbar-toggler {
+  color: var(--ili-text);
+  border-color: rgba(31, 42, 55, 0.32);
+}
+
+.navbar .navbar-toggler-icon {
+  --bs-navbar-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%231f2a37' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.navbar-brand-container .navbar-brand .navbar-logo {
+  max-height: 30px;
+}
+
+.sidebar-navigation {
+  background: var(--ili-surface);
+  border-right: 1px solid rgba(5, 100, 169, 0.12);
+}
+
+.sidebar-item {
+  border-left: 3px solid transparent;
+}
+
+.sidebar-item-container .active,
+.sidebar-item.active {
+  border-left-color: var(--ili-primary);
+  background: rgba(5, 100, 169, 0.08);
+  color: var(--ili-primary-dark);
+}
+
+a {
+  color: var(--ili-primary);
+}
+
+a:hover {
+  color: var(--ili-primary-light);
+}
+
+#title-block-header {
+  display: none;
+}
+
+.footer {
+  background: var(--ili-surface);
+  border-top: 1px solid rgba(5, 100, 169, 0.12);
+  color: var(--ili-muted);
+}
+
+.nav-footer {
+  border-top: 0px !important;
+}
+
+.quarto-container-page {
+  background: transparent;
+}
+
+/* Add an external-link suffix icon only to the two right-side external navbar links. */
+.navbar a[href="https://www.ech.ch/de/ech/ech-0031/2.1.0"],
+.navbar a[href="https://www.ech.ch/de/ech/ech-0031/2.1.0/"],
+.navbar a[href="https://interlis.ch"],
+.navbar a[href="https://interlis.ch/"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.33em;
+  line-height: 1.2;
+}
+
+.navbar a[href="https://www.ech.ch/de/ech/ech-0031/2.1.0"]::after,
+.navbar a[href="https://www.ech.ch/de/ech/ech-0031/2.1.0/"]::after,
+.navbar a[href="https://interlis.ch"]::after,
+.navbar a[href="https://interlis.ch/"]::after {
+  content: "";
+  width: 0.85em;
+  height: 0.85em;
+  flex: 0 0 0.85em;
+  opacity: 0.85;
+  background-color: currentColor;
+  -webkit-mask: url("images/box-arrow-up-right.svg") no-repeat center / contain;
+  mask: url("images/box-arrow-up-right.svg") no-repeat center / contain;
+}

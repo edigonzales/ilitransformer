@@ -1,24 +1,28 @@
 project:
   type: website
   output-dir: _site
+  preview:
+    port: 3000
+    watch-inputs: true
 
 website:
   title: "INTERLIS Transformer"
   site-url: "https://transformer.interlis.guru"
   repo-url: "https://github.com/edigonzales/ilitransformer"
-  search:
-    location: navbar
-    type: overlay
+  favicon: assets/img/ilitransformer.png
   navbar:
-    logo: assets/img/ilitransformer.svg
-    title: false
+    pinned: true
+    logo: assets/img/ilitransformer.png
+    logo-alt: INTERLIS Transformer logo
+    search: false
     left:
-      - href: index.qmd
-        text: Überblick
+      - text: Start 
+        href: erste_schritte.qmd
+      - text: Demo
+        href: demo.qmd
+
       - href: quickstart.qmd
         text: Schnellstart
-      - href: demo/index.qmd
-        text: Demo
       - href: formats/index.qmd
         text: Formate
       - href: vscode/index.qmd
@@ -59,19 +63,36 @@ website:
         - reference/expressions.qmd
         - reference/status.qmd
   page-footer:
-    left: "INTERLIS Transformer"
-    center: "Dokumentation für transformer.interlis.guru"
-    right:
-      - text: "GitHub"
-        href: https://github.com/edigonzales/ilitransformer
+    left: "Copyright 2026, INTERLIS Transformer contributors"
+
+# format:
+#   html:
+#     lang: de
+#     toc: true
+#     code-copy: true
+#     code-overflow: wrap
+#     css:
+#       - styles.css
+#     theme:
+#       - cosmo
+#       - styles/ilitransformer.scss
 
 format:
   html:
-    lang: de
-    toc: true
-    code-copy: true
-    code-overflow: wrap
     theme:
-      - cosmo
-      - styles/ilitransformer.scss
+      - default
+      - inter-theme.scss
+    css: 
+      - styles.css
+    toc: true
+    toc-location: right
+    toc-depth: 3
+    link-external-newwindow: true
+    mainfont: Inter
+    code-copy: true
+    grid:
+      sidebar-width: 290px
+      margin-width: 280px
+      body-width: 1150px
 
+editor: visual

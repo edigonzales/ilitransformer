@@ -1,56 +1,19 @@
 ---
-title: "INTERLIS Transformer"
-page-layout: full
+pagetitle: INTERLIS Transformer
+page-layout: custom
+search: false
 toc: false
+css: index.css
 ---
 
-<section class="hero">
-  <div>
-    <h1>INTERLIS<br>Transformer</h1>
-    <p class="lead">Modellbewusste Transformation für INTERLIS-Daten.</p>
-    <div class="hero-actions">
-      <a href="quickstart.html">Schnellstart</a>
-      <a href="demo/">Beispiele ansehen</a>
-    </div>
-  </div>
-  <img class="ilimap-visual" src="assets/img/ilimap-placeholder.svg" alt="Platzhalter für einen ilimap-Code-Ausschnitt">
-</section>
+::: {.hero-banner}
+# <span class="hero-title-interlis">INTERLIS</span> Transformer
 
-<section class="entry-list" aria-labelledby="entry-title">
-  <h2 id="entry-title">Wählen Sie Ihren Einstieg</h2>
+## Modellbewusste Transformation für INTERLIS-Daten.
 
-  <a class="entry-row" href="concepts/">
-    <span class="icon">▦</span>
-    <span class="title">Lernen</span>
-    <span class="desc">Grundlagen, Konzepte und die wichtigsten Bausteine des Transformers.</span>
-    <span class="arrow">→</span>
-  </a>
+[Get started](erste_schritte.qmd){.btn .btn-action .btn-action-primary role="button"}
+:::
 
-  <a class="entry-row" href="concepts/ilimap.html">
-    <span class="icon">✎</span>
-    <span class="title">Mappings schreiben</span>
-    <span class="desc">`.ilimap`-Dateien erstellen, lesen und Schritt für Schritt verbessern.</span>
-    <span class="arrow">→</span>
-  </a>
-
-  <a class="entry-row" href="formats/">
-    <span class="icon">□</span>
-    <span class="title">Formate verstehen</span>
-    <span class="desc">INTERLIS- und Geodatenformate im Überblick: Eingabe, Ausgabe und Grenzen.</span>
-    <span class="arrow">→</span>
-  </a>
-
-  <a class="entry-row" href="vscode/">
-    <span class="icon">⌁</span>
-    <span class="title">VS Code nutzen</span>
-    <span class="desc">Produktiver arbeiten mit Sprachserver, Diagnose, Mapping Overview und Trace.</span>
-    <span class="arrow">→</span>
-  </a>
-</section>
-
-## Warum dieses Werkzeug?
-
-Der INTERLIS Transformer liest Transferdaten, baut daraus eine modellbewusste Objektwelt auf und schreibt daraus wieder gültige Zieltransfers. Die Transformation wird nicht als beliebiger Skriptcode beschrieben, sondern als deklaratives Mapping. Dadurch bleiben Regeln nachvollziehbar, prüfbar und versionierbar.
-
-Die Startseite hält sich bewusst zurück. Die eigentliche Dokumentation beginnt bei den Beispielen: Dort sieht man die Modelle, die Eingabedaten, das Mapping und das erzeugte Ergebnis zusammen.
-
+::: {.preview-wrap}
+![INTERLIS Transformer Mapping-Vorschau](assets/img/ilimap-placeholder.svg){.preview-image}
+:::
