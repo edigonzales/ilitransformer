@@ -122,6 +122,25 @@ mapping v2 "demo-01-hello-copy" {
 }
 ```
 
+#### Transformation ausführen
+
+Die folgenden Befehle werden aus dem Wurzelverzeichnis der entpackten ilitransformer-Distribution ausgeführt. Das Mapping-Profil deklariert `modeldir`, Eingabe- und Ausgabepfade relativ zu seiner eigenen Position – die Befehle funktionieren daher ohne `cd` in das Demo-Verzeichnis.
+
+```bash
+# 1. Mapping prüfen (Syntax und Semantik, Trockenlauf ohne Ausführung)
+./bin/ilitransformer validate-mapping -m demo/01-hello-copy/profile.ilimap
+
+# 2. Transformation ausführen (erzeugt output.xtf)
+./bin/ilitransformer transform -m demo/01-hello-copy/profile.ilimap
+
+# 3. Transformation ausführen und Ausgabe mit ilivalidator prüfen
+./bin/ilitransformer transform -m demo/01-hello-copy/profile.ilimap --validate
+```
+
+- **`validate-mapping`** liest das Profil, kompiliert die Modelle und meldet Syntaxfehler sowie semantische Probleme – ohne eine Transferdatei zu schreiben.
+- **`transform`** führt die Regeln aus und schreibt `output.xtf` in dasselbe Verzeichnis wie das Profil.
+- **`--validate`** ruft nach der Transformation `ilivalidator` als In-Process-Java-Bibliothek auf und meldet Modellverletzungen in der Ausgabe. 
+
 #### Erwartete Ausgabe (`output.xtf`)
 
 Die Transformation erzeugt zwei `Target`-Objekte mit bereinigten Namen. Die OIDs werden automatisch vergeben (UUID-Strategie) und variieren bei jedem Lauf.

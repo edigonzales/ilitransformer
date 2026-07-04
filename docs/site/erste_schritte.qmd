@@ -75,7 +75,7 @@ Ein typischer Transformationslauf verwendet eine Mapping-Datei sowie Eingabe- un
 
 ```bash
 ./bin/ilitransformer \
-  --mapping mapping.ilimap XXXXXXxxxxxxxxxxxxX \
+  --transform mapping.ilimap \
   --input input.xtf \
   --output output.xtf
 ```
