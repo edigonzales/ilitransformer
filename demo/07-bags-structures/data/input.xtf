@@ -1,14 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS" xmlns:geom="http://www.interlis.ch/geometry/1.0" xmlns:BagDemo="http://www.interlis.ch/xtf/2.4/BagDemo">
-<ili:headersection><ili:models><ili:model>BagDemo</ili:model></ili:models><ili:sender>demo</ili:sender></ili:headersection>
-<ili:datasection>
-<BagDemo:Grundstuecke ili:bid="00000000-0000-0000-0000-00000000b001">
-<BagDemo:Parzelle ili:tid="00000000-0000-0000-0000-000000000001"><BagDemo:Nummer>P-4711</BagDemo:Nummer><BagDemo:Geometrie><geom:surface><geom:exterior><geom:polyline><geom:coord><geom:c1>2600000.000</geom:c1><geom:c2>1200000.000</geom:c2></geom:coord><geom:coord><geom:c1>2600100.000</geom:c1><geom:c2>1200000.000</geom:c2></geom:coord><geom:coord><geom:c1>2600050.000</geom:c1><geom:c2>1200080.000</geom:c2></geom:coord><geom:coord><geom:c1>2600000.000</geom:c1><geom:c2>1200000.000</geom:c2></geom:coord></geom:polyline></geom:exterior></geom:surface></BagDemo:Geometrie><BagDemo:Schlagwoerter><BagDemo:Schlagwort><BagDemo:Wort>Bauland</BagDemo:Wort></BagDemo:Schlagwort><BagDemo:Schlagwort><BagDemo:Wort>ZoneW2</BagDemo:Wort></BagDemo:Schlagwort></BagDemo:Schlagwoerter></BagDemo:Parzelle>
-<BagDemo:Eigentuemer ili:tid="00000000-0000-0000-0000-000000000101"><BagDemo:ParzelleRef>00000000-0000-0000-0000-000000000001</BagDemo:ParzelleRef><BagDemo:Name>Alice Mueller</BagDemo:Name><BagDemo:Anteil>60</BagDemo:Anteil></BagDemo:Eigentuemer>
-<BagDemo:Eigentuemer ili:tid="00000000-0000-0000-0000-000000000102"><BagDemo:ParzelleRef>00000000-0000-0000-0000-000000000001</BagDemo:ParzelleRef><BagDemo:Name>Bob Meier</BagDemo:Name></BagDemo:Eigentuemer>
-<BagDemo:Eckpunkt ili:tid="00000000-0000-0000-0000-000000000201"><BagDemo:ParzelleRef>00000000-0000-0000-0000-000000000001</BagDemo:ParzelleRef><BagDemo:Position><geom:coord><geom:c1>2600000.000</geom:c1><geom:c2>1200000.000</geom:c2></geom:coord></BagDemo:Position><BagDemo:Reihenfolge>1</BagDemo:Reihenfolge></BagDemo:Eckpunkt>
-<BagDemo:Eckpunkt ili:tid="00000000-0000-0000-0000-000000000202"><BagDemo:ParzelleRef>00000000-0000-0000-0000-000000000001</BagDemo:ParzelleRef><BagDemo:Position><geom:coord><geom:c1>2600100.000</geom:c1><geom:c2>1200000.000</geom:c2></geom:coord></BagDemo:Position><BagDemo:Reihenfolge>2</BagDemo:Reihenfolge></BagDemo:Eckpunkt>
-<BagDemo:Eckpunkt ili:tid="00000000-0000-0000-0000-000000000203"><BagDemo:ParzelleRef>00000000-0000-0000-0000-000000000001</BagDemo:ParzelleRef><BagDemo:Position><geom:coord><geom:c1>2600050.000</geom:c1><geom:c2>1200080.000</geom:c2></geom:coord></BagDemo:Position><BagDemo:Reihenfolge>3</BagDemo:Reihenfolge></BagDemo:Eckpunkt>
-</BagDemo:Grundstuecke>
-</ili:datasection>
+  <ili:headersection>
+    <ili:models>
+      <ili:model>BagDemo</ili:model>
+    </ili:models>
+    <ili:sender>demo</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <BagDemo:Grundstuecke ili:bid="00000000-0000-0000-0000-00000000b001">
+      <BagDemo:Parzelle ili:tid="00000000-0000-0000-0000-000000000001">
+        <BagDemo:Nummer>P-4711</BagDemo:Nummer>
+        <BagDemo:Geometrie>
+          <geom:surface>
+            <geom:exterior>
+              <geom:polyline>
+                <geom:coord>
+                  <geom:c1>2600000.000</geom:c1>
+                  <geom:c2>1200000.000</geom:c2>
+                </geom:coord>
+                <geom:coord>
+                  <geom:c1>2600100.000</geom:c1>
+                  <geom:c2>1200000.000</geom:c2>
+                </geom:coord>
+                <geom:coord>
+                  <geom:c1>2600050.000</geom:c1>
+                  <geom:c2>1200080.000</geom:c2>
+                </geom:coord>
+                <geom:coord>
+                  <geom:c1>2600000.000</geom:c1>
+                  <geom:c2>1200000.000</geom:c2>
+                </geom:coord>
+              </geom:polyline>
+            </geom:exterior>
+          </geom:surface>
+        </BagDemo:Geometrie>
+        <BagDemo:Schlagwoerter>
+          <BagDemo:Schlagwort>
+            <BagDemo:Wort>Bauland</BagDemo:Wort>
+          </BagDemo:Schlagwort>
+          <BagDemo:Schlagwort>
+            <BagDemo:Wort>ZoneW2</BagDemo:Wort>
+          </BagDemo:Schlagwort>
+        </BagDemo:Schlagwoerter>
+      </BagDemo:Parzelle>
+      <BagDemo:Eigentuemer ili:tid="00000000-0000-0000-0000-000000000101">
+        <BagDemo:ParzelleRef>00000000-0000-0000-0000-000000000001</BagDemo:ParzelleRef>
+        <BagDemo:Name>Alice Mueller</BagDemo:Name>
+        <BagDemo:Anteil>60</BagDemo:Anteil>
+      </BagDemo:Eigentuemer>
+      <BagDemo:Eigentuemer ili:tid="00000000-0000-0000-0000-000000000102">
+        <BagDemo:ParzelleRef>00000000-0000-0000-0000-000000000001</BagDemo:ParzelleRef>
+        <BagDemo:Name>Bob Meier</BagDemo:Name>
+      </BagDemo:Eigentuemer>
+      <BagDemo:Eckpunkt ili:tid="00000000-0000-0000-0000-000000000201">
+        <BagDemo:ParzelleRef>00000000-0000-0000-0000-000000000001</BagDemo:ParzelleRef>
+        <BagDemo:Position>
+          <geom:coord>
+            <geom:c1>2600000.000</geom:c1>
+            <geom:c2>1200000.000</geom:c2>
+          </geom:coord>
+        </BagDemo:Position>
+        <BagDemo:Reihenfolge>1</BagDemo:Reihenfolge>
+      </BagDemo:Eckpunkt>
+      <BagDemo:Eckpunkt ili:tid="00000000-0000-0000-0000-000000000202">
+        <BagDemo:ParzelleRef>00000000-0000-0000-0000-000000000001</BagDemo:ParzelleRef>
+        <BagDemo:Position>
+          <geom:coord>
+            <geom:c1>2600100.000</geom:c1>
+            <geom:c2>1200000.000</geom:c2>
+          </geom:coord>
+        </BagDemo:Position>
+        <BagDemo:Reihenfolge>2</BagDemo:Reihenfolge>
+      </BagDemo:Eckpunkt>
+      <BagDemo:Eckpunkt ili:tid="00000000-0000-0000-0000-000000000203">
+        <BagDemo:ParzelleRef>00000000-0000-0000-0000-000000000001</BagDemo:ParzelleRef>
+        <BagDemo:Position>
+          <geom:coord>
+            <geom:c1>2600050.000</geom:c1>
+            <geom:c2>1200080.000</geom:c2>
+          </geom:coord>
+        </BagDemo:Position>
+        <BagDemo:Reihenfolge>3</BagDemo:Reihenfolge>
+      </BagDemo:Eckpunkt>
+    </BagDemo:Grundstuecke>
+  </ili:datasection>
 </ili:transfer>

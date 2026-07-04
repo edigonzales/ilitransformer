@@ -9,14 +9,14 @@
 #   demo/validate.sh demo/01-hello-copy
 #
 # Voraussetzungen (Pfade ggf. anpassen):
-#   - gebaute CLI unter build/install/ilitransformer/bin/ilitransformer
 #   - ili2c und ilivalidator als JARs (siehe Variablen unten)
+#   - ilitransformer-CLI unter bin/ilitransformer (in der Distribution)
 set -euo pipefail
 
-ILI2C="${ILI2C:-/Users/stefan/apps/ili2c-5.6.8/ili2c.jar}"
-ILIVALIDATOR="${ILIVALIDATOR:-/Users/stefan/apps/ilivalidator-1.15.0/ilivalidator-1.15.0.jar}"
+ILI2C="${ILI2C:-/pfad/zu/ili2c.jar}"
+ILIVALIDATOR="${ILIVALIDATOR:-/pfad/zu/ilivalidator.jar}"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-CLI="${CLI:-$REPO_ROOT/build/install/ilitransformer/bin/ilitransformer}"
+CLI="${CLI:-$REPO_ROOT/bin/ilitransformer}"
 
 DIR="${1:?Usage: demo/validate.sh <demo-dir>}"
 cd "$DIR"

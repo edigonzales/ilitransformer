@@ -25,17 +25,14 @@ Alle Modelle wurden mit `ili2c` kompiliert, alle Ein- und Ausgabedaten mit
 
 ## Voraussetzungen
 
-```bash
-# CLI aus dem Source bauen (einmalig, aus dem Repo-Root):
-./gradlew installDist
-```
+Die CLI liegt in der Distribution unter `bin/ilitransformer`.
 
 Werkzeuge (Pfade ggf. anpassen, siehe auch `demo/validate.sh`):
 
 ```bash
-export CLI=build/install/ilitransformer/bin/ilitransformer
-export ILI2C=/Users/stefan/apps/ili2c-5.6.8/ili2c.jar
-export ILIVALIDATOR=/Users/stefan/apps/ilivalidator-1.15.0/ilivalidator-1.15.0.jar
+export CLI=bin/ilitransformer
+export ILI2C=/pfad/zu/ili2c.jar
+export ILIVALIDATOR=/pfad/zu/ilivalidator.jar
 ```
 
 ## Schnellstart
@@ -56,8 +53,8 @@ Nur transformieren (aus dem jeweiligen Beispielverzeichnis):
 
 ```bash
 cd demo/01-hello-copy
-../../build/install/ilitransformer/bin/ilitransformer validate-mapping -m profile.ilimap
-../../build/install/ilitransformer/bin/ilitransformer transform -m profile.ilimap
+  ../../bin/ilitransformer validate-mapping -m profile.ilimap
+  ../../bin/ilitransformer transform -m profile.ilimap
 ```
 
 ## Aufbau eines Beispiels

@@ -1,10 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS" xmlns:NumberDemo="http://www.interlis.ch/xtf/2.4/NumberDemo">
-<ili:headersection><ili:models><ili:model>NumberDemo</ili:model></ili:models><ili:sender>demo</ili:sender></ili:headersection>
-<ili:datasection>
-<NumberDemo:Messungen ili:bid="00000000-0000-0000-0000-0000000000d1">
-<NumberDemo:Rohmessung ili:tid="00000000-0000-0000-0000-000000000001"><NumberDemo:LageGenCm>3</NumberDemo:LageGenCm><NumberDemo:HoeheGenCm>5</NumberDemo:HoeheGenCm><NumberDemo:Offset>-12</NumberDemo:Offset><NumberDemo:FaktorText>2.5</NumberDemo:FaktorText></NumberDemo:Rohmessung>
-<NumberDemo:Rohmessung ili:tid="00000000-0000-0000-0000-000000000002"><NumberDemo:LageGenCm>150</NumberDemo:LageGenCm><NumberDemo:HoeheGenCm>80</NumberDemo:HoeheGenCm><NumberDemo:Offset>7</NumberDemo:Offset><NumberDemo:FaktorText>10</NumberDemo:FaktorText></NumberDemo:Rohmessung>
-</NumberDemo:Messungen>
-</ili:datasection>
+  <ili:headersection>
+    <ili:models>
+      <ili:model>NumberDemo</ili:model>
+    </ili:models>
+    <ili:sender>demo</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <NumberDemo:Messungen ili:bid="00000000-0000-0000-0000-0000000000d1">
+      <NumberDemo:Rohmessung ili:tid="00000000-0000-0000-0000-000000000001">
+        <NumberDemo:LageGenCm>3</NumberDemo:LageGenCm>
+        <NumberDemo:HoeheGenCm>5</NumberDemo:HoeheGenCm>
+        <NumberDemo:Offset>-12</NumberDemo:Offset>
+        <NumberDemo:FaktorText>2.5</NumberDemo:FaktorText>
+      </NumberDemo:Rohmessung>
+      <NumberDemo:Rohmessung ili:tid="00000000-0000-0000-0000-000000000002">
+        <NumberDemo:LageGenCm>150</NumberDemo:LageGenCm>
+        <NumberDemo:HoeheGenCm>80</NumberDemo:HoeheGenCm>
+        <NumberDemo:Offset>7</NumberDemo:Offset>
+        <NumberDemo:FaktorText>10</NumberDemo:FaktorText>
+      </NumberDemo:Rohmessung>
+    </NumberDemo:Messungen>
+  </ili:datasection>
 </ili:transfer>

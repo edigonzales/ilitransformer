@@ -1,14 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS" xmlns:AssocDemo="http://www.interlis.ch/xtf/2.4/AssocDemo">
-<ili:headersection><ili:models><ili:model>AssocDemo</ili:model></ili:models><ili:sender>demo</ili:sender></ili:headersection>
-<ili:datasection>
-<AssocDemo:Mutationen ili:bid="00000000-0000-0000-0000-00000000c001">
-<AssocDemo:Mutation ili:tid="00000000-0000-0000-0000-000000000a01"><AssocDemo:MutNummer>MUT-2024-001</AssocDemo:MutNummer><AssocDemo:Beschreibung>Neubau Wohnhaus</AssocDemo:Beschreibung></AssocDemo:Mutation>
-<AssocDemo:Mutation ili:tid="00000000-0000-0000-0000-000000000a02"><AssocDemo:MutNummer>MUT-2024-002</AssocDemo:MutNummer><AssocDemo:Beschreibung>Anbau Garage</AssocDemo:Beschreibung></AssocDemo:Mutation>
-<AssocDemo:Qualitaet ili:tid="00000000-0000-0000-0000-000000000b01"><AssocDemo:QNummer>Q1</AssocDemo:QNummer><AssocDemo:Standard>AV93</AssocDemo:Standard></AssocDemo:Qualitaet>
-<AssocDemo:Qualitaet ili:tid="00000000-0000-0000-0000-000000000b02"><AssocDemo:QNummer>Q2</AssocDemo:QNummer><AssocDemo:Standard>AV88</AssocDemo:Standard></AssocDemo:Qualitaet>
-<AssocDemo:Gebaeude ili:tid="00000000-0000-0000-0000-000000000c01"><AssocDemo:EGID>1001</AssocDemo:EGID><AssocDemo:MutationRef>00000000-0000-0000-0000-000000000a01</AssocDemo:MutationRef><AssocDemo:QualNummer>Q1</AssocDemo:QualNummer></AssocDemo:Gebaeude>
-<AssocDemo:Gebaeude ili:tid="00000000-0000-0000-0000-000000000c02"><AssocDemo:EGID>1002</AssocDemo:EGID><AssocDemo:MutationRef>00000000-0000-0000-0000-000000000a02</AssocDemo:MutationRef><AssocDemo:QualNummer>Q2</AssocDemo:QualNummer></AssocDemo:Gebaeude>
-</AssocDemo:Mutationen>
-</ili:datasection>
+  <ili:headersection>
+    <ili:models>
+      <ili:model>AssocDemo</ili:model>
+    </ili:models>
+    <ili:sender>demo</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <AssocDemo:Mutationen ili:bid="00000000-0000-0000-0000-00000000c001">
+      <AssocDemo:Mutation ili:tid="00000000-0000-0000-0000-000000000a01">
+        <AssocDemo:MutNummer>MUT-2024-001</AssocDemo:MutNummer>
+        <AssocDemo:Beschreibung>Neubau Wohnhaus</AssocDemo:Beschreibung>
+      </AssocDemo:Mutation>
+      <AssocDemo:Mutation ili:tid="00000000-0000-0000-0000-000000000a02">
+        <AssocDemo:MutNummer>MUT-2024-002</AssocDemo:MutNummer>
+        <AssocDemo:Beschreibung>Anbau Garage</AssocDemo:Beschreibung>
+      </AssocDemo:Mutation>
+      <AssocDemo:Qualitaet ili:tid="00000000-0000-0000-0000-000000000b01">
+        <AssocDemo:QNummer>Q1</AssocDemo:QNummer>
+        <AssocDemo:Standard>AV93</AssocDemo:Standard>
+      </AssocDemo:Qualitaet>
+      <AssocDemo:Qualitaet ili:tid="00000000-0000-0000-0000-000000000b02">
+        <AssocDemo:QNummer>Q2</AssocDemo:QNummer>
+        <AssocDemo:Standard>AV88</AssocDemo:Standard>
+      </AssocDemo:Qualitaet>
+      <AssocDemo:Gebaeude ili:tid="00000000-0000-0000-0000-000000000c01">
+        <AssocDemo:EGID>1001</AssocDemo:EGID>
+        <AssocDemo:MutationRef>00000000-0000-0000-0000-000000000a01</AssocDemo:MutationRef>
+        <AssocDemo:QualNummer>Q1</AssocDemo:QualNummer>
+      </AssocDemo:Gebaeude>
+      <AssocDemo:Gebaeude ili:tid="00000000-0000-0000-0000-000000000c02">
+        <AssocDemo:EGID>1002</AssocDemo:EGID>
+        <AssocDemo:MutationRef>00000000-0000-0000-0000-000000000a02</AssocDemo:MutationRef>
+        <AssocDemo:QualNummer>Q2</AssocDemo:QualNummer>
+      </AssocDemo:Gebaeude>
+    </AssocDemo:Mutationen>
+  </ili:datasection>
 </ili:transfer>

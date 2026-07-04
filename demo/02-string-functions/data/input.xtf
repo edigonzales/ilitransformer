@@ -1,10 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS" xmlns:StringDemo="http://www.interlis.ch/xtf/2.4/StringDemo">
-<ili:headersection><ili:models><ili:model>StringDemo</ili:model></ili:models><ili:sender>demo</ili:sender></ili:headersection>
-<ili:datasection>
-<StringDemo:Texts ili:bid="00000000-0000-0000-0000-0000000000c1">
-<StringDemo:RawText ili:tid="00000000-0000-0000-0000-000000000001"><StringDemo:Code>LFP-300-AB</StringDemo:Code><StringDemo:Bemerkung>  Wichtige Notiz zur Parzelle 4711 mit langem Text  </StringDemo:Bemerkung><StringDemo:Telefon>041-555-12-34</StringDemo:Telefon></StringDemo:RawText>
-<StringDemo:RawText ili:tid="00000000-0000-0000-0000-000000000002"><StringDemo:Code>hfp-7</StringDemo:Code><StringDemo:Telefon>044-123-45-67</StringDemo:Telefon></StringDemo:RawText>
-</StringDemo:Texts>
-</ili:datasection>
+  <ili:headersection>
+    <ili:models>
+      <ili:model>StringDemo</ili:model>
+    </ili:models>
+    <ili:sender>demo</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <StringDemo:Texts ili:bid="00000000-0000-0000-0000-0000000000c1">
+      <StringDemo:RawText ili:tid="00000000-0000-0000-0000-000000000001">
+        <StringDemo:Code>LFP-300-AB</StringDemo:Code>
+        <StringDemo:Bemerkung>  Wichtige Notiz zur Parzelle 4711 mit langem Text  </StringDemo:Bemerkung>
+        <StringDemo:Telefon>041-555-12-34</StringDemo:Telefon>
+      </StringDemo:RawText>
+      <StringDemo:RawText ili:tid="00000000-0000-0000-0000-000000000002">
+        <StringDemo:Code>hfp-7</StringDemo:Code>
+        <StringDemo:Telefon>044-123-45-67</StringDemo:Telefon>
+      </StringDemo:RawText>
+    </StringDemo:Texts>
+  </ili:datasection>
 </ili:transfer>

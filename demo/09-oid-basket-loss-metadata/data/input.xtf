@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS" xmlns:OidDemo="http://www.interlis.ch/xtf/2.4/OidDemo">
-<ili:headersection><ili:models><ili:model>OidDemo</ili:model></ili:models><ili:sender>demo</ili:sender></ili:headersection>
-<ili:datasection>
-<OidDemo:Quelle ili:bid="00000000-0000-0000-0000-00000000d001">
-<OidDemo:Punkt ili:tid="00000000-0000-0000-0000-000000000001"><OidDemo:Nummer>P1</OidDemo:Nummer><OidDemo:Typ>haupt</OidDemo:Typ><OidDemo:AltAttribut>Legacy-Info-A</OidDemo:AltAttribut><OidDemo:Wert>500</OidDemo:Wert></OidDemo:Punkt>
-<OidDemo:Punkt ili:tid="00000000-0000-0000-0000-000000000002"><OidDemo:Nummer>P2</OidDemo:Nummer><OidDemo:Typ>neben</OidDemo:Typ><OidDemo:Wert>200</OidDemo:Wert></OidDemo:Punkt>
-</OidDemo:Quelle>
-</ili:datasection>
+  <ili:headersection>
+    <ili:models>
+      <ili:model>OidDemo</ili:model>
+    </ili:models>
+    <ili:sender>demo</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <OidDemo:Quelle ili:bid="00000000-0000-0000-0000-00000000d001">
+      <OidDemo:Punkt ili:tid="00000000-0000-0000-0000-000000000001">
+        <OidDemo:Nummer>P1</OidDemo:Nummer>
+        <OidDemo:Typ>haupt</OidDemo:Typ>
+        <OidDemo:AltAttribut>Legacy-Info-A</OidDemo:AltAttribut>
+        <OidDemo:Wert>500</OidDemo:Wert>
+      </OidDemo:Punkt>
+      <OidDemo:Punkt ili:tid="00000000-0000-0000-0000-000000000002">
+        <OidDemo:Nummer>P2</OidDemo:Nummer>
+        <OidDemo:Typ>neben</OidDemo:Typ>
+        <OidDemo:Wert>200</OidDemo:Wert>
+      </OidDemo:Punkt>
+    </OidDemo:Quelle>
+  </ili:datasection>
 </ili:transfer>

@@ -1,10 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS" xmlns:HelloDemo="http://www.interlis.ch/xtf/2.4/HelloDemo">
-<ili:headersection><ili:models><ili:model>HelloDemo</ili:model></ili:models><ili:sender>demo</ili:sender></ili:headersection>
-<ili:datasection>
-<HelloDemo:Persons ili:bid="00000000-0000-0000-0000-0000000000b1">
-<HelloDemo:Source ili:tid="00000000-0000-0000-0000-000000000001"><HelloDemo:Name>  Alice Mueller  </HelloDemo:Name><HelloDemo:Anzahl>42</HelloDemo:Anzahl><HelloDemo:Aktiv>true</HelloDemo:Aktiv></HelloDemo:Source>
-<HelloDemo:Source ili:tid="00000000-0000-0000-0000-000000000002"><HelloDemo:Name>Bob Meier</HelloDemo:Name><HelloDemo:Anzahl>7</HelloDemo:Anzahl><HelloDemo:Aktiv>false</HelloDemo:Aktiv></HelloDemo:Source>
-</HelloDemo:Persons>
-</ili:datasection>
+  <ili:headersection>
+    <ili:models>
+      <ili:model>HelloDemo</ili:model>
+    </ili:models>
+    <ili:sender>demo</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <HelloDemo:Persons ili:bid="00000000-0000-0000-0000-0000000000b1">
+      <HelloDemo:Source ili:tid="00000000-0000-0000-0000-000000000001">
+        <HelloDemo:Name>  Alice Mueller  </HelloDemo:Name>
+        <HelloDemo:Anzahl>42</HelloDemo:Anzahl>
+        <HelloDemo:Aktiv>true</HelloDemo:Aktiv>
+      </HelloDemo:Source>
+      <HelloDemo:Source ili:tid="00000000-0000-0000-0000-000000000002">
+        <HelloDemo:Name>Bob Meier</HelloDemo:Name>
+        <HelloDemo:Anzahl>7</HelloDemo:Anzahl>
+        <HelloDemo:Aktiv>false</HelloDemo:Aktiv>
+      </HelloDemo:Source>
+    </HelloDemo:Persons>
+  </ili:datasection>
 </ili:transfer>

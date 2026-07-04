@@ -40,8 +40,8 @@ Einzeln (aus `demo/02-string-functions`, CLI-Pfad relativ zum Repo-Root):
 ```bash
 java -jar "$ILI2C" models/strings.ili
 java -jar "$ILIVALIDATOR" --modeldir models data/input.xtf
-../../build/install/ilitransformer/bin/ilitransformer validate-mapping -m profile.ilimap
-../../build/install/ilitransformer/bin/ilitransformer transform -m profile.ilimap
+../../bin/ilitransformer validate-mapping -m profile.ilimap
+../../bin/ilitransformer transform -m profile.ilimap
 java -jar "$ILIVALIDATOR" --modeldir models output.xtf
 ```
 

@@ -29,12 +29,12 @@ triviale String-Expressions.
 
 ## Aufrufe
 
-Pfade beziehen sich auf das Repo-Root. CLI zuvor bauen: `./gradlew installDist`.
+Pfade beziehen sich auf das Distributions-Root. Die CLI liegt unter `bin/ilitransformer`.
 
 ```bash
-CLI=build/install/ilitransformer/bin/ilitransformer
-ILI2C=/Users/stefan/apps/ili2c-5.6.8/ili2c.jar
-ILIVALIDATOR=/Users/stefan/apps/ilivalidator-1.15.0/ilivalidator-1.15.0.jar
+CLI=bin/ilitransformer
+ILI2C=/pfad/zu/ili2c.jar
+ILIVALIDATOR=/pfad/zu/ilivalidator.jar
 
 cd demo/01-hello-copy
 
