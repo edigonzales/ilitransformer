@@ -2,7 +2,7 @@
   --ili-primary: #0564a9;
   --ili-primary-dark: #045990;
   --ili-primary-light: #0674c4;
-  --ili-bg: #f6f9fc;
+  --ili-bg: #fcfcfc;
   --ili-surface: #ffffff;
   --ili-text: #1f2a37;
   --ili-muted: #5f6b7a;
@@ -135,4 +135,22 @@ a:hover {
   background-color: currentColor;
   -webkit-mask: url("images/box-arrow-up-right.svg") no-repeat center / contain;
   mask: url("images/box-arrow-up-right.svg") no-repeat center / contain;
+}
+
+/* Code blocks: subdued grey background, flat look (ForBo7 style) */
+pre,
+pre.sourceCode,
+div.sourceCode {
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 0;
+}
+
+pre {
+  padding: 1em;
+}
+
+:not(pre) > code {
+  background-color: #f0f0f0;
+  border-radius: 0;
 }
