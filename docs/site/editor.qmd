@@ -92,12 +92,6 @@ Platzieren Sie den Cursor auf einem Namen – etwa einem Regelnamen – und drü
 
 Ein Klick auf `Coverage` öffnet die Detailansicht in der Mapping Overview, ein Klick auf eine Fehlerzahl springt zum Problem.
 
-![Platzhalter: CodeLens über Regeln](assets/img/vscode-codelens-placeholder.svg)
-
-:::{.note}
-**Bild erwartet:** Editorausschnitt mit zwei CodeLens-Zeilen über einer `rule`-Deklaration: `Show in Overview` und `Coverage 12/14 · 2 refs · 1 bag · 1 warning`.
-:::
-
 #### Mapping Explorer
 
 In der Aktivitätsleiste am linken Rand von VS Code finden Sie das `ilimap`-Icon. Ein Klick öffnet den **Mapping Explorer** – eine Baumansicht, die alle Inputs, Outputs, Regeln und Probleme der aktuellen `.ilimap`-Datei auflistet. Jeder Eintrag ist anklickbar und springt zur entsprechenden Stelle im Editor.
@@ -116,11 +110,7 @@ In der unteren Statusleiste erscheint zudem eine Zusammenfassung. Ein Klick dara
 
 Bei jedem Speichern (`Ctrl+S` / `Cmd+S`) führt die Erweiterung eine vertiefte Prüfung durch, die die INTERLIS-Modelle mit einbezieht.
 
-![Platzhalter: Diagnostics im Editor](assets/img/vscode-diagnostics-placeholder.svg)
-
-:::{.note}
-**Bild erwartet:** Editor mit einer `.ilimap`-Datei, die rote/gelbe Wellenlinien zeigt. Rechts daneben die Problems-Ansicht mit aufgelisteten Fehlern.
-:::
+![](assets/img/ilimap03.png)
 
 #### Explizite Validierung
 
@@ -138,11 +128,7 @@ Mit `ilimap: Format Mapping` formatieren Sie das gesamte Mapping-Dokument automa
 
 Die Mapping Overview ist eine lesbare, grafische Zusammenfassung Ihres Mappings – als separates Panel in VS Code. Sie öffnen sie mit dem Befehl `ilimap: Open Mapping Overview`.
 
-![Platzhalter: Mapping Overview Gesamtansicht](assets/img/vscode-overview-placeholder.svg)
-
-:::{.note}
-**Bild erwartet:** Mapping Overview als eigenes Panel. Links die Editor-Ansicht mit `.ilimap`-Datei, rechts die Overview mit Coverage-Matrix und Flow-Diagramm.
-:::
+![](assets/img/ilimap04.png)
 
 Die Overview ist **read-only**: Sie ersetzt die Mapping-Datei nicht, sondern hilft, sie zu verstehen und zu prüfen. Bearbeitet wird nach wie vor in der `.ilimap`-Datei. Die Overview aktualisiert sich automatisch beim Speichern.
 
@@ -165,11 +151,7 @@ Klicken Sie in der Coverage-Matrix auf ein Zielattribut, öffnet sich unterhalb 
 
 So lässt sich zum Beispiel schnell nachvollziehen, dass `t.LabelGross` aus dem Ausdruck `upper(trim(s.Name))` entsteht und `s.Name` wiederum aus dem Input gelesen wird.
 
-![Platzhalter: Trace Inspector](assets/img/vscode-trace-placeholder.svg)
-
-:::{.note}
-**Bild erwartet:** Detailansicht einer Coverage-Matrix mit geöffnetem Trace Inspector darunter. Sichtbar: vorwärts- und rückwärts-Trace, Abhängigkeiten als Liste.
-:::
+![](assets/img/ilimap05.png)
 
 #### Navigation zwischen Editor und Overview
 
