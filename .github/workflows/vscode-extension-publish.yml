@@ -24,6 +24,7 @@ jobs:
       should_run: ${{ steps.gate.outputs.should_run }}
       source_sha: ${{ steps.gate.outputs.source_sha }}
       source_run_number: ${{ steps.gate.outputs.source_run_number }}
+      source_changed: ${{ steps.source_check.outputs.source_changed }}
     steps:
       - id: gate
         shell: bash
@@ -45,6 +46,7 @@ jobs:
             echo "should_run=true" >> "$GITHUB_OUTPUT"
             echo "source_sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
             echo "source_run_number=${{ github.event.workflow_run.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "is_manual=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -61,10 +63,32 @@ jobs:
           echo "should_run=true" >> "$GITHUB_OUTPUT"
           echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
           echo "source_run_number=$source_run_number" >> "$GITHUB_OUTPUT"
+          echo "is_manual=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.should_run == 'true'
+        with:
+          ref: ${{ steps.gate.outputs.source_sha }}
+          fetch-depth: 2
+
+      - name: Determine if source changed
+        id: source_check
+        if: steps.gate.outputs.should_run == 'true'
+        shell: bash
+        run: |
+          if [[ "${{ steps.gate.outputs.is_manual }}" == "true" ]]; then
+            echo "source_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git rev-parse HEAD^ >/dev/null 2>&1 && git diff --name-only HEAD^ HEAD | grep -qE '^(vscode|src)/'; then
+            echo "source_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "source_changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
   build-fat-jar:
     needs: gate
-    if: needs.gate.outputs.should_run == 'true'
+    if: needs.gate.outputs.should_run == 'true' && needs.gate.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -101,7 +125,7 @@ jobs:
     needs:
       - gate
       - build-fat-jar
-    if: needs.gate.outputs.should_run == 'true'
+    if: needs.gate.outputs.should_run == 'true' && needs.gate.outputs.source_changed == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -174,7 +198,7 @@ jobs:
       - gate
       - build-fat-jar
       - build-runtimes
-    if: needs.gate.outputs.should_run == 'true'
+    if: needs.gate.outputs.should_run == 'true' && needs.gate.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     env:
       EXTENSION_NAME: ilimap-vscode
