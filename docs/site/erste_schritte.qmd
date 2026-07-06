@@ -58,7 +58,7 @@ Das aktuelle Artefakt kann aus dem Snapshot-Repository heruntergeladen werden, z
 
 ```bash
 curl -L -o ilitransformer-0.1.0-SNAPSHOT.zip \
-  "https://jars.interlis.guru/snapshots/guru/interlis/ilitransformer/0.1.0-SNAPSHOT/ilitransformer-0.1.0-20260704.153505-13.zip"
+  "https://jars.interlis.guru/snapshots/guru/interlis/ilitransformer/0.1.0-SNAPSHOT/ilitransformer-0.1.0-20260706.182146-19.zip"
 ```
 
 Der genaue Dateiname kann je nach publiziertem Snapshot-Build abweichen. Im Zweifel sollte der Dateiname direkt aus der Artefaktliste des Repositories übernommen werden.
