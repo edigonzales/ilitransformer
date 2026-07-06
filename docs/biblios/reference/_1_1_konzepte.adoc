@@ -5,7 +5,7 @@ Der INTERLIS Transformer überführt INTERLIS-Daten kontrolliert von einer Form 
 
 ==== Formatumbau und Datenumbau
 
-*Formatumbau* ändert die technische Repräsentation bei gleichbleibender fachlicher Bedeutung — zum Beispiel XTF nach GeoPackage oder JDBC-Tabelle.
+*Formatumbau* ändert die technische Repräsentation bei gleichbleibender fachlicher Bedeutung — zum Beispiel GeoPackage oder JDBC-Tabelle nach XTF.
 
 *Datenumbau* ändert die fachliche Struktur: Klassen, Attribute, Werte, Einheiten oder Beziehungen werden neu abgebildet — zum Beispiel bei der Migration von einem Datenmodell in ein anderes.
 
