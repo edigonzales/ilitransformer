@@ -23,7 +23,7 @@ website:
       - text: Editor 
         href: editor.qmd
       - text: Referenz
-        href: reference/index.qmd
+        href: https://docs.interlis.guru/ilitransformer/main/
     right:
       - icon: github
         href: https://github.com/edigonzales/ilitransformer
