@@ -56,8 +56,7 @@ public final class IlimapModelIndexService {
 
         Path baseDir = workspaceRoot.toAbsolutePath().normalize();
         Path ilimapDir = ilimapDirectory(analysis, baseDir);
-        List<String> modeldirs =
-                normalizeModeldirs(analysis, baseDir, ilimapDir, builder);
+        List<String> modeldirs = normalizeModeldirs(analysis, baseDir, ilimapDir, builder);
         String modeldirString = modeldirs.isEmpty() ? null : String.join(";", modeldirs);
 
         for (String modelName : modelNames) {
@@ -98,15 +97,18 @@ public final class IlimapModelIndexService {
     }
 
     private static String normalizeModeldir(
-            String modeldir, Path workspaceRoot, Path ilimapDir, IlimapAnalysis analysis, IlimapModelIndex.Builder builder) {
+            String modeldir,
+            Path workspaceRoot,
+            Path ilimapDir,
+            IlimapAnalysis analysis,
+            IlimapModelIndex.Builder builder) {
         if (isRemoteModeldir(modeldir)) {
             return modeldir;
         }
 
         Path path = Path.of(modeldir);
-        Path normalized = path.isAbsolute()
-                ? path.normalize()
-                : ilimapDir.resolve(path).normalize();
+        Path normalized =
+                path.isAbsolute() ? path.normalize() : ilimapDir.resolve(path).normalize();
         if (!Files.isDirectory(normalized)) {
             builder.addDiagnostic(new IlimapIdeDiagnostic(
                     DiagnosticCode.MODEL_COMPILE_FAILED,
