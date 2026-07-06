@@ -15,5 +15,5 @@ css: index.css
 :::
 
 ::: {.preview-wrap}
-![INTERLIS Transformer Mapping-Vorschau](assets/img/ilimap-placeholder.svg){.preview-image}
+![INTERLIS Transformer Mapping-Vorschau](assets/img/title.png){.preview-image}
 :::

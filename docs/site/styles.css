@@ -137,6 +137,19 @@ a:hover {
   mask: url("images/box-arrow-up-right.svg") no-repeat center / contain;
 }
 
+.navbar a[href="https://docs.interlis.guru/ilitransformer/main/"]::after {
+  content: "";
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  margin-left: 0.3em;
+  vertical-align: -0.125em;
+  opacity: 0.65;
+  background-color: currentColor;
+  -webkit-mask: url("assets/img/box-arrow-up-right.svg") no-repeat center / contain;
+  mask: url("assets/img/box-arrow-up-right.svg") no-repeat center / contain;
+}
+
 /* Code blocks: subdued grey background, flat look (ForBo7 style) */
 pre,
 pre.sourceCode,
