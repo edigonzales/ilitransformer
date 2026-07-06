@@ -1,0 +1,58 @@
+:noindex:
+=== job-Block
+
+Der `job`-Block enthält Metadaten und globale Einstellungen.
+
+==== Syntax
+
+[source,ilimap]
+----
+job {
+  name "Mein Mapping";
+  description "Beschreibung des Mappings";
+  direction dm01_to_dmav;
+  failPolicy strict;
+  compileMode strict;
+  modeldir "https://models.interlis.ch/";
+  modeldir "models/";
+}
+----
+
+==== Felder
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `name` | string | nein | Name des Mappings
+| `description` | string | nein | Freitext-Beschreibung
+| `direction` | identifier | nein | Transformationsrichtung (z.B. `dm01_to_dmav`)
+| `failPolicy` | identifier | nein | `strict` (Default), `lenient`, `reportOnly`
+| `compileMode` | identifier | nein | `strict` (Default), `compatible`, `report`
+| `modeldir` | string | nein | Modellverzeichnis (URL oder Pfad, wiederholbar)
+|===
+
+==== Fail-Policy
+
+Siehe xref:_transform[transform] für die Beschreibung der Fail-Policy-Werte.
+
+==== Compile-Mode
+
+[cols="1,3",options="header"]
+|===
+| Wert | Verhalten
+| `strict` | Alle Fehler brechen die Kompilierung ab
+| `compatible` | Abwärtskompatible Prüfung, weniger streng
+| `report` | Fehler nur reportieren, Kompilierung fortsetzen
+|===
+
+==== modeldir
+
+Modellverzeichnisse werden in der deklarierten Reihenfolge durchsucht. URLs werden vor der Verwendung heruntergeladen und gecacht.
+
+[source,ilimap]
+----
+job {
+  modeldir "https://models.interlis.ch/";
+  modeldir "./lokale-modelle/";
+}
+----

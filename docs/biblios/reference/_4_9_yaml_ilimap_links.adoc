@@ -1,0 +1,93 @@
+:noindex:
+=== YAML mit ilimap verknüpfen
+
+Für umfangreiche Transformationen können YAML-Dateien auf *.ilimap*-Dateien verweisen, anstatt alle Regeln inline zu definieren. Das ermöglicht eine modulare Struktur:
+
+[source,yaml]
+----
+version: 1
+
+job:
+  name: "DM01 nach DMAV"
+  description: "Modulare Transformation"
+  modeldir:
+    - "https://models.interlis.ch/"
+  inputs:
+    - id: dm01
+      path: "eingabe.xtf"
+      model: "DM01"
+  outputs:
+    - id: dmav
+      path: "ausgabe.xtf"
+      model: "DMAV"
+
+mapping:
+  rules: []               # Keine Regeln direkt hier
+----
+
+Die Regeln stehen in separaten *.ilimap*-Dateien — eine pro Topic oder Klasse:
+
+[source,text]
+----
+profiles/dm01-to-dmav/
+  mapping.yml             ← YAML-Datei mit job.inputs/outputs
+  lfp3.ilimap             ← Regeldatei für LFP3
+  bb.ilimap               ← Regeldatei für BB
+  eo.ilimap               ← Regeldatei für EO
+  gs.ilimap               ← Regeldatei für GS
+  ...
+----
+
+==== Wie die Verlinkung funktioniert
+
+Jede *.ilimap*-Datei deklariert ihre eigenen `input` und `output` mit denselben IDs wie die YAML-Datei:
+
+.YAML-Datei
+[source,yaml]
+----
+job:
+  inputs:
+    - id: dm01
+      path: "eingabe.xtf"
+      model: "DM01"
+  outputs:
+    - id: dmav
+      path: "ausgabe.xtf"
+      model: "DMAV"
+----
+
+.ilimap-Regeldatei
+[source,ilimap]
+----
+mapping v2 {
+  input dm01 {
+    path "eingabe.xtf";
+    model "DM01";
+  }
+
+  output dmav {
+    path "ausgabe.xtf";
+    model "DMAV";
+  }
+
+  rule lfp3 {
+    target dmav class "DMAV.LFP3";
+    source s from dm01 class "DM01.LFP3";
+    ...
+  }
+}
+----
+
+==== Ausführung
+
+Die Transformation wird über die YAML-Datei gestartet. Der Transformer lädt die *.ilimap*-Dateien aus den in `modeldir` deklarierten Verzeichnissen:
+
+[source,bash]
+----
+ilitransformer transform -m profiles/dm01-to-dmav/mapping.yml
+----
+
+[TIP]
+====
+Die *.ilimap*-Dateien profitieren von der VS-Code-Erweiterung mit Syntax-Highlighting, Autovervollständigung und Validierung, während die YAML-Datei als schlanker Orchestrator dient.
+====

@@ -1,0 +1,83 @@
+:noindex:
+=== bag, ref und create
+
+==== bag — BAG OF STRUCTURE
+
+[source,ilimap]
+----
+bag adressen {
+  from a in src class "Source.Adresse" where a.PersonId == p.OID;
+  target Adressen;
+  structure "Target.Adresse";
+  mode embed;
+  maxItems 5;
+  parentRef attribute "PersonId" parent p;
+
+  assign {
+    Strasse = a.Strasse;
+    PLZ = a.PLZ;
+    Ort = a.Ort;
+  }
+
+  bag dokumente {     // verschachtelter Bag
+    ...
+  }
+}
+----
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `from` | block | ja | Quelle für Bag-Einträge (alias, inputId, class, where)
+| `target` | identifier | nein | Zielattributname (Default: Bag-Name)
+| `structure` | string | ja | Strukturklasse für Bag-Einträge
+| `mode` | enum | nein | `embed` (Default) oder `expand`
+| `maxItems` | number | nein | Maximale Anzahl Einträge
+| `parentRef` | block | nein | Rückwärts-Referenz zum Parent (attribute oder role)
+| `where` | expression | nein | Zusätzliche Filterbedingung
+| `assign` | block | nein | Attributzuweisungen für die Struktur
+| `bag` | block | nein | Verschachtelte Bags (rekursiv)
+|===
+
+==== ref — Referenz-Mapping
+
+[source,ilimap]
+----
+ref gebaeude_ref {
+  association "Target.GebaeudeRef";
+  role "Gebaeude";
+  required;
+  target rule gebaeude_rule sourceRef s.GebaeudeRef;
+}
+----
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `association` | string | nein | Qualifizierter Assoziationsname
+| `role` | string | nein | Rollenname
+| `required` | flag | nein | Referenz ist zwingend
+| `target` | block | ja | Ziel: `rule <id> sourceRef <expression>`
+|===
+
+[WARNING]
+====
+Referenzen werden über den `sourceRef`-Ausdruck aufgelöst. Der Ausdruck muss auf ein Objekt verweisen, das von der Zielregel (`target rule`) erzeugt wurde.
+====
+
+==== create — Zusätzliche Zielobjekte
+
+[source,ilimap]
+----
+create class "Target.Metadaten" {
+  assign {
+    Quelle = "ilitransformer";
+    Timestamp = now();
+  }
+}
+----
+
+[NOTE]
+====
+`create` ist experimentell. Es erzeugt zusätzliche Zielobjekte unabhängig von der 1:1-Quellabbildung.
+====

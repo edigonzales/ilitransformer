@@ -1,0 +1,40 @@
+:noindex:
+=== GeoPackage
+
+GeoPackage wird nur als Eingabeformat unterstützt. Geometrien werden als Simple Features gelesen.
+
+[cols="1,2",options="header"]
+|===
+| Eigenschaft | Unterstützung
+| Eingabe | Ja
+| Ausgabe | Nein
+| Geometrien | Simple Features (Point, LineString, Polygon, Multi*)
+| Structures | Nein
+| References | Nein
+|===
+
+==== Optionen
+
+[cols="1,1,3",options="header"]
+|===
+| Option | Default | Beschreibung
+| `table` | *(Pflicht)* | Tabellenname
+| `fetchSize` | `10000` | Zeilen pro JDBC-Fetch-Roundtrip
+|===
+
+==== Beispiel
+
+[source,ilimap]
+----
+input gpkg_src {
+  path "daten/gebaeude.gpkg";
+  model "MyModel";
+  format gpkg;
+  option table "gebaeude";
+}
+----
+
+[WARNING]
+====
+Nur Simple-Features-Geometrien werden unterstützt. INTERLIS-Structures und -References werden nicht aus GeoPackage gelesen.
+====

@@ -1,0 +1,52 @@
+:noindex:
+=== Architektur
+
+Das folgende Diagramm zeigt den Datenfluss vom CLI-Aufruf bis zur Ausgabe:
+
+[mermaid]
+....
+flowchart LR
+    CLI["CLI (picocli)"] --> JR[JobRunner]
+    JR --> ML[MappingLoader]
+    ML --> MC[MappingCompiler]
+    MC --> TE[TransformationEngine]
+    TE --> OM[OutputManager]
+
+    ML --> IMS[IliModelService]
+    IMS --> TSF[TypeSystemFacade]
+    TSF --> ILI[ili2c]
+
+    ML --> IR[IoxReaders]
+    TE --> IW[IoxWriters]
+
+    TE --> EE[ExpressionEngine]
+    EE --> FR[FunctionRegistry]
+
+    TE --> SS[StateStore]
+
+    subgraph " "
+        IR
+        IW
+    end
+....
+
+Das System arbeitet in zwei Phasen:
+
+. *Compile-Phase*: Der `MappingLoader` liest die Mapping-Datei (YAML oder *.ilimap*). Der `MappingCompiler` validiert sie gegen die INTERLIS-Modelle und erzeugt einen ausführbaren Plan.
+. *Runtime-Phase*: Die `TransformationEngine` führt den Plan aus: Quellobjekte werden gelesen, Ausdrücke evaluiert, Zielobjekte aufgebaut und geschrieben.
+
+==== Komponenten
+
+[cols="1,3",options="header"]
+|===
+| Komponente | Aufgabe
+| `JobRunner` | Einstiegspunkt: lädt das Mapping und orchestriert die Transformation
+| `MappingLoader` | Liest YAML- und *.ilimap*-Dateien, löst `modeldir`-Referenzen auf
+| `MappingCompiler` | Validiert das Mapping gegen die Modelle, erzeugt Diagnosemeldungen
+| `TransformationEngine` | Führt die Regeln aus: liest Quellen, evaluiert Ausdrücke, schreibt Ziele
+| `ExpressionEngine` | Evaluiert ilimap-Ausdrücke mit lazy Evaluation und Typprüfung
+| `FunctionRegistry` | Registriert alle Built-in-Funktionen (String, Math, Enum, Date, Lookup, Geometry)
+| `IliModelService` | Fassade für ili2c: kompiliert INTERLIS-Modelle, stellt Typinformationen bereit
+| `IoxReaders` / `IoxWriters` | Lesen und schreiben die unterstützten Formate (XTF, ITF, CSV, GPKG, JDBC, SHP)
+| `StateStore` | Hält den Zustand während der Transformation (OID-Registry, Basket-Zuordnung)
+|===

@@ -1,0 +1,27 @@
+:noindex:
+=== Geometry-Funktionen
+
+[cols="1,3,3",options="header"]
+|===
+| Funktion | Signatur | Beschreibung
+| `coordEquals` | `(coord1, coord2, tolerance) → boolean` | Zwei Koordinaten innerhalb einer Toleranz gleich?
+| `pointOnSurface` | `(surface) → coord` | Deterministischer Punkt auf einer SURFACE/MULTISURFACE
+|===
+
+[WARNING]
+====
+`pointOnSurface()` gibt eine WARNING aus, wenn kein Punkt abgeleitet werden kann. Dies tritt bei degenerierten Geometrien auf (z.B. Fläche mit Fläche = 0).
+====
+
+==== Beispiele
+
+[source,ilimap]
+----
+assign {
+  // Koordinatenvergleich mit Toleranz
+  GleicherPunkt = coordEquals(s.Koord1, s.Koord2, 0.001);
+
+  // Label-Punkt aus Fläche
+  LabelPunkt = pointOnSurface(s.Geometrie);
+}
+----

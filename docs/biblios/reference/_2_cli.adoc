@@ -1,0 +1,16 @@
+:noindex:
+== CLI-Referenz
+
+include::_2_1_transform.adoc[]
+
+include::_2_2_validate_mapping.adoc[]
+
+include::_2_3_validate_transfer.adoc[]
+
+include::_2_4_convert_mapping.adoc[]
+
+include::_2_5_inspect_model.adoc[]
+
+include::_2_6_run_bundle.adoc[]
+
+include::_2_7_globale_optionen.adoc[]

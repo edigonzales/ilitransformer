@@ -1,0 +1,40 @@
+:noindex:
+=== run-bundle
+
+Führt ein vordefiniertes Transformations-Bundle aus, das in einer Manifest-YAML-Datei beschrieben ist.
+
+==== Signatur
+
+[source,text]
+----
+ilitransformer run-bundle --manifest <yaml> [options]
+----
+
+==== Optionen
+
+[cols="1,1,1,3",options="header"]
+|===
+| Option | Typ | Pflicht | Beschreibung
+| `--manifest` | *file* | ja | Bundle-Manifest (YAML)
+| `--source` | *file* | nein | Eingabedatei überschreiben
+| `--report-dir` | *dir* | nein | Report-Verzeichnis
+| `--output` | *file* | nein | Ausgabedatei überschreiben
+| `--repo-root` | *dir* | nein | Repository-Wurzel für relative Pfade
+| `--validate` | flag | nein | Ausgabe validieren
+| `--no-validate` | flag | nein | Validierung deaktivieren
+|===
+
+[NOTE]
+====
+Ohne `--validate` und `--no-validate` gilt die Einstellung aus dem Manifest.
+====
+
+==== Beispiel
+
+[source,bash]
+----
+ilitransformer run-bundle \
+  --manifest profiles/dm01-to-dmav/bundle.yml \
+  --repo-root profiles/dm01-to-dmav/ \
+  --validate
+----

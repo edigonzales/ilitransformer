@@ -1,0 +1,63 @@
+:noindex:
+=== Grundfunktionen und Operatoren
+
+==== Grundfunktionen
+
+[cols="1,3,3",options="header"]
+|===
+| Funktion | Signatur | Beschreibung
+| `coalesce` | `(a, b, ...) → any` | Erstes nicht-null-Argument (variadisch, lazy)
+| `defined` | `(value) → boolean` | `true` wenn Wert nicht null
+| `notDefined` | `(value) → boolean` | `true` wenn Wert null (Alias: `isNull`)
+| `default` | `(value, fallback) → any` | `fallback` wenn `value` null ist
+| `if` | `(cond, ifTrue, ifFalse) → any` | Bedingte Auswertung (lazy: nur der gewählte Zweig wird evaluiert)
+|===
+
+==== Vergleichsoperatoren
+
+Die Operatoren werden zu den entsprechenden Funktionen desugared:
+
+[cols="2,2,3",options="header"]
+|===
+| Operator | Desugaring | Bedeutung
+| `a == b` | `eq(a, b)` | Gleichheit
+| `a == null` | `notDefined(a)` | Spezialfall: null-Prüfung
+| `a != b` | `neq(a, b)` | Ungleichheit
+| `a != null` | `defined(a)` | Spezialfall: nicht-null-Prüfung
+| `a < b` | `lt(a, b)` | Kleiner als
+| `a <= b` | `lte(a, b)` | Kleiner oder gleich
+| `a > b` | `gt(a, b)` | Grösser als
+| `a >= b` | `gte(a, b)` | Grösser oder gleich
+|===
+
+==== Logische Operatoren
+
+[cols="2,2,3",options="header"]
+|===
+| Operator | Desugaring | Bedeutung
+| `a and b` | `if(a, b, false)` | Logisches UND (lazy)
+| `a or b` | `if(a, true, b)` | Logisches ODER (lazy)
+| `not a` | `not(a)` | Logisches NICHT
+|===
+
+==== Beispiele
+
+[source,ilimap]
+----
+assign {
+  // coalesce: erstes nicht-null
+  Name = coalesce(s.Name1, s.Name2, "Unbekannt");
+
+  // defined / default
+  Optional = default(s.Optional, "Kein Wert");
+
+  // Bedingung
+  Status = if(s.Aktiv == true, #aktiv, #inaktiv);
+
+  // Logische Verknüpfung
+  Gueltig = defined(s.Name) and defined(s.Geometrie);
+
+  // Vergleich
+  Gross = s.Anzahl > 100;
+}
+----

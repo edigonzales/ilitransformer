@@ -1,0 +1,14 @@
+:noindex:
+== Format-Referenz
+
+include::_6_1_xtf_itf.adoc[]
+
+include::_6_2_csv.adoc[]
+
+include::_6_3_gpkg.adoc[]
+
+include::_6_4_jdbc.adoc[]
+
+include::_6_5_shp.adoc[]
+
+include::_6_6_matrix.adoc[]

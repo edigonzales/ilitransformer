@@ -1,0 +1,22 @@
+:noindex:
+== Ausdruckssprache-Referenz
+
+include::_5_1_wertsystem.adoc[]
+
+include::_5_2_grundfunktionen.adoc[]
+
+include::_5_3_string_funktionen.adoc[]
+
+include::_5_4_math_funktionen.adoc[]
+
+include::_5_5_date_funktionen.adoc[]
+
+include::_5_6_enum_funktionen.adoc[]
+
+include::_5_7_ref_funktionen.adoc[]
+
+include::_5_8_lookup_funktionen.adoc[]
+
+include::_5_9_geometry_funktionen.adoc[]
+
+include::_5_10_praezendez.adoc[]

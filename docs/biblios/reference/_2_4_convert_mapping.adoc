@@ -1,0 +1,34 @@
+:noindex:
+=== convert-mapping
+
+Konvertiert eine YAML-Mapping-Datei in das *.ilimap*-Format.
+
+==== Signatur
+
+[source,text]
+----
+ilitransformer convert-mapping --from <yaml> --to <ilimap>
+----
+
+==== Optionen
+
+[cols="1,1,1,3",options="header"]
+|===
+| Option | Typ | Pflicht | Beschreibung
+| `--from`, `--input` | *file* | ja | YAML-Mapping-Datei (Quelle)
+| `--to`, `--output` | *file* | ja | *.ilimap*-Datei (Ziel)
+|===
+
+==== Beispiel
+
+[source,bash]
+----
+ilitransformer convert-mapping \
+  --from mapping.yml \
+  --to mapping.ilimap
+----
+
+[TIP]
+====
+Die umgekehrte Richtung (ilimap → YAML) wird nicht unterstützt. Bearbeiten Sie Mappings bevorzugt im *.ilimap*-Format mit der VS-Code-Erweiterung.
+====

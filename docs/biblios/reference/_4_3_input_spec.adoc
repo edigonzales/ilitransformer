@@ -1,0 +1,92 @@
+:noindex:
+=== InputSpec
+
+Beschreibt eine Eingabedatei mit Format, Modell und formatspezifischen Details.
+
+==== Felder
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `id` | string | ja | Eindeutige ID (in Regeln als `inputId` referenziert)
+| `path` | string | ja* | Dateipfad (* ausser bei JDBC)
+| `model` | string | ja | INTERLIS-Modellname
+| `format` | string | nein | `itf`, `xtf`, `csv`, `gpkg`, `jdbc`, `shp`
+| `options` | map | nein | Formatspezifische Optionen
+| `connection` | block | nein* | JDBC-Verbindung (* Pflicht für JDBC)
+| `queries` | block | nein* | JDBC-Queries (* Pflicht für JDBC)
+|===
+
+==== CSV
+
+[source,yaml]
+----
+inputs:
+  - id: csv_data
+    path: "daten/input.csv"
+    model: "MyModel"
+    format: csv
+    options:
+      firstLineIsHeader: true
+      separator: ";"
+      delimiter: '"'
+      encoding: "UTF-8"
+----
+
+==== GeoPackage
+
+[source,yaml]
+----
+inputs:
+  - id: gpkg_data
+    path: "daten/gebaeude.gpkg"
+    model: "MyModel"
+    format: gpkg
+    options:
+      table: "gebaeude"
+      fetchSize: 5000
+----
+
+==== JDBC (siehe auch xref:_jdbc[Format-Referenz: JDBC])
+
+[source,yaml]
+----
+inputs:
+  - id: db_data
+    model: "MyModel"
+    format: jdbc
+    connection:
+      url: "jdbc:postgresql://localhost/mydb"
+      driver: "org.postgresql.Driver"
+      user: "app"
+      password: "secret"
+    queries:
+      - class: "MyModel.Topic.MyClass"
+        sql: "SELECT * FROM my_table"
+        topic: "Topic"
+        basketId: "b1"
+        oidColumn: "t_id"
+        columns:
+          attr1: "col_a"
+          attr2: "col_b"
+        geometry:
+          geom_attr:
+            column: "geom_col"
+            type: "surface"
+            srid: 2056
+----
+
+==== Shapefile (Eingabe)
+
+[source,yaml]
+----
+inputs:
+  - id: shp_data
+    path: "daten/gebaeude.shp"
+    model: "MyModel"
+    format: shp
+    options:
+      class: "MyModel.Topic.Gebaeude"
+      dbfEncoding: "ISO-8859-1"
+      geometryType: "surface"
+----

@@ -1,0 +1,37 @@
+:noindex:
+=== CSV
+
+CSV wird nur als Eingabeformat unterstützt. Jede Zeile entspricht einem Objekt, jede Spalte einem Attribut.
+
+[cols="1,2",options="header"]
+|===
+| Eigenschaft | Unterstützung
+| Eingabe | Ja
+| Ausgabe | Nein
+| Geometrien | Nein
+| Structures | Nein
+| References | Nein
+|===
+
+==== Optionen
+
+Siehe xref:_formatoptionen[ilimap-DSL: Formatoptionen] für die vollständige Liste der CSV-Optionen.
+
+==== Beispiel
+
+[source,ilimap]
+----
+input csv_src {
+  path "daten/gebaeude.csv";
+  model "MyModel";
+  format csv;
+  option separator ";";
+  option firstLineIsHeader true;
+  option encoding "UTF-8";
+}
+----
+
+[IMPORTANT]
+====
+Ohne `firstLineIsHeader: true` werden die Spalten der Reihe nach den Modellattributen zugewiesen. Mit Header werden die Spalten über den Spaltennamen gematcht.
+====

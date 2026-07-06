@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" role="img" aria-labelledby="title desc">
+  <title id="title">Platzhalter für VS-Code-Editor mit ilimap-Datei</title>
+  <desc id="desc">Platzhalter für einen Screenshot des VS-Code-Editors mit Syntax-Highlighting und Autovervollständigung.</desc>
+  <rect width="900" height="480" fill="#fff"/>
+  <rect x="40" y="40" width="820" height="400" fill="#fff" stroke="#d9dee6" stroke-width="2"/>
+  <!-- Tabs -->
+  <rect x="40" y="40" width="180" height="36" fill="#fff" stroke="#d9dee6" stroke-width="1"/>
+  <text x="75" y="65" font-family="Frutiger, Segoe UI, sans-serif" font-size="15" fill="#20242a">profile.ilimap</text>
+  <rect x="220" y="40" width="820" height="36" fill="#f5f6fa" stroke="#d9dee6" stroke-width="1"/>
+  <!-- Tooltip-Dropdown -->
+  <rect x="230" y="160" width="280" height="200" rx="4" fill="#fff" stroke="#064b96" stroke-width="1.5" filter="drop-shadow(0px 2px 8px rgba(0,0,0,.12))"/>
+  <rect x="230" y="160" width="280" height="34" fill="#064b96" opacity=".08"/>
+  <text x="245" y="184" font-family="Frutiger, Segoe UI, sans-serif" font-size="15" fill="#20242a">Name   <tspan fill="#656d78">TEXT*60</tspan></text>
+  <rect x="230" y="194" width="280" height="34"/>
+  <text x="245" y="218" font-family="Frutiger, Segoe UI, sans-serif" font-size="15" fill="#20242a">Anzahl   <tspan fill="#656d78">0..9999</tspan></text>
+  <rect x="230" y="228" width="280" height="34" fill="#064b96" opacity=".08"/>
+  <text x="245" y="252" font-family="Frutiger, Segoe UI, sans-serif" font-size="15" fill="#20242a">Aktiv   <tspan fill="#656d78">BOOLEAN</tspan></text>
+  <!-- Code-Zeilen -->
+  <g font-family="JetBrains Mono, SFMono-Regular, Consolas, monospace" font-size="18">
+    <text x="90" y="110" fill="#8b94a3">1</text>
+    <text x="120" y="110" fill="#d51f26">rule</text><text x="180" y="110" fill="#20242a">copy {</text>
+    <text x="90" y="140" fill="#8b94a3">2</text>
+    <text x="160" y="140" fill="#d51f26">source</text><text x="250" y="140" fill="#20242a">s </text><text x="270" y="140" fill="#d51f26">from</text><text x="330" y="140" fill="#20242a">src </text><text x="370" y="140" fill="#d51f26">class</text><text x="440" y="140" fill="#064b96">"HelloDemo.Persons.Source"</text>
+    <text x="90" y="170" fill="#8b94a3">3</text>
+    <text x="160" y="170" fill="#d51f26">target</text><text x="250" y="170" fill="#20242a">t </text><text x="270" y="170" fill="#d51f26">from</text><text x="330" y="170" fill="#20242a">tgt </text><text x="370" y="170" fill="#d51f26">class</text><text x="440" y="170" fill="#064b96">"HelloDemo.Persons.Target"</text>
+    <text x="90" y="200" fill="#8b94a3">4</text>
+    <text x="90" y="230" fill="#8b94a3">5</text>
+    <text x="160" y="230" fill="#d51f26">assign</text><text x="250" y="230" fill="#20242a">{</text>
+    <text x="90" y="260" fill="#8b94a3">6</text>
+    <text x="200" y="260" fill="#20242a">t.Label = s.█</text>
+    <text x="90" y="290" fill="#8b94a3">7</text>
+    <text x="90" y="320" fill="#8b94a3">8</text>
+    <text x="200" y="320" fill="#20242a">t.Anzahl = </text><text x="340" y="320" fill="#d51f26">toNumber</text><text x="450" y="320" fill="#20242a">(s.Anzahl)</text>
+    <text x="90" y="350" fill="#8b94a3">9</text>
+    <text x="160" y="350" fill="#20242a">}</text>
+    <text x="90" y="380" fill="#8b94a3">10</text>
+    <text x="120" y="380" fill="#20242a">}</text>
+  </g>
+  <text x="70" y="430" font-family="Frutiger, Segoe UI, sans-serif" font-size="16" fill="#656d78">Bildplatzhalter: Editor mit Syntax-Highlighting und Autovervollständigung einsetzen</text>
+</svg>

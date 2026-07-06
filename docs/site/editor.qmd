@@ -44,11 +44,8 @@ Die Erweiterung aktiviert sich automatisch, sobald Sie eine `.ilimap`-Datei öff
 
 Sobald Sie eine `.ilimap`-Datei öffnen, erkennt die Erweiterung die Sprache automatisch. Keywords wie `mapping`, `rule`, `source`, `target` und `assign` werden in eigenen Farben dargestellt. Kommentare (`//` und `/* */`), Zeichenketten (`"..."`) und Zahlen heben sich ebenfalls ab – Sie sehen auf einen Blick, was Steueranweisung und was Wert ist.
 
-![Platzhalter: Editor mit geöffneter .ilimap-Datei](assets/img/vscode-editor-placeholder.svg)
+![](assets/img/ilimap02.png)
 
-:::{.note}
-**Bild erwartet:** VS-Code-Editor mit einer geöffneten `.ilimap`-Datei, die Syntax-Highlighting zeigt. Ideal mit sichtbarer Autovervollständigung (Dropdown).
-:::
 
 #### Autovervollständigung
 

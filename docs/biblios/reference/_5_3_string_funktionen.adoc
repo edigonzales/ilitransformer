@@ -1,0 +1,36 @@
+:noindex:
+=== String-Funktionen
+
+[cols="1,3,3",options="header"]
+|===
+| Funktion | Signatur | Beschreibung
+| `concat` | `(a, b, ...) → text` | Strings verketten (variadisch)
+| `substring` | `(value, start, length) → text` | Teilstring extrahieren (1-basiert)
+| `trim` | `(value) → text` | Whitespace an beiden Enden entfernen
+| `upper` | `(value) → text` | In Grossbuchstaben umwandeln
+| `lower` | `(value) → text` | In Kleinbuchstaben umwandeln
+| `replace` | `(value, pattern, replacement) → text` | `pattern` durch `replacement` ersetzen
+| `truncate` | `(value, maxLength) → text` | Auf maximale Länge kürzen
+|===
+
+==== Beispiele
+
+[source,ilimap]
+----
+assign {
+  // Trimmen und Grossschreibung
+  Name = upper(trim(s.Rohname));
+
+  // Substring: erstes Zeichen
+  Initial = substring(s.Name, 1, 1);
+
+  // Ersetzung
+  Bereinigt = replace(s.Text, "  ", " ");
+
+  // Kürzen auf 60 Zeichen
+  Kurz = truncate(s.Langtext, 60);
+
+  // Verkettung
+  FullName = concat(s.Vorname, " ", s.Nachname);
+}
+----

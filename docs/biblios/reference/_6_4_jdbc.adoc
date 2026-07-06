@@ -1,0 +1,81 @@
+:noindex:
+=== JDBC
+
+JDBC wird nur als Eingabeformat unterstützt. Es erlaubt das Lesen aus beliebigen relationalen Datenbanken.
+
+[cols="1,2",options="header"]
+|===
+| Eigenschaft | Unterstützung
+| Eingabe | Ja
+| Ausgabe | Nein
+| Geometrien | POINT über WKT/WKB; SURFACE über WKT
+| Structures | Nein
+| References | Nein
+|===
+
+==== connection-Block
+
+[source,ilimap]
+----
+connection {
+  driver "org.postgresql.Driver";
+  url "jdbc:postgresql://localhost/mydb";
+  user "app";
+  password "secret";        // Klartext
+  userEnv "DB_USER";       // Umgebungsvariable
+  passwordEnv "DB_PASS";   // Umgebungsvariable
+  property "key" "value";
+}
+----
+
+[WARNING]
+====
+`user`/`password` speichern Credentials im Klartext. `userEnv`/`passwordEnv` sind sicherer — sie lesen aus Umgebungsvariablen.
+====
+
+==== query-Block
+
+[source,ilimap]
+----
+query gebauede_query {
+  topic "Gebaeude";
+  class "MyModel.Topic.Gebaeude";
+  basketId "b1";
+  oidColumn "t_id";
+  sql "SELECT t_id, name, nummer, geom FROM gebaeude";
+  column "t_id" "OID";
+  column "name" "Name";
+  column "nummer" "Nummer";
+  geometry geom_attr {
+    column "geom";
+    encoding wkb;
+    type surface;
+    srid 2056;
+  }
+}
+----
+
+==== query-Felder
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `class` | string | ja | INTERLIS-Klassenname
+| `sql` | string | ja | SQL-Query
+| `topic` | string | nein | Basket-Topic
+| `basketId` | string | nein | Basket-ID
+| `oidColumn` | string | nein | Spalte für OID
+| `column` | block | nein | DB-Spalte → INTERLIS-Attribut (wiederholbar)
+| `geometry` | block | nein | Geometrie-Spalte
+|===
+
+==== geometry-Block
+
+[cols="1,1,3",options="header"]
+|===
+| Feld | Typ | Beschreibung
+| `column` | string | Geometrie-Spalte
+| `encoding` | enum | `wkt` oder `wkb`
+| `type` | enum | `coord`, `polyline`, `surface`
+| `srid` | int | SRID (z.B. `2056` für LV95)
+|===

@@ -1,0 +1,95 @@
+:noindex:
+=== rule-Block
+
+Eine Regel beschreibt, wie aus einer oder mehreren Quellklassen eine Zielklasse befüllt wird.
+
+==== Syntax
+
+[source,ilimap]
+----
+rule <id> {
+  target <outputId> class "<Model.Topic.Class>";
+  source <alias> from <inputId>[, <inputId>...] class "<Model.Topic.Class>" [where <expr>];
+
+  [where <expression>;]
+  [join (inner|left) <alias> to <alias> on <expression>;]
+  [identity <alias.attr>, ...;]
+
+  assign {
+    <targetAttr> = <expression>;
+    ...
+  }
+
+  [defaults { ... }]
+  [bag <name> { ... }]
+  [ref <name> { ... }]
+  [create class "..." { ... }]
+  [loss { ... }]
+  [metadata { ... }]
+}
+----
+
+==== Felder
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `id` | aliasId | ja | Eindeutiger Regelbezeichner (keine Bindestriche)
+| `target` | block | ja | Zielklasse mit Output-ID
+| `source` | block | ja* | Quellklasse mit Alias und Input-ID (1..n pro Regel)
+| `where` | expression | nein | Filterbedingung für Quellobjekte (nur Objekte, die `true` ergeben)
+| `join` | block | nein | Join zwischen zwei Quellen (experimentell, max. 1 pro Regel)
+| `identity` | list | nein | Business-Key-Felder (z.B. `identity s.Nummer, s.Name;`)
+| `assign` | block | nein | Attributzuweisungen
+| `defaults` | block | nein | Regel-spezifische Defaults
+| `bag` | block | nein | BAG OF STRUCTURE (wiederholbar)
+| `ref` | block | nein | Referenz-Mapping (wiederholbar)
+| `create` | block | nein | Zusätzliche Zielobjekte erzeugen (experimentell)
+| `loss` | block | nein | Dokumentierter Informationsverlust (wiederholbar)
+| `metadata` | block | nein | Metadaten zur Regel (direction, roundtrip, lossiness)
+|===
+
+==== target
+
+[source,ilimap]
+----
+target tgt class "HelloDemo.Persons.Target";
+----
+
+* `tgt` — Output-ID, muss als `output` im Mapping deklariert sein
+* `"HelloDemo.Persons.Target"` — vollqualifizierter INTERLIS-Klassenname
+
+==== source
+
+[source,ilimap]
+----
+source s from src class "HelloDemo.Persons.Source";
+source s from src, other class "Shared.Info" where s.Status == #aktiv;
+----
+
+* `s` — Alias (in Ausdrücken als `s.Attribut` verwendet)
+* `from src` — Input-ID (eine oder mehrere, kommagetrennt)
+* `where` — optionale Filterbedingung
+
+[TIP]
+====
+Mehrere `source`-Blöcke in einer Regel erlauben kartesisches Produkt oder — mit `join` — kontrollierte Verknüpfungen.
+====
+
+==== Mehrere Quellen pro Regel
+
+Eine Regel kann mehrere `source`-Blöcke haben:
+
+[source,ilimap]
+----
+rule combine {
+  target tgt class "Target.Combined";
+  source p from src1 class "Source.Person";
+  source a from src2 class "Source.Address" where p.AdressId == a.Id;
+
+  assign {
+    Name = p.Name;
+    Ort = a.Ort;
+  }
+}
+----

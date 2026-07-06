@@ -1,0 +1,70 @@
+:noindex:
+=== MappingSection
+
+Die `mapping`-Sektion enthält die globalen Strategien und die Transformationsregeln.
+
+==== Felder
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `oidStrategy` | OidStrategySpec | nein | OID-Strategie
+| `basketStrategy` | BasketStrategySpec | nein | Basket-Strategie
+| `enums` | map[string, map] | nein | Enum-Mapping-Tabellen
+| `defaults` | map[string, string] | nein | Default-Werte (top-level)
+| `compileMode` | string | nein | `strict` (Default), `compatible`, `report`
+| `rules` | list[RuleSpec] | ja | Transformationsregeln (>= 1)
+|===
+
+==== OID-Strategie
+
+[source,yaml]
+----
+mapping:
+  oidStrategy:
+    type: uuid
+----
+
+.Mit Namespace (deterministicUuid)
+[source,yaml]
+----
+mapping:
+  oidStrategy:
+    type: deterministicUuid
+    namespace: "ch.admin.geo"
+----
+
+Unterstützte `type`-Werte: `preserve`, `integer`, `uuid`, `deterministicUuid`.
+
+==== Basket-Strategie
+
+[source,yaml]
+----
+mapping:
+  basketStrategy:
+    type: generateUuid
+----
+
+Unterstützte `type`-Werte: `preserve`, `generateUuid`, `preserveOrGenerateUuid`, `byTopic`.
+
+==== Enum-Mappings
+
+[source,yaml]
+----
+mapping:
+  enums:
+    status_map:
+      aktiv: aktiv
+      inaktiv: inaktiv
+      unbekannt: andere
+----
+
+==== Defaults
+
+[source,yaml]
+----
+mapping:
+  defaults:
+    Beschreibung: "Standardtext"
+    Status: "#aktiv"
+----

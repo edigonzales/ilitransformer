@@ -1,0 +1,43 @@
+:noindex:
+=== inspect-model
+
+Exportiert die Struktur eines INTERLIS-Modells als JSON und/oder Markdown. Nützlich, um verfügbare Klassen, Attribute und Typen zu erkunden.
+
+==== Signatur
+
+[source,text]
+----
+ilitransformer inspect-model --model <name> [options]
+----
+
+==== Optionen
+
+[cols="1,1,1,3",options="header"]
+|===
+| Option | Typ | Pflicht | Beschreibung
+| `--model` | *name* | ja | INTERLIS-Modellname
+| `--modeldir` | *dir* | nein | Modellverzeichnisse (Semikolon-getrennt)
+| `--output` | *path* | nein | Basispfad für die Ausgabe (`.json` und `.md` werden angehängt)
+| `--format` | enum | nein | `json`, `markdown`, `both` (Default: `both`)
+|===
+
+==== Beispiele
+
+.JSON und Markdown exportieren
+[source,bash]
+----
+ilitransformer inspect-model \
+  --model HelloDemo \
+  --modeldir models/ \
+  --output hello
+# Erzeugt: hello.json, hello.md
+----
+
+.Nur JSON
+[source,bash]
+----
+ilitransformer inspect-model \
+  --model HelloDemo \
+  --modeldir models/ \
+  --format json
+----

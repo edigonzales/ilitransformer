@@ -1,0 +1,47 @@
+:noindex:
+=== loss und metadata
+
+==== loss — Dokumentierter Informationsverlust
+
+[source,ilimap]
+----
+loss {
+  sourcePath s.AlteGeometrie;
+  reasonCode "GEOM_VEREINFACHT";
+  description "Die Geometrie wurde für das Zielmodell vereinfacht. " +
+              "Detailsiehe Transformationsbericht.";
+  when defined(s.AlteGeometrie);
+}
+----
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `sourcePath` | expression | ja | Quellattribut, das verloren geht
+| `reasonCode` | string | ja | Kategorie/Grund des Verlusts
+| `description` | string | ja | Beschreibung des Verlusts (String-Konkatenation mit `+` möglich)
+| `when` | expression | nein | Bedingung, unter der der Verlust eintritt
+|===
+
+`loss`-Blöcke dokumentieren, welche Quelldaten in der Transformation verloren gehen — etwa weil das Zielmodell sie nicht abbilden kann. Sie verhindern keine Transformation, sondern dienen der Nachvollziehbarkeit.
+
+==== metadata — Regel-Metadaten
+
+[source,ilimap]
+----
+metadata {
+  direction dm01_to_dmav;
+  roundtrip lossy;
+  lossiness partial;
+}
+----
+
+[cols="1,1,3",options="header"]
+|===
+| Feld | Typ | Beschreibung
+| `direction` | identifier | Transformationsrichtung
+| `roundtrip` | identifier | Roundtrip-Fähigkeit (z.B. `lossless`, `lossy`)
+| `lossiness` | identifier | Verlustgrad (z.B. `none`, `partial`, `full`)
+|===
+
+Die Werte sind frei wählbare Bezeichner — sie werden nicht validiert, sondern dienen der Dokumentation.

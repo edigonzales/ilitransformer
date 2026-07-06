@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 240" role="img" aria-labelledby="title desc">
+  <title id="title">Platzhalter für VS-Code-CodeLens</title>
+  <desc id="desc">Platzhalter für einen Screenshot des CodeLens über einer ilimap-Regel.</desc>
+  <rect width="900" height="240" fill="#fff"/>
+  <rect x="40" y="20" width="820" height="180" fill="#fff" stroke="#d9dee6" stroke-width="2"/>
+  <!-- Zwei CodeLens-Zeilen -->
+  <text x="74" y="67" font-family="Frutiger, Segoe UI, sans-serif" font-size="15" fill="#8b94a3">Show in Overview</text>
+  <text x="74" y="90" font-family="Frutiger, Segoe UI, sans-serif" font-size="15" fill="#8b94a3">Coverage 12/14 · 2 refs · 1 bag · 1 warning</text>
+  <!-- Code -->
+  <g font-family="JetBrains Mono, SFMono-Regular, Consolas, monospace" font-size="18">
+    <text x="74" y="125" fill="#8b94a3">2</text>
+    <text x="104" y="125" fill="#d51f26">rule</text><text x="164" y="125" fill="#20242a">GebaeudeAV_To_GebaeudeLV95 {</text>
+    <text x="74" y="155" fill="#8b94a3">3</text>
+    <text x="144" y="155" fill="#d51f26">source</text><text x="234" y="155" fill="#20242a">s </text><text x="254" y="155" fill="#d51f26">from</text><text x="314" y="155" fill="#20242a">src </text><text x="354" y="155" fill="#d51f26">class</text><text x="424" y="155" fill="#064b96">"AV_Gebaeude.Gebaeude"</text>
+    <text x="74" y="185" fill="#8b94a3">4</text>
+    <text x="144" y="185" fill="#d51f26">target</text><text x="234" y="185" fill="#20242a">t </text><text x="254" y="185" fill="#d51f26">from</text><text x="314" y="185" fill="#20242a">tgt </text><text x="354" y="185" fill="#d51f26">class</text><text x="424" y="185" fill="#064b96">"LV95_Gebaeude.Gebaeude"</text>
+  </g>
+  <text x="70" y="210" font-family="Frutiger, Segoe UI, sans-serif" font-size="16" fill="#656d78">Bildplatzhalter: CodeLens-Ausschnitt über einer Regel einsetzen</text>
+</svg>

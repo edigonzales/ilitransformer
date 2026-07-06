@@ -1,0 +1,56 @@
+:noindex:
+=== validate-mapping
+
+Prüft eine Mapping-Datei auf syntaktische und semantische Korrektheit, ohne eine Transformation auszuführen.
+
+==== Signatur
+
+[source,text]
+----
+ilitransformer validate-mapping -m <path> [options]
+----
+
+==== Optionen
+
+[cols="1,1,1,3",options="header"]
+|===
+| Option | Typ | Pflicht | Beschreibung
+| `-m`, `--mapping` | *file* | ja | Pfad zur Mapping-Datei (YAML oder *.ilimap*)
+| `--modeldir` | *dir* | nein | Zusätzliches Modellverzeichnis (wiederholbar)
+|===
+
+==== Verhalten
+
+*Ohne `--modeldir`*: Nur strukturelle Validierung (Syntax, Duplikate, unbekannte Referenzen innerhalb der Mapping-Datei).
+
+*Mit `--modeldir`*: Vollständige modellbewusste Validierung. Die referenzierten INTERLIS-Modelle werden kompiliert. Klassen-, Attribut- und Typreferenzen werden gegen die Modelle geprüft.
+
+[IMPORTANT]
+====
+Für *.ilimap*-Dateien, die `modeldir` im `job`-Block deklarieren, ist `--modeldir` auf der Kommandozeile optional. Ohne `job.modeldir` und ohne `--modeldir` erfolgt nur eine reduzierte Prüfung.
+====
+
+==== Beispiele
+
+.Strukturelle Prüfung
+[source,bash]
+----
+ilitransformer validate-mapping -m minimal.ilimap
+----
+
+.Modellbewusste Prüfung
+[source,bash]
+----
+ilitransformer validate-mapping \
+  -m profile.ilimap \
+  --modeldir /pfad/zu/modellen/
+----
+
+==== Exit-Codes
+
+[cols="1,2",options="header"]
+|===
+| Code | Bedeutung
+| `0` | Keine Fehler
+| `1` | Syntaxfehler oder semantische Probleme
+|===

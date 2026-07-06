@@ -1,0 +1,51 @@
+:noindex:
+=== XTF und ITF
+
+XTF (XML Transfer Format) und ITF (INTERLIS Transfer Format) sind die primären INTERLIS-Austauschformate.
+
+==== XTF
+
+[cols="1,2",options="header"]
+|===
+| Eigenschaft | Unterstützung
+| Eingabe | Vollständig
+| Ausgabe | Vollständig
+| Geometrien | Alle INTERLIS-Geometrietypen
+| Structures | Ja
+| References | Ja (bidirektionale Auflösung)
+|===
+
+==== ITF
+
+[cols="1,2",options="header"]
+|===
+| Eigenschaft | Unterstützung
+| Eingabe | Vollständig
+| Ausgabe | Vollständig
+| Geometrien | Eingeschränkt (modellabhängig)
+| Structures | Modellabhängig
+| References | Modellabhängig
+|===
+
+==== Verwendung
+
+[source,ilimap]
+----
+input src {
+  path "daten/input.xtf";
+  model "MyModel";
+  // format xtf;  ← optional, wird aus Endung erraten
+}
+
+output tgt {
+  path "daten/output.xtf";
+  model "MyModel";
+  format xtf;
+  option pretty true;
+}
+----
+
+[NOTE]
+====
+Bei XTF/ITF wird das Format aus der Dateiendung erraten. Die explizite Angabe von `format` ist nur nötig, wenn die Endung nicht dem Format entspricht.
+====

@@ -1,0 +1,40 @@
+:noindex:
+=== JobSection
+
+Die `job`-Sektion deklariert Metadaten und sämtliche Ein- und Ausgabedateien.
+
+==== Felder
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `name` | string | nein | Job-Name
+| `description` | string | nein | Beschreibung
+| `direction` | string | nein | Transformationsrichtung
+| `failPolicy` | string | nein | `strict` (Default), `lenient`, `reportOnly`
+| `modeldir` | list[string] | nein | Modellverzeichnisse (URLs oder Pfade)
+| `inputs` | list[InputSpec] | ja | Eingabedateien (>= 1)
+| `outputs` | list[OutputSpec] | ja | Ausgabedateien (>= 1)
+|===
+
+==== Beispiel
+
+[source,yaml]
+----
+job:
+  name: "DM01 nach DMAV"
+  description: "Vollständige Transformation"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  modeldir:
+    - "https://models.interlis.ch/"
+    - "./lokale-modelle/"
+  inputs:
+    - id: dm01
+      path: "eingabe.xtf"
+      model: "DM01"
+  outputs:
+    - id: dmav
+      path: "ausgabe.xtf"
+      model: "DMAV"
+----

@@ -1,0 +1,49 @@
+:noindex:
+=== Schnelleinstieg
+
+Dieser Abschnitt zeigt einen minimalen Transformationslauf vom geklonten Repository bis zur Ausgabe.
+
+==== Voraussetzungen
+
+* Java 17 oder neuer
+* Git (um das Repository zu klonen)
+
+==== Build
+
+[source,bash]
+----
+git clone https://github.com/edigonzales/ilitransformer.git
+cd ilitransformer
+./gradlew installDist
+----
+
+==== Erstes Mapping
+
+Die Demo-Suite enthält ein minimales Beispiel (*Hello Copy*), das zwei Objekte kopiert und dabei Namen trimmt und in Grossbuchstaben umwandelt.
+
+.Mapping validieren
+[source,bash]
+----
+./build/install/ilitransformer/bin/ilitransformer validate-mapping \
+  -m demo/01-hello-copy/profile.ilimap
+----
+
+.Transformation ausführen
+[source,bash]
+----
+./build/install/ilitransformer/bin/ilitransformer transform \
+  -m demo/01-hello-copy/profile.ilimap
+----
+
+.Transformation mit Validierung der Ausgabe
+[source,bash]
+----
+./build/install/ilitransformer/bin/ilitransformer transform \
+  -m demo/01-hello-copy/profile.ilimap --validate
+----
+
+Das Ergebnis (`output.xtf`) enthält zwei `Target`-Objekte mit bereinigten Namen.
+
+==== Nächste Schritte
+
+Die vollständige Demo-Suite (`demo/`) enthält neun Beispiele, die sich von einfachen Kopierregeln bis zu Referenzen, BAG OF STRUCTURE und OID-Strategien steigern. Siehe xref:_beispiele[Anhang C] für die kompletten Listings.

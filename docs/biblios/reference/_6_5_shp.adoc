@@ -1,0 +1,80 @@
+:noindex:
+=== Shapefile
+
+Shapefile wird als Ein- und Ausgabeformat unterstützt. Es besteht aus mindestens drei Dateien: `.shp` (Geometrie), `.dbf` (Attribute) und `.shx` (Index).
+
+[cols="1,2",options="header"]
+|===
+| Eigenschaft | Unterstützung
+| Eingabe | Ja
+| Ausgabe | Ja
+| Geometrien | Point, MultiPoint, Polyline, Polygon (2D)
+| Structures | Nein
+| References | Nein
+|===
+
+==== Eingabe-Optionen
+
+[cols="1,1,3",options="header"]
+|===
+| Option | Default | Beschreibung
+| `class` | *(Pflicht)* | INTERLIS-Klassenname
+| `topic` | aus `class` | Basket-Topic
+| `basketId` | `b1` | Basket-ID
+| `oidField` | `shp.<recordNumber>` | DBF-Feld für OID
+| `geometryAttribute` | inferiert | Name des Geometrieattributs
+| `geometryType` | aus Shape-Typ | `coord`, `polyline`, `surface`
+| `dbfEncoding` | `ISO-8859-1` | DBF-Kodierung
+| `column.<DBF>` | *(opt.)* | DBF-Spalte → INTERLIS-Attribut
+| `deletedRecordPolicy` | `error` | `error` oder `skip`
+| `requireShx` | `false` | `.shx` erzwingen
+|===
+
+==== Ausgabe-Optionen
+
+[cols="1,1,3",options="header"]
+|===
+| Option | Default | Beschreibung
+| `class` | erste geschriebene | IOX-Klasse
+| `geometryAttribute` | inferiert | Geometrieattribut für `.shp`
+| `shapeType` | aus Geometrie | `null`, `point`, `multipoint`, `polyline`, `polygon`
+| `dbfEncoding` | `UTF-8` | DBF-Kodierung
+| `fieldNameStrategy` | `strict` | `strict`, `truncate`, `stable`
+| `overflowPolicy` | `strict` | `strict`, `truncate`
+| `writeSidecarMapping` | `true` | `.iliattr.json` schreiben
+| `prj` | *(leer)* | WKT-String für `.prj`
+| `failOnMultipleBaskets` | `true` | Fehler bei mehreren Baskets
+|===
+
+[IMPORTANT]
+====
+DBF-Feldnamen sind auf 10 Zeichen begrenzt. `fieldNameStrategy: truncate` kürzt lange Attributnamen. Ein Mapping-File (`.iliattr.json`) dokumentiert die Zuordnung von DBF-Spalten zu INTERLIS-Attributen und wird standardmässig mitgeschrieben.
+====
+
+==== Eingabe-Beispiel
+
+[source,ilimap]
+----
+input shp_src {
+  path "daten/gebaeude.shp";
+  model "AV";
+  format shp;
+  option class "AV.Gebaeude";
+  option dbfEncoding "ISO-8859-1";
+  option geometryType surface;
+}
+----
+
+==== Ausgabe-Beispiel
+
+[source,ilimap]
+----
+output shp_out {
+  path "output/gebaeude.shp";
+  model "LV95";
+  format shp;
+  option dbfEncoding "UTF-8";
+  option fieldNameStrategy truncate;
+  option prj "PROJCS[\"CH1903+ / LV95\",GEOGCS[...]]";
+}
+----

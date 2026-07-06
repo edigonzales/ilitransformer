@@ -1,0 +1,42 @@
+:noindex:
+=== validate-transfer
+
+Validiert eine INTERLIS-Transferdatei (ITF oder XTF) mit ilivalidator.
+
+==== Signatur
+
+[source,text]
+----
+ilitransformer validate-transfer -f <file> --modeldir <dir>... --model <model>... [options]
+----
+
+==== Optionen
+
+[cols="1,1,1,3",options="header"]
+|===
+| Option | Typ | Pflicht | Beschreibung
+| `-f`, `--file` | *file* | ja | INTERLIS-Transferdatei (ITF oder XTF)
+| `--modeldir` | *dir* | ja | Modellverzeichnis (wiederholbar)
+| `--model` | *name* | ja | INTERLIS-Modellname (wiederholbar)
+| `--log` | *file* | nein | Pfad für das Validierungs-Log
+|===
+
+==== Beispiel
+
+[source,bash]
+----
+ilitransformer validate-transfer \
+  -f output.xtf \
+  --modeldir models/ \
+  --model HelloDemo
+----
+
+.Mit Log-Datei
+[source,bash]
+----
+ilitransformer validate-transfer \
+  -f output.xtf \
+  --modeldir models/ \
+  --model HelloDemo \
+  --log validation.log
+----

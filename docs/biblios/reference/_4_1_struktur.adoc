@@ -1,0 +1,53 @@
+:noindex:
+=== Gesamtstruktur
+
+Eine YAML-Mapping-Datei hat drei Top-Level-Sektionen:
+
+[source,yaml]
+----
+version: 1
+
+job:
+  name: "Meine Transformation"
+  description: "Beschreibung"
+  direction: dm01-to-dmav
+  failPolicy: strict
+  modeldir:
+    - "https://models.interlis.ch/"
+    - "models/"
+  inputs: [...]
+  outputs: [...]
+
+mapping:
+  oidStrategy: ...
+  basketStrategy: ...
+  enums: {...}
+  defaults: {...}
+  compileMode: strict
+  rules: [...]
+----
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `version` | int | ja | DSL-Version (aktuell `1`)
+| `job` | JobSection | ja | Job-Metadaten und I/O-Deklarationen
+| `mapping` | MappingSection | ja | Mapping-Regeln und Strategien
+|===
+
+[IMPORTANT]
+====
+Der YAML-Mapping-Compiler validiert die Version. Nur `version: 1` wird derzeit unterstützt.
+====
+
+==== Vergleich YAML vs. ilimap
+
+[cols="1,2,2",options="header"]
+|===
+| Aspekt | YAML | ilimap
+| Verwendung | Umfangreiche Transformationen mit vielen Dateien | Einzelne Mapping-Dateien
+| Tooling | Allgemeine YAML-Editoren | VS-Code-Erweiterung mit LSP
+| Modularisierung | Verlinkungen auf *.ilimap*-Dateien | Alles-in-einer-Datei
+| Syntax-Prüfung | Durch YAML-Parser + Compiler | Durch LSP in Echtzeit
+| Konvertierung | `convert-mapping` → ilimap | —
+|===

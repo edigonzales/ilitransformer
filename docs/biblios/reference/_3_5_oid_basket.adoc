@@ -1,0 +1,60 @@
+:noindex:
+=== oid und basket
+
+Steuern, wie Objekt-Identifikatoren (OID) und Baskets im Zielmodell vergeben werden.
+
+==== oid
+
+[source,ilimap]
+----
+// Einfache Form
+oid uuid;
+
+// Mit Namespace
+oid deterministicUuid {
+  namespace "ch.admin.geo";
+}
+----
+
+*Strategien:*
+
+[cols="1,3",options="header"]
+|===
+| Strategie | Beschreibung
+| `preserve` | OID aus der Quelle übernehmen
+| `integer` | Fortlaufende Ganzzahlen vergeben
+| `uuid` | Zufällige UUIDs generieren
+| `deterministicUuid` | UUIDs aus OID + Namespace ableiten (reproduzierbar)
+| `external` | *Reserviert, nicht implementiert*
+|===
+
+Der `deterministicUuid`-Namespace ist ein optionaler String. Ist er gesetzt, werden UUIDs aus `namespace + Quell-OID` abgeleitet, sodass sie über mehrere Läufe hinweg stabil bleiben.
+
+[IMPORTANT]
+====
+Die Strategie `external` ist reserviert, aber nicht implementiert. Ihre Verwendung führt zu einem Fehler.
+====
+
+==== basket
+
+[source,ilimap]
+----
+basket preserve;
+----
+
+*Strategien:*
+
+[cols="1,3",options="header"]
+|===
+| Strategie | Beschreibung
+| `preserve` | Basket-IDs aus der Quelle übernehmen
+| `generateUuid` | Neue UUID-Baskets generieren
+| `preserveOrGenerateUuid` | Quelle übernehmen, sonst UUID generieren
+| `byTopic` | Baskets nach Topic gruppieren
+| `expression` | *Reserviert, nicht implementiert*
+|===
+
+[IMPORTANT]
+====
+Die Strategie `expression` ist reserviert, aber nicht implementiert.
+====

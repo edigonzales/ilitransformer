@@ -1,0 +1,28 @@
+[preface]
+== Vorwort
+
+Die vorliegende Referenz dokumentiert den INTERLIS Transformer vollständig. Sie beschreibt alle CLI-Befehle, die ilimap-DSL, das YAML-Mapping-Format, die Ausdruckssprache, die unterstützten Formate sowie sämtliche Diagnostic-Codes.
+
+=== Zielgruppe
+
+Die Referenz richtet sich an alle, die mit dem INTERLIS Transformer arbeiten — vom Einsteiger, der das erste Mapping schreibt, bis zur erfahrenen Person, die eine komplexe Transformation mit YAML und verlinkten ilimap-Dateien konfiguriert. Sie setzt Grundkenntnisse in INTERLIS und der Arbeit mit der Kommandozeile voraus.
+
+=== Aufbau
+
+* <<_einfuhrung>> erklärt die Konzepte und die Architektur.
+* <<_cli_referenz>> beschreibt sämtliche CLI-Befehle mit allen Optionen.
+* <<_ilimap_dsl_referenz>> dokumentiert die ilimap-Sprache vollständig.
+* <<_yaml_mapping_referenz>> dokumentiert das YAML-Mapping-Format.
+* <<_ausdruckssprache_referenz>> listet alle Built-in-Funktionen auf.
+* <<_format_referenz>> beschreibt die unterstützten Ein- und Ausgabeformate.
+* Die Anhänge enthalten Diagnostic-Codes, OID-/Basket-Strategien, Beispiele und die formale Grammatik.
+
+=== Konventionen
+
+In dieser Referenz werden folgende typografische Mittel verwendet:
+
+* `feste Breite` — CLI-Befehle, Dateinamen, ilimap-Schlüsselwörter, Code
+* *kursiv* — Platzhalter, die durch eigene Werte zu ersetzen sind
+* [IMPORTANT] — wichtige Hinweise
+* [TIP] — Tipps und Best Practices
+* [WARNING] — Warnungen vor häufigen Fehlern

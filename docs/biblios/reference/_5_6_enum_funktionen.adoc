@@ -1,0 +1,41 @@
+:noindex:
+=== Enum-Funktionen
+
+[cols="1,3,3",options="header"]
+|===
+| Funktion | Signatur | Beschreibung
+| `enumMap` | `(value, mapName) → enum` | Wert über benannte Enum-Map abbilden; WARNING bei fehlendem Eintrag
+| `enumMapDefault` | `(value, mapName, fallback) → enum` | Wie `enumMap`, aber mit explizitem Fallback
+| `enumMapStrict` | `(value, mapName) → enum` | Wie `enumMap`, aber ERROR bei fehlendem Eintrag
+| `enumDefault` | `(value, fallback) → enum` | Fallback-Wert wenn `value` null ist
+| `enumName` | `(value) → text` | Text-Name eines Enum-Werts
+|===
+
+==== Beispiele
+
+[source,ilimap]
+----
+// enum-Block im Mapping:
+enum status_map {
+  #aktiv => #aktiv;
+  #inaktiv => #inaktiv;
+  _ => #unbekannt;
+}
+
+assign {
+  // Standard-Mapping
+  StatusNeu = enumMap(s.StatusAlt, status_map);
+
+  // Mit Fallback
+  StatusNeu = enumMapDefault(s.StatusAlt, status_map, #unbekannt);
+
+  // Strikt (Fehler bei unbekanntem Wert)
+  StatusNeu = enumMapStrict(s.StatusAlt, status_map);
+
+  // Optional mit Default
+  Status = enumDefault(s.Status, #aktiv);
+
+  // Enum-Name als Text
+  StatusText = enumName(s.Status);
+}
+----

@@ -1,0 +1,41 @@
+:lang: de
+:imagesdir: images
+:example-caption!:
+:table-caption: Tabelle
+:figure-caption: Abbildung
+:note-caption: Hinweis
+:tip-caption: Tipp
+:warning-caption: Achtung
+:xrefstyle: full
+:chapter-refsig: Kapitel
+:section-refsig: Kapitel
+:doctype: book
+:revdate: {localdate}
+
+= INTERLIS Transformer — Referenz
+
+include::_vorwort.adoc[]
+
+include::_1_einfuehrung.adoc[]
+
+include::_2_cli.adoc[]
+
+include::_3_ilimap_dsl.adoc[]
+
+include::_4_yaml_mapping.adoc[]
+
+include::_5_expressions.adoc[]
+
+include::_6_formate.adoc[]
+
+:sectnums!:
+
+include::_anhang_a.adoc[]
+
+include::_anhang_b.adoc[]
+
+include::_anhang_c.adoc[]
+
+include::_anhang_d.adoc[]
+
+:sectnums:

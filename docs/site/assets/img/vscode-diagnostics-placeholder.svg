@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" role="img" aria-labelledby="title desc">
+  <title id="title">Platzhalter für VS-Code-Diagnostics</title>
+  <desc id="desc">Platzhalter für einen Screenshot mit Diagnostics und Problems-Ansicht in VS Code.</desc>
+  <rect width="900" height="400" fill="#fff"/>
+  <rect x="40" y="20" width="820" height="350" fill="#fff" stroke="#d9dee6" stroke-width="2"/>
+  <line x1="620" y1="20" x2="620" y2="370" stroke="#d9dee6" stroke-width="2"/>
+  <!-- Linke Seite: Editor -->
+  <text x="70" y="60" font-family="Frutiger, Segoe UI, sans-serif" font-size="20" font-weight="700" fill="#20242a">profile.ilimap</text>
+  <g font-family="JetBrains Mono, SFMono-Regular, Consolas, monospace" font-size="18">
+    <text x="70" y="100" fill="#8b94a3">4</text>
+    <text x="100" y="100" fill="#d51f26">rule</text><text x="160" y="100" fill="#20242a">copy {</text>
+    <text x="70" y="130" fill="#8b94a3">5</text>
+    <text x="100" y="163" fill="#20242a">t.Label = </text><text x="230" y="163" fill="#d51f26">trim</text><text x="290" y="163" fill="#20242a">(s.Name)</text>
+    <!-- Rote Wellenlinie -->
+    <line x1="100" y1="173" x2="310" y2="173" stroke="#d51f26" stroke-width="2" stroke-dasharray="4 2"/>
+    <text x="70" y="200" fill="#8b94a3">6</text>
+    <!-- Gelbe Wellenlinie -->
+    <text x="100" y="200" fill="#20242a">t.Anzahl = </text><text x="230" y="200" fill="#20242a">s.Anzahl</text>
+    <line x1="100" y1="210" x2="300" y2="210" stroke="#e6a817" stroke-width="2" stroke-dasharray="4 2"/>
+  </g>
+  <!-- Rechte Seite: Problems -->
+  <text x="650" y="60" font-family="Frutiger, Segoe UI, sans-serif" font-size="15" font-weight="600" fill="#656d78">PROBLEMS</text>
+  <!-- Problem 1 -->
+  <circle cx="660" cy="100" r="6" fill="#d51f26"/>
+  <text x="675" y="106" font-family="Frutiger, Segoe UI, sans-serif" font-size="15" fill="#20242a">Missing assignment for mandatory</text>
+  <text x="675" y="126" font-family="Frutiger, Segoe UI, sans-serif" font-size="13" fill="#656d78">target attribute "t.Beschreibung"</text>
+  <text x="675" y="144" font-family="Frutiger, Segoe UI, sans-serif" font-size="12" fill="#8b94a3">profile.ilimap 5:11</text>
+  <!-- Problem 2 -->
+  <circle cx="660" cy="175" r="6" fill="#e6a817"/>
+  <text x="675" y="181" font-family="Frutiger, Segoe UI, sans-serif" font-size="15" fill="#20242a">Coverage of rule "copy" is</text>
+  <text x="675" y="201" font-family="Frutiger, Segoe UI, sans-serif" font-size="13" fill="#656d78">incomplete: 2 of 4 attributes covered</text>
+  <text x="675" y="219" font-family="Frutiger, Segoe UI, sans-serif" font-size="12" fill="#8b94a3">profile.ilimap 4:1</text>
+  <text x="70" y="360" font-family="Frutiger, Segoe UI, sans-serif" font-size="16" fill="#656d78">Bildplatzhalter: Diagnostics mit roten/gelben Wellenlinien und Problems-Ansicht</text>
+</svg>

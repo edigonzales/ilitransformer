@@ -1,0 +1,50 @@
+:noindex:
+=== Präzedenz und Desugaring
+
+==== Operatoren-Präzedenz
+
+Von niedrigster zu höchster Bindungsstärke:
+
+[cols="1,2,3",options="header"]
+|===
+| Stufe | Operatoren | Assoziativität
+| 1 (niedrigste) | `or` | links
+| 2 | `and` | links
+| 3 | `==`, `!=` | links
+| 4 | `<`, `\<=`, `>`, `>=` | links
+| 5 | `not` | rechts
+| 6 (höchste) | `()`, Literale, Pfade, Funktionsaufrufe | —
+|===
+
+==== Beispiele zur Präzedenz
+
+[source,ilimap]
+----
+// a and b or c                    → (a and b) or c
+// a and not b                     → a and (not b)
+// a == b and c > d               → (a == b) and (c > d)
+// not a and b                     → (not a) and b
+----
+
+==== Vollständiges Desugaring
+
+Jeder Operator wird vor der Ausführung in einen Funktionsaufruf umgewandelt:
+
+[cols="2,3",options="header"]
+|===
+| Ausdruck | Desugaring
+| `a == b` | `eq(a, b)` — ausser `a == null` → `notDefined(a)`
+| `a != b` | `neq(a, b)` — ausser `a != null` → `defined(a)`
+| `a < b` | `lt(a, b)`
+| `a <= b` | `lte(a, b)`
+| `a > b` | `gt(a, b)`
+| `a >= b` | `gte(a, b)`
+| `a and b` | `if(a, b, false)`
+| `a or b` | `if(a, true, b)`
+| `not a` | `not(a)`
+|===
+
+[TIP]
+====
+Die Lazy-Evaluation von `and` und `or` bedeutet, dass der rechte Operand nur ausgewertet wird, wenn der linke nicht bereits das Ergebnis bestimmt. `defined(x) and x > 0` ist daher sicher — `x > 0` wird nie mit `null` evaluiert.
+====

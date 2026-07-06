@@ -1,0 +1,91 @@
+[appendix]
+== ilimap-Grammatik (EBNF)
+
+Diese Grammatik beschreibt die vollständige Syntax der ilimap-DSL in erweiterter Backus-Naur-Form.
+
+=== Top-Level
+
+[source,text]
+----
+mapping     = "mapping" "v2" [STRING] "{" {job} {input} {output}
+              {oid} {basket} {enumBlock} {defaults} {rule} "}"
+
+job         = "job" "{" {stmt} "}"
+              stmt = name | description | direction | failPolicy
+                   | compileMode | modeldir
+
+input       = "input" ID "{" {path | model | format | option
+                           | connection | query} "}"
+output      = "output" ID "{" {path | model | format | option} "}"
+
+oid         = "oid" ID ["{" [namespace] "}"] ";"
+basket      = "basket" ID ";"
+enumBlock   = "enum" ID "{" {entry} "}"
+              entry = literal "=>" literal ";"
+defaults    = "defaults" "{" {assign} "}"
+rule        = "rule" ID "{" target source [{source}] [where]
+              [join] [identity] [assignBlock] [defaults]
+              {bag} {ref} [{create}] {loss} [metadata] "}"
+----
+
+=== rule-Elemente
+
+[source,text]
+----
+target      = "target" ID "class" STRING ";"
+source      = "source" ID "from" ID {"," ID} "class" STRING
+              ["where" expr] ";"
+where       = "where" expr ";"
+join        = "join" ("inner" | "left") ID "to" ID "on" expr ";"
+identity    = "identity" expr {"," expr} ";"
+assignBlock = "assign" "{" {assign} "}"
+assign      = ID "=" expr ";"
+----
+
+=== bag und ref
+
+[source,text]
+----
+bag         = "bag" ID "{" [from] [target] structure [mode]
+              [maxItems] [parentRef] [where] [assignBlock]
+              {bag} "}"
+
+ref         = "ref" ID "{" [association] [role] [required]
+              targetRef "}"
+
+create      = "create" "class" STRING "{" assignBlock "}"
+loss        = "loss" "{" sourcePath reasonCode description [when] "}"
+metadata    = "metadata" "{" {direction | roundtrip | lossiness} "}"
+----
+
+=== Lexikalische Tokens
+
+[source,text]
+----
+ID          = [a-zA-Z][a-zA-Z0-9_-]*              // symbolId
+ALIAS       = [a-zA-Z][a-zA-Z0-9_]*               // aliasId (ohne '-')
+STRING      = '"' {char} '"'
+INT         = [0-9]+
+FLOAT       = [0-9]+ "." [0-9]+
+BOOL        = "true" | "false"
+NULL        = "null"
+HASH        = "#" ID                              // Enum-Literal
+
+COMMENT     = "//" {char} "\n"                    // Zeilenkommentar
+            | "/*" {char} "*/"                    // Block-Kommentar
+
+RESERVED    = "mapping" | "job" | "input" | "output" | "oid"
+            | "basket" | "enum" | "rule" | "target" | "source"
+            | "from" | "where" | "join" | "identity" | "assign"
+            | "defaults" | "bag" | "ref" | "create" | "loss"
+            | "metadata" | "class" | "inner" | "left" | "mode"
+            | "structure" | "maxItems" | "parentRef"
+            | "association" | "role" | "required" | "sourcePath"
+            | "reasonCode" | "description" | "when" | "direction"
+            | "roundtrip" | "lossiness" | "option"
+            | "true" | "false" | "null"
+----
+
+=== Ausdrücke
+
+Die Ausdrucksgrammatik ist in xref:_praezendez_und_desugaring[Kapitel 5.10] dokumentiert.

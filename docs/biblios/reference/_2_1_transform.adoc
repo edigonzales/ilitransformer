@@ -1,0 +1,60 @@
+:noindex:
+=== transform
+
+Führt eine Transformation aus: liest Eingabedaten, wendet die Mapping-Regeln an und schreibt die Ausgabedatei.
+
+==== Signatur
+
+[source,text]
+----
+ilitransformer transform -m <path> [options]
+----
+
+==== Optionen
+
+[cols="1,1,1,3",options="header"]
+|===
+| Option | Typ | Pflicht | Beschreibung
+| `-m`, `--mapping` | *file* | ja | Pfad zur Mapping-Datei (YAML oder *.ilimap*)
+| `--modeldir` | *dir* | nein | Zusätzliches Modellverzeichnis (wiederholbar)
+| `--validate` | flag | nein | Ausgabe nach der Transformation mit ilivalidator prüfen
+| `--report` | *dir* | nein | Verzeichnis für Reports (JSON + Markdown)
+| `--fail-policy` | enum | nein | `strict` (Default), `lenient`, `report_only`
+| `--keep-temp` | flag | nein | Temporäre Dateien bei Fehler nicht löschen
+|===
+
+==== Fail-Policy
+
+[cols="1,3",options="header"]
+|===
+| Wert | Verhalten
+| `strict` | Abbruch bei jedem Fehler (Default)
+| `lenient` | Fehler sammeln, Ausgabe trotzdem schreiben
+| `report_only` | Fehler nur reportieren, keine Ausgabe schreiben
+|===
+
+==== Beispiele
+
+.Minimale Transformation
+[source,bash]
+----
+ilitransformer transform -m mapping.ilimap
+----
+
+.Mit Modellverzeichnissen und Validierung
+[source,bash]
+----
+ilitransformer transform \
+  -m profile.ilimap \
+  --modeldir models/ \
+  --validate
+----
+
+.Mit Report und lenient-Policy
+[source,bash]
+----
+ilitransformer transform \
+  -m mapping.yml \
+  --report reports/ \
+  --fail-policy lenient
+----

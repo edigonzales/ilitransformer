@@ -1,0 +1,83 @@
+:noindex:
+=== input und output
+
+`input` und `output` deklarieren Ein- und Ausgabedateien mit Format, Modell und formatspezifischen Optionen.
+
+==== Syntax input
+
+[source,ilimap]
+----
+input <id> {
+  path "datei.xtf";
+  model "Model.Topic";
+  format xtf;
+  option <key> <value>;
+  connection { ... }      // nur JDBC
+  query <id> { ... }      // nur JDBC, wiederholbar
+}
+----
+
+==== Syntax output
+
+[source,ilimap]
+----
+output <id> {
+  path "ausgabe.xtf";
+  model "Model.Topic";
+  format xtf;
+  option <key> <value>;
+}
+----
+
+==== Gemeinsame Felder
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `path` | string | ja* | Dateipfad (* ausser bei JDBC)
+| `model` | string | ja | INTERLIS-Modellname
+| `format` | identifier | nein | `itf`, `xtf`, `csv`, `gpkg`, `jdbc`, `shp`
+| `option` | id + literal | nein | Formatspezifische Option (wiederholbar)
+|===
+
+Wird kein `format` angegeben, errät der Transformer das Format anhand der Dateiendung:
+`*.xtf` → XTF, `*.itf` → ITF, `*.xml` → XML. Bei CSV, GPKG, JDBC und SHP ist `format` immer erforderlich.
+
+==== JDBC-spezifische Blöcke
+
+Siehe xref:_jdbc[Format-Referenz: JDBC] für `connection` und `query`.
+
+==== Beispiele
+
+.XTF
+[source,ilimap]
+----
+input src {
+  path "daten/input.xtf";
+  model "HelloDemo";
+}
+----
+
+.CSV mit Optionen
+[source,ilimap]
+----
+input csv_data {
+  path "daten/input.csv";
+  model "HelloData";
+  format csv;
+  option separator ";";
+  option encoding "ISO-8859-1";
+}
+----
+
+.Shapefile-Ausgabe mit Optionen
+[source,ilimap]
+----
+output shp_out {
+  path "output/gebaeude.shp";
+  model "LV95_Gebaeude";
+  format shp;
+  option dbfEncoding "UTF-8";
+  option fieldNameStrategy truncate;
+}
+----

@@ -1,0 +1,57 @@
+:noindex:
+=== Unterstützungsmatrix
+
+[cols="1,1,1,1,1,1",options="header"]
+|===
+| Format | Eingabe | Ausgabe | Geometrien | Structures | References
+| XTF | ✓ | ✓ | Alle | ✓ | ✓
+| ITF | ✓ | ✓ | Eingeschränkt | Modellabhängig | Modellabhängig
+| XML | ✓ | ✓ | Eingeschränkt | Modellabhängig | Modellabhängig
+| CSV | ✓ | ✗ | ✗ | ✗ | ✗
+| GeoPackage | ✓ | ✗ | Simple Features | ✗ | ✗
+| JDBC | ✓ | ✗ | WKT/WKB POINT | ✗ | ✗
+| Shapefile | ✓ | ✓ | Point/MultiPoint/Polyline/Polygon (2D) | ✗ | ✗
+|===
+
+==== Format-Erkennung
+
+[cols="2,3",options="header"]
+|===
+| Dateiendung / Option | Erkannt als
+| `.xtf` | XTF
+| `.itf` | ITF
+| `.xml` | XML
+| `format csv` | CSV (zwingend)
+| `format gpkg` | GeoPackage (zwingend)
+| `format jdbc` | JDBC (zwingend, kein `path`)
+| `format shp` | Shapefile (zwingend)
+|===
+
+==== Formate im YAML-Mapping
+
+[source,yaml]
+----
+inputs:
+  - id: xtf_in
+    path: "input.xtf"
+    model: "MyModel"
+    format: xtf
+
+  - id: csv_in
+    path: "input.csv"
+    model: "MyModel"
+    format: csv
+    options:
+      separator: ";"
+
+  - id: jdbc_in
+    model: "MyModel"
+    format: jdbc
+    connection:
+      url: "jdbc:postgresql://localhost/db"
+      userEnv: "DB_USER"
+      passwordEnv: "DB_PASS"
+    queries:
+      - class: "MyModel.Topic.MyClass"
+        sql: "SELECT * FROM my_table"
+----

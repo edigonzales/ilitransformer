@@ -1,0 +1,53 @@
+:noindex:
+=== Globale Optionen
+
+Diese Optionen sind für alle Befehle verfügbar.
+
+==== --help
+
+Zeigt die Hilfe für einen Befehl an:
+
+[source,bash]
+----
+ilitransformer --help                      # Befehlsübersicht
+ilitransformer transform --help           # Hilfe für transform
+ilitransformer validate-mapping --help    # Hilfe für validate-mapping
+----
+
+==== --version
+
+Zeigt die Build-Version und den Git-Commit-Hash an:
+
+[source,bash]
+----
+ilitransformer --version
+# ilitransformer 0.1.0 (commit: a1b2c3d)
+----
+
+==== Exit-Codes
+
+[cols="1,2",options="header"]
+|===
+| Code | Bedeutung
+| `0` | Erfolg
+| `1` | Kompilierungsfehler oder Laufzeitfehler
+|===
+
+==== Gradle-Tasks
+
+Neben den CLI-Befehlen stehen Gradle-Tasks für spezielle Anwendungsfälle zur Verfügung:
+
+[cols="1,3",options="header"]
+|===
+| Task | Beschreibung
+| `validateTransfer` | Transferdatei validieren (`-Ptransfer=... -Pmodel=...`)
+| `importDmavCorrelation` | DM01/DMAV-Korrelation importieren
+| `produceDm01BbItf` | DM01-BB-ITF erzeugen
+| `runDm01DmavFullRun` | Vollständigen DM01→DMAV-Lauf ausführen
+| `generateExpressionReference` | Ausdrucksreferenz generieren
+|===
+
+[source,bash]
+----
+./gradlew validateTransfer -Ptransfer=output.xtf -Pmodel=MyModel
+----

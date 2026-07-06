@@ -1,0 +1,20 @@
+:noindex:
+== YAML-Mapping-Referenz
+
+include::_4_1_struktur.adoc[]
+
+include::_4_2_job_section.adoc[]
+
+include::_4_3_input_spec.adoc[]
+
+include::_4_4_output_spec.adoc[]
+
+include::_4_5_mapping_section.adoc[]
+
+include::_4_6_rule_spec.adoc[]
+
+include::_4_7_bag_spec.adoc[]
+
+include::_4_8_ref_create_loss.adoc[]
+
+include::_4_9_yaml_ilimap_links.adoc[]

@@ -1,0 +1,22 @@
+:noindex:
+=== Referenz-Funktionen
+
+[cols="1,3,3",options="header"]
+|===
+| Funktion | Signatur | Beschreibung
+| `refOid` | `(ref) → text` | OID eines Referenz-Objekts extrahieren
+| `refEquals` | `(a, b) → boolean` | Prüfen, ob zwei Referenzen auf dasselbe Objekt zeigen
+|===
+
+==== Beispiele
+
+[source,ilimap]
+----
+assign {
+  // OID aus Referenz extrahieren
+  RefId = refOid(s.GebaeudeRef);
+
+  // Referenzen vergleichen
+  GleichesObjekt = refEquals(s.Ref1, s.Ref2);
+}
+----

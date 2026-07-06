@@ -1,0 +1,25 @@
+:noindex:
+=== Konzepte
+
+Der INTERLIS Transformer überführt INTERLIS-Daten kontrolliert von einer Form in eine andere. Er trennt bewusst zwischen technischer Repräsentation (Format) und fachlicher Bedeutung (Modell).
+
+==== Formatumbau und Datenumbau
+
+*Formatumbau* ändert die technische Repräsentation bei gleichbleibender fachlicher Bedeutung — zum Beispiel XTF nach GeoPackage oder JDBC-Tabelle.
+
+*Datenumbau* ändert die fachliche Struktur: Klassen, Attribute, Werte, Einheiten oder Beziehungen werden neu abgebildet — zum Beispiel bei der Migration von einem Datenmodell in ein anderes.
+
+==== Drei Bausteine
+
+. *I/O-Provider* lesen und schreiben Formate wie XTF, ITF, CSV, GeoPackage, JDBC und Shapefile.
+. *IOM / iox-ili* stellt die gemeinsame, modellbewusste Objektwelt bereit.
+. *ilimap* beschreibt deklarativ, wie aus Quellobjekten Zielobjekte entstehen.
+
+==== Mapping-Formate
+
+Ein Mapping kann auf zwei Arten beschrieben werden:
+
+. Als *.ilimap*-Datei — eine eigene DSL mit Syntax-Highlighting, Autovervollständigung und Validierung in VS Code.
+. Als *YAML-Datei* — geeignet für umfangreiche Transformationen. YAML-Dateien können auf *.ilimap*-Dateien verweisen, um Regeln auszulagern.
+
+Beide Formate werden vom selben Compiler verarbeitet und sind funktional äquivalent.

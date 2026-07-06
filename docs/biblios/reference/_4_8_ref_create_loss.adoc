@@ -1,0 +1,81 @@
+:noindex:
+=== RefMapping, CreateSpec, LossSpec, MetadataSpec
+
+==== RefMapping
+
+[source,yaml]
+----
+refs:
+  - association: "TargetModel.Topic.AssocRef"
+    role: "ZielRolle"
+    sourceRef: "s.RefOID"
+    targetRule: "ziel_regel"
+----
+
+[cols="1,1,3",options="header"]
+|===
+| Feld | Pflicht | Beschreibung
+| `association` | nein | Qualifizierter Assoziationsname
+| `role` | nein | Rollenname
+| `sourceRef` | ja | Ausdruck, der die Referenz-OID liefert
+| `targetRule` | ja | ID der Zielregel, die das referenzierte Objekt erzeugt
+|===
+
+==== CreateSpec (experimentell)
+
+[source,yaml]
+----
+create:
+  - class: "TargetModel.Topic.Metadaten"
+    assign:
+      Quelle: '"ilitransformer"'
+      Timestamp: "now()"
+----
+
+==== LossSpec
+
+[source,yaml]
+----
+loss:
+  - sourcePath: "s.AlteGeometrie"
+    reasonCode: "GEOM_VEREINFACHT"
+    description: "Geometrie wurde vereinfacht"
+    when: "defined(s.AlteGeometrie)"
+----
+
+[cols="1,1,3",options="header"]
+|===
+| Feld | Pflicht | Beschreibung
+| `sourcePath` | ja | Quellattribut, das verloren geht
+| `reasonCode` | ja | Kategorie des Verlusts
+| `description` | ja | Beschreibung
+| `when` | nein | Bedingung
+|===
+
+==== MetadataSpec
+
+[source,yaml]
+----
+metadata:
+  direction: "dm01_to_dmav"
+  roundtrip: "lossy"
+  lossiness: "partial"
+----
+
+[cols="1,1,3",options="header"]
+|===
+| Feld | Pflicht | Beschreibung
+| `direction` | nein | Transformationsrichtung
+| `roundtrip` | nein | Roundtrip-Fähigkeit
+| `lossiness` | nein | Verlustgrad
+|===
+
+==== IdentitySpec
+
+[source,yaml]
+----
+identity:
+  sourceKey:
+    - "s.Nummer"
+    - "s.Name"
+----

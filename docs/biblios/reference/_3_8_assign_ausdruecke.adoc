@@ -1,0 +1,65 @@
+:noindex:
+=== assign und Ausdrücke
+
+Der `assign`-Block enthält die eigentlichen Attributzuweisungen.
+
+==== Syntax
+
+[source,ilimap]
+----
+assign {
+  <zielAttribut> = <expression>;
+  ...
+}
+----
+
+Jede Zuweisung besteht aus einem Zielattribut (links) und einem Ausdruck (rechts), abgeschlossen mit `;`.
+
+==== Einfache Zuweisungen
+
+[source,ilimap]
+----
+assign {
+  Name = s.Name;                          // Direkt übernehmen
+  Beschreibung = "Standard";              // Konstanter String
+  Anzahl = 42;                            // Konstanter Zahlenwert
+  Aktiv = true;                           // Boolescher Wert
+  Status = #aktiv;                        // Enum-Wert
+}
+----
+
+==== Ausdrücke mit Funktionen
+
+[source,ilimap]
+----
+assign {
+  Name = trim(s.Name);                    // String trimmen
+  NameGross = upper(trim(s.Name));        // Verschachtelte Aufrufe
+  Wert = round(s.Wert, 2);               // Auf 2 Stellen runden
+  Datum = toXmlDateTime(s.Datum);        // Typkonvertierung
+  StatusNeu = enumMap(s.StatusAlt,      // Enum-Mapping
+    meine_map);
+  Bezug = if(defined(s.Referenz),         // Bedingung
+    s.Referenz, null);
+}
+----
+
+==== Pfade und Aliase
+
+* `alias.attribut` — Attribut eines Quellobjekts (z.B. `s.Name`)
+* `alias.rolle.attribut` — Attribut über eine Rolle (z.B. `s.Adresse.Ort`)
+
+Die vollständige Ausdruckssprache ist in xref:_ausdruckssprache_referenz[Kapitel 5] dokumentiert.
+
+==== Ausdrücke über mehrere Zeilen
+
+Lange Ausdrücke können umgebrochen werden — der Ausdruck endet erst beim `;`:
+
+[source,ilimap]
+----
+assign {
+  Label = trim(
+    upper(s.Name)
+  );
+}
+----

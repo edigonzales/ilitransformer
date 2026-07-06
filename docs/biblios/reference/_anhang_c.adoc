@@ -1,0 +1,181 @@
+[appendix]
+== Beispiele
+
+Dieser Anhang enthält vollständige, lauffähige Minimalbeispiele. Alle Beispiele sind im Repository unter `demo/` verfügbar.
+
+=== Demo 01 — Hello Copy (ilimap)
+
+.Interlis-Modell (`models/hello.ili`)
+[source,interlis]
+----
+INTERLIS 2.4;
+
+MODEL HelloDemo (en)
+  AT "https://demo.ilinexus.ch" VERSION "2026-06-22" =
+  TOPIC Persons =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    CLASS Source =
+      Name: MANDATORY TEXT*60;
+      Anzahl: 0 .. 9999;
+      Aktiv: BOOLEAN;
+    END Source;
+
+    CLASS Target =
+      Label: MANDATORY TEXT*60;
+      LabelGross: TEXT*60;
+      Anzahl: 0 .. 9999;
+      Aktiv: BOOLEAN;
+    END Target;
+
+  END Persons;
+END HelloDemo.
+----
+
+.Eingabedaten (`data/input.xtf`)
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS"
+              xmlns:HelloDemo="http://www.interlis.ch/xtf/2.4/HelloDemo">
+  <ili:headersection>
+    <ili:models>
+      <ili:model>HelloDemo</ili:model>
+    </ili:models>
+    <ili:sender>demo</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <HelloDemo:Persons ili:bid="b1">
+      <HelloDemo:Source ili:tid="001">
+        <HelloDemo:Name>  Alice Mueller  </HelloDemo:Name>
+        <HelloDemo:Anzahl>42</HelloDemo:Anzahl>
+        <HelloDemo:Aktiv>true</HelloDemo:Aktiv>
+      </HelloDemo:Source>
+    </HelloDemo:Persons>
+  </ili:datasection>
+</ili:transfer>
+----
+
+.Mapping (`profile.ilimap`)
+[source,ilimap]
+----
+mapping v2 "demo-01-hello-copy" {
+  job {
+    description "1:1-Kopie mit String-Expressions";
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "HelloDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "HelloDemo";
+  }
+
+  oid uuid;
+
+  rule copy {
+    target tgt class "HelloDemo.Persons.Target";
+    source s from src class "HelloDemo.Persons.Source";
+
+    assign {
+      Label = trim(s.Name);
+      LabelGross = upper(trim(s.Name));
+      Anzahl = s.Anzahl;
+      Aktiv = s.Aktiv;
+    }
+  }
+}
+----
+
+.Ausführung
+[source,bash]
+----
+ilitransformer validate-mapping -m profile.ilimap
+ilitransformer transform -m profile.ilimap --validate
+----
+
+=== Demo 01 — Hello Copy (YAML)
+
+.Gleiches Mapping als YAML (`mapping.yml`)
+[source,yaml]
+----
+version: 1
+
+job:
+  description: "1:1-Kopie mit String-Expressions"
+  modeldir:
+    - "models/"
+  inputs:
+    - id: src
+      path: "data/input.xtf"
+      model: "HelloDemo"
+  outputs:
+    - id: tgt
+      path: "output.xtf"
+      model: "HelloDemo"
+
+mapping:
+  oidStrategy:
+    type: uuid
+  rules:
+    - id: "copy"
+      target:
+        output: tgt
+        class: "HelloDemo.Persons.Target"
+      sources:
+        - input: src
+          alias: s
+          class: "HelloDemo.Persons.Source"
+      assign:
+        Label: "trim(s.Name)"
+        LabelGross: "upper(trim(s.Name))"
+        Anzahl: "s.Anzahl"
+        Aktiv: "s.Aktiv"
+----
+
+=== Demo 05 — Bedingungen (ilimap)
+
+[source,ilimap]
+----
+mapping v2 {
+  job {
+    modeldir "models/";
+  }
+
+  input src {
+    path "input.xtf";
+    model "HelloDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "HelloDemo";
+  }
+
+  oid uuid;
+
+  rule conditional {
+    target tgt class "HelloDemo.Persons.Target";
+    source s from src class "HelloDemo.Persons.Source";
+
+    assign {
+      // if, defined, coalesce
+      Label = if(defined(s.Name), trim(s.Name), "Unbekannt");
+      Status = coalesce(s.StatusA, s.StatusB, #inaktiv);
+      Gross = s.Anzahl > 50;
+      Kategorie = if(s.Anzahl < 10, "Klein",
+                    if(s.Anzahl < 100, "Mittel", "Gross"));
+    }
+  }
+}
+----
+
+[NOTE]
+====
+Die vollständige Demo-Suite mit allen 9 Beispielen — von einfachen Kopien über BAG OF STRUCTURE bis zu OID-Strategien — finden Sie im Repository unter `demo/`.
+====

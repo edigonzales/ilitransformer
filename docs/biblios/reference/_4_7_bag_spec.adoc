@@ -1,0 +1,74 @@
+:noindex:
+=== BagSpec
+
+`bags` definieren BAG OF STRUCTURE — strukturierte Listen innerhalb eines Zielobjekts.
+
+==== Felder
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `from` | BagFromSpec | ja | Quelle für Bag-Einträge
+| `structure` | string | ja | Strukturklasse
+| `mode` | string | nein | `embed` (Default) oder `expand`
+| `maxItems` | int | nein | Maximale Anzahl Einträge
+| `parentRef` | ParentRefSpec | nein | Rückwärts-Referenz
+| `where` | string | nein | Zusätzlicher Filter
+| `assign` | map[string, string] | nein | Attributzuweisungen
+| `bag` | map[string, BagSpec] | nein | Verschachtelte Bags
+|===
+
+==== BagFromSpec
+
+[source,yaml]
+----
+from:
+  input: src          # Input-ID
+  alias: a            # Alias
+  class: "Model.Topic.SourceClass"
+  where: "a.ParentId == p.OID"
+----
+
+==== ParentRefSpec
+
+[source,yaml]
+----
+parentRef:
+  attribute: "GebaeudeId"   # oder role: "..."
+  parent: g                 # Parent-Alias
+----
+
+==== Vollständiges Beispiel
+
+[source,yaml]
+----
+bags:
+  adressen:
+    from:
+      input: src
+      alias: a
+      class: "AV.Adresse"
+      where: "a.GebaeudeId == g.OID"
+    structure: "LV95.Adresse"
+    mode: embed
+    maxItems: 10
+    parentRef:
+      attribute: "GebaeudeId"
+      parent: g
+    assign:
+      Strasse: "a.Strasse"
+      Hausnummer: "a.Hausnummer"
+      PLZ: "a.PLZ"
+      Ort: "a.Ort"
+    bag:
+      dokumente:
+        from:
+          input: src
+          alias: d
+          class: "AV.Dokument"
+          where: "d.AdresseId == a.OID"
+        structure: "LV95.Dokument"
+        assign:
+          Dateiname: "d.Dateiname"
+          Typ: "d.Typ"
+----

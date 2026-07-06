@@ -1,0 +1,32 @@
+:noindex:
+=== Date-Funktionen
+
+[cols="1,3,3",options="header"]
+|===
+| Funktion | Signatur | Beschreibung
+| `toXmlDateTime` | `(value) → XMLDateTime` | DATE oder TEXT in INTERLIS.XMLDateTime umwandeln
+| `toDate` | `(value) → Date` | XMLDateTime oder TEXT in INTERLIS.Date umwandeln
+| `toInterlis1Date` | `(value) → text` | In INTERLIS-1-Datumsformat umwandeln (BASIC_ISO_DATE: `YYYY-MM-DD`)
+| `now` | `() → XMLDateTime` | Aktueller Zeitstempel (nicht-deterministisch)
+|===
+
+[WARNING]
+====
+`now()` ist nicht-deterministisch. Jeder Aufruf liefert einen anderen Zeitstempel. Verwenden Sie `now()` sparsam und nur, wenn der exakte Zeitpunkt der Transformation festgehalten werden soll.
+====
+
+==== Beispiele
+
+[source,ilimap]
+----
+assign {
+  // DATE → XMLDateTime
+  Erfassung = toXmlDateTime(s.Erfassungsdatum);
+
+  // XMLDateTime → INTERLIS 1 (YYYY-MM-DD)
+  DatumAlt = toInterlis1Date(s.ModernesDatum);
+
+  // Aktueller Zeitstempel
+  ImportZeit = now();
+}
+----

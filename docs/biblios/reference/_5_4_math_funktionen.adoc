@@ -1,0 +1,35 @@
+:noindex:
+=== Math-Funktionen
+
+[cols="1,3,3",options="header"]
+|===
+| Funktion | Signatur | Beschreibung
+| `div` | `(value, divisor) → number` | Division; `null` bei Division durch 0
+| `mul` | `(value, factor) → number` | Multiplikation
+| `add` | `(value, addend) → number` | Addition
+| `sub` | `(value, subtrahend) → number` | Subtraktion
+| `round` | `(value, scale) → number` | Runden auf Dezimalstellen (HALF_UP)
+| `abs` | `(value) → number` | Absolutwert
+| `min` | `(a, b) → number` | Kleinerer von zwei Werten
+| `max` | `(a, b) → number` | Grösserer von zwei Werten
+| `toNumber` | `(value) → number` | Text in Zahl umwandeln
+|===
+
+==== Beispiele
+
+[source,ilimap]
+----
+assign {
+  // Einheiten umrechnen
+  FlaecheM2 = round(mul(s.FlaecheHa, 10000), 2);
+
+  // Prozentuale Anpassung
+  PreisNeu = round(mul(s.PreisAlt, 1.08), 2);
+
+  // Begrenzung
+  Anzahl = min(s.Anzahl, 9999);
+
+  // Text → Zahl
+  Wert = toNumber(s.TextWert);
+}
+----

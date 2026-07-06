@@ -1,0 +1,54 @@
+:noindex:
+=== OutputSpec
+
+Beschreibt eine Ausgabedatei.
+
+==== Felder
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `id` | string | ja | Eindeutige ID (in Regeln als `outputId` referenziert)
+| `path` | string | ja | Ausgabedatei
+| `model` | string | ja | INTERLIS-Modellname
+| `format` | string | nein | `itf`, `xtf`, `shp`
+| `options` | map | nein | Formatspezifische Optionen
+|===
+
+==== Beispiele
+
+.XTF
+[source,yaml]
+----
+outputs:
+  - id: out
+    path: "output.xtf"
+    model: "TargetModel"
+    format: xtf
+----
+
+.XTF mit Pretty-Print
+[source,yaml]
+----
+outputs:
+  - id: out
+    path: "output.xtf"
+    model: "TargetModel"
+    format: xtf
+    options:
+      pretty: true
+----
+
+.Shapefile
+[source,yaml]
+----
+outputs:
+  - id: shp_out
+    path: "output/gebaeude.shp"
+    model: "TargetModel"
+    format: shp
+    options:
+      dbfEncoding: "UTF-8"
+      fieldNameStrategy: "truncate"
+      prj: "PROJCS[\"CH1903+ / LV95\",...]"
+----

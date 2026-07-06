@@ -1,0 +1,55 @@
+:noindex:
+=== enum und defaults
+
+==== enum — Enum-Mapping-Tabellen
+
+[source,ilimap]
+----
+enum meine_enum_map {
+  #aktiv => #aktiv;
+  #inaktiv => #inaktiv;
+  #unbekannt => #andere;
+  _ => #andere;    // Default-Wert
+}
+----
+
+Enum-Blöcke definieren benannte Zuordnungstabellen, die in Ausdrücken mit `enumMap()`, `enumMapDefault()` und `enumMapStrict()` verwendet werden (siehe xref:_enum_funktionen[Ausdruckssprache: Enum-Funktionen]).
+
+[cols="2,3",options="header"]
+|===
+| Element | Beschreibung
+| `"literal" => "literal"` | Enum-Wert der Quelle auf Enum-Wert des Ziels abbilden
+| `#literal => #literal` | Hash-Literale für Enum-Werte
+| `_` | Wildcard / Default-Zweig
+|===
+
+[IMPORTANT]
+====
+Enum-Maps werden über ihren Bezeichner referenziert — nicht über ihren Dateinamen. Der Bezeichner `meine_enum_map` wird in Ausdrücken als `enumMap(s.Status, meine_enum_map)` verwendet.
+====
+
+==== defaults — Default-Werte
+
+`defaults`-Blöcke können auf zwei Ebenen erscheinen:
+
+*Top-Level* (gilt für alle Regeln):
+[source,ilimap]
+----
+defaults {
+  Beschreibung = "Standardtext";
+  Status = #aktiv;
+}
+----
+
+*Rule-Level* (gilt nur für diese Regel):
+[source,ilimap]
+----
+rule copy {
+  defaults {
+    Beschreibung = "Kopiert von " + s.Name;
+  }
+  ...
+}
+----
+
+Rule-Level-Defaults überschreiben Top-Level-Defaults für dasselbe Attribut. Defaults kommen nur zum Zug, wenn das Zielattribut in keiner `assign`-Anweisung gesetzt wurde.

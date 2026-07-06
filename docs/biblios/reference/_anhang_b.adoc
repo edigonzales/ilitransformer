@@ -1,0 +1,53 @@
+[appendix]
+== OID- und Basket-Strategien
+
+=== OID-Strategien
+
+[cols="1,3,2",options="header"]
+|===
+| Strategie | Verhalten | Namespace
+| `preserve` | OID unverändert aus der Quelle übernehmen | —
+| `integer` | Fortlaufende Ganzzahlen (1, 2, 3, ...) | —
+| `uuid` | Zufällige UUIDv4 generieren | —
+| `deterministicUuid` | UUIDv5 aus Namespace + Quell-OID ableiten | Pflicht
+| `external` | *Reserviert, nicht implementiert* | —
+|===
+
+==== deterministicUuid im Detail
+
+`deterministicUuid` verwendet UUIDv5 (SHA-1-basiert) mit einem konfigurierbaren Namespace. Die resultierende UUID ist nur vom Namespace und der Quell-OID abhängig — sie bleibt über mehrere Transformationsläufe hinweg stabil.
+
+[source,ilimap]
+----
+oid deterministicUuid {
+  namespace "ch.admin.geo";
+}
+----
+
+[NOTE]
+====
+Ändern Sie den Namespace nicht nach der ersten Transformation. Ein neuer Namespace erzeugt andere UUIDs und bricht bestehende Referenzen.
+====
+
+=== Basket-Strategien
+
+[cols="1,3",options="header"]
+|===
+| Strategie | Verhalten
+| `preserve` | Basket-ID unverändert aus der Quelle übernehmen
+| `generateUuid` | Für jedes Zielobjekt einen neuen UUID-Basket generieren
+| `preserveOrGenerateUuid` | Quelle übernehmen wenn vorhanden, sonst UUID generieren
+| `byTopic` | Objekte nach INTERLIS-Topic in separate Baskets gruppieren
+| `expression` | *Reserviert, nicht implementiert*
+|===
+
+=== Matrix: Strategie pro Anwendungsfall
+
+[cols="1,3,1,1",options="header"]
+|===
+| Anwendungsfall | Empfohlene OID | Empfohlener Basket | Begründung
+| 1:1-Kopie | `preserve` | `preserve` | Identität erhalten
+| Neue Objekte | `uuid` | `preserveOrGenerateUuid` | Eindeutigkeit + Herkunft
+| Wiederholbare Migration | `deterministicUuid` | `preserveOrGenerateUuid` | Reproduzierbarkeit
+| Modell-Merge | `uuid` | `byTopic` | Trennung nach Thema
+|===

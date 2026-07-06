@@ -1,0 +1,89 @@
+:noindex:
+=== RuleSpec
+
+Eine Regel in der YAML-DSL.
+
+==== Felder
+
+[cols="1,1,1,3",options="header"]
+|===
+| Feld | Typ | Pflicht | Beschreibung
+| `id` | string | ja | Eindeutige Regel-ID
+| `target` | TargetSpec | ja | Zielklasse und Output
+| `sources` | list[SourceSpec] | ja | Quellklassen (>= 1)
+| `where` | string | nein | Filter-Ausdruck (betrifft alle Quellen)
+| `identity` | IdentitySpec | nein | Business-Key
+| `assign` | map[string, string] | nein | Attributzuweisungen
+| `refs` | list[RefMapping] | nein | Referenz-Mappings
+| `bags` | map[string, BagSpec] | nein | BAG OF STRUCTURE
+| `joins` | list[JoinSpec] | nein | Joins (experimentell, max. 1)
+| `create` | list[CreateSpec] | nein | Zusätzliche Zielobjekte (experimentell)
+| `loss` | list[LossSpec] | nein | Informationsverlust
+| `metadata` | MetadataSpec | nein | Metadaten
+| `defaults` | map[string, string] | nein | Regel-Defaults
+|===
+
+==== TargetSpec
+
+[source,yaml]
+----
+target:
+  output: out
+  class: "TargetModel.Topic.TargetClass"
+----
+
+==== SourceSpec
+
+[source,yaml]
+----
+sources:
+  - input: src
+    alias: s
+    class: "SourceModel.Topic.SourceClass"
+    where: "s.Status == #aktiv"
+----
+
+==== Beispiel
+
+[source,yaml]
+----
+rules:
+  - id: "copy_gebaeude"
+    target:
+      output: out
+      class: "LV95.Gebaeude"
+    sources:
+      - input: src
+        alias: g
+        class: "AV.Gebaeude"
+    assign:
+      Name: "trim(g.Name)"
+      Nummer: "g.Nummer"
+      Geometrie: "ref g.Geometrie"
+    bags:
+      adressen:
+        from:
+          input: src
+          alias: a
+          class: "AV.Adresse"
+          where: "a.GebaeudeId == g.OID"
+        target: "Adressen"
+        structure: "LV95.Adresse"
+        assign:
+          Strasse: "a.Strasse"
+          Ort: "a.Ort"
+    refs:
+      - association: "LV95.GebaeudeRef"
+        role: "Gebaeude"
+        sourceRef: "g.RefOID"
+        targetRule: "gebaeude_rule"
+    loss:
+      - sourcePath: "g.AlteGeometrie"
+        reasonCode: "GEOM_VEREINFACHT"
+        description: "Geometrie vereinfacht"
+        when: "defined(g.AlteGeometrie)"
+    metadata:
+      direction: "av_to_lv95"
+      roundtrip: "lossy"
+      lossiness: "minimal"
+----

@@ -1,0 +1,94 @@
+[appendix]
+== Diagnostic-Codes
+
+Jede Diagnosemeldung hat einen Code der Form `ILITRF-KATEGORIE-NAME`. Die Codes sind hierarchisch nach Kategorie gruppiert.
+
+=== ILITRF-MAP — Mapping/Compiler
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Severity | Beschreibung
+| `VERSION` | ERROR | version-Feld fehlt oder < 1
+| `MISSING-ID` | ERROR | Regel ohne id
+| `DUPLICATE-ID` | ERROR | Regel-id nicht eindeutig
+| `MISSING-TARGET-CLASS` | ERROR | Zielklasse fehlt
+| `UNKNOWN-OUTPUT` | ERROR | Output-ID unbekannt
+| `MISSING-SOURCE-CLASS` | ERROR | Quellklasse fehlt
+| `MISSING-ALIAS` | ERROR | Source-Alias fehlt
+| `DUPLICATE-ALIAS` | ERROR | Source-Alias nicht eindeutig
+| `UNKNOWN-INPUT` | ERROR | Input-ID unbekannt
+| `MISSING-INPUT` | ERROR | Source-Input-Feld fehlt
+| `UNKNOWN-TARGET-CLASS` | ERROR | Zielklasse nicht im Modell
+| `UNKNOWN-SOURCE-CLASS` | ERROR | Quellklasse nicht im Modell
+| `ABSTRACT-TARGET-CLASS` | ERROR | Zielklasse ist abstrakt
+| `UNKNOWN-TARGET-ATTRIBUTE` | ERROR | Zielattribut nicht im Modell
+| `UNKNOWN-SOURCE-ATTRIBUTE` | WARNING | Quellattribut nicht im Modell
+| `UNKNOWN-ROLE` | WARNING | Rolle nicht in Zielklasse
+| `TYPE-MISMATCH` | WARNING | Typ des Ausdrucks passt nicht
+| `MANDATORY-MISSING` | WARNING | Pflichtattribut nicht gesetzt
+| `DUPLICATE-TARGET-ASSIGN` | ERROR | Zielattribut doppelt zugewiesen
+| `CYCLIC-DEPENDENCY` | ERROR | Zyklische Regel-Abhängigkeit
+| `NON-TRANSFERABLE-TARGET` | WARNING | Zielklasse ist View
+| `OID-TYPE-MISMATCH` | ERROR | OID-Strategie inkompatibel
+|===
+
+=== ILITRF-MODEL — Modell
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Severity | Beschreibung
+| `COMPILE-FAILED` | ERROR | Modellkompilierung fehlgeschlagen
+|===
+
+=== ILITRF-RUN — Laufzeit
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Severity | Beschreibung
+| `REF-UNRESOLVED` | WARNING / ERROR | Referenz nicht auflösbar
+| `REF-AMBIGUOUS` | ERROR | Referenz mehrdeutig
+| `REF-TYPE-MISMATCH` | WARNING / ERROR | Falsche Zielklasse
+| `REF-MISSING-MANDATORY` | WARNING / ERROR | Pflicht-Referenz fehlt
+| `REF-CARDINALITY` | WARNING | Kardinalität verletzt
+| `OID-COLLISION` | ERROR | OID-Kollision
+| `BASKET` | ERROR | Basket-Zuordnung fehlgeschlagen
+| `SOURCE-READ` | ERROR | Quelle nicht lesbar
+| `TARGET-WRITE` | ERROR | Ziel nicht schreibbar
+| `EXPR` | ERROR | Ausdrucks-Evaluierung fehlgeschlagen
+| `CARDINALITY` | ERROR | Kardinalität verletzt
+|===
+
+=== ILITRF-EXPR — Ausdrücke
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Severity | Beschreibung
+| `SYNTAX` | ERROR | Syntaxfehler im Ausdruck
+| `UNKNOWN-FUNC` | ERROR | Unbekannte Funktion
+| `TYPE` | ERROR | Typfehler
+| `NON-DETERMINISTIC` | WARNING | Nicht-deterministische Funktion verwendet
+| `UNSUPPORTED` | WARNING | Feature noch nicht unterstützt
+|===
+
+=== ILITRF-GEOM — Geometrie
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Severity | Beschreibung
+| `TYPE-MISMATCH` | ERROR | Geometrietyp passt nicht
+| `CRS-MISMATCH` | ERROR | CRS-Unterschied
+| `INVALID` | ERROR | Ungültige Geometrie
+| `TOPOLOGY` | WARNING | Topologie-Verletzung
+| `LINEATTR-UNSUPPORTED` | WARNING | LINEATTR nicht unterstützt
+|===
+
+=== ILITRF-DMAV — DM01/DMAV-spezifisch
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Severity | Beschreibung
+| `CORRELATION-PARSE` | WARNING | XLSX-Korrelationsdatei fehlerhaft
+| `LOW-CONFIDENCE` | WARNING | Mapping mit niedriger Konfidenz
+| `LOSSY` | WARNING | Verlustbehaftetes Mapping
+| `OPEN-QUESTION` | WARNING | Fachlich offene Frage
+|===

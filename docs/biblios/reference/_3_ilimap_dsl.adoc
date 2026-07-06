@@ -1,0 +1,24 @@
+:noindex:
+== ilimap-DSL-Referenz
+
+include::_3_1_dateistruktur.adoc[]
+
+include::_3_2_job_block.adoc[]
+
+include::_3_3_input_output.adoc[]
+
+include::_3_4_formatoptionen.adoc[]
+
+include::_3_5_oid_basket.adoc[]
+
+include::_3_6_enum_defaults.adoc[]
+
+include::_3_7_rule_block.adoc[]
+
+include::_3_8_assign_ausdruecke.adoc[]
+
+include::_3_9_bag_ref_create.adoc[]
+
+include::_3_10_loss_metadata.adoc[]
+
+include::_3_11_lexikalische_regeln.adoc[]

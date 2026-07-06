@@ -1,0 +1,76 @@
+:noindex:
+=== Lexikalische Regeln
+
+==== Kommentare
+
+[source,ilimap]
+----
+// Zeilenkommentar
+/* Block-Kommentar
+   über mehrere Zeilen */
+----
+
+==== Strings
+
+Doppelte Anführungszeichen:
+
+[source,ilimap]
+----
+"Ein String mit Umlauten: äöü"
+""
+----
+
+==== Bezeichner
+
+* `symbolId`: `[a-zA-Z][a-zA-Z0-9_-]*` — für Regelnamen, Input-/Output-IDs, Enum-Namen
+**Bindestriche sind erlaubt** (z.B. `meine-regel`)
+* `aliasId`: `[a-zA-Z][a-zA-Z0-9_]*` — für Source-Aliase in Ausdrücken
+**Keine Bindestriche** (z.B. `s`, `quelle1`)
+
+==== Numerische Literale
+
+[source,ilimap]
+----
+42
+3.14
+-5
+0
+----
+
+==== Boolesche und Null-Literale
+
+[source,ilimap]
+----
+true
+false
+null
+----
+
+==== Enum-Literale
+
+Mit `#`-Präfix:
+
+[source,ilimap]
+----
+#aktiv
+#inaktiv
+#unbekannt
+----
+
+==== Reservierte Wörter
+
+Die folgenden Wörter sind reserviert und können nicht als Bezeichner verwendet werden:
+
+`mapping`, `job`, `input`, `output`, `oid`, `basket`, `enum`, `rule`, `target`, `source`, `from`, `where`, `join`, `identity`, `assign`, `defaults`, `bag`, `ref`, `create`, `loss`, `metadata`, `class`, `inner`, `left`, `mode`, `structure`, `maxItems`, `parentRef`, `association`, `role`, `required`, `sourcePath`, `reasonCode`, `description`, `when`, `direction`, `roundtrip`, `lossiness`, `option`, `true`, `false`, `null`
+
+==== Ausdruck-Ende
+
+Ein `;` auf oberster Verschachtelungsebene beendet einen Ausdruck. `;` innerhalb von Strings, Klammern oder Block-Kommentaren werden ignoriert:
+
+[source,ilimap]
+----
+assign {
+  Name = "Text; mit Semikolon";   // OK: in String
+  Wert = if(a == b; b; a);         // NICHT OK: ; in Klammern beendet Ausdruck nicht
+}
+----

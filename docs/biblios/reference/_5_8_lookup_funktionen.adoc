@@ -1,0 +1,40 @@
+:noindex:
+=== Lookup-Funktionen
+
+Lookup-Funktionen suchen Werte in anderen Quellklassen — auch input-übergreifend.
+
+[cols="1,3,3",options="header"]
+|===
+| Funktion | Signatur | Beschreibung
+| `oid` | `(alias) → text` | OID des Quellobjekts
+| `bagFirst` | `(alias, bagAttr, valueAttr) → any` | Erstes Attribut aus einem BAG-Attribut
+| `lookup` | `(classPath, keyAttr, keyValue, returnAttr) → text` | Unscoped Lookup über alle Inputs; WARNING bei keinem Treffer
+| `lookupOptional` | `(classPath, keyAttr, keyValue, returnAttr) → text` | Wie `lookup`, aber still bei keinem Treffer
+| `lookupIn` | `(inputId, classPath, keyAttr, keyValue, returnAttr) → text` | Scoped Lookup (nur in `inputId`)
+| `existsIn` | `(inputId, classPath, keyAttr, keyValue, ...) → boolean` | Existenz-Prüfung mit mehreren Key/Value-Paaren
+|===
+
+==== Beispiele
+
+[source,ilimap]
+----
+assign {
+  // OID des Quellobjekts
+  SourceOid = oid(s);
+
+  // Erstes Element aus einem Bag
+  ErsteAdresse = bagFirst(g, Adressen, Strasse);
+
+  // Lookup über alle Inputs
+  Ort = lookup("AV.Ortschaft", "PLZ", s.PLZ, "Ortsname");
+
+  // Leiser Lookup (keine Warnung)
+  Ort = lookupOptional("AV.Ortschaft", "PLZ", s.PLZ, "Ortsname");
+
+  // Lookup in bestimmtem Input
+  Region = lookupIn(src, "AV.Region", "BFS_Nr", s.BFS, "Name");
+
+  // Existenz-Prüfung
+  HatAdresse = existsIn(src, "AV.Adresse", "GebaeudeId", oid(g));
+}
+----
