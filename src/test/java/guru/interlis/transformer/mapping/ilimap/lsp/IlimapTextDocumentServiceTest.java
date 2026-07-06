@@ -176,6 +176,9 @@ class IlimapTextDocumentServiceTest {
                   rule r1 {
                     target out class "TestModel.TestTopic.TestClass";
                     source s from src class "TestModel.TestTopic.TestClass";
+                    assign {
+                      Name = s.Name;
+                    }
                   }
                 }
                 """;
@@ -202,6 +205,9 @@ class IlimapTextDocumentServiceTest {
                   rule r1 {
                     target out class "TestModel.TestTopic.TestClass";
                     source s from src class "TestModel.TestTopic.TestClass";
+                    assign {
+                      Name = s.Name;
+                    }
                   }
                 }
                 """;

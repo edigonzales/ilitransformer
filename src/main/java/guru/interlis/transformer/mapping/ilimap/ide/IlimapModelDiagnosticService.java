@@ -20,10 +20,12 @@ import guru.interlis.transformer.mapping.ilimap.lexer.IlimapSourceRange;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public final class IlimapModelDiagnosticService {
 
@@ -110,9 +112,11 @@ public final class IlimapModelDiagnosticService {
             IlimapRuleBlock rule,
             IlimapClassInfo targetClass,
             List<IlimapIdeDiagnostic> diagnostics) {
+        Set<String> assigned = new LinkedHashSet<>();
         for (IlimapRuleElement element : rule.elements()) {
             if (element instanceof IlimapAssignmentBlock assignments) {
                 for (IlimapAssignment assignment : assignments.assignments()) {
+                    assigned.add(assignment.targetAttribute());
                     if (targetClass.findAttribute(assignment.targetAttribute()).isEmpty()) {
                         diagnostics.add(new IlimapIdeDiagnostic(
                                 DiagnosticCode.MAP_UNKNOWN_TARGET_ATTRIBUTE,
@@ -123,6 +127,25 @@ public final class IlimapModelDiagnosticService {
                                 "Check the target attribute name"));
                     }
                 }
+            } else if (element instanceof IlimapDefaultsBlock defaults) {
+                for (IlimapAssignment assignment : defaults.assignments()) {
+                    assigned.add(assignment.targetAttribute());
+                }
+            }
+        }
+        Optional<IlimapTargetStmt> target = target(rule);
+        for (IlimapAttributeInfo attr : targetClass.attributes()) {
+            if (attr.mandatory() && !assigned.contains(attr.name())) {
+                IlimapIdeRange range = target
+                        .map(t -> rangeOfValue(analysis, t.range(), t.targetClass()))
+                        .orElseGet(() -> analysis.lineMap().toIdeRange(rule.range()));
+                diagnostics.add(new IlimapIdeDiagnostic(
+                        DiagnosticCode.MAP_MANDATORY_MISSING,
+                        IlimapIdeSeverity.ERROR,
+                        "Mandatory target attribute not assigned: " + attr.name() + " in class "
+                                + targetClass.qualifiedName(),
+                        range,
+                        "Assign a value to this mandatory attribute in the assign or defaults block"));
             }
         }
     }

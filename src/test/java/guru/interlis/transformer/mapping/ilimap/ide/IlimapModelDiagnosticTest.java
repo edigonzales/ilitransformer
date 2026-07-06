@@ -76,6 +76,25 @@ class IlimapModelDiagnosticTest {
                 .anySatisfy(diagnostic -> assertThat(diagnostic.code()).isEqualTo(DiagnosticCode.MODEL_COMPILE_FAILED));
     }
 
+    @Test
+    void reportsMissingMandatoryTargetAttribute() {
+        IlimapAnalysis analysis = analyze(missingMandatoryMapping());
+
+        assertThat(analysis.diagnostics()).anySatisfy(diagnostic -> {
+            assertThat(diagnostic.code()).isEqualTo(DiagnosticCode.MAP_MANDATORY_MISSING);
+            assertThat(diagnostic.message()).contains("Name");
+        });
+    }
+
+    @Test
+    void noMandatoryDiagnosticWhenAttributeSetInDefaults() {
+        IlimapAnalysis analysis = analyze(defaultsMapping());
+
+        assertThat(analysis.diagnostics())
+                .filteredOn(d -> d.code().equals(DiagnosticCode.MAP_MANDATORY_MISSING))
+                .isEmpty();
+    }
+
     private IlimapAnalysis analyze(String source) {
         return analysisService.analyze("file:///test.ilimap", source, MODEL_AWARE_OPTIONS);
     }
@@ -149,6 +168,44 @@ class IlimapModelDiagnosticTest {
                     assign {}
                     ref Entstehung {
                       target rule rNf sourceRef p.Entstehung;
+                    }
+                  }
+                }
+                """;
+    }
+
+    private static String missingMandatoryMapping() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "TestModel"; }
+                  output out { path "out.xtf"; model "TestModel"; }
+                  rule r1 {
+                    target out class "TestModel.TestTopic.TestClass";
+                    source s from src class "TestModel.TestTopic.TestClass";
+                  }
+                }
+                """;
+    }
+
+    private static String defaultsMapping() {
+        return """
+                mapping v2 {
+                  job {
+                    modeldir "src/test/data/models/";
+                  }
+                  input src { path "in.xtf"; model "TestModel"; }
+                  output out { path "out.xtf"; model "TestModel"; }
+                  rule r1 {
+                    target out class "TestModel.TestTopic.TestClass";
+                    source s from src class "TestModel.TestTopic.TestClass";
+                    assign {
+                      Beschreibung = s.Beschreibung;
+                    }
+                    defaults {
+                      Name = s.Name;
                     }
                   }
                 }
