@@ -80,7 +80,7 @@ jobs:
             echo "source_changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if git rev-parse HEAD^ >/dev/null 2>&1 && git diff --name-only HEAD^ HEAD | grep -qE '^(vscode|src)/'; then
+          if git rev-parse HEAD^ >/dev/null 2>&1 && git diff --name-only HEAD^ HEAD | grep -qE '^vscode/|mapping/ilimap/lsp/'; then
             echo "source_changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "source_changed=false" >> "$GITHUB_OUTPUT"
