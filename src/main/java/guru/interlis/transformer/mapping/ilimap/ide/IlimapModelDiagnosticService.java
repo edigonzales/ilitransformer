@@ -136,8 +136,7 @@ public final class IlimapModelDiagnosticService {
         Optional<IlimapTargetStmt> target = target(rule);
         for (IlimapAttributeInfo attr : targetClass.attributes()) {
             if (attr.mandatory() && !assigned.contains(attr.name())) {
-                IlimapIdeRange range = target
-                        .map(t -> rangeOfValue(analysis, t.range(), t.targetClass()))
+                IlimapIdeRange range = target.map(t -> rangeOfValue(analysis, t.range(), t.targetClass()))
                         .orElseGet(() -> analysis.lineMap().toIdeRange(rule.range()));
                 diagnostics.add(new IlimapIdeDiagnostic(
                         DiagnosticCode.MAP_MANDATORY_MISSING,
