@@ -54,8 +54,10 @@ public final class IlimapModelIndexService {
             addModelName(output.model(), analysis.lineMap().toIdeRange(output.range()), modelNames, modelRanges);
         }
 
+        Path baseDir = workspaceRoot.toAbsolutePath().normalize();
+        Path ilimapDir = ilimapDirectory(analysis, baseDir);
         List<String> modeldirs =
-                normalizeModeldirs(analysis, workspaceRoot.toAbsolutePath().normalize(), builder);
+                normalizeModeldirs(analysis, baseDir, ilimapDir, builder);
         String modeldirString = modeldirs.isEmpty() ? null : String.join(";", modeldirs);
 
         for (String modelName : modelNames) {
@@ -85,18 +87,18 @@ public final class IlimapModelIndexService {
     }
 
     private static List<String> normalizeModeldirs(
-            IlimapAnalysis analysis, Path workspaceRoot, IlimapModelIndex.Builder builder) {
+            IlimapAnalysis analysis, Path workspaceRoot, Path ilimapDir, IlimapModelIndex.Builder builder) {
         if (analysis.document().job() == null) {
             return List.of();
         }
 
         return analysis.document().job().modeldirs().stream()
-                .map(modeldir -> normalizeModeldir(modeldir, workspaceRoot, analysis, builder))
+                .map(modeldir -> normalizeModeldir(modeldir, workspaceRoot, ilimapDir, analysis, builder))
                 .toList();
     }
 
     private static String normalizeModeldir(
-            String modeldir, Path workspaceRoot, IlimapAnalysis analysis, IlimapModelIndex.Builder builder) {
+            String modeldir, Path workspaceRoot, Path ilimapDir, IlimapAnalysis analysis, IlimapModelIndex.Builder builder) {
         if (isRemoteModeldir(modeldir)) {
             return modeldir;
         }
@@ -104,7 +106,7 @@ public final class IlimapModelIndexService {
         Path path = Path.of(modeldir);
         Path normalized = path.isAbsolute()
                 ? path.normalize()
-                : workspaceRoot.resolve(path).normalize();
+                : ilimapDir.resolve(path).normalize();
         if (!Files.isDirectory(normalized)) {
             builder.addDiagnostic(new IlimapIdeDiagnostic(
                     DiagnosticCode.MODEL_COMPILE_FAILED,
@@ -114,6 +116,26 @@ public final class IlimapModelIndexService {
                     "Check the modeldir path"));
         }
         return normalized.toString();
+    }
+
+    private static Path ilimapDirectory(IlimapAnalysis analysis, Path workspaceRoot) {
+        String uri = analysis.uri();
+        if (uri == null || uri.isBlank()) {
+            return workspaceRoot;
+        }
+        try {
+            java.net.URI parsed = java.net.URI.create(uri);
+            if ("file".equals(parsed.getScheme())) {
+                Path ilimapPath = Path.of(parsed).toAbsolutePath().normalize();
+                Path parent = ilimapPath.getParent();
+                if (parent != null && !parent.equals(parent.getRoot())) {
+                    return parent;
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            // ignore
+        }
+        return workspaceRoot;
     }
 
     private static boolean isRemoteModeldir(String modeldir) {

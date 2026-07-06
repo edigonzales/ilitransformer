@@ -9,11 +9,11 @@ Der INTERLIS Transformer ist ein Werkzeug, um INTERLIS-Daten kontrolliert von ei
 
 Typische Anwendungsfälle sind:
 
-- ein XTF in ein GeoPackage, eine Datenbank oder ein Shapefile schreiben
 - bestehende INTERLIS-Daten in ein anderes INTERLIS-Modell überführen
 - Attribute umbenennen, Werte umcodieren oder Einheiten anpassen
 - Objekte neu bilden, Referenzen auflösen oder Beziehungen anders strukturieren
 - Migrationen zwischen älteren und neueren Datenmodellen nachvollziehbar beschreiben
+- ein XTF in ein GeoPackage, eine Datenbank oder ein Shapefile schreiben
 
 Dabei trennt der Transformer bewusst zwischen technischer Repräsentation und fachlicher Bedeutung. Ein Format beschreibt, wie Daten gespeichert oder übertragen werden, zum Beispiel als XTF, CSV, GeoPackage oder Datenbanktabelle. Ein Modell beschreibt dagegen, welche Objekte, Attribute, Beziehungen und Werte fachlich erlaubt sind.
 
@@ -58,7 +58,7 @@ Das aktuelle Artefakt kann aus dem Snapshot-Repository heruntergeladen werden, z
 
 ```bash
 curl -L -o ilitransformer-0.1.0-SNAPSHOT.zip \
-  "https://jars.interlis.guru/snapshots/guru/interlis/ilitransformer/0.1.0-SNAPSHOT/ilitransformer-0.1.0-20260703.195334-8.zip"
+  "https://jars.interlis.guru/snapshots/guru/interlis/ilitransformer/0.1.0-SNAPSHOT/ilitransformer-0.1.0-20260704.153505-13.zip"
 ```
 
 Der genaue Dateiname kann je nach publiziertem Snapshot-Build abweichen. Im Zweifel sollte der Dateiname direkt aus der Artefaktliste des Repositories übernommen werden.
@@ -68,7 +68,7 @@ Der genaue Dateiname kann je nach publiziertem Snapshot-Build abweichen. Im Zwei
 Nach dem Download kann `ilitransformer` mittels Bash- oder Windows-Bat-Datei gestartet werden:
 
 ```bash
-./bin/ilitransformer --help --help
+./bin/ilitransformer --help
 ```
 
 Ein typischer Transformationslauf verwendet eine Mapping-Datei sowie Eingabe- und Ausgabedaten:

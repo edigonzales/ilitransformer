@@ -16,13 +16,24 @@ quarto preview
 
 ## Bilder ersetzen
 
-Die Titelseite verwendet aktuell `assets/img/ilimap-placeholder.svg` als Platzhalter für einen ilimap-Code-Ausschnitt. Die VS-Code-Seiten verwenden `assets/img/vscode-overview-placeholder.svg` und enthalten im Text konkrete Hinweise, welche Screenshots ergänzt werden sollten.
+Die Titelseite verwendet `assets/img/ilimap-placeholder.svg` als Platzhalter. Das Editor-Kapitel (`editor.qmd`) verwendet mehrere Platzhalter-SVGs und enthält im Text konkrete Hinweise (`:::{.note}`-Blöcke), welche Screenshots ergänzt werden sollten.
+
+Benötigte SVG-Platzhalter unter `assets/img/`:
+
+| Datei | Verwendung |
+|---|---|
+| `vscode-install-placeholder.svg` | Erweiterungssuche / Installation |
+| `vscode-editor-placeholder.svg` | Editor mit `.ilimap`, Autocomplete |
+| `vscode-codelens-placeholder.svg` | CodeLens über Regel |
+| `vscode-diagnostics-placeholder.svg` | Diagnostics + Problems-Ansicht |
+| `vscode-overview-placeholder.svg` | Mapping Overview Gesamtansicht |
+| `vscode-trace-placeholder.svg` | Trace Inspector Detail |
+| `ilimap-placeholder.svg` | Startseite (Code-Ausschnitt) |
 
 Empfohlene finale Bilder:
 
 - Startseite: ruhiger Ausschnitt einer realen `.ilimap`-Datei, idealerweise mit sichtbarer Mapping-Struktur.
-- VS Code: Editor mit `.ilimap`-Datei, Diagnostics und Mapping Overview.
-- VS Code Mapping Overview: Screenshot mit Abdeckungsmatrix und Trace/Navigation.
+- Editor: Screenshots gemäss den `:::{.note}`-Hinweisen im Editor-Kapitel ersetzen.
 
 ## Gestaltung
 
