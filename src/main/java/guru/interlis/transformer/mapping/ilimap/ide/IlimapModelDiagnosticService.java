@@ -131,6 +131,12 @@ public final class IlimapModelDiagnosticService {
                 for (IlimapAssignment assignment : defaults.assignments()) {
                     assigned.add(assignment.targetAttribute());
                 }
+            } else if (element instanceof IlimapBagBlock bag
+                    && (bag.mode() == null || bag.mode().isBlank() || "embed".equalsIgnoreCase(bag.mode()))) {
+                assigned.add(
+                        bag.targetAttribute() != null && !bag.targetAttribute().isBlank()
+                                ? bag.targetAttribute()
+                                : bag.id());
             }
         }
         Optional<IlimapTargetStmt> target = target(rule);

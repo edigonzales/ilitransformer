@@ -1,0 +1,56 @@
+version: 1
+job:
+  name: mandatory-bag
+  failPolicy: strict
+  inputs:
+    - id: src
+      path: in.xtf
+      model: MandatoryBag
+      format: xtf
+  outputs:
+    - id: out
+      path: out.xtf
+      model: MandatoryBag
+      format: xtf
+mapping:
+  compileMode: strict
+  oidStrategy:
+    default: uuid
+  basketStrategy:
+    default: generateUuid
+  rules:
+    - id: parent-rule
+      target:
+        output: out
+        class: MandatoryBag.TestTopic.Parent
+      sources:
+        - alias: s
+          input: src
+          class: MandatoryBag.TestTopic.Source
+      assign:
+        Name: s.Name
+      bags:
+        meta-bag:
+          target: Metaattribute
+          mode: embed
+          assign:
+            Value: s.Name
+        Entries:
+          from:
+            input: src
+            class: MandatoryBag.TestTopic.Source
+            alias: e
+            where: e.Name == s.Name
+          assign:
+            Value: e.Name
+        Nested:
+          from:
+            input: src
+            class: MandatoryBag.TestTopic.Source
+            alias: n
+            where: n.Name == s.Name
+          nestedBags:
+            detail:
+              target: Detail
+              assign:
+                Value: n.Name

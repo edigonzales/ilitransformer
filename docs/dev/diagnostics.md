@@ -100,3 +100,14 @@ public record Diagnostic(
     Map<String, Object> context
 ) {}
 ```
+
+### Pflichtattribute und Bags
+
+`ILITRF-MAP-MANDATORY-MISSING` prüft statisch, ob ein Pflichtattribut zugewiesen wird.
+Neben direkten Zuweisungen und Defaults zählen eingebettete Bags (`mode embed`, auch
+als Standardmodus), einschliesslich verschachtelter Bags auf der jeweiligen Strukturebene.
+Massgebend ist das effektive Zielattribut, nicht eine davon abweichende Bag-ID.
+`mode expand` erzeugt separate Objekte und deckt kein Pflichtattribut des umgebenden Objekts ab.
+Die Editor-Prüfung berücksichtigt direkte eingebettete Bags ebenfalls.
+Ob zur Laufzeit tatsächlich Werte und genügend Strukturelemente entstehen, bleibt
+Gegenstand der Laufzeit- und Transferprüfung; beispielsweise kann ein Filter einen Bag leeren.

@@ -95,6 +95,46 @@ class IlimapModelDiagnosticTest {
                 .isEmpty();
     }
 
+    @Test
+    void mandatoryAttributesCoveredByEmbedBags() throws Exception {
+        var analysis = analyze(mandatoryBagMapping());
+        assertThat(analysis.diagnostics()).isEmpty();
+    }
+
+    @Test
+    void missingBagStillReportsMandatory() throws Exception {
+        assertMandatoryBagMissing(mandatoryBagMapping().replace("target Metaattribute;", "target OptionalMetadata;"));
+    }
+
+    @Test
+    void expandBagDoesNotCoverMandatoryAttribute() throws Exception {
+        assertMandatoryBagMissing(mandatoryBagMapping().replace("mode embed;", "mode expand;"));
+    }
+
+    @Test
+    void explicitBagTargetTakesPrecedenceOverId() throws Exception {
+        assertMandatoryBagMissing(mandatoryBagMapping()
+                .replace("bag meta-bag", "bag Metaattribute")
+                .replace("target Metaattribute;", "target OptionalMetadata;"));
+    }
+
+    @Test
+    void nestedBagDoesNotCoverOuterMandatoryAttribute() throws Exception {
+        assertMandatoryBagMissing(mandatoryBagMapping()
+                .replace("target Metaattribute;", "target OptionalMetadata;")
+                .replace("target Detail;", "target Metaattribute;"));
+    }
+
+    private void assertMandatoryBagMissing(String source) {
+        assertThat(analyze(source).diagnostics())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_MANDATORY_MISSING)
+                        && d.message().contains("Metaattribute"));
+    }
+
+    private static String mandatoryBagMapping() throws Exception {
+        return java.nio.file.Files.readString(Path.of("src/test/resources/mappings/mandatory-bag.ilimap"));
+    }
+
     private IlimapAnalysis analyze(String source) {
         return analysisService.analyze("file:///test.ilimap", source, MODEL_AWARE_OPTIONS);
     }

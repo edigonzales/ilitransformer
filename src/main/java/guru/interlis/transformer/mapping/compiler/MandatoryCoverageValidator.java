@@ -5,6 +5,7 @@ import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
+import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.model.TypeSystemFacade;
 
 import ch.interlis.ili2c.metamodel.AttributeDef;
@@ -21,12 +22,18 @@ final class MandatoryCoverageValidator {
             Table targetClass,
             TypeSystemFacade ts,
             List<AssignmentPlan> assignments,
+            List<BagPlan> bags,
             String ruleId,
             DiagnosticCollector diag) {
         var attrIt = targetClass.getAttributes();
         Set<String> assigned = new HashSet<>();
         for (AssignmentPlan ap : assignments) {
             assigned.add(ap.targetAttrName());
+        }
+        for (BagPlan bag : bags) {
+            if (bag.isEmbed()) {
+                assigned.add(bag.bagAttrName());
+            }
         }
         while (attrIt.hasNext()) {
             Extendable ext = attrIt.next();

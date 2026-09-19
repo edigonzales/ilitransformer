@@ -283,7 +283,6 @@ final class BagCompiler {
                 }
             }
 
-            checkStructureMandatoryCoverage(componentTable, bagAssignments, bagAttrName, ruleId, diag);
             if (parentRefAttribute == null
                     && bagWhere != null
                     && bagWhere.ast() instanceof FunctionCallExpr fce
@@ -372,6 +371,8 @@ final class BagCompiler {
                         bagSourcePlan.alias());
             }
 
+            checkStructureMandatoryCoverage(componentTable, bagAssignments, nestedBagPlans, bagAttrName, ruleId, diag);
+
             BagPlan bp = new BagPlan(
                     targetBagAttrName,
                     bagSourcePlan,
@@ -407,12 +408,19 @@ final class BagCompiler {
     private void checkStructureMandatoryCoverage(
             Table componentTable,
             List<AssignmentPlan> assignments,
+            List<BagPlan> nestedBags,
             String bagAttrName,
             String ruleId,
             DiagnosticCollector diag) {
         Set<String> assigned = new HashSet<>();
         for (AssignmentPlan ap : assignments) {
             assigned.add(ap.targetAttrName());
+        }
+
+        for (BagPlan bag : nestedBags) {
+            if (bag.isEmbed()) {
+                assigned.add(bag.bagAttrName());
+            }
         }
 
         Iterator<Extendable> it = componentTable.getAttributes();

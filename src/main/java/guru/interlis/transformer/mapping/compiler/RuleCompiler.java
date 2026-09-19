@@ -139,11 +139,6 @@ final class RuleCompiler {
             }
         }
 
-        if (targetTs != null) {
-            mandatoryCoverageValidator.checkMandatoryCoverage(
-                    targetClass, targetTs, assignmentPlans, ruleId, ctx.diagnostics());
-        }
-
         List<RefPlan> refPlans = new ArrayList<>();
         for (JobConfig.RefMapping ref : JobConfigNormalizer.getEffectiveRefs(rule)) {
             RefPlan rp = refCompiler.compileRef(ref, targetClass, targetTs, sourcePlans, ruleId, ctx);
@@ -154,6 +149,11 @@ final class RuleCompiler {
 
         List<BagPlan> bagPlans =
                 bagCompiler.compileBags(rule, sourcePlans, sourcesByAlias, targetClass, targetTs, ruleId, ctx, null);
+
+        if (targetTs != null) {
+            mandatoryCoverageValidator.checkMandatoryCoverage(
+                    targetClass, targetTs, assignmentPlans, bagPlans, ruleId, ctx.diagnostics());
+        }
 
         List<LossPlan> lossPlans = lossCompiler.compileLosses(rule, sourcesByAlias, ruleId, ctx);
 

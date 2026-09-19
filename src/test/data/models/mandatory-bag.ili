@@ -1,0 +1,29 @@
+INTERLIS 2.4;
+
+MODEL MandatoryBag (en)
+  AT "http://test.ilitransformer.ch" VERSION "2026-09-19" =
+  TOPIC TestTopic =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.UUIDOID;
+
+    STRUCTURE Metadata =
+      Value: MANDATORY TEXT*60;
+    END Metadata;
+
+    STRUCTURE Envelope =
+      Detail: MANDATORY Metadata;
+    END Envelope;
+
+    CLASS Source =
+      Name: MANDATORY TEXT*60;
+    END Source;
+
+    CLASS Parent =
+      Name: MANDATORY TEXT*60;
+      Metaattribute: MANDATORY Metadata;
+      Entries: BAG {1..*} OF Metadata;
+      Nested: MANDATORY Envelope;
+      OptionalMetadata: Metadata;
+    END Parent;
+  END TestTopic;
+END MandatoryBag.

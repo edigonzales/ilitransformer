@@ -1,0 +1,32 @@
+mapping v2 "mandatory-bag" {
+  job {
+    modeldir "src/test/data/models/";
+    compileMode strict;
+    failPolicy strict;
+  }
+  input src { path "in.xtf"; model "MandatoryBag"; format xtf; }
+  output out { path "out.xtf"; model "MandatoryBag"; format xtf; }
+  oid { strategy uuid; }
+  basket generateUuid;
+  rule parent-rule {
+    target out class "MandatoryBag.TestTopic.Parent";
+    source s from src class "MandatoryBag.TestTopic.Source";
+    assign { Name = s.Name; }
+    bag meta-bag {
+      target Metaattribute;
+      mode embed;
+      assign { Value = s.Name; }
+    }
+    bag Entries {
+      from e in src class "MandatoryBag.TestTopic.Source" where e.Name == s.Name;
+      assign { Value = e.Name; }
+    }
+    bag Nested {
+      from n in src class "MandatoryBag.TestTopic.Source" where n.Name == s.Name;
+      bag detail {
+        target Detail;
+        assign { Value = n.Name; }
+      }
+    }
+  }
+}
