@@ -623,9 +623,9 @@ Ausdruck ausgewertet: Ein Alias allein (z.B. `s`) liefert die OID des aktuellen
 Quellobjekts, `oid(s)` ist die explizite Schreibweise dafuer, und `s.ParentRef`
 liest die OID aus einer Quellreferenz.
 
-Bei einer Komposition wie `LKObjekt`–`LKObjekt_Text` ist fuer eine Referenz vom
+Bei einer Komposition wie `BaseObject`–`ObjectText` ist fuer eine Referenz vom
 Textobjekt zum Parent normalerweise die Child-Rolle zu mappen, z.B. `role
-"LKObjektRef"` mit `sourceRef s.LKObjektRef`. `oid(s)` liefert in diesem Fall nur
+"ParentRef"` mit `sourceRef s.ParentRef`. `oid(s)` liefert in diesem Fall nur
 die OID des Textobjekts und stellt die Parent-Beziehung nicht her.
 
 Wenn die Zielrolle auf eine abstrakte Basisklasse zeigt, darf die Zielregel eine

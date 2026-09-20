@@ -18,7 +18,7 @@ Die Demo-Suite wird mit `ilitransformer` ausgeliefert (Ordner `demo`) und ist de
 | 07 | Bags und Structures | `BAG OF`, `LIST OF`, `parentRef` |
 | 08 | Assoziationen und Referenzen | `ref`, `join`, `lookup`, `existsIn` |
 | 09 | OID, Basket, Loss | OID-Strategien, Metadaten, `create`, dokumentierter Verlust |
-| 10 | SIA 405 LKMap-Komposition | `sourceRef`, Komposition, polymorphe Referenzen |
+| 10 | Polymorphe Komposition | `sourceRef`, Komposition, polymorphe Referenzen |
 
 ### Empfehlung
 
@@ -191,7 +191,7 @@ demo/
   07-bags-structures/
   08-associations-refs/
   09-oid-basket-loss-metadata/
-  10-sia405-lkmap-komposition/
+  10-polymorphic-composition/
 ```
 
 ### Hinweise

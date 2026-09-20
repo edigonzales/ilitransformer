@@ -1,0 +1,102 @@
+mapping v2 "demo-10-polymorphic-composition" {
+  job {
+    description "Polymorphe Komposition mit abstrakter Basisklasse und konkreten Unterklassen";
+    direction quelle-to-ziel;
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "CompositionSourceDemo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "CompositionTargetDemo";
+  }
+
+  oid {
+    strategy preserve;
+  }
+
+  rule area-object {
+    target tgt class "CompositionTargetDemo.Composition.AreaObject";
+    source f from src class "CompositionSourceDemo.Composition.AreaObject";
+
+    assign {
+      Name = f.Name;
+      Code = f.Code;
+    }
+  }
+
+  rule line-object {
+    target tgt class "CompositionTargetDemo.Composition.LineObject";
+    source l from src class "CompositionSourceDemo.Composition.LineObject";
+
+    assign {
+      Name = l.Name;
+      Code = l.Code;
+    }
+  }
+
+  rule point-object {
+    target tgt class "CompositionTargetDemo.Composition.PointObject";
+    source p from src class "CompositionSourceDemo.Composition.PointObject";
+
+    assign {
+      Name = p.Name;
+      Code = p.Code;
+    }
+  }
+
+  rule object-text-area {
+    target tgt class "CompositionTargetDemo.Composition.ObjectText";
+    source t from src class "CompositionSourceDemo.Composition.ObjectText";
+    where existsIn("src", "CompositionSourceDemo.Composition.AreaObject", "__objectOid", oid(t.ParentRef));
+
+    assign {
+      Text = t.Text;
+    }
+
+    ref object_parent {
+      association "BaseObject_ObjectTextAssoc";
+      role "ParentRef";
+      required;
+      target rule area-object sourceRef t.ParentRef;
+    }
+  }
+
+  rule object-text-line {
+    target tgt class "CompositionTargetDemo.Composition.ObjectText";
+    source t from src class "CompositionSourceDemo.Composition.ObjectText";
+    where existsIn("src", "CompositionSourceDemo.Composition.LineObject", "__objectOid", oid(t.ParentRef));
+
+    assign {
+      Text = t.Text;
+    }
+
+    ref object_parent {
+      association "BaseObject_ObjectTextAssoc";
+      role "ParentRef";
+      required;
+      target rule line-object sourceRef t.ParentRef;
+    }
+  }
+
+  rule object-text-point {
+    target tgt class "CompositionTargetDemo.Composition.ObjectText";
+    source t from src class "CompositionSourceDemo.Composition.ObjectText";
+    where existsIn("src", "CompositionSourceDemo.Composition.PointObject", "__objectOid", oid(t.ParentRef));
+
+    assign {
+      Text = t.Text;
+    }
+
+    ref object_parent {
+      association "BaseObject_ObjectTextAssoc";
+      role "ParentRef";
+      required;
+      target rule point-object sourceRef t.ParentRef;
+    }
+  }
+}

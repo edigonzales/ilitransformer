@@ -6,22 +6,22 @@ MODEL InheritanceAssocModel (en)
     BASKET OID AS INTERLIS.UUIDOID;
     OID AS INTERLIS.STANDARDOID;
 
-    CLASS LKObjekt (ABSTRACT) =
+    CLASS BaseObject (ABSTRACT) =
       Name: MANDATORY TEXT*60;
-    END LKObjekt;
+    END BaseObject;
 
-    CLASS LKLinie EXTENDS LKObjekt =
+    CLASS LineObject EXTENDS BaseObject =
       Code: MANDATORY TEXT*20;
-    END LKLinie;
+    END LineObject;
 
-    CLASS LKObjekt_Text =
+    CLASS ObjectText =
       Text: MANDATORY TEXT*100;
-    END LKObjekt_Text;
+    END ObjectText;
 
-    ASSOCIATION LKObjekt_LKObjektTextAssoc =
-      LKObjektRef -<#> {1} LKObjekt;
-      LKObjekt_LKObjekt_TextAssocRef -- {0..*} LKObjekt_Text;
-    END LKObjekt_LKObjektTextAssoc;
+    ASSOCIATION BaseObject_ObjectTextAssoc =
+      ParentRef -<#> {1} BaseObject;
+      BaseObject_ObjectTextAssocRef -- {0..*} ObjectText;
+    END BaseObject_ObjectTextAssoc;
 
   END AssocTopic;
 END InheritanceAssocModel.

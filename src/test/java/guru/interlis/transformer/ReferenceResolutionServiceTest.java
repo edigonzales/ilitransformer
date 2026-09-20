@@ -287,10 +287,10 @@ class ReferenceResolutionServiceTest {
 
         TypeSystemFacade typeSystem = new TypeSystemFacade(compileResult.transferDescription());
         assertThat(typeSystem.isTypeCompatible(
-                        "InheritanceAssocModel.AssocTopic.LKObjekt", "InheritanceAssocModel.AssocTopic.LKLinie"))
+                        "InheritanceAssocModel.AssocTopic.BaseObject", "InheritanceAssocModel.AssocTopic.LineObject"))
                 .isTrue();
         assertThat(typeSystem.isTypeCompatible(
-                        "InheritanceAssocModel.AssocTopic.LKObjekt", "InheritanceAssocModel.AssocTopic.LKObjekt_Text"))
+                        "InheritanceAssocModel.AssocTopic.BaseObject", "InheritanceAssocModel.AssocTopic.ObjectText"))
                 .isFalse();
         OutputBinding output = new OutputBinding(
                 "out1",
@@ -316,20 +316,19 @@ class ReferenceResolutionServiceTest {
         InMemoryStateStore stateStore = new InMemoryStateStore();
         InMemoryReferenceIndex refIndex = new InMemoryReferenceIndex();
         DiagnosticCollector diag = new DiagnosticCollector();
-        Iom_jObject owner = new Iom_jObject("InheritanceAssocModel.AssocTopic.LKObjekt_Text", "text1");
-        TargetObjectKey ownerKey =
-                new TargetObjectKey("out1", "InheritanceAssocModel.AssocTopic.LKObjekt_Text", "text1");
+        Iom_jObject owner = new Iom_jObject("InheritanceAssocModel.AssocTopic.ObjectText", "text1");
+        TargetObjectKey ownerKey = new TargetObjectKey("out1", "InheritanceAssocModel.AssocTopic.ObjectText", "text1");
         stateStore.registerTarget(ownerKey, owner);
         refIndex.add(
-                new SourceObjectKey("in1", "b1", "InheritanceAssocModel.AssocTopic.LKLinie", "line-source"),
-                new TargetReference("out1", "InheritanceAssocModel.AssocTopic.LKLinie", "line1", "linie"));
+                new SourceObjectKey("in1", "b1", "InheritanceAssocModel.AssocTopic.LineObject", "line-source"),
+                new TargetReference("out1", "InheritanceAssocModel.AssocTopic.LineObject", "line1", "line-object"));
         stateStore.addDeferredReference(new DeferredReference(
                 ownerKey,
-                "LKObjektRef",
-                "LKObjekt_LKObjektTextAssoc",
-                new SourceReferenceSelector("in1", "b1", "InheritanceAssocModel.AssocTopic.LKLinie", "line-source"),
-                "linie",
-                "InheritanceAssocModel.AssocTopic.LKObjekt",
+                "ParentRef",
+                "BaseObject_ObjectTextAssoc",
+                new SourceReferenceSelector("in1", "b1", "InheritanceAssocModel.AssocTopic.LineObject", "line-source"),
+                "line-object",
+                "InheritanceAssocModel.AssocTopic.BaseObject",
                 new DeferredReference.Cardinality(1, 1),
                 true));
 
@@ -339,7 +338,7 @@ class ReferenceResolutionServiceTest {
         assertThat(report.resolved()).isEqualTo(1);
         assertThat(report.typeMismatch()).isZero();
         assertThat(diag.all()).isEmpty();
-        assertThat(owner.getattrobj("LKObjektRef", 0).getobjectrefoid()).isEqualTo("line1");
+        assertThat(owner.getattrobj("ParentRef", 0).getobjectrefoid()).isEqualTo("line1");
     }
 
     @Test

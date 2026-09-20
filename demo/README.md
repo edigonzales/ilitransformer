@@ -22,7 +22,7 @@ Alle Modelle wurden mit `ili2c` kompiliert, alle Ein- und Ausgabedaten mit
 | 07 | [bags-structures](07-bags-structures/) | `STRUCTURE`, `BAG OF`, `LIST OF`, `SURFACE`, `COORD` | `bag`/`parentRef`, synth. Bag, `bagFirst`, `pointOnSurface`, `coordEquals` |
 | 08 | [associations-refs](08-associations-refs/) | `ASSOCIATION` + Rollen, Referenzen | `ref`, `join`, `lookup`, `lookupIn`, `existsIn`, `oid` |
 | 09 | [oid-basket-loss-metadata](09-oid-basket-loss-metadata/) | 2 Topics, OID/Basket | `oid`/`basket`-Strategien, `loss`, `metadata`, `create`, `identity` |
-| 10 | [sia405-lkmap-komposition](10-sia405-lkmap-komposition/) | abstrakte Basisklasse, Komposition, polymorphe Referenz | `sourceRef`, `oid`, `existsIn`, Untertyp-Kompatibilität |
+| 10 | [polymorphic-composition](10-polymorphic-composition/) | abstrakte Basisklasse, Komposition, polymorphe Referenz | `sourceRef`, `oid`, `existsIn`, Untertyp-Kompatibilität |
 
 ## Voraussetzungen
 

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS"
+    xmlns:CompositionSourceDemo="http://www.interlis.ch/xtf/2.4/CompositionSourceDemo">
+  <ili:headersection>
+    <ili:models>
+      <ili:model>CompositionSourceDemo</ili:model>
+    </ili:models>
+    <ili:sender>ilitransformer-demo</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <CompositionSourceDemo:Composition ili:bid="00000000-0000-0000-0000-000000001001">
+      <CompositionSourceDemo:AreaObject ili:tid="a000000000000001">
+        <CompositionSourceDemo:Name>Werkplatz</CompositionSourceDemo:Name>
+        <CompositionSourceDemo:Code>F-001</CompositionSourceDemo:Code>
+      </CompositionSourceDemo:AreaObject>
+      <CompositionSourceDemo:LineObject ili:tid="a000000000000002">
+        <CompositionSourceDemo:Name>Hauptstrasse</CompositionSourceDemo:Name>
+        <CompositionSourceDemo:Code>L-001</CompositionSourceDemo:Code>
+      </CompositionSourceDemo:LineObject>
+      <CompositionSourceDemo:PointObject ili:tid="a000000000000003">
+        <CompositionSourceDemo:Name>Signal</CompositionSourceDemo:Name>
+        <CompositionSourceDemo:Code>P-001</CompositionSourceDemo:Code>
+      </CompositionSourceDemo:PointObject>
+      <CompositionSourceDemo:ObjectText ili:tid="a000000000000101">
+        <CompositionSourceDemo:Text>Beschriftung Werkplatz</CompositionSourceDemo:Text>
+        <CompositionSourceDemo:ParentRef ili:ref="a000000000000001"/>
+      </CompositionSourceDemo:ObjectText>
+      <CompositionSourceDemo:ObjectText ili:tid="a000000000000102">
+        <CompositionSourceDemo:Text>Beschriftung Hauptstrasse</CompositionSourceDemo:Text>
+        <CompositionSourceDemo:ParentRef ili:ref="a000000000000002"/>
+      </CompositionSourceDemo:ObjectText>
+      <CompositionSourceDemo:ObjectText ili:tid="a000000000000103">
+        <CompositionSourceDemo:Text>Beschriftung Signal</CompositionSourceDemo:Text>
+        <CompositionSourceDemo:ParentRef ili:ref="a000000000000003"/>
+      </CompositionSourceDemo:ObjectText>
+    </CompositionSourceDemo:Composition>
+  </ili:datasection>
+</ili:transfer>

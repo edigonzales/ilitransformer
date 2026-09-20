@@ -177,12 +177,13 @@ mapping v2 {
 }
 ----
 
-=== Demo 10 — SIA 405 LKMap-Komposition (ilimap)
+=== Demo 10 — Polymorphe Komposition (ilimap)
 
-Das zehnte Beispiel bildet die Komposition zwischen `LKObjekt` und
-`LKObjekt_Text` nach. `LKFlaeche`, `LKLinie` und `LKPunkt` sind konkrete
-Unterklassen von `LKObjekt`; die Textobjekte werden über die Child-Rolle
-`LKObjektRef` wieder mit ihrem konkreten Parent verbunden.
+Das zehnte Beispiel bildet eine Komposition zwischen einer abstrakten
+Basisklasse und einer Textklasse nach. `AreaObject`, `LineObject` und
+`PointObject` sind konkrete Unterklassen von `BaseObject`; die Textobjekte
+werden über die Child-Rolle `ParentRef` wieder mit ihrem konkreten Parent
+verbunden.
 
 [source,ilimap]
 ----
@@ -190,28 +191,28 @@ oid {
   strategy preserve;
 }
 
-rule lkobjekt-text-linie {
-  target tgt class "LKMap2025Demo.LKMap.LKObjekt_Text";
-  source t from src class "LKMap2015Demo.LKMap.LKObjekt_Text";
-  where existsIn("src", "LKMap2015Demo.LKMap.LKLinie",
-                 "__objectOid", oid(t.LKObjektRef));
+rule object-text-line {
+  target tgt class "CompositionTargetDemo.Composition.ObjectText";
+  source t from src class "CompositionSourceDemo.Composition.ObjectText";
+  where existsIn("src", "CompositionSourceDemo.Composition.LineObject",
+                 "__objectOid", oid(t.ParentRef));
 
-  ref lkobjekt_parent {
-    association "LKObjekt_LKObjektTextAssoc";
-    role "LKObjektRef";
+  ref object_parent {
+    association "BaseObject_ObjectTextAssoc";
+    role "ParentRef";
     required;
-    target rule lklinie sourceRef t.LKObjektRef;
+    target rule line-object sourceRef t.ParentRef;
   }
 }
 ----
 
 `oid(t)` allein wäre hier falsch, weil es die OID des Textobjekts liefert.
-`t.LKObjektRef` liefert dagegen die Parent-OID. Die Zielrolle darf auf die
-abstrakte Klasse `LKObjekt` zeigen, während die Zielregel `lklinie` die
-konkrete Unterklasse `LKLinie` erzeugt. Die vollständige, validierbare Demo
-liegt unter `demo/10-sia405-lkmap-komposition/`.
+`t.ParentRef` liefert dagegen die Parent-OID. Die Zielrolle darf auf die
+abstrakte Klasse `BaseObject` zeigen, während die Zielregel `line-object` die
+konkrete Unterklasse `LineObject` erzeugt. Die vollständige, validierbare Demo
+liegt unter `demo/10-polymorphic-composition/`.
 
 [NOTE]
 ====
-Die vollständige Demo-Suite mit allen 10 Beispielen — von einfachen Kopien über BAG OF STRUCTURE und OID-Strategien bis zur SIA-405-LKMap-Komposition — finden Sie im Repository unter `demo/`.
+Die vollständige Demo-Suite mit allen 10 Beispielen — von einfachen Kopien über BAG OF STRUCTURE und OID-Strategien bis zu polymorphen Kompositionsreferenzen — finden Sie im Repository unter `demo/`.
 ====

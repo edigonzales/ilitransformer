@@ -1,0 +1,69 @@
+INTERLIS 2.4;
+
+MODEL CompositionSourceDemo (de)
+  AT "https://demo.ilinexus.ch" VERSION "2026-09-20" =
+  TOPIC Composition =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.STANDARDOID;
+
+    CLASS BaseObject (ABSTRACT) =
+      Name: MANDATORY TEXT*80;
+    END BaseObject;
+
+    CLASS AreaObject EXTENDS BaseObject =
+      Code: MANDATORY TEXT*20;
+    END AreaObject;
+
+    CLASS LineObject EXTENDS BaseObject =
+      Code: MANDATORY TEXT*20;
+    END LineObject;
+
+    CLASS PointObject EXTENDS BaseObject =
+      Code: MANDATORY TEXT*20;
+    END PointObject;
+
+    CLASS ObjectText =
+      Text: MANDATORY TEXT*120;
+    END ObjectText;
+
+    ASSOCIATION BaseObject_ObjectTextAssoc =
+      ParentRef -<#> {1} BaseObject;
+      BaseObject_ObjectTextAssocRef -- {0..*} ObjectText;
+    END BaseObject_ObjectTextAssoc;
+
+  END Composition;
+END CompositionSourceDemo.
+
+MODEL CompositionTargetDemo (de)
+  AT "https://demo.ilinexus.ch" VERSION "2026-09-20" =
+  TOPIC Composition =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.STANDARDOID;
+
+    CLASS BaseObject (ABSTRACT) =
+      Name: MANDATORY TEXT*80;
+    END BaseObject;
+
+    CLASS AreaObject EXTENDS BaseObject =
+      Code: MANDATORY TEXT*20;
+    END AreaObject;
+
+    CLASS LineObject EXTENDS BaseObject =
+      Code: MANDATORY TEXT*20;
+    END LineObject;
+
+    CLASS PointObject EXTENDS BaseObject =
+      Code: MANDATORY TEXT*20;
+    END PointObject;
+
+    CLASS ObjectText =
+      Text: MANDATORY TEXT*120;
+    END ObjectText;
+
+    ASSOCIATION BaseObject_ObjectTextAssoc =
+      ParentRef -<#> {1} BaseObject;
+      BaseObject_ObjectTextAssocRef -- {0..*} ObjectText;
+    END BaseObject_ObjectTextAssoc;
+
+  END Composition;
+END CompositionTargetDemo.
