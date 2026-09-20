@@ -175,7 +175,41 @@ mapping v2 {
 }
 ----
 
+=== Demo 10 — SIA 405 LKMap-Komposition (ilimap)
+
+Das zehnte Beispiel bildet die Komposition zwischen `LKObjekt` und
+`LKObjekt_Text` nach. `LKFlaeche`, `LKLinie` und `LKPunkt` sind konkrete
+Unterklassen von `LKObjekt`; die Textobjekte werden über die Child-Rolle
+`LKObjektRef` wieder mit ihrem konkreten Parent verbunden.
+
+[source,ilimap]
+----
+oid {
+  strategy preserve;
+}
+
+rule lkobjekt-text-linie {
+  target tgt class "LKMap2025Demo.LKMap.LKObjekt_Text";
+  source t from src class "LKMap2015Demo.LKMap.LKObjekt_Text";
+  where existsIn("src", "LKMap2015Demo.LKMap.LKLinie",
+                 "__objectOid", oid(t.LKObjektRef));
+
+  ref lkobjekt_parent {
+    association "LKObjekt_LKObjektTextAssoc";
+    role "LKObjektRef";
+    required;
+    target rule lklinie sourceRef t.LKObjektRef;
+  }
+}
+----
+
+`oid(t)` allein wäre hier falsch, weil es die OID des Textobjekts liefert.
+`t.LKObjektRef` liefert dagegen die Parent-OID. Die Zielrolle darf auf die
+abstrakte Klasse `LKObjekt` zeigen, während die Zielregel `lklinie` die
+konkrete Unterklasse `LKLinie` erzeugt. Die vollständige, validierbare Demo
+liegt unter `demo/10-sia405-lkmap-komposition/`.
+
 [NOTE]
 ====
-Die vollständige Demo-Suite mit allen 9 Beispielen — von einfachen Kopien über BAG OF STRUCTURE bis zu OID-Strategien — finden Sie im Repository unter `demo/`.
+Die vollständige Demo-Suite mit allen 10 Beispielen — von einfachen Kopien über BAG OF STRUCTURE und OID-Strategien bis zur SIA-405-LKMap-Komposition — finden Sie im Repository unter `demo/`.
 ====
