@@ -9,7 +9,7 @@ Die Referenz richtet sich an alle, die mit dem INTERLIS Transformer arbeiten —
 
 === Aufbau
 
-* <<_einfuhrung>> erklärt die Konzepte und die Architektur.
+* <<einfuhrung>> erklärt die Konzepte und die Architektur.
 * <<_cli_referenz>> beschreibt sämtliche CLI-Befehle mit allen Optionen.
 * <<_ilimap_dsl_referenz>> dokumentiert die ilimap-Sprache vollständig.
 * <<_yaml_mapping_referenz>> dokumentiert das YAML-Mapping-Format.
