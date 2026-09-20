@@ -74,15 +74,17 @@ HASH        = "#" ID                              // Enum-Literal
 COMMENT     = "//" {char} "\n"                    // Zeilenkommentar
             | "/*" {char} "*/"                    // Block-Kommentar
 
-RESERVED    = "mapping" | "job" | "input" | "output" | "oid"
-            | "basket" | "enum" | "rule" | "target" | "source"
-            | "from" | "where" | "join" | "identity" | "assign"
-            | "defaults" | "bag" | "ref" | "create" | "loss"
-            | "metadata" | "class" | "inner" | "left" | "mode"
-            | "structure" | "maxItems" | "parentRef"
-            | "association" | "role" | "required" | "sourcePath"
-            | "reasonCode" | "description" | "when" | "direction"
-            | "roundtrip" | "lossiness" | "option"
+RESERVED    = "mapping" | "v2" | "job" | "input" | "output" | "oid"
+            | "basket" | "enum" | "defaults" | "rule" | "target"
+            | "source" | "from" | "in" | "class" | "where" | "join"
+            | "inner" | "left" | "to" | "on" | "identity" | "assign"
+            | "bag" | "structure" | "mode" | "embed" | "expand"
+            | "maxItems" | "parentRef" | "parent" | "attribute" | "role"
+            | "ref" | "association" | "required" | "sourceRef" | "create"
+            | "loss" | "sourcePath" | "reasonCode" | "description" | "when"
+            | "metadata" | "direction" | "roundtrip" | "lossiness" | "name"
+            | "modeldir" | "path" | "model" | "format" | "option"
+            | "namespace" | "failPolicy" | "compileMode" | "strategy"
             | "true" | "false" | "null"
 ----
 

@@ -227,6 +227,27 @@ The authoritative list of built-in functions is generated from `FunctionRegistry
 
 Use `lookup()` when a missing match should be visible as a data-quality warning. Use `lookupOptional()` when the source model allows the child/helper record to be absent and a null target value is acceptable. Use `existsIn()` for filters and guards that only need to test whether a matching source record exists.
 
+#### Reserved lookup keys
+
+The lookup functions accept normal INTERLIS attribute names as `keyAttr`. They
+also support the reserved pseudo-key `__objectOid`, which matches the OID of
+the source object itself:
+
+```ilimap
+existsIn("src", "Model.Topic.Parent", "__objectOid", oid(child.ParentRef))
+```
+
+`__objectOid` is provided by the internal `SourceLookupIndex`. It is not an
+INTERLIS attribute and does not occur in the model or transfer data. It is
+valid only as a lookup key for `lookup()`, `lookupOptional()`, `lookupIn()` and
+`existsIn()`; it must not be added to an `.ili` model or used as a mapped
+attribute.
+
+The runtime also uses `_itf_<attributeName>` as an internal helper name while
+handling certain ILI1 geometry cases. This is an implementation detail for
+ITF writing, not supported mapping syntax. Mapping profiles must not rely on
+these helper names.
+
 ### Geometry functions
 
 | Function | Signature | Description |

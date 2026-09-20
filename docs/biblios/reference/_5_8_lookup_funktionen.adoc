@@ -38,3 +38,25 @@ assign {
   HatAdresse = existsIn(src, "AV.Adresse", "GebaeudeId", oid(g));
 }
 ----
+
+==== Reservierter Lookup-Schlüssel
+
+Neben normalen INTERLIS-Attributnamen akzeptieren die Lookup-Funktionen den
+reservierten Pseudo-Schlüssel `__objectOid`. Er prüft die OID des Quellobjekts
+selbst und ist insbesondere für Referenzen auf polymorphe Parent-Objekte
+nützlich:
+
+[source,ilimap]
+----
+existsIn("src", "Model.Topic.Parent", "__objectOid", oid(child.ParentRef))
+----
+
+`__objectOid` wird von der internen `SourceLookupIndex` bereitgestellt. Es ist
+kein INTERLIS-Attribut und kommt weder im Modell noch in den Transferdaten vor.
+Es darf nur als `keyAttr` in `lookup`, `lookupOptional`, `lookupIn` und
+`existsIn` verwendet werden.
+
+Der Runtime-Name `_itf_<Attributname>` ist davon zu unterscheiden. Er dient
+intern als Geometrie-Hilfsname für bestimmte INTERLIS-1-/ITF-Fälle und ist
+keine unterstützte Mapping-Syntax. Mapping-Profile dürfen sich nicht darauf
+stützen.
