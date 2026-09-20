@@ -206,6 +206,11 @@ rule object-text-line {
 }
 ----
 
+`__objectOid` ist hier kein Attribut des INTERLIS-Modells. Es ist ein
+reservierter Lookup-Schlüssel der Engine und steht für die OID des
+Quellobjekts selbst. Die vollständige Erklärung findet sich im Kapitel
+xref:_lookup_funktionen[Lookup-Funktionen].
+
 `oid(t)` allein wäre hier falsch, weil es die OID des Textobjekts liefert.
 `t.ParentRef` liefert dagegen die Parent-OID. Die Zielrolle darf auf die
 abstrakte Klasse `BaseObject` zeigen, während die Zielregel `line-object` die
