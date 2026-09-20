@@ -444,7 +444,8 @@ public final class TransformationEngine {
             TargetRefValue resolved = candidates.get(0);
             if (deferredRef.expectedTargetClass() != null
                     && !deferredRef.expectedTargetClass().isEmpty()
-                    && !deferredRef.expectedTargetClass().equals(resolved.targetClass())) {
+                    && !isTypeCompatible(
+                            plan, resolved.targetFileId(), deferredRef.expectedTargetClass(), resolved.targetClass())) {
                 Severity severity = failPolicySeverity(plan, Severity.ERROR);
                 diagnostics.add(new Diagnostic(
                         DiagnosticCode.RUN_REF_TYPE_MISMATCH,
@@ -463,6 +464,23 @@ public final class TransformationEngine {
                         ref.setobjectrefoid(resolved.targetOid());
                     });
         }
+    }
+
+    private static boolean isTypeCompatible(
+            TransformPlan plan, String outputId, String expectedClass, String actualClass) {
+        if (expectedClass == null || actualClass == null) return false;
+        if (expectedClass.equals(actualClass)) return true;
+        if (plan == null || plan.outputsById() == null) return false;
+        OutputBinding output = plan.outputsById().get(outputId);
+        if (output != null
+                && output.typeSystem() != null
+                && output.typeSystem().isTypeCompatible(expectedClass, actualClass)) {
+            return true;
+        }
+        return plan.outputsById().values().stream()
+                .map(OutputBinding::typeSystem)
+                .filter(java.util.Objects::nonNull)
+                .anyMatch(typeSystem -> typeSystem.isTypeCompatible(expectedClass, actualClass));
     }
 
     private void resolveSingletonRef(DeferredRef deferredRef, TransformPlan plan) {

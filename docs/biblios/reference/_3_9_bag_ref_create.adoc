@@ -60,9 +60,12 @@ ref gebaeude_ref {
 | `target` | block | ja | Ziel: `rule <id> sourceRef <expression>`
 |===
 
-[WARNING]
+[NOTE]
 ====
-Referenzen werden über den `sourceRef`-Ausdruck aufgelöst. Der Ausdruck muss auf ein Objekt verweisen, das von der Zielregel (`target rule`) erzeugt wurde.
+Referenzen werden über den `sourceRef`-Ausdruck aufgelöst. Der Ausdruck muss auf ein Objekt verweisen, das von der Zielregel (`target rule`) erzeugt wurde. Ein Alias allein (z.B. `s`) liefert die OID des aktuellen Quellobjekts; `oid(s)` ist die explizite Schreibweise dafür. Eine Quellreferenz kann mit `s.ParentRef` gelesen werden.
+
+Bei einer Komposition muss die Referenz in der Regel des abhängigen Child-Objekts auf dessen Parent-Rolle zeigen. `oid(s)` liefert dort weiterhin nur die OID des Child-Objekts und nicht automatisch die OID des Parents.
+Zeigt die Zielrolle auf eine abstrakte Basisklasse, darf die Zielregel eine konkrete Unterklasse erzeugen. Die Referenzauflösung berücksichtigt die INTERLIS-Vererbung; unverwandte Zielklassen werden weiterhin als Typfehler abgewiesen.
 ====
 
 ==== create — Zusätzliche Zielobjekte

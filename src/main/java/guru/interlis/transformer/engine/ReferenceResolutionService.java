@@ -100,7 +100,7 @@ public final class ReferenceResolutionService {
 
             if (ref.expectedTargetClass() != null
                     && !ref.expectedTargetClass().isEmpty()
-                    && !ref.expectedTargetClass().equals(resolvedTarget.targetClass())) {
+                    && !isTypeCompatible(plan, ref.owner().outputId(), ref.expectedTargetClass(), resolvedTarget)) {
                 Severity severity = failPolicySeverity(plan, Severity.ERROR);
                 diagnostics.add(new Diagnostic(
                         DiagnosticCode.RUN_REF_TYPE_MISMATCH,
@@ -154,6 +154,22 @@ public final class ReferenceResolutionService {
                 typeMismatch,
                 cardinalityViolations,
                 totalDeferred);
+    }
+
+    private boolean isTypeCompatible(
+            TransformPlan plan, String ownerOutputId, String expectedTargetClass, TargetReference resolvedTarget) {
+        if (expectedTargetClass.equals(resolvedTarget.targetClass())) return true;
+
+        TypeSystemFacade typeSystem = null;
+        if (plan != null) {
+            OutputBinding ownerOutput = plan.outputsById().get(ownerOutputId);
+            if (ownerOutput != null) typeSystem = ownerOutput.typeSystem();
+            if (typeSystem == null) {
+                OutputBinding resolvedOutput = plan.outputsById().get(resolvedTarget.outputId());
+                if (resolvedOutput != null) typeSystem = resolvedOutput.typeSystem();
+            }
+        }
+        return typeSystem != null && typeSystem.isTypeCompatible(expectedTargetClass, resolvedTarget.targetClass());
     }
 
     private int checkRequiredRefsWithoutDeferred(

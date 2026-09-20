@@ -1,0 +1,69 @@
+INTERLIS 2.4;
+
+MODEL LKMap2015Demo (de)
+  AT "https://demo.ilinexus.ch" VERSION "2026-09-20" =
+  TOPIC LKMap =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.STANDARDOID;
+
+    CLASS LKObjekt (ABSTRACT) =
+      Name: MANDATORY TEXT*80;
+    END LKObjekt;
+
+    CLASS LKFlaeche EXTENDS LKObjekt =
+      Code: MANDATORY TEXT*20;
+    END LKFlaeche;
+
+    CLASS LKLinie EXTENDS LKObjekt =
+      Code: MANDATORY TEXT*20;
+    END LKLinie;
+
+    CLASS LKPunkt EXTENDS LKObjekt =
+      Code: MANDATORY TEXT*20;
+    END LKPunkt;
+
+    CLASS LKObjekt_Text =
+      Text: MANDATORY TEXT*120;
+    END LKObjekt_Text;
+
+    ASSOCIATION LKObjekt_LKObjektTextAssoc =
+      LKObjektRef -<#> {1} LKObjekt;
+      LKObjekt_LKObjekt_TextAssocRef -- {0..*} LKObjekt_Text;
+    END LKObjekt_LKObjektTextAssoc;
+
+  END LKMap;
+END LKMap2015Demo.
+
+MODEL LKMap2025Demo (de)
+  AT "https://demo.ilinexus.ch" VERSION "2026-09-20" =
+  TOPIC LKMap =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.STANDARDOID;
+
+    CLASS LKObjekt (ABSTRACT) =
+      Name: MANDATORY TEXT*80;
+    END LKObjekt;
+
+    CLASS LKFlaeche EXTENDS LKObjekt =
+      Code: MANDATORY TEXT*20;
+    END LKFlaeche;
+
+    CLASS LKLinie EXTENDS LKObjekt =
+      Code: MANDATORY TEXT*20;
+    END LKLinie;
+
+    CLASS LKPunkt EXTENDS LKObjekt =
+      Code: MANDATORY TEXT*20;
+    END LKPunkt;
+
+    CLASS LKObjekt_Text =
+      Text: MANDATORY TEXT*120;
+    END LKObjekt_Text;
+
+    ASSOCIATION LKObjekt_LKObjektTextAssoc =
+      LKObjektRef -<#> {1} LKObjekt;
+      LKObjekt_LKObjekt_TextAssocRef -- {0..*} LKObjekt_Text;
+    END LKObjekt_LKObjektTextAssoc;
+
+  END LKMap;
+END LKMap2025Demo.

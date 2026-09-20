@@ -1,0 +1,27 @@
+INTERLIS 2.4;
+
+MODEL InheritanceAssocModel (en)
+  AT "http://test.ilitransformer.ch" VERSION "2026-09-20" =
+  TOPIC AssocTopic =
+    BASKET OID AS INTERLIS.UUIDOID;
+    OID AS INTERLIS.STANDARDOID;
+
+    CLASS LKObjekt (ABSTRACT) =
+      Name: MANDATORY TEXT*60;
+    END LKObjekt;
+
+    CLASS LKLinie EXTENDS LKObjekt =
+      Code: MANDATORY TEXT*20;
+    END LKLinie;
+
+    CLASS LKObjekt_Text =
+      Text: MANDATORY TEXT*100;
+    END LKObjekt_Text;
+
+    ASSOCIATION LKObjekt_LKObjektTextAssoc =
+      LKObjektRef -<#> {1} LKObjekt;
+      LKObjekt_LKObjekt_TextAssocRef -- {0..*} LKObjekt_Text;
+    END LKObjekt_LKObjektTextAssoc;
+
+  END AssocTopic;
+END InheritanceAssocModel.

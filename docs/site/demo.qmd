@@ -5,7 +5,7 @@ order: 2
 
 ## Demo-Suite
 
-Die Demo-Suite wird mit `ilitransformer` ausgeliefert (Ordner `demo`) und ist der beste Einstieg. Jedes der neun Beispiele ist in sich geschlossen und enthält Modell, Eingabedaten, Mapping und erwartetes Ergebnis.
+Die Demo-Suite wird mit `ilitransformer` ausgeliefert (Ordner `demo`) und ist der beste Einstieg. Jedes der zehn Beispiele ist in sich geschlossen und enthält Modell, Eingabedaten, Mapping und erwartetes Ergebnis.
 
 | Demo | Thema | Schwerpunkt |
 |---|---|---|
@@ -177,7 +177,7 @@ Die Transformation erzeugt zwei `Target`-Objekte mit bereinigten Namen. Die OIDs
 
 ### Die gesamte Demo-Suite
 
-Alle neun Beispiele befinden sich im Ordner `demo/` der ilitransformer-Distribution. Jedes Unterverzeichnis enthält ein eigenes Modell, Eingabedaten, ein Mapping-Profil und eine ausführliche README mit allen Aufrufen.
+Alle zehn Beispiele befinden sich im Ordner `demo/` der ilitransformer-Distribution. Jedes Unterverzeichnis enthält ein eigenes Modell, Eingabedaten, ein Mapping-Profil und eine ausführliche README mit allen Aufrufen.
 
 ```bash
 demo/

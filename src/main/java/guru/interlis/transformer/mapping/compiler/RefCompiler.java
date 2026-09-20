@@ -4,13 +4,17 @@ import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
+import guru.interlis.transformer.mapping.plan.ExpressionCompileContext;
 import guru.interlis.transformer.mapping.plan.RefPlan;
 import guru.interlis.transformer.mapping.plan.SourcePlan;
+import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.TypeSystemFacade;
 
 import ch.interlis.ili2c.metamodel.Table;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 final class RefCompiler {
 
@@ -87,30 +91,6 @@ final class RefCompiler {
             }
         }
 
-        if (ref.sourceRef != null) {
-            String sourceRefPath = ref.sourceRef;
-            int dotIdx = sourceRefPath.indexOf('.');
-            if (dotIdx > 0) {
-                String alias = sourceRefPath.substring(0, dotIdx);
-                boolean aliasFound = false;
-                for (SourcePlan sp : sourcePlans) {
-                    if (alias.equals(sp.alias())) {
-                        aliasFound = true;
-                        break;
-                    }
-                }
-                if (!aliasFound) {
-                    ctx.diagnostics()
-                            .add(new Diagnostic(
-                                    DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE,
-                                    Severity.WARNING,
-                                    "Source alias not found for ref '" + sourceRefPath + "': " + alias,
-                                    ruleId,
-                                    "Check that a source with alias '" + alias + "' is defined"));
-                }
-            }
-        }
-
         String association = ref.association;
         String sourceRef = ref.sourceRef;
         String targetRuleId = ref.targetRule;
@@ -119,6 +99,23 @@ final class RefCompiler {
             if (sourceRef == null) {
                 sourceRef = ref.targetObject.sourceRef;
             }
+        }
+
+        if (sourceRef != null && !sourceRef.isBlank()) {
+            Map<String, SourcePlan> sourcesByAlias = new LinkedHashMap<>();
+            for (SourcePlan sourcePlan : sourcePlans) {
+                sourcesByAlias.put(sourcePlan.alias(), sourcePlan);
+            }
+            ctx.expressionCompiler()
+                    .compile(
+                            sourceRef,
+                            new ExpressionCompileContext(
+                                    ruleId + "-ref",
+                                    sourcesByAlias,
+                                    TypeInfo.UNKNOWN,
+                                    ctx.functionRegistry(),
+                                    ctx.enumMaps()),
+                            ctx.diagnostics());
         }
 
         return new RefPlan(roleName, association, sourceRef, targetRuleId, ref.required);

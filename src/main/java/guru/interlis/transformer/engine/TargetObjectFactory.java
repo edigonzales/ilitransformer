@@ -6,6 +6,8 @@ import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.expr.EvalContext;
 import guru.interlis.transformer.expr.ExpressionEngine;
+import guru.interlis.transformer.expr.ReferenceValue;
+import guru.interlis.transformer.expr.Value;
 import guru.interlis.transformer.geometry.GeometryAdapter;
 import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.CreatePlan;
@@ -79,7 +81,7 @@ public final class TargetObjectFactory {
 
         assignmentExecutionService.execute(rule.assignments(), evalCtx, target, targetTs);
 
-        deferReferences(rule, matchedSource, driverRecord, evalCtx.sources(), target, targetTs, plan, ctx);
+        deferReferences(rule, matchedSource, driverRecord, evalCtx, target, targetTs, plan, ctx);
 
         processBags(rule, matchedSource, driverRecord, target, plan, ctx);
 
@@ -144,7 +146,7 @@ public final class TargetObjectFactory {
             RulePlan rule,
             SourcePlan matchedSource,
             SourceRecord driverRecord,
-            Map<String, IomObject> boundSources,
+            EvalContext evalCtx,
             Iom_jObject target,
             TypeSystemFacade targetTs,
             TransformPlan plan,
@@ -153,7 +155,7 @@ public final class TargetObjectFactory {
 
         for (var ref : rule.refs()) {
             if (ref.sourceRef() == null) continue;
-            String sourceRefOid = resolveSourceReferenceOid(ref.sourceRef(), matchedSource, driverRecord, boundSources);
+            String sourceRefOid = resolveSourceReferenceOid(ref.sourceRef(), matchedSource, driverRecord, evalCtx);
             if (sourceRefOid == null || sourceRefOid.isBlank()) {
                 if (ref.required()) {
                     ctx.diagnostics()
@@ -372,12 +374,7 @@ public final class TargetObjectFactory {
 
         for (var ref : create.references()) {
             if (ref.sourceRef() == null) continue;
-            String attrName = ref.sourceRef();
-            int dotIdx = attrName.indexOf('.');
-            if (dotIdx >= 0) {
-                attrName = attrName.substring(dotIdx + 1);
-            }
-            String sourceRefOid = readSourceReferenceOid(record.sourceObject(), attrName);
+            String sourceRefOid = resolveSourceReferenceOid(ref.sourceRef(), null, record, evalCtx);
             if (sourceRefOid != null && !sourceRefOid.isBlank()) {
                 ctx.stateStore()
                         .addDeferredRef(new DeferredRef(
@@ -419,16 +416,23 @@ public final class TargetObjectFactory {
         return source.getattrvalue(roleName);
     }
 
-    private static String resolveSourceReferenceOid(
-            String sourceRef,
-            SourcePlan matchedSource,
-            SourceRecord driverRecord,
-            Map<String, IomObject> boundSources) {
+    private String resolveSourceReferenceOid(
+            String sourceRef, SourcePlan matchedSource, SourceRecord driverRecord, EvalContext evalCtx) {
         if (sourceRef == null || sourceRef.isBlank()) return null;
         String trimmed = sourceRef.trim();
         if (trimmed.startsWith("#")) {
             return trimmed;
         }
+
+        if (evalCtx != null) {
+            Value evaluated = expressionEngine.evaluate(trimmed, evalCtx);
+            String evaluatedOid = toSourceReferenceOid(evaluated);
+            if (evaluatedOid != null && !evaluatedOid.isBlank()) {
+                return evaluatedOid;
+            }
+        }
+
+        Map<String, IomObject> boundSources = evalCtx != null ? evalCtx.sources() : null;
         if (boundSources != null) {
             IomObject source = boundSources.get(trimmed);
             if (source != null) {
@@ -454,6 +458,15 @@ public final class TargetObjectFactory {
             attrName = attrName.substring(dotIdx + 1);
         }
         return readSourceReferenceOid(driverRecord.sourceObject(), attrName);
+    }
+
+    private static String toSourceReferenceOid(Value value) {
+        if (value == null || !value.isDefined()) return null;
+        if (value instanceof ReferenceValue reference) {
+            return reference.oid();
+        }
+        Object nativeValue = value.toNative();
+        return nativeValue != null ? nativeValue.toString() : null;
     }
 
     private static Map<String, String> buildIdentityKeyValues(

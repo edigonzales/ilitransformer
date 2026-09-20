@@ -43,6 +43,28 @@ public final class TypeSystemFacade {
         return resolveClass(qualifiedPath) != null;
     }
 
+    /**
+     * Returns whether an actual target class can be assigned to a reference that expects the
+     * given target class. INTERLIS references to an abstract base class may resolve to a concrete
+     * extending class, so exact-name equality is not sufficient here.
+     */
+    public boolean isTypeCompatible(String expectedClass, String actualClass) {
+        if (expectedClass == null || actualClass == null) return false;
+        if (expectedClass.equals(actualClass)) return true;
+
+        Table expected = resolveClass(expectedClass);
+        Table actual = resolveClass(actualClass);
+        if (expected == null || actual == null) return false;
+
+        Table current = actual;
+        while (current != null) {
+            if (getScopedName(current).equals(getScopedName(expected))) return true;
+            Element extending = current.getExtending();
+            current = extending instanceof Table base ? base : null;
+        }
+        return false;
+    }
+
     public Table resolveClass(String qualifiedPath) {
         List<String> parts = splitQualifiedPath(qualifiedPath);
         if (parts.size() == 2) {

@@ -1,0 +1,102 @@
+mapping v2 "demo-10-sia405-lkmap-komposition" {
+  job {
+    description "SIA-405 LKMap: polymorphe LKObjekt-Komposition mit LKObjekt_Text";
+    direction quelle-to-ziel;
+    modeldir "models/";
+  }
+
+  input src {
+    path "data/input.xtf";
+    model "LKMap2015Demo";
+  }
+
+  output tgt {
+    path "output.xtf";
+    model "LKMap2025Demo";
+  }
+
+  oid {
+    strategy preserve;
+  }
+
+  rule lkflaeche {
+    target tgt class "LKMap2025Demo.LKMap.LKFlaeche";
+    source f from src class "LKMap2015Demo.LKMap.LKFlaeche";
+
+    assign {
+      Name = f.Name;
+      Code = f.Code;
+    }
+  }
+
+  rule lklinie {
+    target tgt class "LKMap2025Demo.LKMap.LKLinie";
+    source l from src class "LKMap2015Demo.LKMap.LKLinie";
+
+    assign {
+      Name = l.Name;
+      Code = l.Code;
+    }
+  }
+
+  rule lkpunk {
+    target tgt class "LKMap2025Demo.LKMap.LKPunkt";
+    source p from src class "LKMap2015Demo.LKMap.LKPunkt";
+
+    assign {
+      Name = p.Name;
+      Code = p.Code;
+    }
+  }
+
+  rule lkobjekt-text-flaeche {
+    target tgt class "LKMap2025Demo.LKMap.LKObjekt_Text";
+    source t from src class "LKMap2015Demo.LKMap.LKObjekt_Text";
+    where existsIn("src", "LKMap2015Demo.LKMap.LKFlaeche", "__objectOid", oid(t.LKObjektRef));
+
+    assign {
+      Text = t.Text;
+    }
+
+    ref lkobjekt_parent {
+      association "LKObjekt_LKObjektTextAssoc";
+      role "LKObjektRef";
+      required;
+      target rule lkflaeche sourceRef t.LKObjektRef;
+    }
+  }
+
+  rule lkobjekt-text-linie {
+    target tgt class "LKMap2025Demo.LKMap.LKObjekt_Text";
+    source t from src class "LKMap2015Demo.LKMap.LKObjekt_Text";
+    where existsIn("src", "LKMap2015Demo.LKMap.LKLinie", "__objectOid", oid(t.LKObjektRef));
+
+    assign {
+      Text = t.Text;
+    }
+
+    ref lkobjekt_parent {
+      association "LKObjekt_LKObjektTextAssoc";
+      role "LKObjektRef";
+      required;
+      target rule lklinie sourceRef t.LKObjektRef;
+    }
+  }
+
+  rule lkobjekt-text-punkt {
+    target tgt class "LKMap2025Demo.LKMap.LKObjekt_Text";
+    source t from src class "LKMap2015Demo.LKMap.LKObjekt_Text";
+    where existsIn("src", "LKMap2015Demo.LKMap.LKPunkt", "__objectOid", oid(t.LKObjektRef));
+
+    assign {
+      Text = t.Text;
+    }
+
+    ref lkobjekt_parent {
+      association "LKObjekt_LKObjektTextAssoc";
+      role "LKObjektRef";
+      required;
+      target rule lkpunk sourceRef t.LKObjektRef;
+    }
+  }
+}

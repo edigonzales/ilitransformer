@@ -1,9 +1,9 @@
 # ilinexus Demo-Suite
 
-Eine Sammlung von 9 in sich geschlossenen Beispielen für die modellbewusste
+Eine Sammlung von 10 in sich geschlossenen Beispielen für die modellbewusste
 INTERLIS-Transformation mit der `.ilimap`-DSL (v2). Jedes Beispiel hat ein eigenes
 INTERLIS-2.4-Modell, eigene Transferdaten, ein Mapping-Profil und ein README mit allen
-Aufrufen. Die Beispiele steigern sich von sehr einfach (01) bis anspruchsvoll (09) und
+Aufrufen. Die Beispiele steigern sich von sehr einfach (01) bis anspruchsvoll (10) und
 decken zusammen einen Grossteil der INTERLIS-Sprachelemente und der Expression-Sprache ab.
 
 Alle Modelle wurden mit `ili2c` kompiliert, alle Ein- und Ausgabedaten mit
@@ -22,6 +22,7 @@ Alle Modelle wurden mit `ili2c` kompiliert, alle Ein- und Ausgabedaten mit
 | 07 | [bags-structures](07-bags-structures/) | `STRUCTURE`, `BAG OF`, `LIST OF`, `SURFACE`, `COORD` | `bag`/`parentRef`, synth. Bag, `bagFirst`, `pointOnSurface`, `coordEquals` |
 | 08 | [associations-refs](08-associations-refs/) | `ASSOCIATION` + Rollen, Referenzen | `ref`, `join`, `lookup`, `lookupIn`, `existsIn`, `oid` |
 | 09 | [oid-basket-loss-metadata](09-oid-basket-loss-metadata/) | 2 Topics, OID/Basket | `oid`/`basket`-Strategien, `loss`, `metadata`, `create`, `identity` |
+| 10 | [sia405-lkmap-komposition](10-sia405-lkmap-komposition/) | abstrakte Basisklasse, Komposition, polymorphe Referenz | `sourceRef`, `oid`, `existsIn`, Untertyp-Kompatibilität |
 
 ## Voraussetzungen
 

@@ -7,11 +7,15 @@ import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.ReferenceResolutionReport;
 import guru.interlis.transformer.engine.ReferenceResolutionService;
 import guru.interlis.transformer.mapping.plan.*;
+import guru.interlis.transformer.model.IliModelCompileResult;
+import guru.interlis.transformer.model.IliModelService;
+import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.*;
 
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -271,6 +275,71 @@ class ReferenceResolutionServiceTest {
 
         assertThat(report.typeMismatch()).isEqualTo(1);
         assertThat(diag.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_TYPE_MISMATCH));
+    }
+
+    @Test
+    void acceptsConcreteSubclassForAbstractReferenceTarget() {
+        IliModelCompileResult compileResult = new IliModelService()
+                .compileModel("src/test/data/models/with-inheritance-associations.ili", "src/test/data/models/");
+        assertThat(compileResult.hasErrors())
+                .as("Model compilation errors: %s", compileResult.diagnostics().all())
+                .isFalse();
+
+        TypeSystemFacade typeSystem = new TypeSystemFacade(compileResult.transferDescription());
+        assertThat(typeSystem.isTypeCompatible(
+                        "InheritanceAssocModel.AssocTopic.LKObjekt", "InheritanceAssocModel.AssocTopic.LKLinie"))
+                .isTrue();
+        assertThat(typeSystem.isTypeCompatible(
+                        "InheritanceAssocModel.AssocTopic.LKObjekt", "InheritanceAssocModel.AssocTopic.LKObjekt_Text"))
+                .isFalse();
+        OutputBinding output = new OutputBinding(
+                "out1",
+                Path.of("out.xtf"),
+                "InheritanceAssocModel",
+                "xtf",
+                Map.of(),
+                compileResult.transferDescription(),
+                typeSystem);
+        TransformPlan plan = new TransformPlan(
+                "inheritance",
+                "forward",
+                FailPolicy.STRICT,
+                CompileMode.STRICT,
+                List.of(),
+                Map.of(),
+                Map.of("out1", output),
+                new DiagnosticCollector(),
+                new OidPlan(OidStrategy.PRESERVE, "ns"),
+                new BasketPlan(BasketStrategy.PRESERVE),
+                Map.of());
+
+        InMemoryStateStore stateStore = new InMemoryStateStore();
+        InMemoryReferenceIndex refIndex = new InMemoryReferenceIndex();
+        DiagnosticCollector diag = new DiagnosticCollector();
+        Iom_jObject owner = new Iom_jObject("InheritanceAssocModel.AssocTopic.LKObjekt_Text", "text1");
+        TargetObjectKey ownerKey =
+                new TargetObjectKey("out1", "InheritanceAssocModel.AssocTopic.LKObjekt_Text", "text1");
+        stateStore.registerTarget(ownerKey, owner);
+        refIndex.add(
+                new SourceObjectKey("in1", "b1", "InheritanceAssocModel.AssocTopic.LKLinie", "line-source"),
+                new TargetReference("out1", "InheritanceAssocModel.AssocTopic.LKLinie", "line1", "linie"));
+        stateStore.addDeferredReference(new DeferredReference(
+                ownerKey,
+                "LKObjektRef",
+                "LKObjekt_LKObjektTextAssoc",
+                new SourceReferenceSelector("in1", "b1", "InheritanceAssocModel.AssocTopic.LKLinie", "line-source"),
+                "linie",
+                "InheritanceAssocModel.AssocTopic.LKObjekt",
+                new DeferredReference.Cardinality(1, 1),
+                true));
+
+        ReferenceResolutionReport report =
+                new ReferenceResolutionService().resolveAll(plan, stateStore, refIndex, diag);
+
+        assertThat(report.resolved()).isEqualTo(1);
+        assertThat(report.typeMismatch()).isZero();
+        assertThat(diag.all()).isEmpty();
+        assertThat(owner.getattrobj("LKObjektRef", 0).getobjectrefoid()).isEqualTo("line1");
     }
 
     @Test

@@ -322,7 +322,7 @@ assign:
 refs:
   - association: "Entstehung_LFP3"    # Vollqualifizierte Association
     role: "Entstehung"                # Rollenname
-    sourceRef: "src.Entstehung"       # Quellreferenz
+    sourceRef: "src.Entstehung"       # Quellreferenz-Ausdruck; src liefert die aktuelle OID
     targetRule: "lfp3-nachfuehrung"   # Rule-ID des Zielobjekts
 ```
 

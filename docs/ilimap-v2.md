@@ -618,7 +618,19 @@ ref Entstehung {
 referenziert die Zielregel. `sourceRef` gibt den Quellpfad zur Referenzaufloesung an.
 
 `association` und `role` sind optional. `target rule` mit `sourceRef` koennen ebenfalls
-weggelassen werden, falls nur die Assoziation dokumentiert wird.
+weggelassen werden, falls nur die Assoziation dokumentiert wird. `sourceRef` wird als
+Ausdruck ausgewertet: Ein Alias allein (z.B. `s`) liefert die OID des aktuellen
+Quellobjekts, `oid(s)` ist die explizite Schreibweise dafuer, und `s.ParentRef`
+liest die OID aus einer Quellreferenz.
+
+Bei einer Komposition wie `LKObjekt`–`LKObjekt_Text` ist fuer eine Referenz vom
+Textobjekt zum Parent normalerweise die Child-Rolle zu mappen, z.B. `role
+"LKObjektRef"` mit `sourceRef s.LKObjektRef`. `oid(s)` liefert in diesem Fall nur
+die OID des Textobjekts und stellt die Parent-Beziehung nicht her.
+
+Wenn die Zielrolle auf eine abstrakte Basisklasse zeigt, darf die Zielregel eine
+konkrete Unterklasse erzeugen. Die Referenzauflösung prüft dafür die INTERLIS-
+Vererbung; eine unverwandte Zielklasse bleibt ein Typfehler.
 
 Die Ref-Kurzform (`ref Name -> rule using expr`) ist syntaktisch reserviert, aber in
 v2.0 **nicht implementiert**. Der Parser lehnt die Kurzform aktiv ab.
