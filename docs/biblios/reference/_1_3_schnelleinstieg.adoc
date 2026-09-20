@@ -46,4 +46,4 @@ Das Ergebnis (`output.xtf`) enthält zwei `Target`-Objekte mit bereinigten Namen
 
 ==== Nächste Schritte
 
-Die vollständige Demo-Suite (`demo/`) enthält zehn Beispiele, die sich von einfachen Kopierregeln bis zu Referenzen, BAG OF STRUCTURE und OID-Strategien steigern. Siehe xref:_beispiele[Anhang C] für die kompletten Listings.
+Die vollständige Demo-Suite (`demo/`) enthält zehn Beispiele, die sich von einfachen Kopierregeln bis zu Referenzen, BAG OF STRUCTURE und OID-Strategien steigern. Anhang C enthält dazu ausgewählte vollständige Minimalbeispiele; die kompletten Demo-Dateien liegen unter `demo/`.

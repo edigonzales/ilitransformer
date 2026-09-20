@@ -1,7 +1,9 @@
 [appendix]
 == Beispiele
 
-Dieser Anhang enthält vollständige, lauffähige Minimalbeispiele. Alle Beispiele sind im Repository unter `demo/` verfügbar.
+Dieser Anhang enthält ausgewählte vollständige, lauffähige Minimalbeispiele.
+Die vollständige Demo-Suite mit allen zehn Beispielen ist im Repository unter
+`demo/` verfügbar.
 
 === Demo 01 — Hello Copy (ilimap)
 

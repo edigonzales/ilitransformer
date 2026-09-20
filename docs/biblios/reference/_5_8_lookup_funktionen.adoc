@@ -56,7 +56,7 @@ kein INTERLIS-Attribut und kommt weder im Modell noch in den Transferdaten vor.
 Es darf nur als `keyAttr` in `lookup`, `lookupOptional`, `lookupIn` und
 `existsIn` verwendet werden.
 
-Der Runtime-Name `_itf_<Attributname>` ist davon zu unterscheiden. Er dient
+Der Runtime-Name `\_itf\_<Attributname>` ist davon zu unterscheiden. Er dient
 intern als Geometrie-Hilfsname für bestimmte INTERLIS-1-/ITF-Fälle und ist
 keine unterstützte Mapping-Syntax. Mapping-Profile dürfen sich nicht darauf
 stützen.
