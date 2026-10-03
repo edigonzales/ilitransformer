@@ -384,7 +384,8 @@ final class IlimapPrinter {
     private void printBagFrom(IlimapBagFromStmt from) {
         StringBuilder sb = new StringBuilder("from ");
         sb.append(from.alias()).append(" in ").append(from.inputId());
-        sb.append(" class ").append(quoted(from.sourceClass()));
+        sb.append(from.attributePath() == null ? " class " : " attribute ")
+                .append(quoted(from.attributePath() == null ? from.sourceClass() : from.attributePath()));
         if (from.where() != null) {
             sb.append(" where ").append(from.where().text().strip());
         }

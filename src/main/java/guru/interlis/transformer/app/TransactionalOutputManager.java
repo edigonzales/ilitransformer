@@ -16,9 +16,18 @@ public final class TransactionalOutputManager implements AutoCloseable {
     private final Map<String, Path> tempPathsByOutputId = new LinkedHashMap<>();
     private final Map<String, OutputBinding> bindingsById = new LinkedHashMap<>();
     private final boolean keepTemporaryFiles;
+    private final boolean overwriteExisting;
+    private final boolean requireAtomicPublication;
 
     public TransactionalOutputManager(boolean keepTemporaryFiles) {
+        this(keepTemporaryFiles, true, false);
+    }
+
+    public TransactionalOutputManager(
+            boolean keepTemporaryFiles, boolean overwriteExisting, boolean requireAtomicPublication) {
         this.keepTemporaryFiles = keepTemporaryFiles;
+        this.overwriteExisting = overwriteExisting;
+        this.requireAtomicPublication = requireAtomicPublication;
         try {
             this.tempDir = Files.createTempDirectory("ilitransformer-");
         } catch (IOException e) {
@@ -60,9 +69,17 @@ public final class TransactionalOutputManager implements AutoCloseable {
         if (parent != null) {
             Files.createDirectories(parent);
         }
+        if (!overwriteExisting) {
+            // Atomic no-clobber publication: never replace a concurrently created target.
+            Files.createLink(targetPath, tempPath);
+            Files.delete(tempPath);
+            tempPathsByOutputId.remove(outputId);
+            return;
+        }
         try {
             Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (AtomicMoveNotSupportedException e) {
+            if (requireAtomicPublication) throw e;
             Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
         }
         tempPathsByOutputId.remove(outputId);

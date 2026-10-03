@@ -47,21 +47,26 @@ public final class SourceIndexingService {
 
         Set<String> inputIds = new HashSet<>();
         for (RulePlan rule : plan.rules()) {
+            ExecutionCancellation.check();
             for (SourcePlan sp : rule.sources()) {
+                ExecutionCancellation.check();
                 inputIds.addAll(sp.inputIds());
             }
             for (BagPlan bag : rule.bags()) {
+                ExecutionCancellation.check();
                 inputIds.addAll(bag.fromSource().inputIds());
             }
         }
 
         for (String inputId : inputIds) {
+            ExecutionCancellation.check();
             List<SourceRecord> inputRecords = new ArrayList<>();
             IoxReader reader = readerFactoryById.apply(inputId);
             try {
                 String basketId = null;
                 IoxEvent event;
                 while ((event = reader.read()) != null) {
+                    ExecutionCancellation.check();
                     if (event instanceof StartBasketEvent basket) {
                         basketId = basket.getBid();
                         continue;
@@ -104,6 +109,7 @@ public final class SourceIndexingService {
 
         List<BagPlan> embedBags = dispatchIndex.embedBagsFor(sr.sourceFileId(), sourceClass);
         for (BagPlan bag : embedBags) {
+            ExecutionCancellation.check();
             if (!bag.hasParentRef()) continue;
             String refAttr = bag.parentRefAttribute();
             String parentOid = readReferenceOid(sr.sourceObject(), refAttr);
@@ -133,6 +139,7 @@ public final class SourceIndexingService {
         String sourceClass = source.getobjecttag();
         List<RuleDispatchIndex.BagExpansionEntry> entries = dispatchIndex.expandBagsFor(inputId, sourceClass);
         for (var entry : entries) {
+            ExecutionCancellation.check();
             BagPlan bag = entry.bag();
             String parentClassName =
                     TypeSystemFacade.getScopedName(entry.parentSource().sourceClass());
@@ -143,6 +150,7 @@ public final class SourceIndexingService {
             if (count <= 0) continue;
 
             for (int i = 0; i < count; i++) {
+                ExecutionCancellation.check();
                 IomObject structure = source.getattrobj(bagAttrName, i);
                 if (structure == null) continue;
                 SourceRecord.ParentContext parentContext =

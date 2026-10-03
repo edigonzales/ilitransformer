@@ -68,7 +68,27 @@ public final class BagTransformationService {
             bagSourceClass = TypeSystemFacade.getScopedName(bag.fromSource().sourceClass());
         }
 
-        if (bag.hasParentRef()) {
+        if (!bag.fromSource().structurePath().isEmpty()) {
+            var parentRecord = ctx.parent().sourceRecord();
+            IomObject owner = parentRecord.sourceObject();
+            List<String> path = bag.fromSource().structurePath();
+            for (int p = 0; owner != null && p < path.size() - 1; p++) owner = owner.getattrobj(path.get(p), 0);
+            bagSourceRecords = new ArrayList<>();
+            if (owner != null) {
+                String attribute = path.getLast();
+                for (int p = 0; p < owner.getattrvaluecount(attribute); p++) {
+                    ExecutionCancellation.check();
+                    IomObject child = owner.getattrobj(attribute, p);
+                    if (child == null)
+                        throw new IllegalArgumentException("Structure expected at " + attribute + "[" + p + "]");
+                    if (!child.getobjecttag().equals(bagSourceClass))
+                        throw new IllegalArgumentException(
+                                "Concrete structure subtype requires explicit mapping: " + child.getobjecttag());
+                    bagSourceRecords.add(new SourceRecord(
+                            parentRecord.sourceFileId(), parentRecord.sourceBasketId(), child.getobjecttag(), child));
+                }
+            }
+        } else if (bag.hasParentRef()) {
             String parentOid = ctx.parent().sourceRecord().sourceObject().getobjectoid();
             if (bag.fromSource().sourceClass() != null) {
                 String resolvedSourceClass =
@@ -86,6 +106,7 @@ public final class BagTransformationService {
                 // Fallback when sourceClass unknown: scan stateStore and filter by parent ref attribute
                 bagSourceRecords = new ArrayList<>();
                 for (SourceRecord sr : ctx.stateStore().sourceRecords()) {
+                    ExecutionCancellation.check();
                     IomObject obj = sr.sourceObject();
                     if (obj.getattrvaluecount(bag.parentRefAttribute()) <= 0) continue;
                     IomObject ref = obj.getattrobj(bag.parentRefAttribute(), 0);
@@ -102,6 +123,7 @@ public final class BagTransformationService {
             // Fallback: scan stateStore, optionally filtered by sourceClass
             bagSourceRecords = new ArrayList<>();
             for (SourceRecord sr : ctx.stateStore().sourceRecords()) {
+                ExecutionCancellation.check();
                 boolean classMatch = bagSourceClass == null || bagSourceClass.equals(sr.sourceClass());
                 boolean inputMatch = bag.fromSource().inputIds().isEmpty()
                         || bag.fromSource().inputIds().contains(sr.sourceFileId());
@@ -116,8 +138,9 @@ public final class BagTransformationService {
         }
 
         List<SourceRecord> sorted = new ArrayList<>(bagSourceRecords);
-        sorted.sort(Comparator.comparing(
-                sr -> sr.sourceObject().getobjectoid(), Comparator.nullsLast(Comparator.naturalOrder())));
+        if (bag.fromSource().structurePath().isEmpty())
+            sorted.sort(Comparator.comparing(
+                    sr -> sr.sourceObject().getobjectoid(), Comparator.nullsLast(Comparator.naturalOrder())));
 
         List<IomObject> structures = new ArrayList<>();
         Map<String, IomObject> parentSources = Map.of(
@@ -127,6 +150,7 @@ public final class BagTransformationService {
                 ctx.parent().sourceRecord().sourceObject());
 
         for (SourceRecord sr : sorted) {
+            ExecutionCancellation.check();
             IomObject bagSource = sr.sourceObject();
             Map<String, IomObject> allSources = new LinkedHashMap<>();
             allSources.put(bag.fromSource().alias(), bagSource);
@@ -163,6 +187,7 @@ public final class BagTransformationService {
                     .withLookupIndex(ctx.sourceLookupIndex());
 
             for (AssignmentPlan ap : bag.assignments()) {
+                ExecutionCancellation.check();
                 Value value = expressionEngine.evaluate(ap.expression(), assignCtx);
                 if (value.isDefined()) {
                     setBagAttribute(struct, ap, value, ctx);
@@ -173,6 +198,7 @@ public final class BagTransformationService {
 
             // Embed nested bags recursively
             for (BagPlan nestedBag : bag.nestedBags()) {
+                ExecutionCancellation.check();
                 if (nestedBag.isEmbed()) {
                     BagExecutionContext nestedCtx = new BagExecutionContext(
                             nestedBag,
@@ -196,6 +222,7 @@ public final class BagTransformationService {
         }
 
         for (IomObject struct : structures) {
+            ExecutionCancellation.check();
             target.addattrobj(bag.bagAttrName(), struct);
         }
     }
@@ -235,6 +262,7 @@ public final class BagTransformationService {
 
         Iom_jObject struct = new Iom_jObject(bag.structureName(), null);
         for (AssignmentPlan ap : bag.assignments()) {
+            ExecutionCancellation.check();
             Value value = expressionEngine.evaluate(ap.expression(), evalCtx);
             if (value.isDefined()) {
                 setBagAttribute(struct, ap, value, ctx);
@@ -284,6 +312,7 @@ public final class BagTransformationService {
         String outputId = ctx.rule().outputId();
 
         for (int i = 0; i < limit; i++) {
+            ExecutionCancellation.check();
             IomObject rawStructure = parentObj.getattrobj(bagAttrName, i);
             IomObject structure = normalizeBagSourceStructure(rawStructure, bag);
             if (structure == null) continue;
@@ -359,6 +388,7 @@ public final class BagTransformationService {
                     .withLookupIndex(ctx.sourceLookupIndex());
 
             for (AssignmentPlan ap : bag.assignments()) {
+                ExecutionCancellation.check();
                 Value value = expressionEngine.evaluate(ap.expression(), assignCtx);
                 if (value.isDefined()) {
                     setBagAttribute(bagTarget, ap, value, ctx);
@@ -386,6 +416,7 @@ public final class BagTransformationService {
 
             // Nested bags (EXPAND only)
             for (BagPlan nestedBag : bag.nestedBags()) {
+                ExecutionCancellation.check();
                 if (nestedBag.isExpand()) {
                     expandBag(nestedBag, parentRecord, structure, bagTarget, ctx);
                 }
@@ -408,6 +439,7 @@ public final class BagTransformationService {
 
     private void checkMandatoryAttributes(Iom_jObject struct, BagPlan bag, DiagnosticCollector diag) {
         for (AssignmentPlan ap : bag.assignments()) {
+            ExecutionCancellation.check();
             AttributeDef targetAttr = ap.targetAttr();
             if (!isMandatory(targetAttr)) {
                 continue;
@@ -443,6 +475,7 @@ public final class BagTransformationService {
 
         IomObject current = structure;
         for (int depth = 0; depth < 4; depth++) {
+            ExecutionCancellation.check();
             if (current == null) {
                 return null;
             }
@@ -496,6 +529,7 @@ public final class BagTransformationService {
     private static int meaningfulAttributeCount(IomObject object) {
         int count = 0;
         for (int i = 0; i < object.getattrcount(); i++) {
+            ExecutionCancellation.check();
             if (!isHelperAttribute(object.getattrname(i))) {
                 count++;
             }
@@ -505,6 +539,7 @@ public final class BagTransformationService {
 
     private static String firstMeaningfulAttributeName(IomObject object) {
         for (int i = 0; i < object.getattrcount(); i++) {
+            ExecutionCancellation.check();
             String attrName = object.getattrname(i);
             if (!isHelperAttribute(attrName)) {
                 return attrName;

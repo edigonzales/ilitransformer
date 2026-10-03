@@ -42,6 +42,7 @@ public final class ReferenceResolutionService {
         Map<String, Map<String, Long>> roleCountByOwner = new HashMap<>();
 
         for (DeferredReference ref : deferredRefs) {
+            ExecutionCancellation.check();
             SourceReferenceSelector selector = ref.sourceSelector();
             List<TargetReference> candidates;
             if (selector.referencedSourceOid() != null
@@ -177,12 +178,14 @@ public final class ReferenceResolutionService {
         int missingCount = 0;
         if (plan == null) return 0;
         for (RulePlan rule : plan.rules()) {
+            ExecutionCancellation.check();
             OutputBinding outputBinding = plan.outputsById().get(rule.outputId());
             TypeSystemFacade targetTs = outputBinding != null ? outputBinding.typeSystem() : null;
             if (targetTs == null) continue;
             String targetClassScoped = getScopedName(rule.targetClass());
 
             for (var ref : rule.refs()) {
+                ExecutionCancellation.check();
                 if (!ref.required()) continue;
                 RoleResolver roleResolver = new RoleResolver(targetTs);
                 long minCardinality = roleResolver
@@ -193,6 +196,7 @@ public final class ReferenceResolutionService {
                 List<DeferredReference> deferredRefs = stateStore.deferredReferences();
                 boolean hasResolved = false;
                 for (DeferredReference dr : deferredRefs) {
+                    ExecutionCancellation.check();
                     if (dr.owner().targetClass() != null
                             && dr.owner().targetClass().equals(targetClassScoped)
                             && dr.targetRoleName().equals(ref.targetRoleName())) {

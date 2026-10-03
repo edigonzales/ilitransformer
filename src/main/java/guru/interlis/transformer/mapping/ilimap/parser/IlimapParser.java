@@ -759,8 +759,10 @@ public final class IlimapParser {
         String alias = expectIdentifier();
         expectKeyword("in");
         String inputId = expectIdentifier();
-        expectKeyword("class");
-        String sourceClass = expectString();
+        boolean embedded = peekKeyword("attribute");
+        expectKeyword(embedded ? "attribute" : "class");
+        String source = expectString();
+        String sourceClass = embedded ? null : source;
         IlimapExpressionText where = null;
         if (peekKeyword("where")) {
             advance();
@@ -773,7 +775,7 @@ public final class IlimapParser {
             end = expectToken(IlimapTokenType.SEMICOLON).range().end();
         }
         IlimapSourceRange range = new IlimapSourceRange(fromKeyword.range().start(), end);
-        return new IlimapBagFromStmt(alias, inputId, sourceClass, where, range);
+        return new IlimapBagFromStmt(alias, inputId, sourceClass, where, range, embedded ? source : null);
     }
 
     private IlimapParentRefStmt parseParentRefStmt() {

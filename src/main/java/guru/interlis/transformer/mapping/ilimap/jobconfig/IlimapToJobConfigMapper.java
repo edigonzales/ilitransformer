@@ -302,6 +302,7 @@ public final class IlimapToJobConfigMapper {
             bs.from.alias = bag.from().alias();
             bs.from.input = bag.from().inputId();
             bs.from.clazz = bag.from().sourceClass();
+            bs.from.attribute = bag.from().attributePath();
             if (bag.from().where() != null) {
                 bs.from.where = normalizer.normalizeForJobConfig(bag.from().where(), symbols);
             }

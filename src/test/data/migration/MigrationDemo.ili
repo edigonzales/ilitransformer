@@ -1,0 +1,40 @@
+INTERLIS 2.4;
+MODEL MigrationDemo_V1 (en) AT "https://interlis.example/models" VERSION "2026-10-03" =
+  DOMAIN
+    Coord = COORD 0.000 .. 1000.000, 0.000 .. 1000.000, 0.000 .. 1000.000;
+    Coord2 = COORD 0.000 .. 1000.000, 0.000 .. 1000.000;
+    Axis = POLYLINE WITH (STRAIGHTS, ARCS) VERTEX Coord2;
+  TOPIC Data =
+    STRUCTURE Detail = Note : TEXT*80; END Detail;
+    STRUCTURE Control = Office : TEXT*80; Details : BAG {0..*} OF Detail; END Control;
+    CLASS Facility = Name : TEXT*80; END Facility;
+    CLASS Line =
+      Label : MANDATORY TEXT*80;
+      Status : (active, retired);
+      Location : Coord;
+      Geometry : Axis;
+      Controls : LIST {0..*} OF Control;
+    END Line;
+    ASSOCIATION LineFacility = Facility -- {0..1} Facility; Lines -- {0..*} Line; END LineFacility;
+  END Data;
+END MigrationDemo_V1.
+MODEL MigrationDemo_V2 (en) AT "https://interlis.example/models" VERSION "2026-10-03" =
+  DOMAIN
+    Coord = COORD 0.000 .. 1000.000, 0.000 .. 1000.000, 0.000 .. 1000.000;
+    Coord2 = COORD 0.000 .. 1000.000, 0.000 .. 1000.000;
+    Axis = POLYLINE WITH (STRAIGHTS, ARCS) VERTEX Coord2;
+  TOPIC Data =
+    STRUCTURE Detail = Note : TEXT*80; END Detail;
+    STRUCTURE Control = Office : TEXT*80; Details : BAG {0..*} OF Detail; END Control;
+    CLASS Facility = Name : TEXT*80; END Facility;
+    CLASS Line =
+      Name : MANDATORY TEXT*80;
+      Origin : MANDATORY TEXT*30;
+      Status : (operational, closed);
+      Location : Coord;
+      Geometry : Axis;
+      Controls : LIST {0..*} OF Control;
+    END Line;
+    ASSOCIATION LineFacility = Facility -- {0..1} Facility; Lines -- {0..*} Line; END LineFacility;
+  END Data;
+END MigrationDemo_V2.

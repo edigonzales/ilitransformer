@@ -16,12 +16,14 @@ public final class OutputWritingService {
             throws Exception {
         long written = 0;
         for (var entry : writersByOutputId.entrySet()) {
+            ExecutionCancellation.check();
             String outputId = entry.getKey();
             IoxWriter writer = entry.getValue();
             writer.write(new ch.interlis.iox_j.StartTransferEvent(
                     guru.interlis.transformer.BuildInfo.get().senderId(), null, null));
             Map<String, List<IomObject>> byBasket = objectsByOutputAndBasket.getOrDefault(outputId, Map.of());
             for (var basketEntry : byBasket.entrySet()) {
+                ExecutionCancellation.check();
                 String[] parts = basketEntry.getKey().split("::", 2);
                 String topic = parts[0];
                 String basketId = parts.length > 1 && !parts[1].isEmpty() ? parts[1] : null;
@@ -29,6 +31,7 @@ public final class OutputWritingService {
                 List<IomObject> sorted = new ArrayList<>(basketEntry.getValue());
                 sorted.sort(targetObjectComparator());
                 for (IomObject target : sorted) {
+                    ExecutionCancellation.check();
                     writer.write(new ch.interlis.iox_j.ObjectEvent(target));
                     written++;
                 }
@@ -55,9 +58,11 @@ public final class OutputWritingService {
         if (object == null) return false;
         if (object.getobjectrefoid() != null) return true;
         for (int i = 0; i < object.getattrcount(); i++) {
+            ExecutionCancellation.check();
             String attrName = object.getattrname(i);
             int valueCount = object.getattrvaluecount(attrName);
             for (int valueIdx = 0; valueIdx < valueCount; valueIdx++) {
+                ExecutionCancellation.check();
                 if (hasReference(object.getattrobj(attrName, valueIdx))) {
                     return true;
                 }

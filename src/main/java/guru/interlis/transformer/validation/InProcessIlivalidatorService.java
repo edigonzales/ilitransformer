@@ -34,7 +34,10 @@ public final class InProcessIlivalidatorService implements TransferValidationSer
 
         boolean valid;
         try {
-            valid = Validator.runValidation(new String[] {transferFile.toString()}, settings);
+            synchronized (ch.interlis.ili2c.Main.class) {
+                guru.interlis.transformer.engine.ExecutionCancellation.check();
+                valid = Validator.runValidation(new String[] {transferFile.toString()}, settings);
+            }
         } catch (Exception e) {
             return new ValidationResult(false, -1, -1, effectiveLog, e.getMessage());
         }

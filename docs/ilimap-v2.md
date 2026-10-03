@@ -911,3 +911,31 @@ Eindeutigkeit:
 - Bag-Namen innerhalb desselben Blocks sind eindeutig.
 
 Diagnostics enthalten Datei, Zeile und Spalte.
+
+## Embedded source structures for model migrations
+
+A bag can read occurrences already embedded in its enclosing source object:
+
+```ilimap
+bag Controls {
+  from c in s attribute "Controls";
+  assign { Office = trim(c.Office); }
+  bag Details {
+    from d in c attribute "Details";
+    assign { Note = d.Note; }
+  }
+}
+```
+
+`in s` refers to the immediately enclosing source alias, not to an input ID. The
+attribute path may traverse single-valued structures before its final structure
+attribute. This form requires `embed` mode and excludes `parentRef`. It preserves
+occurrence order and repeated equal values; filters and `maxItems` still explicitly
+change the selected content. Concrete subtypes which do not match the compiled source
+structure are rejected. The existing `from c in input class "..."` form is unchanged.
+YAML expresses the new path as `from.attribute` instead of `from.class`.
+
+Migration drafts may record `option modelFingerprint "<sha256>"` on input/output.
+Compilation compares the contents of all compiled model source files to this fingerprint.
+The embedded migration API also requires `option migrationReviewed true` when a draft
+has been marked `false`; this is an explicit review decision, not a validation result.

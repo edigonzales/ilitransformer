@@ -59,7 +59,10 @@ public final class IoxGeometryAdapter implements GeometryAdapter {
         String c1 = geom.getattrvalue("C1");
         String c2 = geom.getattrvalue("C2");
         if (c1 != null && c2 != null) {
-            return new CoordValue(Double.parseDouble(c1), Double.parseDouble(c2));
+            return new CoordValue(
+                    Double.parseDouble(c1),
+                    Double.parseDouble(c2),
+                    geom.getattrvalue("C3") == null ? null : Double.valueOf(geom.getattrvalue("C3")));
         }
         return parseCoordText(geom.getattrvalue("value"));
     }
@@ -68,13 +71,17 @@ public final class IoxGeometryAdapter implements GeometryAdapter {
         if (value == null || value.isBlank()) return null;
         String[] parts = value.trim().split("\\s+");
         if (parts.length < 2) return null;
-        return new CoordValue(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
+        return new CoordValue(
+                Double.parseDouble(parts[0]),
+                Double.parseDouble(parts[1]),
+                parts.length > 2 ? Double.valueOf(parts[2]) : null);
     }
 
     private IomObject buildCoord(CoordValue cv) {
         Iom_jObject obj = new Iom_jObject("COORD", null);
         obj.setattrvalue("C1", Double.toString(cv.x()));
         obj.setattrvalue("C2", Double.toString(cv.y()));
+        if (cv.z() != null) obj.setattrvalue("C3", Double.toString(cv.z()));
         return obj;
     }
 }

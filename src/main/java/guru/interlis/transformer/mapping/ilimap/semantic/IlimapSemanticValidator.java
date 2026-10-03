@@ -344,7 +344,9 @@ public final class IlimapSemanticValidator {
             IlimapIdentifierRules.requireAliasId(
                     bag.from().alias(), diagnostics, bag.from().range());
 
-            if (symbols.resolveInput(bag.from().inputId()).isEmpty()) {
+            if (bag.from().attributePath() == null
+                    ? symbols.resolveInput(bag.from().inputId()).isEmpty()
+                    : parentScope.resolve(bag.from().inputId()).isEmpty()) {
                 diagnostics.add(new Diagnostic(
                         DiagnosticCode.ILIMAP_UNKNOWN_INPUT,
                         Severity.ERROR,

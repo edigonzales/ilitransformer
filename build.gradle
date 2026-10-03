@@ -335,3 +335,39 @@ tasks.register('validateFeatureMatrix', Test) {
 check.dependsOn integrationTest
 check.dependsOn validateFeatureMatrix
 check.dependsOn spotlessCheck
+
+// Thin Java API artifact for hosts such as Apache Hop; the CLI distribution remains unchanged.
+def coreJar = tasks.register('coreJar', Jar) {
+    archiveBaseName = 'ilitransformer-core'
+    from sourceSets.main.output
+    exclude 'guru/interlis/transformer/app/CliMain*'
+    exclude 'guru/interlis/transformer/app/BuildInfoVersionProvider*'
+    exclude 'guru/interlis/transformer/cli/**'
+    exclude 'guru/interlis/transformer/mapping/ilimap/lsp/**'
+}
+publishing.publications.create('core', MavenPublication) {
+    groupId = project.group.toString()
+    artifactId = 'ilitransformer-core'
+    version = project.version.toString()
+    artifact(coreJar)
+    pom.withXml {
+        def deps = asNode().appendNode('dependencies')
+        configurations.implementation.dependencies.findAll {
+            !(it.group in ['info.picocli', 'org.eclipse.lsp4j'])
+        }.each { dependency ->
+            def dep = deps.appendNode('dependency')
+            dep.appendNode('groupId', dependency.group)
+            dep.appendNode('artifactId', dependency.name)
+            dep.appendNode('version', dependency.version)
+            dep.appendNode('scope', 'compile')
+            if (dependency.excludeRules) {
+                def exclusions = dep.appendNode('exclusions')
+                dependency.excludeRules.each { rule ->
+                    def ex = exclusions.appendNode('exclusion')
+                    ex.appendNode('groupId', rule.group ?: '*')
+                    ex.appendNode('artifactId', rule.module ?: '*')
+                }
+            }
+        }
+    }
+}

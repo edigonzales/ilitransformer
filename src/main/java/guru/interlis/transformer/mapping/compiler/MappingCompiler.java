@@ -42,6 +42,23 @@ public final class MappingCompiler {
         this.expressionCompiler = new ExpressionCompiler();
     }
 
+    private static void checkFingerprint(
+            String expected,
+            ch.interlis.ili2c.metamodel.TransferDescription td,
+            String binding,
+            DiagnosticCollector diagnostics) {
+        if (expected == null) return;
+        try {
+            String actual = guru.interlis.transformer.api.MigrationDraftService.fingerprint(td);
+            if (!expected.equals(actual))
+                throw new IllegalArgumentException(
+                        "Model source changed; review migration mappings before updating modelFingerprint");
+        } catch (Exception ex) {
+            diagnostics.add(new Diagnostic(
+                    DiagnosticCode.MODEL_COMPILE_FAILED, Severity.ERROR, ex.getMessage(), binding, null));
+        }
+    }
+
     public CompileResult compile(JobConfig config) {
         DiagnosticCollector diagnostics = new DiagnosticCollector();
         structuralValidator.validateVersion(config, diagnostics);
@@ -63,6 +80,16 @@ public final class MappingCompiler {
 
     public TransformPlan compileTyped(JobConfig config, ModelRegistry modelRegistry) {
         DiagnosticCollector diagnostics = new DiagnosticCollector();
+        modelRegistry
+                .inputsById()
+                .values()
+                .forEach(b -> checkFingerprint(
+                        b.options().get("modelFingerprint"), b.transferDescription(), b.inputId(), diagnostics));
+        modelRegistry
+                .outputsById()
+                .values()
+                .forEach(b -> checkFingerprint(
+                        b.options().get("modelFingerprint"), b.transferDescription(), b.outputId(), diagnostics));
 
         structuralValidator.validateVersion(config, diagnostics);
         structuralValidator.validateOutputs(config, diagnostics);

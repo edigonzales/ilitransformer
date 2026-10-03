@@ -94,12 +94,14 @@ public final class RuleExecutionService {
         List<String> orderedRuleIds = depGraph.topologicalOrder();
         Map<String, RulePlan> rulesById = new HashMap<>();
         for (RulePlan rp : plan.rules()) {
+            ExecutionCancellation.check();
             rulesById.put(rp.ruleId(), rp);
         }
 
         List<List<String>> cycles = depGraph.cycles();
         if (!cycles.isEmpty()) {
             for (List<String> cycle : cycles) {
+                ExecutionCancellation.check();
                 diagnostics.add(new Diagnostic(
                         DiagnosticCode.MAP_CYCLIC_DEPENDENCY,
                         Severity.ERROR,
@@ -110,6 +112,7 @@ public final class RuleExecutionService {
         }
 
         for (String ruleId : orderedRuleIds) {
+            ExecutionCancellation.check();
             RulePlan rule = rulesById.get(ruleId);
             if (rule == null) continue;
 
@@ -146,6 +149,7 @@ public final class RuleExecutionService {
             }
 
             for (CreatePlan create : rule.creates()) {
+                ExecutionCancellation.check();
                 processCreatePlan(
                         create,
                         rule,
@@ -168,8 +172,10 @@ public final class RuleExecutionService {
         }
 
         for (var entry : expandedTargets.entrySet()) {
+            ExecutionCancellation.check();
             String outputId = entry.getKey();
             for (var basketEntry : entry.getValue().entrySet()) {
+                ExecutionCancellation.check();
                 objectsByOutputAndBasket
                         .computeIfAbsent(outputId, ignored -> new LinkedHashMap<>())
                         .computeIfAbsent(basketEntry.getKey(), ignored -> new java.util.ArrayList<>())
@@ -205,10 +211,13 @@ public final class RuleExecutionService {
                 sourceLookupIndex);
 
         for (SourcePlan source : rule.sources()) {
+            ExecutionCancellation.check();
             if (source.sourceClass() == null) continue;
             String scopedClass = TargetObjectFactory.getScopedName(source.sourceClass());
             for (String inputId : source.inputIds()) {
+                ExecutionCancellation.check();
                 for (SourceRecord record : stateStore.sourceRecords(inputId, scopedClass)) {
+                    ExecutionCancellation.check();
                     metrics.recordRuleSourceRecordVisited(rule.ruleId());
                     Map<String, IomObject> sources = Map.of(source.alias(), record.sourceObject());
                     EvalContext evalCtx = new EvalContext(
@@ -260,6 +269,7 @@ public final class RuleExecutionService {
         List<JoinPlan> joins = rule.joins();
         SourcePlan driverPlan = joins.get(0).left();
         for (SourceRecord driverRecord : stateStore.sourceRecords()) {
+            ExecutionCancellation.check();
             if (!sourceMatchesPlan(driverRecord, driverPlan)) continue;
             metrics.recordRuleSourceRecordVisited(rule.ruleId());
 
@@ -407,6 +417,7 @@ public final class RuleExecutionService {
         }
 
         for (SourceRecord rightRecord : rightMatches) {
+            ExecutionCancellation.check();
             Map<String, SourceRecord> joinedRecords = new LinkedHashMap<>(boundRecords);
             joinedRecords.put(join.right().alias(), rightRecord);
 
@@ -492,6 +503,7 @@ public final class RuleExecutionService {
     private static Map<String, IomObject> toSourceObjects(Map<String, SourceRecord> boundRecords) {
         Map<String, IomObject> sources = new LinkedHashMap<>();
         for (Map.Entry<String, SourceRecord> entry : boundRecords.entrySet()) {
+            ExecutionCancellation.check();
             sources.put(entry.getKey(), entry.getValue().sourceObject());
         }
         return sources;
@@ -536,6 +548,7 @@ public final class RuleExecutionService {
                 sourceLookupIndex);
 
         for (SourceRecord record : stateStore.sourceRecords()) {
+            ExecutionCancellation.check();
             SourcePlan sp = findSourcePlan(parentRule, record);
             if (sp == null) continue;
             metrics.recordRuleSourceRecordVisited(parentRule.ruleId());
@@ -552,6 +565,7 @@ public final class RuleExecutionService {
 
     private static SourcePlan findSourcePlan(RulePlan rule, SourceRecord record) {
         for (SourcePlan sp : rule.sources()) {
+            ExecutionCancellation.check();
             if (sp.sourceClass() == null) continue;
             if (!sp.inputIds().contains(record.sourceFileId())) continue;
             if (TypeSystemFacade.getScopedName(sp.sourceClass()).equals(record.sourceClass())) {
@@ -607,6 +621,7 @@ public final class RuleExecutionService {
             return;
         }
         for (var loss : rule.losses()) {
+            ExecutionCancellation.check();
             if (loss.whenExpression() != null
                     && !isFilterTruthy(expressionEngine.evaluate(loss.whenExpression(), evalCtx))) {
                 continue;
@@ -624,11 +639,14 @@ public final class RuleExecutionService {
     private static Map<String, Map<String, TypeInfo>> buildSourceAttributeTypeMap(TransformPlan plan) {
         Map<String, Map<String, TypeInfo>> result = new LinkedHashMap<>();
         for (RulePlan rule : plan.rules()) {
+            ExecutionCancellation.check();
             for (SourcePlan sp : rule.sources()) {
+                ExecutionCancellation.check();
                 if (sp.sourceClass() == null) continue;
                 addSourceAttributeTypes(result, sp.alias(), sp.sourceClass());
             }
             for (BagPlan bag : rule.bags()) {
+                ExecutionCancellation.check();
                 addBagSourceAttributeTypes(result, bag);
             }
         }
@@ -644,6 +662,7 @@ public final class RuleExecutionService {
                     result, bag.fromSource().alias(), bag.fromSource().sourceClass());
         }
         for (BagPlan nestedBag : bag.nestedBags()) {
+            ExecutionCancellation.check();
             addBagSourceAttributeTypes(result, nestedBag);
         }
     }
@@ -654,6 +673,7 @@ public final class RuleExecutionService {
         Map<String, TypeInfo> aliasTypes = result.computeIfAbsent(alias, ignored -> new LinkedHashMap<>());
         Iterator<ch.interlis.ili2c.metamodel.ViewableTransferElement> it = sourceClass.getAttributesAndRoles2();
         while (it.hasNext()) {
+            ExecutionCancellation.check();
             ch.interlis.ili2c.metamodel.ViewableTransferElement element = it.next();
             if (element.obj instanceof ch.interlis.ili2c.metamodel.AttributeDef attr) {
                 if (attr.getName() != null) {

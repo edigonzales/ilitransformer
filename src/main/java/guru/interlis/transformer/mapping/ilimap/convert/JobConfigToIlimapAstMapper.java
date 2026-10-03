@@ -278,7 +278,8 @@ public final class JobConfigToIlimapAstMapper {
                     bag.from.input,
                     bag.from.clazz,
                     bag.from.where != null ? exprRewrite(bag.from.where, enumNames, aliasRenames) : null,
-                    SYNTHETIC);
+                    SYNTHETIC,
+                    bag.from.attribute);
         }
 
         IlimapParentRefStmt parentRef = null;

@@ -353,6 +353,7 @@ public final class JobConfig {
     }
 
     public static final class BagFrom {
+        public String attribute;
         public String input;
 
         @JsonProperty("class")

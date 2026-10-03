@@ -174,6 +174,49 @@ final class BagCompiler {
                     continue;
                 }
                 bagSourcePlan = new SourcePlan(parentAlias, null, List.of(), null);
+            } else if (from.attribute != null) {
+                SourcePlan owner = sourcesByAlias.get(from.input);
+                String expectedParent = fallbackParentAlias != null
+                        ? fallbackParentAlias
+                        : sourcePlans.isEmpty() ? null : sourcePlans.getFirst().alias();
+                if (owner == null
+                        || !java.util.Objects.equals(from.input, expectedParent)
+                        || mode != BagPlan.BagMode.EMBED
+                        || bagSpec.parentRef != null
+                        || from.alias == null) {
+                    diag.add(new Diagnostic(
+                            DiagnosticCode.MAP_TYPE_MISMATCH,
+                            Severity.ERROR,
+                            "Embedded structure requires the enclosing source alias, embed mode and no parentRef",
+                            ruleId,
+                            null));
+                    continue;
+                }
+                List<String> path = List.of(from.attribute.split("\\.", -1));
+                Table component = owner.sourceClass();
+                boolean valid = component != null;
+                for (int pi = 0; valid && pi < path.size(); pi++) {
+                    AttributeDef attribute = component.findAttribute(path.get(pi));
+                    var domain = attribute == null ? null : attribute.getDomainResolvingAliases();
+                    if (!(domain instanceof CompositionType composition)
+                            || (pi < path.size() - 1
+                                    && composition.getCardinality().getMaximum() > 1)) {
+                        valid = false;
+                    } else {
+                        component = composition.getComponentType();
+                    }
+                }
+                if (!valid) {
+                    diag.add(new Diagnostic(
+                            DiagnosticCode.MAP_TYPE_MISMATCH,
+                            Severity.ERROR,
+                            "Invalid embedded structure path: " + from.input + "." + from.attribute,
+                            ruleId,
+                            null));
+                    continue;
+                }
+                parentAlias = from.input;
+                bagSourcePlan = new SourcePlan(from.alias, component, owner.inputIds(), null, path);
             } else {
                 if (from.clazz == null || from.clazz.isBlank()) {
                     diag.add(new Diagnostic(
@@ -234,7 +277,11 @@ final class BagCompiler {
             }
 
             bagSourcePlan = new SourcePlan(
-                    bagSourcePlan.alias(), bagSourcePlan.sourceClass(), bagSourcePlan.inputIds(), bagWhere);
+                    bagSourcePlan.alias(),
+                    bagSourcePlan.sourceClass(),
+                    bagSourcePlan.inputIds(),
+                    bagWhere,
+                    bagSourcePlan.structurePath());
 
             List<AssignmentPlan> bagAssignments = new ArrayList<>();
             Set<String> assignedBagAttrs = new HashSet<>();

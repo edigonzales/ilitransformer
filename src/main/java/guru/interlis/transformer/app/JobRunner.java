@@ -60,6 +60,29 @@ public final class JobRunner {
             DiagnosticCode.RUN_REF_MISSING_MANDATORY,
             DiagnosticCode.RUN_MISSING_SOURCE_OID);
 
+    private final java.util.function.Consumer<String> log;
+    private boolean overwriteExisting = true;
+    private boolean requireAtomicPublication;
+
+    public void setPublicationPolicy(boolean overwrite, boolean atomic) {
+        overwriteExisting = overwrite;
+        requireAtomicPublication = atomic;
+    }
+
+    private Runnable beforeCommit = () -> {};
+
+    public void setBeforeCommit(Runnable check) {
+        beforeCommit = java.util.Objects.requireNonNull(check);
+    }
+
+    public JobRunner() {
+        this(System.out::println);
+    }
+
+    public JobRunner(java.util.function.Consumer<String> log) {
+        this.log = java.util.Objects.requireNonNull(log);
+    }
+
     private final TransferValidationService validationService = new InProcessIlivalidatorService();
 
     public CompileResult validateMapping(Path configPath) throws Exception {
@@ -134,17 +157,25 @@ public final class JobRunner {
         long prepareStartNanos = System.nanoTime();
         PreparedJob prepared = prepare(configPath, options);
         long compilePrepareMs = nanosToMillis(System.nanoTime() - prepareStartNanos);
-        TransformPlan plan = prepared.plan();
+        return runPrepared(prepared, options, runStartNanos, compilePrepareMs);
+    }
 
+    public DiagnosticCollector runPrepared(PreparedJob prepared, RunOptions options) throws Exception {
+        return runPrepared(prepared, options, System.nanoTime(), 0);
+    }
+
+    private DiagnosticCollector runPrepared(
+            PreparedJob prepared, RunOptions options, long runStartNanos, long compilePrepareMs) throws Exception {
+        TransformPlan plan = prepared.plan();
         printCompilerDiagnostics(plan);
 
         if (plan.diagnostics().hasErrors()) {
-            System.err.println("Compilation failed with errors. Aborting.");
+            log.accept("Compilation failed with errors. Aborting.");
             return plan.diagnostics();
         }
 
         if (plan.failPolicy() == FailPolicy.REPORT_ONLY) {
-            System.out.println("REPORT_ONLY mode: compilation successful. Skipping transformation run.");
+            log.accept("REPORT_ONLY mode: compilation successful. Skipping transformation run.");
             if (options.reportDirectory() != null) {
                 RunProfileSnapshot profile = new RunProfileSnapshot(
                         compilePrepareMs, 0, 0, nanosToMillis(System.nanoTime() - runStartNanos));
@@ -171,7 +202,8 @@ public final class JobRunner {
         long validationNanos = 0;
         boolean committed = false;
 
-        try (TransactionalOutputManager txManager = new TransactionalOutputManager(options.keepTemporaryFiles())) {
+        try (TransactionalOutputManager txManager = new TransactionalOutputManager(
+                options.keepTemporaryFiles(), overwriteExisting, requireAtomicPublication)) {
             IoxFormatRegistry ioRegistry = IoxFormatRegistry.defaultRegistry();
 
             Map<String, IoxWriter> writersByOutputId = new LinkedHashMap<>();
@@ -205,7 +237,11 @@ public final class JobRunner {
                 try {
                     FormatOpenContext context =
                             new FormatOpenContext(prepared.baseDirectory(), binding.transferDescription(), engineDiag);
-                    readerByInputId.put(inputId, ioRegistry.createReader(binding, context));
+                    readerByInputId.put(
+                            inputId,
+                            new ManagedReader(
+                                    ioRegistry.createReader(binding, context),
+                                    requireAtomicPublication && "xtf".equals(binding.format())));
                 } catch (Exception e) {
                     engineDiag.add(ioOpenDiagnostic(true, inputId, e));
                 }
@@ -229,6 +265,7 @@ public final class JobRunner {
                         pcIndex,
                         metrics);
                 try {
+                    engine.setProgressListener(log);
                     result = engine.runTyped(plan, readerByInputId::get, writersByOutputId);
                     metricsSnapshot = engine.getMetricsSnapshot();
                     lossinessCollector = engine.getLossinessCollector();
@@ -238,6 +275,19 @@ public final class JobRunner {
                             Severity.ERROR,
                             "Transformation engine failed: " + e.getClass().getSimpleName()
                                     + (e.getMessage() != null ? ": " + e.getMessage() : ""),
+                            null,
+                            null));
+                }
+            }
+
+            for (IoxReader reader : readerByInputId.values()) {
+                try {
+                    reader.close();
+                } catch (Exception e) {
+                    engineDiag.add(new Diagnostic(
+                            DiagnosticCode.COMMIT_FAILED,
+                            Severity.ERROR,
+                            "Failed to close reader: " + e.getMessage(),
                             null,
                             null));
                 }
@@ -303,7 +353,10 @@ public final class JobRunner {
                         case REPORT_ONLY -> false;
                     };
 
+            if (Thread.currentThread().isInterrupted()) shouldCommit = false;
             if (shouldCommit) {
+                beforeCommit.run();
+                guru.interlis.transformer.engine.ExecutionCancellation.check();
                 for (var entry : plan.outputsById().entrySet()) {
                     String outputId = entry.getKey();
                     if (txManager.tempPath(outputId) != null) {
@@ -324,7 +377,7 @@ public final class JobRunner {
                         suggestion));
                 txManager.rollbackAll();
                 if (options.keepTemporaryFiles()) {
-                    System.out.println("Temporary files retained in " + txManager.tempDir());
+                    log.accept("Temporary files retained in " + txManager.tempDir());
                 }
             }
         }
@@ -337,13 +390,13 @@ public final class JobRunner {
         Duration elapsed = Duration.between(start, Instant.now());
 
         if (result != null) {
-            System.out.println(result.summary());
+            log.accept(result.summary());
         }
         if (metricsSnapshot != null && metricsSnapshot.elapsedMillis() > 0) {
-            System.out.println(metricsSnapshot.summary());
+            log.accept(metricsSnapshot.summary());
         }
         if (committed) {
-            System.out.println("Output committed successfully.");
+            log.accept("Output committed successfully.");
         }
 
         // Write reports
@@ -439,18 +492,17 @@ public final class JobRunner {
 
     // -- Internal helpers ----------------------------------------------------
 
-    private static void printCompilerDiagnostics(TransformPlan plan) {
+    private void printCompilerDiagnostics(TransformPlan plan) {
         if (plan.diagnostics().all().isEmpty()) return;
-        System.out.println("--- Compiler Diagnostics ---");
+        log.accept("--- Compiler Diagnostics ---");
         for (Diagnostic d : plan.diagnostics().all()) {
-            System.out.printf(
-                    "[%s] %s: %s (rule: %s)%n",
-                    d.severity(), d.code(), d.message(), d.sourcePath() != null ? d.sourcePath() : "");
+            log.accept("[%s] %s: %s (rule: %s)"
+                    .formatted(d.severity(), d.code(), d.message(), d.sourcePath() != null ? d.sourcePath() : ""));
             if (d.suggestion() != null) {
-                System.out.printf("  Suggestion: %s%n", d.suggestion());
+                log.accept("  Suggestion: " + d.suggestion());
             }
         }
-        System.out.println();
+        log.accept("");
     }
 
     private void writeReports(
@@ -510,9 +562,9 @@ public final class JobRunner {
                     modelVersions,
                     metricsSnapshot,
                     finalProfile);
-            System.out.println("Reports written to: " + reportDirectory);
+            log.accept("Reports written to: " + reportDirectory);
         } catch (IOException e) {
-            System.err.println("Failed to write reports: " + e.getMessage());
+            log.accept("Failed to write reports: " + e.getMessage());
         }
     }
 
@@ -524,7 +576,7 @@ public final class JobRunner {
             collector.writeJson(reportDirectory.resolve("lossiness-report.json"));
             collector.writeMarkdown(reportDirectory.resolve("lossiness-report.md"));
         } catch (IOException e) {
-            System.err.println("Failed to write lossiness reports: " + e.getMessage());
+            log.accept("Failed to write lossiness reports: " + e.getMessage());
         }
     }
 

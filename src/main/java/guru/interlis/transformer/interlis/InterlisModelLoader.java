@@ -13,6 +13,12 @@ import java.util.List;
 public final class InterlisModelLoader {
 
     public TransferDescription compileModel(String modelName, String modelDirectories) throws Ili2cFailure {
+        synchronized (ch.interlis.ili2c.Main.class) {
+            return compileLocked(modelName, modelDirectories);
+        }
+    }
+
+    private TransferDescription compileLocked(String modelName, String modelDirectories) throws Ili2cFailure {
         List<String> repos = normalizeModelDirectories(modelDirectories);
 
         IliManager manager = new IliManager();

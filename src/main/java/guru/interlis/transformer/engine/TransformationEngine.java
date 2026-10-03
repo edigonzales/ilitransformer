@@ -208,11 +208,19 @@ public final class TransformationEngine {
         return runTypedLegacy(config, readerFactory, writersByOutputId);
     }
 
+    private java.util.function.Consumer<String> progress = phase -> {};
+
+    public void setProgressListener(java.util.function.Consumer<String> listener) {
+        progress = java.util.Objects.requireNonNull(listener);
+    }
+
     public TransformResult runTyped(
             TransformPlan plan, Function<String, IoxReader> readerFactoryById, Map<String, IoxWriter> writersByOutputId)
             throws Exception {
         dispatchIndex = RuleDispatchIndex.build(plan);
 
+        ExecutionCancellation.check();
+        progress.accept("Indexing sources");
         long sourceIndexStart = System.nanoTime();
         sourceIndexingService.indexSources(
                 plan,
@@ -226,11 +234,15 @@ public final class TransformationEngine {
         metrics.recordSourceIndexDuration(System.nanoTime() - sourceIndexStart);
 
         expandedTargets = new LinkedHashMap<>();
+        ExecutionCancellation.check();
+        progress.accept("Transforming objects");
         long ruleExecutionStart = System.nanoTime();
         RuleExecutionService.RuleExecutionResult execResult = ruleExecutionService.executeRules(
                 plan, dispatchIndex, stateStore, sourceLookupIndex, parentChildIndex, diagnostics, metrics);
         metrics.recordRuleExecutionDuration(System.nanoTime() - ruleExecutionStart);
 
+        ExecutionCancellation.check();
+        progress.accept("Resolving references");
         long referenceResolutionStart = System.nanoTime();
         if (referenceResolutionService != null && referenceIndex != null) {
             referenceResolutionService.resolveAll(plan, stateStore, referenceIndex, diagnostics);
@@ -240,6 +252,8 @@ public final class TransformationEngine {
         }
         metrics.recordReferenceResolutionDuration(System.nanoTime() - referenceResolutionStart);
 
+        ExecutionCancellation.check();
+        progress.accept("Writing transfer");
         long outputWriteStart = System.nanoTime();
         long written = outputWritingService.writeOutputs(writersByOutputId, execResult.objectsByOutputAndBasket());
         metrics.recordOutputWriteDuration(System.nanoTime() - outputWriteStart);
