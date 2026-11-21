@@ -10,6 +10,7 @@ import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.geometry.IoxGeometryAdapter;
+import guru.interlis.transformer.io.FormatIdResolver;
 import guru.interlis.transformer.io.FormatOpenContext;
 import guru.interlis.transformer.io.IoxFormatRegistry;
 import guru.interlis.transformer.io.jdbc.JdbcConnectionException;
@@ -58,6 +59,10 @@ public final class JobRunner {
             DiagnosticCode.RUN_DUPLICATE_TARGET_OID,
             DiagnosticCode.MODEL_COMPILE_FAILED,
             DiagnosticCode.RUN_REF_MISSING_MANDATORY,
+            DiagnosticCode.RUN_REF_AMBIGUOUS,
+            DiagnosticCode.RUN_REF_UNREPRESENTABLE,
+            DiagnosticCode.RUN_REF_TYPE_MISMATCH,
+            DiagnosticCode.RUN_REF_CARDINALITY,
             DiagnosticCode.RUN_MISSING_SOURCE_OID);
 
     private final java.util.function.Consumer<String> log;
@@ -241,7 +246,7 @@ public final class JobRunner {
                             inputId,
                             new ManagedReader(
                                     ioRegistry.createReader(binding, context),
-                                    requireAtomicPublication && "xtf".equals(binding.format())));
+                                    requireAtomicPublication && FormatIdResolver.isXtf(binding.format())));
                 } catch (Exception e) {
                     engineDiag.add(ioOpenDiagnostic(true, inputId, e));
                 }

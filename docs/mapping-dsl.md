@@ -258,7 +258,11 @@ basketStrategy:
   default: preserveOrGenerateUuid   # preserve | generateUuid | preserveOrGenerateUuid | byTopic | expression
 ```
 
-Unterstützte Strategien: `preserve`, `generateUuid`, `preserveOrGenerateUuid`, `byTopic`. `expression` ist als Stub vorbereitet.
+Unterstützt sind `preserve`, `generateUuid`, `preserveOrGenerateUuid` und
+`byTopic`. `generateUuid` vergibt innerhalb eines Laufs eine Ziel-BID pro
+Ausgabe, Zieltopic, Quellinput und Quellbasket. `preserveOrGenerateUuid`
+übernimmt eine gültige Quell-UUID und verwendet beim Generieren dieselbe
+Gruppierung. ITF schreibt Themenblöcke. `expression` ist als Stub vorbereitet.
 
 ## RuleSpec
 
@@ -322,9 +326,21 @@ assign:
 refs:
   - association: "Entstehung_LFP3"    # Vollqualifizierte Association
     role: "Entstehung"                # Rollenname
-    sourceRef: "src.Entstehung"       # Quellreferenz-Ausdruck; src liefert die aktuelle OID
+    sourceRef: "src.Entstehung"       # Referenzwert des Quellobjekts
     targetRule: "lfp3-nachfuehrung"   # Rule-ID des Zielobjekts
 ```
+
+Für `sourceRef` den vollständigen Referenzwert verwenden, damit Input und
+Basket erhalten bleiben. Textprojektionen wie `refOid()` und `trim()` sind
+als Zielidentität in `sourceRef` unzulässig. Bei lokalen Referenzen gilt der Basket
+des Quellobjekts. Eine explizite BID bestimmt den referenzierten Basket.
+`targetRule` schränkt die erzeugende Regel ein und bestimmt bei Bedarf den
+zugehörigen Input. `#first` verlangt genau ein von `targetRule` erzeugtes Objekt.
+Fehlende Pflichtreferenzen und mehrdeutige Treffer sind auch mit `lenient` Fehler.
+Die Ausgabe verwendet die erzeugte Ziel-OID und prüft den tatsächlichen
+Zielbasket. Externe Referenzen zwischen Baskets benötigen XTF 2.4 mit beiden
+Baskets in derselben Ausgabe. Der eingesetzte IOX-Writer kodiert externe
+XTF-2.3-Ausgabereferenzen fehlerhaft, deshalb meldet die Engine einen Fehler.
 
 ### BagSpec
 

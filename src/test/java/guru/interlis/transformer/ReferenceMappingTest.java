@@ -2,8 +2,10 @@ package guru.interlis.transformer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -22,12 +24,16 @@ import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxWriter;
+import ch.interlis.iox.ObjectEvent;
 
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 
 class ReferenceMappingTest {
 
@@ -86,11 +92,84 @@ class ReferenceMappingTest {
     }
 
     @Test
+    void additionalCreateObjectDoesNotBecomeAnImplicitReferenceTarget() throws Exception {
+        JobConfig config = compositionConfig();
+        config.mapping.oidStrategy.defaultStrategy = "integer";
+        config.mapping.rules.get(1).refs.getFirst().targetRule = null;
+        var create = new JobConfig.CreateSpec();
+        create.clazz = "AssocModel.AssocTopic.Parent";
+        create.assign = Map.of("Name", "\"Additional parent\"");
+        config.mapping.rules.getFirst().create = List.of(create);
+        TransformPlan plan = compileMapping(config);
+        assertThat(plan.diagnostics().hasErrors())
+                .as("%s", plan.diagnostics().all())
+                .isFalse();
+
+        var parent = object("AssocModel.AssocTopic.Parent", "p1", "Mapped parent");
+        var child = object("AssocModel.AssocTopic.Child", "c1", "Child");
+        child.addattrobj("ParentRole", Iom_jObject.REF).setobjectrefoid("p1");
+        var diagnostics = new DiagnosticCollector();
+        var engine = new TransformationEngine(new ExpressionEngine(), new InMemoryStateStore(), diagnostics);
+        IoxWriter writer = recordingWriter();
+        engine.runTyped(plan, inputId -> TestMockReaders.mockReader(parent, child), Map.of("out", writer));
+
+        assertThat(diagnostics.hasErrors()).as("%s", diagnostics.all()).isFalse();
+        var events = ArgumentCaptor.forClass(IoxEvent.class);
+        verify(writer, atLeastOnce()).write(events.capture());
+        var objects = events.getAllValues().stream()
+                .filter(ObjectEvent.class::isInstance)
+                .map(ObjectEvent.class::cast)
+                .map(ObjectEvent::getIomObject)
+                .toList();
+        assertThat(objects).hasSize(3);
+        var mappedParent = objects.stream()
+                .filter(obj -> "Mapped parent".equals(obj.getattrvalue("Name")))
+                .findFirst()
+                .orElseThrow();
+        var mappedChild = objects.stream()
+                .filter(obj -> "Child".equals(obj.getattrvalue("Name")))
+                .findFirst()
+                .orElseThrow();
+        assertThat(mappedChild.getattrobj("ParentRole", 0).getobjectrefoid()).isEqualTo(mappedParent.getobjectoid());
+    }
+
+    @Test
     void sourceRefReportsUnknownAliasDuringCompilation() {
         TransformPlan plan = compileMapping(compositionConfig("oid(unknown)"));
 
         assertThat(plan.diagnostics().all())
                 .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"refOid(c.ParentRole)", "trim(c.ParentRole)"})
+    void sourceRefRejectsOidProjection(String expression) {
+        TransformPlan plan = compileMapping(compositionConfig(expression));
+
+        assertThat(plan.diagnostics().hasErrors()).isTrue();
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.EXPR_UNSUPPORTED)
+                        && d.message().contains("must yield a reference"));
+    }
+
+    @Test
+    void sourceRefRejectsTextChosenAtRuntime() throws Exception {
+        TransformPlan plan = compileMapping(compositionConfig("if(false, c.ParentRole, trim(c.ParentRole))"));
+        assertThat(plan.diagnostics().hasErrors()).isFalse();
+
+        var parent = object("AssocModel.AssocTopic.Parent", "p1", "Parent");
+        var child = object("AssocModel.AssocTopic.Child", "c1", "Child");
+        child.addattrobj("ParentRole", Iom_jObject.REF).setobjectrefoid("p1");
+        var diagnostics = new DiagnosticCollector();
+        var stateStore = new InMemoryStateStore();
+        var engine = new TransformationEngine(new ExpressionEngine(), stateStore, diagnostics);
+        engine.runTyped(plan, inputId -> TestMockReaders.mockReader(parent, child), Map.of("out", recordingWriter()));
+
+        assertThat(diagnostics.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_TYPE_MISMATCH));
+        var target = stateStore
+                .findTarget(new TargetObjectKey("out", "AssocModel.AssocTopic.Child", "c1"))
+                .orElseThrow();
+        assertThat(target.getattrvaluecount("ParentRole")).isZero();
     }
 
     private static TransformPlan compileMapping(JobConfig config) {

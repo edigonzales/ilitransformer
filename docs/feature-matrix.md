@@ -13,17 +13,17 @@
 | ExpressionEngine | 4 | ✅ SUPPORTED | Parse and evaluate mapping expressions | ExpressionEngineTest, ExpressionParserTest |
 | FunctionRegistry (Basic/String/Date/Enum/Ref/Math) | 4 | ✅ SUPPORTED | Builtin functions for expressions | FunctionRegistryTest, BuiltinFunctionsTest |
 | Value type system | 4 | ✅ SUPPORTED | Sealed interface: TextValue, NumberValue, BooleanValue, DateValue, EnumValue, CoordValue, GeometryObjectValue, ReferenceValue, NullValue | ValueTest, ExpressionEngineTest |
-| Two-pass execution engine | 5 | ✅ SUPPORTED | Pass 0 (index), Pass 1 (build), Pass 2 (refs), Write (stable sort) | TransformationEngineIntegrationTest |
+| Two-pass execution engine | 5 | ✅ SUPPORTED | Pass 0 (index), Pass 1 (build), Pass 2 (refs), Write (stable sort) | ReferenceResolutionIntegrationTest |
 | 1:1 Scalar mapping | 5 | ✅ SUPPORTED | Copy attributes from source to target | ScalarMappingIntegrationTest |
-| OID strategies (preserve/integer/uuid/deterministic) | 6 | ✅ SUPPORTED | preserve, integer, uuid, deterministicUuid (UUIDv3) | OidStrategyTest, OidStrategyGoldenTest |
+| OID strategies (preserve/integer/uuid/deterministic) | 6 | ✅ SUPPORTED | preserve, integer, uuid, deterministicUuid (UUIDv3) | DefaultOidGenerationServiceTest, OidStrategyGoldenTest |
 | OID strategy external | 6 | 📌 STUB | External OID source — pass-through stub |  |
 | Basket strategies | 6 | ✅ SUPPORTED | preserve, generateUuid, preserveOrGenerateUuid, byTopic | BasketStrategyTest |
 | Basket strategy expression | 6 | 📌 STUB | Expression-based basket routing — stub |  |
-| Reference resolution + roles | 7 | ✅ SUPPORTED | DeferredRefs, type checking, cardinality, role-aware resolution | ReferenceResolutionIntegrationTest |
+| Reference resolution + roles | 7 | ✅ SUPPORTED | Deferred references, type checking, cardinality and version-aware XTF reference encoding | ReferenceResolutionIntegrationTest |
 | ReferenceIndex + ReferenceResolutionService | 19 | ✅ SUPPORTED | Separate ReferenceIndex with SourceObjectKey/TargetReference; ReferenceResolutionService with per-owner cardinality, ambiguity detection, association-aware diagnostics | ReferenceIndexTest, ReferenceResolutionServiceTest |
-| Same OID different context resolution | 19 | ✅ SUPPORTED | Same OID in different baskets/inputs/classes correctly disambiguated; no global OID-only fallback by default | ReferenceIndexTest, ReferenceResolutionServiceTest, ReferenceResolutionIntegrationTest |
+| Same OID different context resolution | 19 | ✅ SUPPORTED | Lookup is scoped to the source input, basket and class or to the transfer ID of an XTF 2.4 EXTERNAL reference | ReferenceIndexTest, ReferenceResolutionServiceTest, ReferenceResolutionIntegrationTest |
 | Association-aware role resolution | 19 | ✅ SUPPORTED | requireRole() with AssociationDef; association name in diagnostics; XTF association serialization tested with ilivalidator | AssociationXtfIntegrationTest |
-| failPolicy (strict/lenient/reportOnly) | 7 | ✅ SUPPORTED | Configurable error handling at plan level | TransformationEngineIntegrationTest |
+| failPolicy (strict/lenient/reportOnly) | 7 | ✅ SUPPORTED | Configurable error handling at plan level | ReferenceResolutionIntegrationTest |
 | GeometryAdapter (Coord/Polyline/Surface/Area) | 13/24 | ✅ SUPPORTED | IoxGeometryAdapter with GeometryValueCopier, ItfGeometryWriter for ILI1 helper tables | IoxGeometryAdapterTest, GeometryIntegrationTest, GeometryDeepCopyTest |
 | GeometryValueCopier | 24 | ✅ SUPPORTED | Deep copy IomObject geometries to prevent source-target aliasing | GeometryDeepCopyTest |
 | GeometryCompatibilityService | 24 | ✅ SUPPORTED | Compile-time geometry compatibility checks: dimension, SURFACE/AREA, type matching | GeometryCompatibilityServiceTest |
@@ -50,7 +50,7 @@
 | Joins / Splits / Merge | 22 | 🔬 EXPERIMENTAL | Multi-source equi-joins (max 1 join per rule), create directives, rule dependency ordering | JoinCompilationTest, CreateCompilationTest, CreateAdditionalObjectIntegrationTest |
 | RuleDispatchIndex | 26 | ✅ SUPPORTED | Pre-computed O(1) rule dispatch per (inputId, sourceClass); eliminates SourceRecord x Rule full scan | RuleDispatchIndexTest |
 | ExecutionMetrics und Performance-Report | 26 | ✅ SUPPORTED | Laufzeitmessung, Join-/BAG-Lookup-Zähler, Targets-by-Class; integriert in JSON/Markdown-Report | ExecutionMetricsTest |
-| Service-Dekomposition der TransformationEngine | 26 | ✅ SUPPORTED | SourceIndexingService, RuleExecutionService, TargetObjectFactory, AssignmentExecutionService, OutputWritingService | TransformationEngineIntegrationTest |
+| Service-Dekomposition der TransformationEngine | 26 | ✅ SUPPORTED | SourceIndexingService, RuleExecutionService, TargetObjectFactory, AssignmentExecutionService, OutputWritingService | ReferenceResolutionIntegrationTest |
 | Deterministic Output Order | 26 | ✅ SUPPORTED | Output sortiert nach basketId, class, oid; reproduzierbar über mehrere Runs | DeterministicOutputOrderTest |
 | Real Dataset Smoke Tests (DM01+DMAV) | 26 | ✅ SUPPORTED | Vollständige Datensätze mit Modellen einlesen; Objektzahlen pro Topic/Klasse berichten | FullDm01ReadSmokeTest, FullDmavReadSmokeTest |
 | RealDatasetCatalog | 26 | ✅ SUPPORTED | Scan/Classify von Transfer-Dateien ohne harte Dateinamen; requireSingleItf/Xtf | RealDatasetCatalogTest |

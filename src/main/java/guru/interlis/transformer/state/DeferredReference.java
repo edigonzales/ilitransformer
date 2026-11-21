@@ -2,10 +2,13 @@ package guru.interlis.transformer.state;
 
 public record DeferredReference(
         TargetObjectKey owner,
+        String ownerRuleId,
+        String ownerBasketId,
         String targetRoleName,
         String associationName,
-        SourceReferenceSelector sourceSelector,
+        java.util.List<SourceReferenceSelector> sourceSelectors,
         String targetRuleId,
+        boolean singleton,
         String expectedTargetClass,
         Cardinality expectedCardinality,
         boolean required) {

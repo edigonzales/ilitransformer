@@ -98,7 +98,7 @@ public final class ExpressionEngine {
                     if (source != null) {
                         String oid = source.getobjectoid();
                         if (oid != null) {
-                            yield new ReferenceValue(source.getobjecttag(), oid);
+                            yield new ReferenceValue(source.getobjecttag(), oid, null, p.alias(), null);
                         }
                     }
                     yield NullValue.INSTANCE;
@@ -169,7 +169,7 @@ public final class ExpressionEngine {
             if (source != null) {
                 String oid = source.getobjectoid();
                 if (oid != null) {
-                    return new ReferenceValue(source.getobjecttag(), oid);
+                    return new ReferenceValue(source.getobjecttag(), oid, null, parts[0], null);
                 }
                 return NullValue.INSTANCE;
             }
@@ -191,22 +191,12 @@ public final class ExpressionEngine {
             return resolveGeometryValue(source, attrName, attrType, ctx);
         }
 
+        ReferenceValue reference = readReference(source, parts[0], attrName);
+        if (reference != null) return reference;
+        String attrValue = source.getattrvalue(attrName);
+        if (attrValue == null) return NullValue.INSTANCE;
         if (attrType == TypeInfo.REFERENCE) {
-            String refOid = readReferenceOid(source, attrName);
-            if (refOid != null) {
-                return new ReferenceValue(null, refOid);
-            }
-            return NullValue.INSTANCE;
-        }
-
-        String attrValue = source.getattrvalue(parts[1]);
-        if (attrValue == null) {
-            // Fallback: try reading as reference even without type info
-            String refOid = readReferenceOid(source, parts[1]);
-            if (refOid != null) {
-                return new ReferenceValue(null, refOid);
-            }
-            return NullValue.INSTANCE;
+            return new ReferenceValue(null, attrValue, null, parts[0], attrName);
         }
         if (attrType == TypeInfo.BOOLEAN) {
             return BooleanValue.of(Boolean.parseBoolean(attrValue));
@@ -217,14 +207,11 @@ public final class ExpressionEngine {
         return new TextValue(attrValue);
     }
 
-    private String readReferenceOid(IomObject source, String attrName) {
-        if (source.getattrvaluecount(attrName) > 0) {
-            IomObject refObj = source.getattrobj(attrName, 0);
-            if (refObj != null && refObj.getobjectrefoid() != null) {
-                return refObj.getobjectrefoid();
-            }
-        }
-        return source.getattrvalue(attrName);
+    private static ReferenceValue readReference(IomObject source, String alias, String attrName) {
+        if (source.getattrvaluecount(attrName) == 0) return null;
+        IomObject ref = source.getattrobj(attrName, 0);
+        if (ref == null || ref.getobjectrefoid() == null) return null;
+        return new ReferenceValue(null, ref.getobjectrefoid(), ref.getobjectrefbid(), alias, attrName);
     }
 
     private TypeInfo resolveSourceAttributeType(EvalContext ctx, String alias, String attrName) {

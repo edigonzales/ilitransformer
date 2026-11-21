@@ -80,7 +80,6 @@ public final class SourceIndexingService {
                     }
                     if (event instanceof ObjectEvent obj) {
                         IomObject source = obj.getIomObject();
-                        stateStore.indexSourceObject(source.getobjecttag(), inputId, basketId, source);
                         SourceRecord sr = new SourceRecord(inputId, basketId, source.getobjecttag(), source);
                         stateStore.addSourceRecord(sr);
                         sourceLookupIndex.index(sr);

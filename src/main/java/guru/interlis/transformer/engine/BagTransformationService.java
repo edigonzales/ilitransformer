@@ -143,27 +143,24 @@ public final class BagTransformationService {
                     sr -> sr.sourceObject().getobjectoid(), Comparator.nullsLast(Comparator.naturalOrder())));
 
         List<IomObject> structures = new ArrayList<>();
-        Map<String, IomObject> parentSources = Map.of(
-                bag.parentAlias() != null
-                        ? bag.parentAlias()
-                        : ctx.parent().sourcePlan().alias(),
-                ctx.parent().sourceRecord().sourceObject());
+        String parentAlias = bag.parentAlias() != null
+                ? bag.parentAlias()
+                : ctx.parent().sourcePlan().alias();
 
         for (SourceRecord sr : sorted) {
             ExecutionCancellation.check();
-            IomObject bagSource = sr.sourceObject();
-            Map<String, IomObject> allSources = new LinkedHashMap<>();
-            allSources.put(bag.fromSource().alias(), bagSource);
-            allSources.putAll(parentSources);
-
-            EvalContext bagCtx = new EvalContext(
-                            allSources,
-                            ctx.diagnostics(),
-                            ctx.rule().ruleId(),
-                            plan.enumMaps(),
-                            ctx.geometryAdapter(),
-                            ctx.sourceAttributeTypes())
-                    .withLookupIndex(ctx.sourceLookupIndex());
+            Map<String, SourceRecord> records = new LinkedHashMap<>();
+            records.put(bag.fromSource().alias(), sr);
+            records.put(parentAlias, ctx.parent().sourceRecord());
+            EvalContext bagCtx = EvalContext.forRecords(
+                    records,
+                    plan.inputsById(),
+                    ctx.diagnostics(),
+                    ctx.rule().ruleId(),
+                    plan.enumMaps(),
+                    ctx.geometryAdapter(),
+                    ctx.sourceAttributeTypes(),
+                    ctx.sourceLookupIndex());
 
             if (bag.whereExpression() != null
                     && bag.whereExpression().sourceText() != null
@@ -176,19 +173,9 @@ public final class BagTransformationService {
 
             Iom_jObject struct = new Iom_jObject(bag.structureName(), null);
 
-            Map<String, IomObject> assignSources = allSources;
-            EvalContext assignCtx = new EvalContext(
-                            assignSources,
-                            ctx.diagnostics(),
-                            ctx.rule().ruleId(),
-                            plan.enumMaps(),
-                            ctx.geometryAdapter(),
-                            ctx.sourceAttributeTypes())
-                    .withLookupIndex(ctx.sourceLookupIndex());
-
             for (AssignmentPlan ap : bag.assignments()) {
                 ExecutionCancellation.check();
-                Value value = expressionEngine.evaluate(ap.expression(), assignCtx);
+                Value value = expressionEngine.evaluate(ap.expression(), bagCtx);
                 if (value.isDefined()) {
                     setBagAttribute(struct, ap, value, ctx);
                 }
@@ -213,7 +200,8 @@ public final class BagTransformationService {
                             ctx.geometryAdapter(),
                             ctx.sourceAttributeTypes(),
                             ctx.sourceLookupIndex(),
-                            ctx.referenceIndex());
+                            ctx.referenceIndex(),
+                            ctx.basketRouter());
                     embed(nestedCtx);
                 }
             }
@@ -240,16 +228,15 @@ public final class BagTransformationService {
         String parentAlias = bag.parentAlias() != null && !bag.parentAlias().isBlank()
                 ? bag.parentAlias()
                 : ctx.parent().sourcePlan().alias();
-        IomObject parentSource = ctx.parent().sourceRecord().sourceObject();
-        Map<String, IomObject> sources = Map.of(parentAlias, parentSource);
-        EvalContext evalCtx = new EvalContext(
-                        sources,
-                        ctx.diagnostics(),
-                        ctx.rule().ruleId(),
-                        plan.enumMaps(),
-                        ctx.geometryAdapter(),
-                        ctx.sourceAttributeTypes())
-                .withLookupIndex(ctx.sourceLookupIndex());
+        EvalContext evalCtx = EvalContext.forRecords(
+                Map.of(parentAlias, ctx.parent().sourceRecord()),
+                plan.inputsById(),
+                ctx.diagnostics(),
+                ctx.rule().ruleId(),
+                plan.enumMaps(),
+                ctx.geometryAdapter(),
+                ctx.sourceAttributeTypes(),
+                ctx.sourceLookupIndex());
 
         if (bag.whereExpression() != null
                 && bag.whereExpression().sourceText() != null
@@ -370,22 +357,35 @@ public final class BagTransformationService {
 
             Iom_jObject bagTarget = new Iom_jObject(bag.structureName(), targetOid);
 
-            Map<String, IomObject> assignSources = new LinkedHashMap<>();
-            assignSources.put(bag.fromSource().alias(), structure);
+            Map<String, SourceRecord> records = new LinkedHashMap<>();
+            records.put(
+                    bag.fromSource().alias(),
+                    new SourceRecord(
+                            parentRecord.sourceFileId(),
+                            parentRecord.sourceBasketId(),
+                            structure.getobjecttag(),
+                            structure));
             String parentAlias = bag.parentAlias();
             if (parentAlias != null
                     && !parentAlias.isBlank()
                     && !parentAlias.equals(bag.fromSource().alias())) {
-                assignSources.put(parentAlias, parentObj);
+                records.put(
+                        parentAlias,
+                        new SourceRecord(
+                                parentRecord.sourceFileId(),
+                                parentRecord.sourceBasketId(),
+                                parentObj.getobjecttag(),
+                                parentObj));
             }
-            EvalContext assignCtx = new EvalContext(
-                            assignSources,
-                            ctx.diagnostics(),
-                            ctx.rule().ruleId(),
-                            plan.enumMaps(),
-                            ctx.geometryAdapter(),
-                            ctx.sourceAttributeTypes())
-                    .withLookupIndex(ctx.sourceLookupIndex());
+            EvalContext assignCtx = EvalContext.forRecords(
+                    records,
+                    plan.inputsById(),
+                    ctx.diagnostics(),
+                    ctx.rule().ruleId(),
+                    plan.enumMaps(),
+                    ctx.geometryAdapter(),
+                    ctx.sourceAttributeTypes(),
+                    ctx.sourceLookupIndex());
 
             for (AssignmentPlan ap : bag.assignments()) {
                 ExecutionCancellation.check();
@@ -424,11 +424,13 @@ public final class BagTransformationService {
 
             // Add to expanded targets for output merging
             String targetTopic = extractTopic(bag.structureName());
-            String targetBasketId = BasketRouter.determineTargetBasket(
-                    plan.basketPlan().defaultStrategy(),
-                    parentRecord.sourceBasketId(),
-                    targetTopic,
-                    bag.structureName());
+            String targetBasketId = ctx.basketRouter()
+                    .determineTargetBasket(
+                            plan.basketPlan().defaultStrategy(),
+                            parentRecord.sourceFileId(),
+                            parentRecord.sourceBasketId(),
+                            targetTopic,
+                            plan.outputsById().get(outputId));
             String basketKey = basketKey(targetTopic, targetBasketId);
             ctx.expandedTargets()
                     .computeIfAbsent(outputId, ignored -> new LinkedHashMap<>())

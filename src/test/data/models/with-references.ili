@@ -8,12 +8,16 @@ MODEL P7Model (en)
 
     CLASS ClassA =
       Name: MANDATORY TEXT*60;
-      RefToB: TEXT*100;
     END ClassA;
 
     CLASS ClassB =
       Name: MANDATORY TEXT*60;
     END ClassB;
+
+    ASSOCIATION SourceLink =
+      RefToB (EXTERNAL) -- {0..1} ClassB;
+      SourceA -- {0..*} ClassA;
+    END SourceLink;
 
     ASSOCIATION AtoB =
       B_Role -<> {0..*} ClassB;

@@ -189,7 +189,8 @@ class NestedBagTransformationTest {
                 null,
                 Map.of(),
                 null,
-                null);
+                null,
+                new BasketRouter());
 
         // Service with dummy OID generation
         guru.interlis.transformer.state.OidGenerationService oidGen =
@@ -233,7 +234,7 @@ class NestedBagTransformationTest {
 
     @Test
     void expandBindsNestedBackreferenceToExpandedParent() {
-        Iom_jObject parentTarget = new Iom_jObject("Target.Parent", "parent-target-1");
+        Iom_jObject parentTarget = new Iom_jObject("Target.Topic.Parent", "parent-target-1");
 
         Iom_jObject nestedItem = new Iom_jObject("Source.NestedItem", null);
         nestedItem.setattrvalue("Detail", "NestedDetail");
@@ -256,7 +257,7 @@ class NestedBagTransformationTest {
         BagPlan nestedExpand = new BagPlan(
                 "NestedItems",
                 new SourcePlan("gc", null, List.of("in1"), null),
-                "Target.GrandChild",
+                "Target.Topic.GrandChild",
                 List.of(new AssignmentPlan("Detail", null, nestedDetail)),
                 null,
                 BagPlan.BagMode.EXPAND,
@@ -272,7 +273,7 @@ class NestedBagTransformationTest {
         BagPlan outerExpand = new BagPlan(
                 "Children",
                 new SourcePlan("ch", null, List.of("in1"), null),
-                "Target.Child",
+                "Target.Topic.Child",
                 List.of(new AssignmentPlan("Name", null, childName)),
                 null,
                 BagPlan.BagMode.EXPAND,
@@ -295,7 +296,7 @@ class NestedBagTransformationTest {
                 Map.of(),
                 new DiagnosticCollector(),
                 new OidPlan(OidStrategy.INTEGER, "test"),
-                new BasketPlan(BasketStrategy.PRESERVE),
+                new BasketPlan(BasketStrategy.GENERATE_UUID),
                 Map.of());
 
         RulePlan rulePlan = new RulePlan(
@@ -327,7 +328,8 @@ class NestedBagTransformationTest {
                 null,
                 Map.of(),
                 null,
-                new InMemoryReferenceIndex());
+                new InMemoryReferenceIndex(),
+                new BasketRouter());
 
         OidGenerationService oidGenerator = new OidGenerationService() {
             private int next = 0;
@@ -343,15 +345,16 @@ class NestedBagTransformationTest {
         service.expand(ctx);
 
         IomObject childTarget = stateStore
-                .findTarget(new TargetObjectKey("out1", "Target.Child", "oid-1"))
+                .findTarget(new TargetObjectKey("out1", "Target.Topic.Child", "oid-1"))
                 .orElseThrow();
         IomObject grandChildTarget = stateStore
-                .findTarget(new TargetObjectKey("out1", "Target.GrandChild", "oid-2"))
+                .findTarget(new TargetObjectKey("out1", "Target.Topic.GrandChild", "oid-2"))
                 .orElseThrow();
 
         assertThat(childTarget.getattrobj("Parent", 0).getobjectrefoid()).isEqualTo("parent-target-1");
         assertThat(grandChildTarget.getattrobj("Child", 0).getobjectrefoid()).isEqualTo("oid-1");
-        assertThat(stateStore.deferredRefs()).isEmpty();
+        assertThat(ctx.expandedTargets().get("out1").values()).singleElement().satisfies(objects -> assertThat(objects)
+                .containsExactlyInAnyOrder(childTarget, grandChildTarget));
         assertThat(stateStore.deferredReferences()).isEmpty();
         assertThat(diagnostics.all()).isEmpty();
     }

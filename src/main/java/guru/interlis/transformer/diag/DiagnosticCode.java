@@ -74,6 +74,7 @@ public final class DiagnosticCode {
     public static final String RUN_REF_AMBIGUOUS = "ILITRF-RUN-REF-AMBIGUOUS";
     public static final String RUN_REF_TYPE_MISMATCH = "ILITRF-RUN-REF-TYPE-MISMATCH";
     public static final String RUN_REF_MISSING_MANDATORY = "ILITRF-RUN-REF-MISSING-MANDATORY";
+    public static final String RUN_REF_UNREPRESENTABLE = "ILITRF-RUN-REF-UNREPRESENTABLE";
     public static final String RUN_REF_CARDINALITY = "ILITRF-RUN-REF-CARDINALITY";
     public static final String RUN_MISSING_SOURCE_OID = "ILITRF-RUN-MISSING-SOURCE-OID";
     public static final String RUN_DUPLICATE_TARGET_OID = "ILITRF-RUN-DUPLICATE-TARGET-OID";

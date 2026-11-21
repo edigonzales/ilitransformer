@@ -29,4 +29,5 @@ public record BagExecutionContext(
         GeometryAdapter geometryAdapter,
         Map<String, Map<String, TypeInfo>> sourceAttributeTypes,
         SourceLookupIndex sourceLookupIndex,
-        ReferenceIndex referenceIndex) {}
+        ReferenceIndex referenceIndex,
+        BasketRouter basketRouter) {}

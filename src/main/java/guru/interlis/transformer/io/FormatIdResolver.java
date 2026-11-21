@@ -38,6 +38,10 @@ public final class FormatIdResolver {
         return output.path != null ? fromPath(Path.of(output.path)).orElse(null) : null;
     }
 
+    public static boolean isXtf(String format) {
+        return "xtf".equals(format) || "xml".equals(format);
+    }
+
     public static Optional<String> fromPath(Path path) {
         if (path == null) {
             return Optional.empty();

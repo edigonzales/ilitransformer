@@ -1,129 +1,41 @@
 # State Store
 
-The StateStore is the runtime data store for the transformation engine. It indexes source objects, tracks target objects, and maps identities for reference resolution.
+`TransformationEngine.runTyped(TransformPlan, …)` uses one `StateStore` and one
+`ReferenceIndex` for the run. `InMemoryStateStore` keeps source records, target
+objects keyed by output, class and OID, and a single list of `DeferredReference`
+records. `OidGenerationService` generates target OIDs.
 
-## Interface
+`ReferenceIndex` maps a `SourceObjectKey` (input ID, basket ID, class and OID) to
+the generated `TargetReference` values. A target record contains its output ID,
+class, OID, actual basket ID and producing rule. Target creation uses the same
+basket ID for routing and registration. The index registers the object mapped by
+a rule. Additional objects from a create block are emitted separately.
 
-```java
-public interface StateStore {
-    // Source records
-    void putSourceRecord(SourceRecord record);
-    Stream<SourceRecord> getSourceRecords(String className);
-    Stream<SourceRecord> getAllSourceRecords(String className);
-    void clearSourceRecords();
+## Reference resolution
 
-    // Target records
-    void putTargetRecord(TargetRecord record);
-    TargetRecord getTargetRecord(String className, String oid);
-    Stream<TargetRecord> getAllTargetRecords(String className);
-    Stream<TargetRecord> getAllTargetObjects();
+- A local reference uses the basket of the source object identified by its
+  expression. An explicit reference BID selects that basket. A configured
+  target rule constrains the producing rule and can identify a different input.
+- An EXTERNAL XTF 2.4 reference carries a transfer ID. The lookup is scoped to
+  the applicable input and source type, using the configured target rule when
+  present. The basket comes from the matched object.
+- A singleton expression such as `#first` requires exactly one target produced
+  by the configured rule. Multiple candidates produce an ambiguity error.
+- `ReferenceResolutionService` checks target type compatibility and role
+  cardinality. An unresolved required mapping reference is an error under every failure
+  policy. An optional reference with a supplied but unresolved value produces
+  a warning.
 
-    // Identity mapping
-    void putIdMapping(IdMapping mapping);
-    Optional<IdMapping> findIdMapping(SourceKey key);
+ITF writes a single block per topic. There is no output BID, so the rules for
+generating or preserving BIDs apply to XTF and do not split ITF topics.
+A scalar OID expression in a join requires a unique source basket and input.
+Use a bound alias or a modelled reference when the joined records have
+different source contexts.
 
-    // Deferred references
-    void putDeferredRef(DeferredRef ref);
-    Stream<DeferredRef> getDeferredRefs(String ruleId);
-    List<DeferredRef> allDeferredRefs();
+Local references carry the generated target OID. XTF 2.4 uses a unique target
+TID for an EXTERNAL reference between baskets in the same output. XTF 2.3
+requires REF and BID for this case. IOX 1.24.4 emits EXTREF instead of REF when
+a BID is set, so the engine rejects cross-basket 2.3 output before publication.
 
-    // OID generation
-    String nextOid(OidStrategy strategy, String namespace, List<String> sourceKey, String targetClass);
-}
-```
-
-## Key records
-
-### SourceRecord
-
-```java
-public record SourceRecord(
-    String fileId,       // input ID from job config
-    String basketId,     // source basket ID
-    String className,    // fully qualified class name
-    String oid,          // source object OID
-    IomObject object     // raw IOM object
-) {}
-```
-
-### TargetRecord
-
-```java
-public record TargetRecord(
-    String outputId,     // output ID from job config
-    String basketId,     // target basket ID
-    String className,    // fully qualified class name
-    String oid,          // target object OID
-    IomObject object     // built target object
-) {}
-```
-
-### IdMapping
-
-Maps source identity to target identity. Used in Pass 2 to resolve deferred references.
-
-Two-level storage:
-- **Scoped**: `sourceClass` + `sourceFileId` + `sourceBasketId` + `sourceOid` → `TargetKey`
-- **Global** (cross-class): `sourceClass=null, sourceFileId=null, sourceBasketId=null` + `sourceOid` → `TargetKey`
-
-The global entry enables finding target objects when the reference doesn't know the class context.
-
-```java
-public record SourceKey(
-    String sourceClass,
-    String sourceFileId,
-    String sourceBasketId,
-    String sourceOid
-) {}
-```
-
-### DeferredRef
-
-Stores an unresolved reference for Pass 2 resolution.
-
-```java
-public record DeferredRef(
-    String ownerRuleId,         // rule that owns the reference
-    IomObject ownerObject,      // target object that holds the reference
-    String roleName,            // role/attribute name
-    String sourceRefOid,        // source object OID from the reference
-    String sourceClassName,     // source class name (from source model)
-    String expectedTargetClass  // expected target class (from target model)
-) {}
-```
-
-## Reference resolution (Pass 2)
-
-Resolution order:
-
-1. **Exact**: SourceClass + SourceOid + FileId + BasketId
-2. **Input-wide**: SourceClass + SourceOid + FileId
-3. **Basket-wide**: SourceClass + SourceOid + BasketId
-4. **Global**: SourceClass + SourceOid (cross-class)
-5. **Result**:
-   - 0 matches → `ILITRF-RUN-REF-UNRESOLVED`
-   - 1 match → resolved, check type compatibility
-   - >1 match → `ILITRF-RUN-REF-AMBIGUOUS`
-6. **Type check**: resolved target class vs expected target class → `ILITRF-RUN-REF-TYPE-MISMATCH`
-
-## OID strategies
-
-| Strategy | Behavior |
-|---|---|
-| `preserve` | Copy source OID (only if compatible with target OID type) |
-| `integer` | Sequential integer (not for UUIDOID target models) |
-| `uuid` | Random UUID |
-| `deterministicUuid` | UUIDv3 from namespace + source key (MD5-based) |
-| `external` | Stub (future: from expression) |
-
-## InMemoryStateStore
-
-Current implementation using in-memory `HashMap`s and `ArrayList`s.
-- Source records: indexed by `className`
-- IdMapping: indexed by `SourceKey`
-- DeferredRefs: lists per `ruleId`, plus global list
-- Target records: tracked per class + OID
-
-## Future: PersistentStateStore
-
-Architecture allows plugging in persistent backends (SQLite, H2, DuckDB) for large datasets exceeding memory limits. The `StateStore` interface is designed to be implemented with a database-backed store.
+See the transfer rules in the [INTERLIS 2.3 reference manual, chapter 3.3](https://www.interlis.ch/download/interlis2/ili2-refman_2006-04-13_e.pdf)
+and the [INTERLIS 2.4 reference manual, chapter 4.3](https://geostandards-ch.github.io/doc_refhb24/).
