@@ -59,7 +59,7 @@ public final class MigrationDraftService {
                 if (!(topics.next() instanceof Topic topic)) continue;
                 for (Iterator<Element> members = topic.iterator(); members.hasNext(); ) {
                     Element member = members.next();
-                    if (member instanceof Table table && !table.isAbstract()) {
+                    if (member instanceof Table table && !table.isImplicit() && !table.isAbstract()) {
                         entities.add(entity(types, table, !table.isIdentifiable()));
                     } else if (member instanceof AssociationDef association
                             && !association.isAbstract()

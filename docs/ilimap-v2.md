@@ -621,7 +621,8 @@ liefert den vollständigen Referenzwert einschliesslich einer expliziten Quell-B
 
 Bei einer Komposition wie `BaseObject`–`ObjectText` ist fuer eine Referenz vom
 Textobjekt zum Parent normalerweise die Child-Rolle zu mappen, z.B. `role
-"ParentRef"` mit `sourceRef s.ParentRef`. Die OID des Textobjekts ist über `oid(s)` als Text verfügbar.
+"ParentRef"` mit `sourceRef s.ParentRef`. `oid(s)` liefert einen Referenzwert
+auf das gebundene Quellobjekt. `refOid(oid(s))` extrahiert daraus die OID als Text.
 
 Wenn die Zielrolle auf eine abstrakte Basisklasse zeigt, darf die Zielregel eine
 konkrete Unterklasse erzeugen. Die Referenzauflösung prüft dafür die INTERLIS-
