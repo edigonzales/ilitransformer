@@ -3,11 +3,14 @@ package guru.interlis.transformer.mapping.compiler;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
+import guru.interlis.transformer.io.FormatIdResolver;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 import guru.interlis.transformer.mapping.plan.*;
 import guru.interlis.transformer.model.TypeSystemFacade;
 
+import ch.interlis.ili2c.metamodel.AbstractClassDef;
+import ch.interlis.ili2c.metamodel.AssociationDef;
 import ch.interlis.ili2c.metamodel.Table;
 
 import java.util.*;
@@ -29,7 +32,8 @@ final class RuleCompiler {
         String targetOutput = JobConfigNormalizer.getEffectiveTargetOutput(rule);
         String targetClassName = JobConfigNormalizer.getEffectiveTargetClass(rule);
 
-        Table targetClass = CompileUtils.resolveTargetClass(targetOutput, targetClassName, ctx.modelRegistry());
+        AbstractClassDef<?> targetClass =
+                CompileUtils.resolveTargetClass(targetOutput, targetClassName, ctx.modelRegistry());
         if (targetClass == null) {
             ctx.diagnostics()
                     .add(new Diagnostic(
@@ -49,7 +53,19 @@ final class RuleCompiler {
                             ruleId,
                             "Choose a concrete target class or instantiate via a specific subclass"));
         }
-        if (!targetClass.isIdentifiable()) {
+        if (targetClass instanceof AssociationDef association) {
+            String problem = TypeSystemFacade.unsupportedAssociation(association);
+            var output = ctx.modelRegistry().outputsById().get(targetOutput);
+            if (problem == null && output != null && !FormatIdResolver.isXtf(output.format())) {
+                problem = "Standalone association targets require XTF output: " + targetClassName;
+            }
+            if (problem != null) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.MAP_UNSUPPORTED_FEATURE, Severity.ERROR, problem, ruleId, null));
+                return null;
+            }
+        } else if (targetClass instanceof Table table && !table.isIdentifiable()) {
             ctx.diagnostics()
                     .add(new Diagnostic(
                             DiagnosticCode.MAP_NON_TRANSFERABLE_TARGET,
@@ -152,7 +168,7 @@ final class RuleCompiler {
 
         if (targetTs != null) {
             mandatoryCoverageValidator.checkMandatoryCoverage(
-                    targetClass, targetTs, assignmentPlans, bagPlans, ruleId, ctx.diagnostics());
+                    targetClass, assignmentPlans, refPlans, bagPlans, ruleId, ctx.diagnostics());
         }
 
         List<LossPlan> lossPlans = lossCompiler.compileLosses(rule, sourcesByAlias, ruleId, ctx);

@@ -100,7 +100,7 @@ final class IdentityCompiler {
             AttributeDef attr = null;
             var attrIt = matchingSource.sourceClass().getAttributes();
             while (attrIt.hasNext()) {
-                Extendable ext = attrIt.next();
+                var ext = attrIt.next();
                 if (ext instanceof AttributeDef ad) {
                     if (ad.getName() != null && ad.getName().equals(attrName)) {
                         attr = ad;

@@ -10,7 +10,7 @@ import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.TypeSystemFacade;
 
-import ch.interlis.ili2c.metamodel.Table;
+import ch.interlis.ili2c.metamodel.AbstractClassDef;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,7 +20,7 @@ final class RefCompiler {
 
     RefPlan compileRef(
             JobConfig.RefMapping ref,
-            Table targetClass,
+            AbstractClassDef<?> targetClass,
             TypeSystemFacade targetTs,
             List<SourcePlan> sourcePlans,
             String ruleId,
@@ -37,7 +37,7 @@ final class RefCompiler {
                 ctx.diagnostics()
                         .add(new Diagnostic(
                                 DiagnosticCode.MAP_UNKNOWN_ROLE,
-                                Severity.WARNING,
+                                Severity.ERROR,
                                 "Role not found on target class '" + targetClass.getName() + "': " + roleName,
                                 ruleId,
                                 "Check the owner-side reference/role name in the target model"));

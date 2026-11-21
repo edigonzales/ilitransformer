@@ -4,6 +4,7 @@ import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
+import guru.interlis.transformer.io.FormatIdResolver;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 import guru.interlis.transformer.mapping.plan.CompiledExpression;
@@ -13,8 +14,9 @@ import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.model.TypeSystemFacade;
 
+import ch.interlis.ili2c.metamodel.AbstractClassDef;
+import ch.interlis.ili2c.metamodel.AssociationDef;
 import ch.interlis.ili2c.metamodel.AttributeDef;
-import ch.interlis.ili2c.metamodel.Table;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,7 +43,7 @@ final class SourceCompiler {
             }
         }
 
-        Table sourceClass = null;
+        AbstractClassDef<?> sourceClass = null;
         if (sourceTs != null) {
             sourceClass = sourceTs.resolveClass(src.clazz);
         }
@@ -52,6 +54,20 @@ final class SourceCompiler {
                     "Source class not found in any registered model: " + src.clazz,
                     ruleId,
                     "Check the source class name and ensure its model is listed in inputs"));
+        }
+
+        if (sourceClass instanceof AssociationDef association) {
+            String problem = TypeSystemFacade.unsupportedAssociation(association);
+            if (problem == null
+                    && JobConfigNormalizer.getInputIds(src).stream()
+                            .map(modelRegistry.inputsById()::get)
+                            .anyMatch(input -> input != null && !FormatIdResolver.isXtf(input.format()))) {
+                problem = "Standalone association sources require XTF input: " + src.clazz;
+            }
+            if (problem != null) {
+                diag.add(new Diagnostic(DiagnosticCode.MAP_UNSUPPORTED_FEATURE, Severity.ERROR, problem, ruleId, null));
+                return null;
+            }
         }
 
         return new SourcePlan(src.alias, sourceClass, JobConfigNormalizer.getInputIds(src), null);
@@ -114,7 +130,7 @@ final class SourceCompiler {
             boolean found = false;
             var it = sp.sourceClass().getAttributes();
             while (it.hasNext()) {
-                ch.interlis.ili2c.metamodel.Extendable ext = it.next();
+                var ext = it.next();
                 if (ext instanceof AttributeDef attrDef) {
                     if (attrName.equals(attrDef.getName())) {
                         found = true;

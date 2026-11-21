@@ -111,7 +111,7 @@ Typed expression system with:
 Multi-pass execution:
 
 - **Pass 0**: Source scan -- read input files, index objects
-- **Pass 1**: Target creation -- build target objects, assign scalar attributes, generate OIDs, store deferred refs
+- **Pass 1**: Build target objects, assign scalar attributes, generate OIDs for identifiable targets and store deferred references with their target IOM object.
 - **Pass 2**: `ReferenceResolutionService` resolves deferred references against the source identity and producing rule, then validates the target class, cardinality and output basket.
 - **Write**: Stable-sort and write output via `IoxWriter`.
 
@@ -119,7 +119,9 @@ Multi-pass execution:
 
 `InMemoryStateStore` holds source records, registered target objects and deferred
 references. `ReferenceIndex` maps source keys to the actual output, class, OID,
-basket and producing rule of each target. The [state store contract](dev/state-store.md)
+basket and producing rule of each indexed target. A standalone link without an OID
+is kept in its output basket and can own deferred references through its IOM
+object. It has no entry in the reference index. The [state store contract](dev/state-store.md)
 describes the lookup scope and transfer encoding.
 
 ### BasketRouter
@@ -132,14 +134,16 @@ Determines target basket for generated objects:
 - `byTopic` -- one basket per target topic
 - `expression` -- stub (future)
 
-### RoleResolver
+### Model-aware references
 
-Model-aware role resolution:
-
-- Resolves associations and their role endpoints
-- Determines expected target class for references
-- Checks cardinality constraints
-- Validates target object type at reference resolution time
+`RulePlan.targetClass()`, `SourcePlan.sourceClass()` and `TypeSystemFacade.resolveClass()`
+expose ili2c's `AbstractClassDef` for classes and associations. The compiler uses
+`AssociationDef.isLightweight()` to distinguish embedded links from standalone
+transfer objects. Each standalone link contains one reference per role. Role
+cardinality describes participation across link objects. Direct class
+`REFERENCE TO` attributes use the alias-resolved `ReferenceType` for the
+destination class and external-reference semantics. The same resolver handles
+both kinds of reference.
 
 ## Data flow
 

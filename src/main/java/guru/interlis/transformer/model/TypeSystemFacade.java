@@ -53,20 +53,20 @@ public final class TypeSystemFacade {
         if (expectedClass == null || actualClass == null) return false;
         if (expectedClass.equals(actualClass)) return true;
 
-        Table expected = resolveClass(expectedClass);
-        Table actual = resolveClass(actualClass);
+        AbstractClassDef<?> expected = resolveClass(expectedClass);
+        AbstractClassDef<?> actual = resolveClass(actualClass);
         if (expected == null || actual == null) return false;
 
-        Table current = actual;
+        AbstractClassDef<?> current = actual;
         while (current != null) {
             if (getScopedName(current).equals(getScopedName(expected))) return true;
             Element extending = current.getExtending();
-            current = extending instanceof Table base ? base : null;
+            current = extending instanceof AbstractClassDef<?> base ? base : null;
         }
         return false;
     }
 
-    public Table resolveClass(String qualifiedPath) {
+    public AbstractClassDef<?> resolveClass(String qualifiedPath) {
         List<String> parts = splitQualifiedPath(qualifiedPath);
         if (parts.size() == 2) {
             return resolveModelLevelClass(parts.get(0), parts.get(1));
@@ -87,7 +87,7 @@ public final class TypeSystemFacade {
                     Iterator<Element> telIt = topic.iterator();
                     while (telIt.hasNext()) {
                         Element tel = telIt.next();
-                        if (tel instanceof Table table) {
+                        if (tel instanceof AbstractClassDef<?> table) {
                             if (table.getName() != null && table.getName().equals(path.className())) {
                                 return table;
                             }
@@ -99,7 +99,7 @@ public final class TypeSystemFacade {
         return null;
     }
 
-    private Table resolveModelLevelClass(String modelName, String className) {
+    private AbstractClassDef<?> resolveModelLevelClass(String modelName, String className) {
         Iterator<Model> modelIt = td.iterator();
         while (modelIt.hasNext()) {
             Model model = modelIt.next();
@@ -107,7 +107,7 @@ public final class TypeSystemFacade {
             Iterator<Element> elIt = model.iterator();
             while (elIt.hasNext()) {
                 Element el = elIt.next();
-                if (el instanceof Table table
+                if (el instanceof AbstractClassDef<?> table
                         && table.getName() != null
                         && table.getName().equals(className)) {
                     return table;
@@ -118,12 +118,12 @@ public final class TypeSystemFacade {
     }
 
     public boolean attributeExists(String classPath, String attrName) {
-        Table table = resolveClass(classPath);
+        AbstractClassDef<?> table = resolveClass(classPath);
         if (table == null) return false;
         return findAttribute(table, attrName) != null;
     }
 
-    public AttributeDef findAttribute(Table table, String attrName) {
+    public AttributeDef findAttribute(AbstractClassDef<?> table, String attrName) {
         AttributeDef found = table.findAttribute(attrName);
         if (found != null) {
             return found;
@@ -212,10 +212,10 @@ public final class TypeSystemFacade {
     }
 
     public ReferenceInfo resolveReference(String classPath, String roleName) {
-        Table table = resolveClass(classPath);
+        AbstractClassDef<?> table = resolveClass(classPath);
         if (table == null) return null;
         AttributeDef attr = findAttribute(table, roleName);
-        if (attr != null && attr.getDomain() instanceof ReferenceType refType) {
+        if (attr != null && attr.getDomainResolvingAliases() instanceof ReferenceType refType) {
             Cardinality card = attr.getCardinality();
             return new ReferenceInfo(
                     roleName,
@@ -228,10 +228,20 @@ public final class TypeSystemFacade {
                     refType.isExternal());
         }
 
-        ReferenceInfo ownerSide = resolveOwnerSideAssociationRole(table, roleName);
+        if (table instanceof AssociationDef association) {
+            RoleDef role = association.findRole(roleName);
+            if (association.isLightweight() || role == null) return null;
+            // Each transferred link contains one value per end. Role cardinality
+            // describes participation in the association across link objects.
+            return new ReferenceInfo(
+                    roleName, role, association, className(role.getDestination()), 1, 1, false, role.isExternal());
+        }
+
+        if (!(table instanceof Table owner)) return null;
+        ReferenceInfo ownerSide = resolveOwnerSideAssociationRole(owner, roleName);
         if (ownerSide != null) return ownerSide;
 
-        return resolveLegacyTargetForRole(table, roleName);
+        return resolveLegacyTargetForRole(owner, roleName);
     }
 
     private ReferenceInfo resolveOwnerSideAssociationRole(Table ownerClass, String roleName) {
@@ -240,7 +250,7 @@ public final class TypeSystemFacade {
         Iterator<Element> it = topic.iterator();
         while (it.hasNext()) {
             Element el = it.next();
-            if (!(el instanceof AssociationDef assoc)) continue;
+            if (!(el instanceof AssociationDef assoc) || !assoc.isLightweight()) continue;
             for (RoleDef role : assoc.getRoles()) {
                 if (role.getName() == null || !role.getName().equals(roleName)) continue;
                 if (!hasOppositeDestination(assoc, role, ownerClass)) continue;
@@ -267,6 +277,7 @@ public final class TypeSystemFacade {
             RoleDef role = it.next();
             if (role.getName() != null && role.getName().equals(roleName)) {
                 AssociationDef association = role.getContainer() instanceof AssociationDef assoc ? assoc : null;
+                if (association != null && !association.isLightweight()) continue;
                 String targetClass = null;
                 if (association != null) {
                     for (RoleDef other : association.getRoles()) {
@@ -321,7 +332,7 @@ public final class TypeSystemFacade {
         return false;
     }
 
-    private static boolean sameClass(AbstractClassDef candidate, Table table) {
+    private static boolean sameClass(AbstractClassDef<?> candidate, Table table) {
         if (candidate == table) return true;
         if (candidate instanceof Table candidateTable) {
             return getScopedName(candidateTable).equals(getScopedName(table));
@@ -331,25 +342,37 @@ public final class TypeSystemFacade {
                 && candidate.getName().equals(table.getName());
     }
 
-    private static String className(AbstractClassDef classDef) {
-        if (classDef instanceof Table table) {
-            return getScopedName(table);
-        }
-        return classDef != null ? classDef.getName() : null;
+    private static String className(AbstractClassDef<?> classDef) {
+        return classDef != null ? getScopedName(classDef) : null;
     }
 
-    public static String getScopedName(Table table) {
-        Container container = table.getContainer();
-        if (container instanceof Topic topic) {
-            Container modelContainer = topic.getContainer();
-            if (modelContainer instanceof Model model) {
-                return model.getName() + "." + topic.getName() + "." + table.getName();
+    public static String getScopedName(AbstractClassDef<?> classDef) {
+        return classDef.getScopedName(null);
+    }
+
+    public static String unsupportedAssociation(AssociationDef association) {
+        String path = getScopedName(association);
+        if (association.getExtending() != null || association.getRoles().size() != 2) {
+            return "Only standalone binary associations without association inheritance can be mapped: " + path;
+        }
+        if (association.isLightweight()) {
+            return "Embedded associations cannot be mapped as transfer objects: " + path;
+        }
+        for (RoleDef role : association.getRoles()) {
+            var references = role.iteratorReference();
+            ReferenceType reference = references.next();
+            if (role.isOrdered()
+                    || references.hasNext()
+                    || reference.iteratorRestrictedTo().hasNext()) {
+                return "Ordered roles and roles with alternative or restricted targets are unsupported: " + path + "."
+                        + role.getName();
             }
         }
-        if (container instanceof Model model) {
-            return model.getName() + "." + table.getName();
-        }
-        return table.getName();
+        return null;
+    }
+
+    public static boolean hasAssociationOid(AssociationDef association) {
+        return association.isIdentifiable() || association.getOid() != null;
     }
 
     public String getAttributeTypeString(String classPath, String attrName) {
@@ -392,6 +415,9 @@ public final class TypeSystemFacade {
     }
 
     public String getOidType(String classPath) {
+        if (resolveClass(classPath) instanceof AssociationDef association) {
+            return hasAssociationOid(association) ? formatOidDomainType(association.getOid()) : null;
+        }
         Topic topic = resolveTopic(classPath);
         if (topic == null) return null;
         return formatOidDomainType(topic.getOid());
@@ -442,7 +468,7 @@ public final class TypeSystemFacade {
     }
 
     private AttributeDef resolveAttribute(String classPath, String attrName) {
-        Table table = resolveClass(classPath);
+        AbstractClassDef<?> table = resolveClass(classPath);
         if (table == null) return null;
         return findAttribute(table, attrName);
     }

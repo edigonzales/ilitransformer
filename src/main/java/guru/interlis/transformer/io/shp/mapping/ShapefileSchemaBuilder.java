@@ -83,8 +83,7 @@ public final class ShapefileSchemaBuilder {
             Optional<ShapeType> shapeTypeOverride)
             throws ShapefileMappingException {
 
-        Table table = typeSystem.resolveClass(className);
-        if (table == null) {
+        if (!(typeSystem.resolveClass(className) instanceof Table table)) {
             throw new ShapefileMappingException(
                     "SHP output '" + outputId + "': output class '" + className + "' not found in model");
         }

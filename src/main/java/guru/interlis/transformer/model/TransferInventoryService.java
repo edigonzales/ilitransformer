@@ -187,8 +187,7 @@ public final class TransferInventoryService {
         String scopedPath = findScopedPath(className, facade);
         if (scopedPath == null) return;
 
-        Table table = facade.resolveClass(scopedPath);
-        if (table == null) return;
+        if (!(facade.resolveClass(scopedPath) instanceof Table table)) return;
 
         int refsForObj = 0;
         Iterator<ch.interlis.ili2c.metamodel.Extendable> attrsIt = table.getAttributes();
@@ -252,8 +251,7 @@ public final class TransferInventoryService {
 
     private List<String> findGeometryAttributes(String classPath, TypeSystemFacade facade) {
         List<String> result = new ArrayList<>();
-        Table table = facade.resolveClass(classPath);
-        if (table == null) return result;
+        if (!(facade.resolveClass(classPath) instanceof Table table)) return result;
 
         Iterator<ch.interlis.ili2c.metamodel.Extendable> it = table.getAttributes();
         while (it.hasNext()) {

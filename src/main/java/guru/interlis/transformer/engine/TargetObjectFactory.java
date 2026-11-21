@@ -33,6 +33,8 @@ import guru.interlis.transformer.state.StateStore;
 import guru.interlis.transformer.state.TargetObjectKey;
 import guru.interlis.transformer.state.TargetReference;
 
+import ch.interlis.ili2c.metamodel.AbstractClassDef;
+import ch.interlis.ili2c.metamodel.AssociationDef;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 
@@ -94,6 +96,10 @@ public final class TargetObjectFactory {
             SourceRecord driverRecord,
             TransformPlan plan,
             ObjectCreationContext ctx) {
+        if (rule.targetClass() instanceof AssociationDef association
+                && !TypeSystemFacade.hasAssociationOid(association)) {
+            return new Iom_jObject(getScopedName(association), null);
+        }
         Map<String, String> rawIdentityValues =
                 buildIdentityKeyValues(rule.identitySourceKeys(), driverRecord.sourceObject(), matchedSource.alias());
         String sourceOid = driverRecord.sourceObject().getobjectoid();
@@ -186,7 +192,8 @@ public final class TargetObjectFactory {
             var selectors = sourceSelectors(ref, driverRecord, boundRecords, reference, singleton, plan);
             ctx.stateStore()
                     .addDeferredReference(new DeferredReference(
-                            new TargetObjectKey(outputId, target.getobjecttag(), target.getobjectoid()),
+                            target,
+                            outputId,
                             ruleId,
                             targetBasket,
                             ref.targetRoleName(),
@@ -332,6 +339,7 @@ public final class TargetObjectFactory {
             Iom_jObject target,
             String targetBasket,
             ObjectCreationContext ctx) {
+        if (target.getobjectoid() == null) return;
         ctx.referenceIndex()
                 .add(
                         new SourceObjectKey(
@@ -475,7 +483,7 @@ public final class TargetObjectFactory {
         return binding.typeSystem().getOidType(getScopedName(rule.targetClass()));
     }
 
-    static String getScopedName(ch.interlis.ili2c.metamodel.Table table) {
+    static String getScopedName(AbstractClassDef<?> table) {
         return TypeSystemFacade.getScopedName(table);
     }
 

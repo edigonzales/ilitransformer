@@ -614,19 +614,14 @@ ref Entstehung {
 }
 ```
 
-`required` ist ein Marker. Wenn er fehlt, ist die Referenz optional. `target rule`
-referenziert die Zielregel. `sourceRef` gibt den Quellpfad zur Referenzaufloesung an.
-
-`association` und `role` sind optional. `target rule` mit `sourceRef` koennen ebenfalls
-weggelassen werden, falls nur die Assoziation dokumentiert wird. `sourceRef` wird als
-Ausdruck ausgewertet: Ein Alias allein (z.B. `s`) liefert die OID des aktuellen
-Quellobjekts, `oid(s)` ist die explizite Schreibweise dafuer, und `s.ParentRef`
-liest die OID aus einer Quellreferenz.
+Kennzeichne Pflichtreferenzen mit `required`. `target rule` bezeichnet die
+Regel, die das referenzierte Zielobjekt erzeugt. `sourceRef` wird als Ausdruck ausgewertet. Ein gebundener Alias
+wie `s` ergibt eine Referenz auf das Quellobjekt. Ein Pfad wie `s.ParentRef`
+liefert den vollständigen Referenzwert einschliesslich einer expliziten Quell-BID.
 
 Bei einer Komposition wie `BaseObject`–`ObjectText` ist fuer eine Referenz vom
 Textobjekt zum Parent normalerweise die Child-Rolle zu mappen, z.B. `role
-"ParentRef"` mit `sourceRef s.ParentRef`. `oid(s)` liefert in diesem Fall nur
-die OID des Textobjekts und stellt die Parent-Beziehung nicht her.
+"ParentRef"` mit `sourceRef s.ParentRef`. Die OID des Textobjekts ist über `oid(s)` als Text verfügbar.
 
 Wenn die Zielrolle auf eine abstrakte Basisklasse zeigt, darf die Zielregel eine
 konkrete Unterklasse erzeugen. Die Referenzauflösung prüft dafür die INTERLIS-
@@ -634,6 +629,41 @@ Vererbung; eine unverwandte Zielklasse bleibt ein Typfehler.
 
 Die Ref-Kurzform (`ref Name -> rule using expr`) ist syntaktisch reserviert, aber in
 v2.0 **nicht implementiert**. Der Parser lehnt die Kurzform aktiv ab.
+
+### Selbständige Assoziationen und REFERENCE TO
+
+Eine XTF-Regel kann eine selbständig übertragene binäre Assoziation als `source`
+und `target` nennen. Das Linkobjekt hat genau einen Referenzwert pro Rolle.
+Die Regeln für die beiden Endobjekte liefern die tatsächlichen Ziel-OIDs.
+Fachattribute des Links werden wie Klassenattribute zugewiesen.
+
+```ilimap
+rule migrateLink {
+  source s from original class "Source.Data.Link";
+  target migrated class "Target.Data.Link";
+  assign { Description = s.Description; }
+  ref Left { required; target rule migrateLeft sourceRef s.Left; }
+  ref Right { required; target rule migrateRight sourceRef s.Right; }
+}
+```
+
+Assoziationen mit eigener OID verwenden die konfigurierte OID-Strategie.
+Assoziationen ohne eigene OID werden ohne TID ausgegeben. Eingebettete
+Assoziationen werden in der Regel des Besitzerobjekts als Rollen behandelt.
+P4.2 unterstützt binäre Links ohne Assoziationsvererbung, geordnete Rollen
+oder Rollen mit alternativen oder eingeschränkten Zielen.
+
+Für ein direktes Klassenattribut `REFERENCE TO` ist der Zielname der
+Attributname, beispielsweise `ref Site { target rule migrateSite sourceRef s.Site; }`.
+Geerbte Attribute und Typaliase werden über das Modell aufgelöst. Der Resolver
+prüft Zielklasse und Basket und schreibt die erzeugte Ziel-OID. Lokale
+Referenzen bleiben im Zielbasket. Basketübergreifende XTF-2.4-Referenzen
+brauchen ein `EXTERNAL`-Zielattribut und dieselbe Ausgabedatei. Referenzen
+in verschachtelten Strukturen sind ausserhalb dieses Funktionsumfangs.
+
+Der Migrationsentwurf schlägt eigenständige Linkregeln vor, wenn beide Rollen
+eindeutig zugeordnet werden können. Offene Entscheidungen erscheinen als
+`DECISION` oder `NOT_MAPPED`.
 
 ## Create
 

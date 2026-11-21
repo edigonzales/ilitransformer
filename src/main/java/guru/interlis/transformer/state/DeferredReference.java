@@ -1,7 +1,10 @@
 package guru.interlis.transformer.state;
 
+import ch.interlis.iom.IomObject;
+
 public record DeferredReference(
-        TargetObjectKey owner,
+        IomObject owner,
+        String ownerOutputId,
         String ownerRuleId,
         String ownerBasketId,
         String targetRoleName,

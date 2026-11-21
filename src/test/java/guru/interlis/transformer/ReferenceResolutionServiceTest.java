@@ -57,7 +57,8 @@ class ReferenceResolutionServiceTest {
 
         // Add deferred reference: ClassA -> ClassB
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "roleB",
@@ -102,7 +103,8 @@ class ReferenceResolutionServiceTest {
                 new TargetReference("out1", "Model.T.ClassA", "t1", "b1", "rule-a"));
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "backRef",
@@ -136,7 +138,8 @@ class ReferenceResolutionServiceTest {
         stateStore.registerTarget(ownerKey, owner);
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "roleB",
@@ -167,7 +170,8 @@ class ReferenceResolutionServiceTest {
         stateStore.registerTarget(ownerKey, owner);
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "roleB",
@@ -205,7 +209,8 @@ class ReferenceResolutionServiceTest {
                 new TargetReference("out1", "Model.T.ClassB", "t3", "b1", "rule-b"));
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "roleB",
@@ -242,7 +247,8 @@ class ReferenceResolutionServiceTest {
                 new TargetReference("out1", "Model.T.Symbol", "symbol1", "b1", "symbol-rule"));
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "labelOf",
@@ -279,7 +285,8 @@ class ReferenceResolutionServiceTest {
                 new TargetReference("out1", "Model.T.ClassC", "t2", "b1", "rule-c"));
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "roleB",
@@ -345,7 +352,8 @@ class ReferenceResolutionServiceTest {
                 new TargetReference(
                         "out1", "InheritanceAssocModel.AssocTopic.LineObject", "line1", "b1", "line-object"));
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "ParentRef",
@@ -387,7 +395,8 @@ class ReferenceResolutionServiceTest {
 
         // Max cardinality is 1, but we add 2 refs
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "roleB",
@@ -399,7 +408,8 @@ class ReferenceResolutionServiceTest {
                 new DeferredReference.Cardinality(0, 1),
                 false));
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "roleB",
@@ -434,7 +444,8 @@ class ReferenceResolutionServiceTest {
                 new SourceObjectKey("in1", "b2", "Model.T.ClassB", "second"),
                 new TargetReference("out1", "Model.T.ClassB", "target2", "b2", "singleton"));
         store.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "roleB",
@@ -466,7 +477,8 @@ class ReferenceResolutionServiceTest {
         stateStore.registerTarget(ownerKey, owner);
 
         stateStore.addDeferredReference(new DeferredReference(
-                ownerKey,
+                owner,
+                ownerKey.outputId(),
                 "owner-rule",
                 "b1",
                 "roleB",

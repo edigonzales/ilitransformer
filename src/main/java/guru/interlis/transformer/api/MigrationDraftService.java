@@ -2,6 +2,7 @@ package guru.interlis.transformer.api;
 
 import guru.interlis.transformer.interlis.InterlisModelLoader;
 import guru.interlis.transformer.mapping.ilimap.editor.IlimapEditorDocument;
+import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 
 import ch.interlis.ili2c.metamodel.*;
@@ -51,47 +52,24 @@ public final class MigrationDraftService {
     public Schema schema(String model, TransferDescription td) throws Exception {
         var types = new TypeSystemFacade(td);
         List<Entity> entities = new ArrayList<>();
-        for (var inventory : List.of(new guru.interlis.transformer.model.IliModelService().buildInventory(td, model))) {
-            if (!inventory.modelName().equals(model)) continue;
-            for (var topic : inventory.topics())
-                for (var entity : topic.classes()) {
-                    Table table = types.resolveClass(entity.path());
-                    if (table == null || entity.isAbstract()) continue;
-                    List<Field> fields = new ArrayList<>();
-                    for (var attribute : entity.attributes()) {
-                        AttributeDef attr = types.findAttribute(table, attribute.name());
-                        if (attr == null) continue;
-                        Type type = attr.getDomainResolvingAliases();
-                        String structure = type instanceof CompositionType c
-                                ? TypeSystemFacade.getScopedName(c.getComponentType())
-                                : null;
-                        fields.add(new Field(
-                                attribute.name(),
-                                attribute.typeString(),
-                                attribute.mandatory(),
-                                structure,
-                                null,
-                                type instanceof EnumerationType en ? List.copyOf(en.getValues()) : List.of()));
+        for (Iterator<Model> models = td.iterator(); models.hasNext(); ) {
+            Model definition = models.next();
+            if (!definition.getName().equals(model)) continue;
+            for (Iterator<Element> topics = definition.iterator(); topics.hasNext(); ) {
+                if (!(topics.next() instanceof Topic topic)) continue;
+                for (Iterator<Element> members = topic.iterator(); members.hasNext(); ) {
+                    Element member = members.next();
+                    if (member instanceof Table table && !table.isAbstract()) {
+                        entities.add(entity(types, table, !table.isIdentifiable()));
+                    } else if (member instanceof AssociationDef association
+                            && !association.isAbstract()
+                            && !association.isLightweight()) {
+                        entities.add(entity(types, association, false));
                     }
-                    var transferElements = table.getAttributesAndRoles2();
-                    while (transferElements.hasNext()) {
-                        var transferElement = transferElements.next();
-                        if (transferElement.obj instanceof RoleDef role) {
-                            var reference = types.resolveReference(entity.path(), role.getName());
-                            if (reference != null)
-                                fields.add(new Field(
-                                        role.getName(),
-                                        "REFERENCE",
-                                        reference.minCardinality() > 0,
-                                        null,
-                                        reference.targetClass(),
-                                        List.of()));
-                        }
-                    }
-                    entities.add(new Entity(entity.path(), !table.isIdentifiable(), List.copyOf(fields)));
                 }
+            }
         }
-        // Model-level (rather than topic-level) structures are absent from the class inventory.
+        // Add referenced structures declared at model level.
         // Include every referenced structure so the editor uses exactly the runtime's types.
         Set<String> known = new HashSet<>();
         entities.forEach(e -> known.add(e.name()));
@@ -147,6 +125,21 @@ public final class MigrationDraftService {
                         .append('\n');
                 continue;
             }
+            var sourceClass = source.types().resolveClass(entity.name());
+            var targetClass = target.types().resolveClass(other.name());
+            if (sourceClass instanceof AssociationDef || targetClass instanceof AssociationDef) {
+                if (!(sourceClass instanceof AssociationDef from
+                        && targetClass instanceof AssociationDef to
+                        && matchingAssociation(source, target, entity, other, from, to))) {
+                    differences.add(new Difference(
+                            entity.name(),
+                            other.name(),
+                            "",
+                            Status.DECISION,
+                            "Map the standalone association and both roles explicitly"));
+                    continue;
+                }
+            }
             mappedTargets.add(other.name());
             text.append("  rule ")
                     .append(ruleId(entity.name()))
@@ -201,9 +194,9 @@ public final class MigrationDraftService {
                         from.name(),
                         to.name(),
                         field.name(),
-                        field.required() ? Status.DECISION : Status.COMPATIBLE,
-                        field.required()
-                                ? "New mandatory attribute needs a value"
+                        field.required() || field.referenceTarget() != null ? Status.DECISION : Status.COMPATIBLE,
+                        field.required() || field.referenceTarget() != null
+                                ? "New field needs an explicit mapping decision"
                                 : "New optional attribute remains undefined"));
                 continue;
             }
@@ -238,21 +231,15 @@ public final class MigrationDraftService {
                 structures.append(indent).append("}\n");
                 continue;
             }
-            if (field.referenceTarget() != null && original.referenceTarget() != null) {
-                String expected = original.referenceTarget().startsWith(source.model() + ".")
-                        ? target.model()
-                                + original.referenceTarget()
-                                        .substring(source.model().length())
-                        : original.referenceTarget();
-                if (field.referenceTarget().equals(expected)
-                        && target.entities().stream().anyMatch(e -> e.name().equals(expected))) {
+            if (field.referenceTarget() != null || original.referenceTarget() != null) {
+                if (matchingReference(source, target, from, to, original, field)) {
                     structures
                             .append(indent)
                             .append("ref ")
                             .append(field.name())
                             .append(" { role ")
                             .append(q(field.name()))
-                            .append("; target rule ")
+                            .append(field.required() ? "; required; target rule " : "; target rule ")
                             .append(ruleId(original.referenceTarget()))
                             .append(" sourceRef ")
                             .append(alias)
@@ -306,30 +293,101 @@ public final class MigrationDraftService {
         active.remove(pair);
     }
 
+    private static boolean matchingAssociation(
+            Schema source,
+            Schema target,
+            Entity from,
+            Entity to,
+            AssociationDef sourceClass,
+            AssociationDef targetClass) {
+        if (TypeSystemFacade.unsupportedAssociation(sourceClass) != null
+                || TypeSystemFacade.unsupportedAssociation(targetClass) != null
+                || TypeSystemFacade.hasAssociationOid(sourceClass) != TypeSystemFacade.hasAssociationOid(targetClass)) {
+            return false;
+        }
+        for (RoleDef role : targetClass.getRoles()) {
+            if (sourceClass.findRole(role.getName()) == null) return false;
+            Field original = from.fields().stream()
+                    .filter(f -> f.name().equals(role.getName()))
+                    .findFirst()
+                    .orElseThrow();
+            Field field = to.fields().stream()
+                    .filter(f -> f.name().equals(role.getName()))
+                    .findFirst()
+                    .orElseThrow();
+            if (!matchingReference(source, target, from, to, original, field)) return false;
+        }
+        return true;
+    }
+
+    private static boolean matchingReference(
+            Schema source, Schema target, Entity from, Entity to, Field original, Field field) {
+        if (original.referenceTarget() == null
+                || !original.referenceTarget().startsWith(source.model() + ".")
+                || field.referenceTarget() == null
+                || field.required() && !original.required()) return false;
+        String expected = target.model()
+                + original.referenceTarget().substring(source.model().length());
+        if (!field.referenceTarget().equals(expected)
+                || !source.entities().stream()
+                        .anyMatch(e -> e.name().equals(original.referenceTarget()) && !e.structure())
+                || !target.entities().stream().anyMatch(e -> e.name().equals(expected) && !e.structure())) return false;
+        var originalRef = source.types().resolveReference(from.name(), original.name());
+        var targetRef = target.types().resolveReference(to.name(), field.name());
+        return originalRef.external() == targetRef.external()
+                && originalRef.attributeReference() == targetRef.attributeReference();
+    }
+
+    private static Entity entity(TypeSystemFacade types, AbstractClassDef<?> definition, boolean structure) {
+        String path = TypeSystemFacade.getScopedName(definition);
+        List<Field> fields = new ArrayList<>();
+        var attributes = definition.getAttributes();
+        while (attributes.hasNext()) {
+            if (!(attributes.next() instanceof AttributeDef attr)) continue;
+            Type type = attr.getDomainResolvingAliases();
+            var reference =
+                    !structure && type instanceof ReferenceType ? types.resolveReference(path, attr.getName()) : null;
+            String label = definition.getContainer() instanceof Model
+                    ? type.getClass().getSimpleName()
+                    : IliModelService.formatTypeString(attr.getDomain());
+            var cardinality = attr.getCardinality();
+            fields.add(new Field(
+                    attr.getName(),
+                    reference != null ? "REFERENCE" : label,
+                    cardinality != null && cardinality.getMinimum() > 0,
+                    type instanceof CompositionType c ? TypeSystemFacade.getScopedName(c.getComponentType()) : null,
+                    reference != null ? reference.targetClass() : null,
+                    type instanceof EnumerationType en ? List.copyOf(en.getValues()) : List.of()));
+        }
+        if (!structure) {
+            var elements = definition.getAttributesAndRoles2();
+            while (elements.hasNext()) {
+                if (elements.next().obj instanceof RoleDef role
+                        && (!(definition instanceof AssociationDef association)
+                                || association.findRole(role.getName()) != null)) {
+                    var reference = types.resolveReference(path, role.getName());
+                    if (reference != null)
+                        fields.add(new Field(
+                                role.getName(),
+                                "REFERENCE",
+                                reference.minCardinality() > 0,
+                                null,
+                                reference.targetClass(),
+                                List.of()));
+                }
+            }
+        }
+        return new Entity(path, structure, List.copyOf(fields));
+    }
+
     private Entity structureEntity(Schema schema, String name) {
         return schema.entities().stream()
                 .filter(e -> e.name().equals(name))
                 .findFirst()
                 .orElseGet(() -> {
-                    Table table = schema.types().resolveClass(name);
-                    if (table == null) throw new IllegalArgumentException("Unknown structure: " + name);
-                    List<Field> fields = new ArrayList<>();
-                    var iterator = table.getAttributes();
-                    while (iterator.hasNext()) {
-                        var element = iterator.next();
-                        if (!(element instanceof AttributeDef attr)) continue;
-                        Type type = attr.getDomainResolvingAliases();
-                        fields.add(new Field(
-                                attr.getName(),
-                                type.getClass().getSimpleName(),
-                                type.isMandatory(),
-                                type instanceof CompositionType c
-                                        ? TypeSystemFacade.getScopedName(c.getComponentType())
-                                        : null,
-                                null,
-                                type instanceof EnumerationType en ? List.copyOf(en.getValues()) : List.of()));
-                    }
-                    return new Entity(name, true, List.copyOf(fields));
+                    if (!(schema.types().resolveClass(name) instanceof Table table))
+                        throw new IllegalArgumentException("Unknown structure: " + name);
+                    return entity(schema.types(), table, true);
                 });
     }
 

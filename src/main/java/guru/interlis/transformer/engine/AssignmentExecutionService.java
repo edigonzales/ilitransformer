@@ -74,7 +74,7 @@ public final class AssignmentExecutionService {
 
     private static boolean isIli1TargetClass(TypeSystemFacade targetTs, String targetClassName) {
         if (targetTs == null || targetClassName == null) return false;
-        ch.interlis.ili2c.metamodel.Table table = targetTs.resolveClass(targetClassName);
+        ch.interlis.ili2c.metamodel.AbstractClassDef<?> table = targetTs.resolveClass(targetClassName);
         if (table == null) return false;
         ch.interlis.ili2c.metamodel.Container container = table.getContainer();
         while (container != null && !(container instanceof ch.interlis.ili2c.metamodel.Model)) {

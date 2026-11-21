@@ -149,8 +149,7 @@ public final class ConnectedSubgraphExtractor {
             if (facade != null) {
                 String scopedPath = findScopedPath(entry.classTag, facade);
                 if (scopedPath != null) {
-                    Table table = facade.resolveClass(scopedPath);
-                    if (table != null) {
+                    if (facade.resolveClass(scopedPath) instanceof Table table) {
                         extractReferencesFromModel(entry, fromKey, table, oidToKeys, graph);
                     }
                 }
