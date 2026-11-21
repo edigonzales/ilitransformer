@@ -174,7 +174,7 @@ public final class FeatureMatrix {
                 "5",
                 FeatureStatus.SUPPORTED,
                 "Pass 0 (index), Pass 1 (build), Pass 2 (refs), Write (stable sort)",
-                "TransformationEngineIntegrationTest"));
+                "ReferenceResolutionIntegrationTest"));
 
         entries.add(FeatureEntry.of(
                 "1:1 Scalar mapping",
@@ -188,7 +188,7 @@ public final class FeatureMatrix {
                 "6",
                 FeatureStatus.SUPPORTED,
                 "preserve, integer, uuid, deterministicUuid (UUIDv3)",
-                "OidStrategyTest",
+                "DefaultOidGenerationServiceTest",
                 "OidStrategyGoldenTest"));
 
         entries.add(FeatureEntry.of(
@@ -208,7 +208,7 @@ public final class FeatureMatrix {
                 "Reference resolution + roles",
                 "7",
                 FeatureStatus.SUPPORTED,
-                "DeferredRefs, type checking, cardinality, role-aware resolution",
+                "Deferred references, type checking, cardinality and version-aware XTF reference encoding",
                 "ReferenceResolutionIntegrationTest"));
 
         entries.add(FeatureEntry.of(
@@ -223,7 +223,7 @@ public final class FeatureMatrix {
                 "Same OID different context resolution",
                 "19",
                 FeatureStatus.SUPPORTED,
-                "Same OID in different baskets/inputs/classes correctly disambiguated; no global OID-only fallback by default",
+                "Lookup is scoped to the source input, basket and class or to the transfer ID of an XTF 2.4 EXTERNAL reference",
                 "ReferenceIndexTest",
                 "ReferenceResolutionServiceTest",
                 "ReferenceResolutionIntegrationTest"));
@@ -240,7 +240,7 @@ public final class FeatureMatrix {
                 "7",
                 FeatureStatus.SUPPORTED,
                 "Configurable error handling at plan level",
-                "TransformationEngineIntegrationTest"));
+                "ReferenceResolutionIntegrationTest"));
 
         entries.add(FeatureEntry.of(
                 "GeometryAdapter (Coord/Polyline/Surface/Area)",
@@ -427,7 +427,7 @@ public final class FeatureMatrix {
                 "26",
                 FeatureStatus.SUPPORTED,
                 "SourceIndexingService, RuleExecutionService, TargetObjectFactory, AssignmentExecutionService, OutputWritingService",
-                "TransformationEngineIntegrationTest"));
+                "ReferenceResolutionIntegrationTest"));
 
         entries.add(FeatureEntry.of(
                 "Deterministic Output Order",

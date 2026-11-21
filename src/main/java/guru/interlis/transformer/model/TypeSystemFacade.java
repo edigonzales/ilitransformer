@@ -37,7 +37,8 @@ public final class TypeSystemFacade {
             String targetClass,
             long minCardinality,
             long maxCardinality,
-            boolean attributeReference) {}
+            boolean attributeReference,
+            boolean external) {}
 
     public boolean classExists(String qualifiedPath) {
         return resolveClass(qualifiedPath) != null;
@@ -223,7 +224,8 @@ public final class TypeSystemFacade {
                     className(refType.getReferred()),
                     card != null ? card.getMinimum() : 0,
                     card != null ? card.getMaximum() : 1,
-                    true);
+                    true,
+                    refType.isExternal());
         }
 
         ReferenceInfo ownerSide = resolveOwnerSideAssociationRole(table, roleName);
@@ -250,7 +252,8 @@ public final class TypeSystemFacade {
                         className(role.getDestination()),
                         card != null ? card.getMinimum() : 0,
                         card != null ? card.getMaximum() : Cardinality.UNBOUND,
-                        false);
+                        false,
+                        role.isExternal());
             }
         }
         return null;
@@ -283,7 +286,8 @@ public final class TypeSystemFacade {
                         targetClass,
                         card != null ? card.getMinimum() : 0,
                         card != null ? card.getMaximum() : Cardinality.UNBOUND,
-                        false);
+                        false,
+                        role.isExternal());
             }
         }
         return null;

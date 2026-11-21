@@ -428,7 +428,7 @@ public final class BagTransformationService {
                     plan.basketPlan().defaultStrategy(),
                     parentRecord.sourceBasketId(),
                     targetTopic,
-                    bag.structureName());
+                    plan.outputsById().get(outputId));
             String basketKey = basketKey(targetTopic, targetBasketId);
             ctx.expandedTargets()
                     .computeIfAbsent(outputId, ignored -> new LinkedHashMap<>())

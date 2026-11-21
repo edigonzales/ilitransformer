@@ -65,16 +65,6 @@ class DuplicateTargetOidTest {
     }
 
     @Test
-    void legacyFindTargetObjectFindsTargetWithOutputId() {
-        TargetObjectKey key = new TargetObjectKey("out1", "A.B.C", "oid-1");
-        Iom_jObject obj = new Iom_jObject("A.B.C", "oid-1");
-        store.registerTarget(key, obj);
-
-        assertThat(store.findTargetObject("A.B.C", "oid-1")).isPresent();
-        assertThat(store.findTargetObject("A.B.C", "oid-1").get()).isSameAs(obj);
-    }
-
-    @Test
     void sameOidDifferentClassIsAllowed() {
         TargetObjectKey key1 = new TargetObjectKey("out1", "A.B.C1", "oid-1");
         TargetObjectKey key2 = new TargetObjectKey("out1", "A.B.C2", "oid-1");
@@ -95,22 +85,5 @@ class DuplicateTargetOidTest {
     void findTargetReturnsEmptyForUnknownKey() {
         TargetObjectKey key = new TargetObjectKey("out1", "A.B.C", "unknown");
         assertThat(store.findTarget(key)).isEmpty();
-    }
-
-    @Test
-    void backwardCompatIndexTargetObjectStillWorks() {
-        Iom_jObject obj = new Iom_jObject("A.B.C", "bw-oid");
-        store.indexTargetObject("A.B.C", "bw-oid", obj);
-        assertThat(store.findTargetObject("A.B.C", "bw-oid")).isPresent();
-    }
-
-    @Test
-    void backwardCompatIndexTargetObjectDetectsDuplicate() {
-        Iom_jObject obj1 = new Iom_jObject("A.B.C", "dup-oid");
-        Iom_jObject obj2 = new Iom_jObject("A.B.C", "dup-oid");
-
-        store.indexTargetObject("A.B.C", "dup-oid", obj1);
-        assertThatThrownBy(() -> store.indexTargetObject("A.B.C", "dup-oid", obj2))
-                .isInstanceOf(DuplicateTargetOidException.class);
     }
 }

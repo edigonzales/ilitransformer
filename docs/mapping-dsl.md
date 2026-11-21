@@ -322,9 +322,19 @@ assign:
 refs:
   - association: "Entstehung_LFP3"    # Vollqualifizierte Association
     role: "Entstehung"                # Rollenname
-    sourceRef: "src.Entstehung"       # Quellreferenz-Ausdruck; src liefert die aktuelle OID
+    sourceRef: "src.Entstehung"       # Referenzwert des Quellobjekts
     targetRule: "lfp3-nachfuehrung"   # Rule-ID des Zielobjekts
 ```
+
+`sourceRef` verwendet bei einer lokalen Referenz den Basket des Quellobjekts.
+Enthält der Referenzwert eine explizite BID, ist dieser Basket massgebend.
+`targetRule` schränkt die erzeugende Regel ein und bestimmt bei Bedarf den
+zugehörigen Input. `#first` verlangt genau ein von `targetRule` erzeugtes Objekt.
+Fehlende Pflichtreferenzen und mehrdeutige Treffer sind auch mit `lenient` Fehler.
+Die Ausgabe verwendet die erzeugte Ziel-OID und prüft den tatsächlichen
+Zielbasket. Externe Referenzen zwischen Baskets benötigen XTF 2.4 mit beiden
+Baskets in derselben Ausgabe. Der eingesetzte IOX-Writer kodiert externe
+XTF-2.3-Ausgabereferenzen fehlerhaft, deshalb meldet die Engine einen Fehler.
 
 ### BagSpec
 

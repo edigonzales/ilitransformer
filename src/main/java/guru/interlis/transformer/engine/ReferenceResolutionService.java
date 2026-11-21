@@ -6,9 +6,7 @@ import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
-import guru.interlis.transformer.mapping.plan.RulePlan;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.RoleResolver;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.DeferredReference;
 import guru.interlis.transformer.state.ReferenceIndex;
@@ -16,19 +14,25 @@ import guru.interlis.transformer.state.SourceReferenceSelector;
 import guru.interlis.transformer.state.StateStore;
 import guru.interlis.transformer.state.TargetReference;
 
+import ch.interlis.ili2c.metamodel.Model;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
+import java.util.Set;
 
 public final class ReferenceResolutionService {
 
     public ReferenceResolutionReport resolveAll(
-            TransformPlan plan, StateStore stateStore, ReferenceIndex referenceIndex, DiagnosticCollector diagnostics) {
+            TransformPlan plan,
+            StateStore stateStore,
+            ReferenceIndex referenceIndex,
+            Map<String, Map<String, List<IomObject>>> outputObjects,
+            DiagnosticCollector diagnostics) {
 
         List<DeferredReference> deferredRefs = stateStore.deferredReferences();
         int totalDeferred = deferredRefs.size();
@@ -38,49 +42,42 @@ public final class ReferenceResolutionService {
         int ambiguous = 0;
         int typeMismatch = 0;
         int cardinalityViolations = 0;
-
-        Map<String, Map<String, Long>> roleCountByOwner = new HashMap<>();
+        int unrepresentable = 0;
+        var duplicateXtfOids =
+                deferredRefs.isEmpty() ? Map.<String, Set<String>>of() : duplicateXtfOids(plan, outputObjects);
 
         for (DeferredReference ref : deferredRefs) {
             ExecutionCancellation.check();
-            SourceReferenceSelector selector = ref.sourceSelector();
-            List<TargetReference> candidates;
-            if (selector.referencedSourceOid() != null
-                    && selector.referencedSourceOid().startsWith("#")) {
-                candidates = ref.targetRuleId() != null && !ref.targetRuleId().isBlank()
-                        ? referenceIndex.findByRuleId(ref.targetRuleId())
-                        : List.of();
-            } else {
-                candidates = referenceIndex.find(selector);
-                if (ref.targetRuleId() != null && !ref.targetRuleId().isBlank()) {
-                    candidates = candidates.stream()
-                            .filter(candidate -> ref.targetRuleId().equals(candidate.producingRuleId()))
+            SourceReferenceSelector selector = ref.sourceSelectors().isEmpty()
+                    ? null
+                    : ref.sourceSelectors().getFirst();
+            String oid = selector != null ? selector.referencedSourceOid() : null;
+            List<TargetReference> candidates = ref.singleton()
+                    ? referenceIndex.findByRuleId(ref.targetRuleId())
+                    : ref.sourceSelectors().stream()
+                            .flatMap(source -> referenceIndex.find(source).stream())
+                            .filter(candidate -> ref.targetRuleId() == null
+                                    || ref.targetRuleId().equals(candidate.producingRuleId()))
                             .toList();
-                }
-            }
+            String ownerLocation = ref.ownerRuleId() + " / " + ref.owner().targetClass() + "/"
+                    + ref.owner().targetOid();
+            boolean required = ref.required()
+                    || ref.expectedCardinality() != null
+                            && ref.expectedCardinality().isRequired();
 
             if (candidates.isEmpty()) {
-                Severity severity = ref.required()
-                        ? failPolicySeverity(plan, Severity.ERROR)
-                        : failPolicySeverity(plan, Severity.WARNING);
-                String code =
-                        ref.required() ? DiagnosticCode.RUN_REF_MISSING_MANDATORY : DiagnosticCode.RUN_REF_UNRESOLVED;
-                String detail = ref.required() ? "Required reference missing" : "Optional reference unresolved";
+                // An absent optional value is normal. A supplied optional value that does
+                // not resolve is reported without writing an invalid reference.
+                if (!required && oid == null && ref.sourceSelectors().size() == 1) continue;
                 diagnostics.add(new Diagnostic(
-                        code,
-                        severity,
-                        detail + " for role '" + ref.targetRoleName()
-                                + "' (OID " + selector.referencedSourceOid() + ")"
-                                + (ref.associationName() != null
-                                        ? " in association '" + ref.associationName() + "'"
-                                        : ""),
-                        ref.owner().targetClass() + "/" + ref.owner().targetOid(),
-                        "Check source OID / basket routing"));
-                if (ref.required()) {
-                    unresolvedMandatory++;
-                } else {
-                    unresolvedOptional++;
-                }
+                        required ? DiagnosticCode.RUN_REF_MISSING_MANDATORY : DiagnosticCode.RUN_REF_UNRESOLVED,
+                        required ? Severity.ERROR : Severity.WARNING,
+                        (required ? "Required reference missing for " : "Optional reference unresolved for ")
+                                + context(ref, oid),
+                        ownerLocation,
+                        "Check source input, OID and basket"));
+                if (required) unresolvedMandatory++;
+                else unresolvedOptional++;
                 continue;
             }
 
@@ -88,11 +85,9 @@ public final class ReferenceResolutionService {
                 diagnostics.add(new Diagnostic(
                         DiagnosticCode.RUN_REF_AMBIGUOUS,
                         Severity.ERROR,
-                        "Ambiguous reference for OID " + selector.referencedSourceOid()
-                                + " in class " + selector.expectedSourceClass()
-                                + ": found " + candidates.size() + " targets",
-                        ref.owner().targetClass() + "/" + ref.owner().targetOid(),
-                        "Constrain mapping by input/basket/class"));
+                        "Ambiguous reference for " + context(ref, oid) + ": found " + candidates.size() + " targets",
+                        ownerLocation,
+                        "Constrain the reference by input, basket or target rule"));
                 ambiguous++;
                 continue;
             }
@@ -102,49 +97,81 @@ public final class ReferenceResolutionService {
             if (ref.expectedTargetClass() != null
                     && !ref.expectedTargetClass().isEmpty()
                     && !isTypeCompatible(plan, ref.owner().outputId(), ref.expectedTargetClass(), resolvedTarget)) {
-                Severity severity = failPolicySeverity(plan, Severity.ERROR);
+                Severity severity = required ? Severity.ERROR : failPolicySeverity(plan, Severity.ERROR);
                 diagnostics.add(new Diagnostic(
                         DiagnosticCode.RUN_REF_TYPE_MISMATCH,
                         severity,
-                        "Type mismatch for reference " + selector.referencedSourceOid()
-                                + ": expected " + ref.expectedTargetClass()
-                                + " but resolved " + resolvedTarget.targetClass(),
-                        ref.owner().targetClass() + "/" + ref.owner().targetOid(),
+                        "Type mismatch for " + context(ref, oid) + ": resolved " + resolvedTarget.targetClass(),
+                        ownerLocation,
                         "Check target class of resolved object"));
                 typeMismatch++;
                 continue;
             }
 
-            // Per-owner cardinality check
-            if (ref.targetRoleName() != null && ref.expectedCardinality() != null) {
-                String roleKey = ref.owner().targetClass() + "::" + ref.owner().targetOid();
-                roleCountByOwner
-                        .computeIfAbsent(roleKey, k -> new LinkedHashMap<>())
-                        .merge(ref.targetRoleName(), 1L, Long::sum);
+            IomObject owner = stateStore.findTarget(ref.owner()).orElseThrow();
+            long max = ref.expectedCardinality() == null
+                    ? Long.MAX_VALUE
+                    : ref.expectedCardinality().max();
+            if (owner.getattrvaluecount(ref.targetRoleName()) >= max) {
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.RUN_REF_CARDINALITY,
+                        Severity.ERROR,
+                        "Cardinality exceeded for " + context(ref, oid) + ": max " + max,
+                        ownerLocation,
+                        "Check how many references the mapping creates for this role"));
+                cardinalityViolations++;
+                continue;
+            }
 
-                long count = roleCountByOwner.get(roleKey).get(ref.targetRoleName());
-                if (count > ref.expectedCardinality().max()) {
-                    diagnostics.add(new Diagnostic(
-                            DiagnosticCode.RUN_REF_CARDINALITY,
-                            failPolicySeverity(plan, Severity.ERROR),
-                            "Cardinality exceeded for role '" + ref.targetRoleName()
-                                    + "': max " + ref.expectedCardinality().max()
-                                    + ", got " + count,
-                            ref.owner().targetClass() + "/" + ref.owner().targetOid(),
-                            "Check that source does not produce more references than allowed"));
-                    cardinalityViolations++;
-                    continue;
+            boolean sameOutput = ref.owner().outputId().equals(resolvedTarget.outputId());
+            boolean sameBid = Objects.equals(ref.ownerBasketId(), resolvedTarget.targetBasketId());
+            boolean sameBasket = sameOutput
+                    && sameBid
+                    && TargetObjectFactory.extractTopic(ref.owner().targetClass())
+                            .equals(TargetObjectFactory.extractTopic(resolvedTarget.targetClass()));
+            OutputBinding output =
+                    plan != null ? plan.outputsById().get(ref.owner().outputId()) : null;
+            boolean xtf24 = output != null
+                    && output.transferDescription() != null
+                    && Model.ILI2_4.equals(
+                            output.transferDescription().getLastModel().getIliVersion());
+            var role = output != null && output.typeSystem() != null
+                    ? output.typeSystem().resolveReference(ref.owner().targetClass(), ref.targetRoleName())
+                    : null;
+            String reason = null;
+            if (duplicateXtfOids
+                    .getOrDefault(resolvedTarget.outputId(), Set.of())
+                    .contains(resolvedTarget.targetOid())) {
+                reason = "ambiguous target TID " + resolvedTarget.targetOid();
+            } else if (!sameBasket) {
+                if (output == null || !"xtf".equals(output.format()) || role == null || !role.external()) {
+                    reason = "the target role or output format does not allow an external basket reference";
+                } else if (!xtf24) {
+                    // XtfWriterAlt in IOX 1.24.4 emits EXTREF for a non-null refbid.
+                    // XTF 2.3 requires REF and BID (reference manual 3.3.9).
+                    reason = "the IOX XTF 2.3 writer cannot encode REF with BID";
+                } else if (!sameOutput) {
+                    reason = "XTF 2.4 external references require a target in the same output";
+                } else if (sameBid) {
+                    reason = "different target topics share the same BID";
                 }
             }
-
-            // Set reference on owner object
-            Optional<IomObject> ownerObj = stateStore.findTarget(ref.owner());
-            if (ownerObj.isPresent()) {
-                IomObject owner = ownerObj.get();
-                IomObject refObj = owner.addattrobj(ref.targetRoleName(), Iom_jObject.REF);
-                refObj.setobjectrefoid(resolvedTarget.targetOid());
-                resolved++;
+            if (reason != null) {
+                diagnostics.add(new Diagnostic(
+                        DiagnosticCode.RUN_REF_UNREPRESENTABLE,
+                        Severity.ERROR,
+                        "Cannot encode reference for " + context(ref, oid) + " from output/basket "
+                                + ref.owner().outputId() + "/" + ref.ownerBasketId() + " to "
+                                + resolvedTarget.outputId() + "/" + resolvedTarget.targetBasketId() + ": " + reason,
+                        ownerLocation,
+                        "Check the model's EXTERNAL declaration, output format and basket routing"));
+                unrepresentable++;
+                continue;
             }
+
+            IomObject refObj = owner.addattrobj(ref.targetRoleName(), Iom_jObject.REF);
+            refObj.setobjectrefoid(resolvedTarget.targetOid());
+            resolved++;
         }
 
         return new ReferenceResolutionReport(
@@ -154,7 +181,41 @@ public final class ReferenceResolutionService {
                 ambiguous,
                 typeMismatch,
                 cardinalityViolations,
+                unrepresentable,
                 totalDeferred);
+    }
+
+    private static String context(DeferredReference ref, String oid) {
+        return "role '" + ref.targetRoleName() + "'"
+                + (ref.associationName() == null ? "" : " in association '" + ref.associationName() + "'")
+                + " (source OID " + oid + ", input/BID "
+                + ref.sourceSelectors().stream()
+                        .map(source -> source.inputId() + "/" + source.basketId())
+                        .distinct()
+                        .toList()
+                + ", target rule " + ref.targetRuleId() + ", expected class " + ref.expectedTargetClass() + ")";
+    }
+
+    private static Map<String, Set<String>> duplicateXtfOids(
+            TransformPlan plan, Map<String, Map<String, List<IomObject>>> outputObjects) {
+        Map<String, Set<String>> duplicates = new HashMap<>();
+        for (var output : outputObjects.entrySet()) {
+            OutputBinding binding = plan.outputsById().get(output.getKey());
+            if (binding == null || !"xtf".equals(binding.format())) continue;
+            Set<String> seen = new HashSet<>();
+            for (var basket : output.getValue().values()) {
+                ExecutionCancellation.check();
+                for (IomObject object : basket) {
+                    String oid = object.getobjectoid();
+                    if (oid != null && !seen.add(oid)) {
+                        duplicates
+                                .computeIfAbsent(output.getKey(), ignored -> new HashSet<>())
+                                .add(oid);
+                    }
+                }
+            }
+        }
+        return duplicates;
     }
 
     private boolean isTypeCompatible(
@@ -173,59 +234,8 @@ public final class ReferenceResolutionService {
         return typeSystem != null && typeSystem.isTypeCompatible(expectedTargetClass, resolvedTarget.targetClass());
     }
 
-    private int checkRequiredRefsWithoutDeferred(
-            TransformPlan plan, StateStore stateStore, DiagnosticCollector diagnostics) {
-        int missingCount = 0;
-        if (plan == null) return 0;
-        for (RulePlan rule : plan.rules()) {
-            ExecutionCancellation.check();
-            OutputBinding outputBinding = plan.outputsById().get(rule.outputId());
-            TypeSystemFacade targetTs = outputBinding != null ? outputBinding.typeSystem() : null;
-            if (targetTs == null) continue;
-            String targetClassScoped = getScopedName(rule.targetClass());
-
-            for (var ref : rule.refs()) {
-                ExecutionCancellation.check();
-                if (!ref.required()) continue;
-                RoleResolver roleResolver = new RoleResolver(targetTs);
-                long minCardinality = roleResolver
-                        .getTargetRoleCardinality(ref, targetClassScoped)
-                        .min();
-                if (minCardinality <= 0) continue;
-
-                List<DeferredReference> deferredRefs = stateStore.deferredReferences();
-                boolean hasResolved = false;
-                for (DeferredReference dr : deferredRefs) {
-                    ExecutionCancellation.check();
-                    if (dr.owner().targetClass() != null
-                            && dr.owner().targetClass().equals(targetClassScoped)
-                            && dr.targetRoleName().equals(ref.targetRoleName())) {
-                        hasResolved = true;
-                        break;
-                    }
-                }
-
-                if (!hasResolved) {
-                    Severity severity = failPolicySeverity(plan, Severity.ERROR);
-                    diagnostics.add(new Diagnostic(
-                            DiagnosticCode.RUN_REF_MISSING_MANDATORY,
-                            severity,
-                            "Required reference missing for role " + ref.targetRoleName(),
-                            targetClassScoped,
-                            "Ensure source objects have the required reference"));
-                    missingCount++;
-                }
-            }
-        }
-        return missingCount;
-    }
-
     private static Severity failPolicySeverity(TransformPlan plan, Severity defaultSeverity) {
         if (plan == null) return defaultSeverity;
         return plan.failPolicy() == FailPolicy.LENIENT ? Severity.WARNING : defaultSeverity;
-    }
-
-    private static String getScopedName(ch.interlis.ili2c.metamodel.Table table) {
-        return TypeSystemFacade.getScopedName(table);
     }
 }

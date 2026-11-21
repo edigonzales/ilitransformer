@@ -74,7 +74,7 @@ entries:
     status: SUPPORTED
     description: "Pass 0 (index), Pass 1 (build), Pass 2 (refs), Write (stable sort)"
     testReferences:
-      - "TransformationEngineIntegrationTest"
+      - "ReferenceResolutionIntegrationTest"
   - feature: "1:1 Scalar mapping"
     phase: "5"
     status: SUPPORTED
@@ -86,7 +86,7 @@ entries:
     status: SUPPORTED
     description: "preserve, integer, uuid, deterministicUuid (UUIDv3)"
     testReferences:
-      - "OidStrategyTest"
+      - "DefaultOidGenerationServiceTest"
       - "OidStrategyGoldenTest"
   - feature: "OID strategy external"
     phase: "6"
@@ -107,7 +107,7 @@ entries:
   - feature: "Reference resolution + roles"
     phase: "7"
     status: SUPPORTED
-    description: "DeferredRefs, type checking, cardinality, role-aware resolution"
+    description: "Deferred references, type checking, cardinality and version-aware XTF reference encoding"
     testReferences:
       - "ReferenceResolutionIntegrationTest"
   - feature: "ReferenceIndex + ReferenceResolutionService"
@@ -120,7 +120,7 @@ entries:
   - feature: "Same OID different context resolution"
     phase: "19"
     status: SUPPORTED
-    description: "Same OID in different baskets/inputs/classes correctly disambiguated; no global OID-only fallback by default"
+    description: "Lookup is scoped to the source input, basket and class or to the transfer ID of an XTF 2.4 EXTERNAL reference"
     testReferences:
       - "ReferenceIndexTest"
       - "ReferenceResolutionServiceTest"
@@ -136,7 +136,7 @@ entries:
     status: SUPPORTED
     description: "Configurable error handling at plan level"
     testReferences:
-      - "TransformationEngineIntegrationTest"
+      - "ReferenceResolutionIntegrationTest"
   - feature: "GeometryAdapter (Coord/Polyline/Surface/Area)"
     phase: "13/24"
     status: SUPPORTED
@@ -325,7 +325,7 @@ entries:
     status: SUPPORTED
     description: "SourceIndexingService, RuleExecutionService, TargetObjectFactory, AssignmentExecutionService, OutputWritingService"
     testReferences:
-      - "TransformationEngineIntegrationTest"
+      - "ReferenceResolutionIntegrationTest"
   - feature: "Deterministic Output Order"
     phase: "26"
     status: SUPPORTED

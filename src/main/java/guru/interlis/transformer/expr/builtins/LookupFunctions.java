@@ -115,7 +115,7 @@ public final class LookupFunctions {
         }
         Value arg = args.get(0);
         if (arg instanceof ReferenceValue rv) {
-            return new TextValue(rv.oid());
+            return rv;
         }
         String alias = arg.asText();
         IomObject source = ctx.sources().get(alias);
@@ -135,7 +135,7 @@ public final class LookupFunctions {
         if (objectOid == null || objectOid.isBlank()) {
             return NullValue.INSTANCE;
         }
-        return new TextValue(objectOid);
+        return new ReferenceValue(source.getobjecttag(), objectOid, null, alias, null);
     }
 
     static Value lookup(List<Value> args, EvalContext ctx) {

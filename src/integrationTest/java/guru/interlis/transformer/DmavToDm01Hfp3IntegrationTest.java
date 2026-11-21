@@ -120,7 +120,7 @@ class DmavToDm01Hfp3IntegrationTest {
             TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, hfp), Map.of("dm01", writer));
 
             assertThat(result.targetsWritten()).isEqualTo(2);
-            assertThat(result.errors()).isEqualTo(0);
+            assertThat(result.errors()).as("%s", engineDiag.all()).isZero();
 
             String content = Files.readString(outputPath);
             assertThat(content).contains("HFP3Nachfuehrung");
@@ -274,6 +274,7 @@ class DmavToDm01Hfp3IntegrationTest {
     void referenceEntstehungResolved() throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
+        config.mapping.basketStrategy.defaultStrategy = "generateUuid";
 
         Map<String, TypeSystemFacade> sourceTs = Map.of("DmavTestModel", dmavTs);
         Map<String, TypeSystemFacade> targetTs = Map.of("Dm01TestModel", dm01Ts);
@@ -305,8 +306,9 @@ class DmavToDm01Hfp3IntegrationTest {
             TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, hfp), Map.of("dm01", writer));
 
             assertThat(result.targetsWritten()).isEqualTo(2);
-            assertThat(result.errors()).isEqualTo(0);
+            assertThat(result.errors()).as("%s", engineDiag.all()).isZero();
             String content = Files.readString(outputPath);
+            assertThat(content.lines().filter(line -> line.startsWith("TOPI "))).containsExactly("TOPI Fixpunkte");
             assertThat(content).contains("HFP3Nachfuehrung");
             assertThat(content).contains("HFP3");
 

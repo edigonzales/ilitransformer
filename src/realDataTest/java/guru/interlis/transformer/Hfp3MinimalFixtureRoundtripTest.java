@@ -76,7 +76,7 @@ class Hfp3MinimalFixtureRoundtripTest {
         Path dm01Roundtrip = tempDir.resolve("dm01-roundtrip.itf");
 
         run(materializeDm01ToDmav(DM01_INPUT, dmavIntermediate), tempDir.resolve("reports-dm01-forward"));
-        run(materializeDmavToDm01(dmavIntermediate, dm01Roundtrip), tempDir.resolve("reports-dm01-reverse"));
+        run(materializeDmavToDm01(dmavIntermediate, dm01Roundtrip, "byTopic"), tempDir.resolve("reports-dm01-reverse"));
 
         List<IomObject> original = semanticDm01Objects(DM01_INPUT);
         List<IomObject> roundtripped = semanticDm01Objects(dm01Roundtrip);
@@ -97,7 +97,9 @@ class Hfp3MinimalFixtureRoundtripTest {
         Path dmavRoundtrip = tempDir.resolve("dmav-roundtrip.xtf");
         Path reverseReportDir = tempDir.resolve("reports-dmav-reverse");
 
-        run(materializeDmavToDm01(DMAV_INPUT, dm01Intermediate), reverseReportDir);
+        run(materializeDmavToDm01(DMAV_INPUT, dm01Intermediate, "generateUuid"), reverseReportDir);
+        assertThat(Files.readAllLines(dm01Intermediate).stream().filter(line -> line.startsWith("TOPI ")))
+                .containsExactly("TOPI FixpunkteKategorie3");
         run(materializeDm01ToDmav(dm01Intermediate, dmavRoundtrip), tempDir.resolve("reports-dmav-forward"));
 
         List<IomObject> original = semanticDmavObjects(DMAV_INPUT);
@@ -131,9 +133,10 @@ class Hfp3MinimalFixtureRoundtripTest {
         return mappingPath;
     }
 
-    private Path materializeDmavToDm01(Path inputPath, Path outputPath) throws Exception {
+    private Path materializeDmavToDm01(Path inputPath, Path outputPath, String basketStrategy) throws Exception {
         Path mappingPath = tempDir.resolve("dmav-to-dm01-" + outputPath.getFileName() + ".yaml");
         String yaml = Files.readString(DMAV_TO_DM01_PROFILE, StandardCharsets.UTF_8)
+                .replace("default: byTopic", "default: " + basketStrategy)
                 .replace("path: \"input/dmav.xtf\"", "path: \"" + inputPath.toAbsolutePath() + "\"")
                 .replace("path: \"build/out/dm01-hfp3.itf\"", "path: \"" + outputPath.toAbsolutePath() + "\"");
         Files.writeString(mappingPath, yaml, StandardCharsets.UTF_8);

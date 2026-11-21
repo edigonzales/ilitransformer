@@ -9,7 +9,10 @@ Ein Coding Agent muss diese Datei lesen, bevor er Code, Tests, Build-Dateien, Ma
 ## Nicht verhandelbare Regeln
 
 - Arbeite eng am Auftrag. Keine opportunistischen Refactorings.
-- Ändere keine öffentlichen APIs, DSL-Semantik, Transferformatannahmen oder Testdatenverträge ohne expliziten Hinweis.
+- Während der Vorproduktion sind API-Breaks zulässig. Dokumentiere betroffene Verträge und aktualisiere ihre Verbraucher.
+- Entferne ersetzte Runtime-Pfade und APIs vollständig.
+- Referenzen löst ausschliesslich `ReferenceResolutionService` aus `TransformationEngine.runTyped()` auf.
+- Die Suche bleibt im durch Quelle und Transferformat bestimmten Kontext. Ein ausgebliebener Treffer rechtfertigt keinen Wechsel von Basket oder Input.
 - Behaupte nie, Tests seien erfolgreich, wenn du sie nicht wirklich ausgeführt hast.
 - Committe nie, bevor Definition of Done und Commit Policy erfüllt sind.
 - Erfinde keine INTERLIS-Modellsyntax und keine INTERLIS-Transferdaten.

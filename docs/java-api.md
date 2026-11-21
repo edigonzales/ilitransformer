@@ -22,8 +22,13 @@ Existing CLI publication defaults remain unchanged. Interrupts are checked betwe
 processing steps and before commit. Compilation/ilivalidator use the ili2c Main.class
 monitor so embedding hosts can coordinate global compiler state on that monitor.
 
-The engine still holds source/target state in memory. One object is not an independent
-job: references resolve across the entire input. Use a complete small sample for preview.
+The engine holds source objects, target objects and references in memory.
+Use a complete small sample for preview so that the referenced objects are available.
+Direct runtime callers use `TransformationEngine.runTyped(TransformPlan, …)`.
+The engine resolves local references in their source basket and honours explicit
+source BIDs. It checks uniqueness, type and cardinality before publication.
+The [runtime reference contract](dev/state-store.md#reference-resolution) describes
+how the target basket affects XTF encoding.
 The API does not promise byte-identical XML or automatic preservation of unmapped fields.
 
 `IlimapEditorDocument` applies source-range changes with revision checking and transactional

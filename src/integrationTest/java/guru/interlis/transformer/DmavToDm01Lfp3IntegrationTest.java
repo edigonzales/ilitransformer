@@ -121,7 +121,7 @@ class DmavToDm01Lfp3IntegrationTest {
             TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dm01", writer));
 
             assertThat(result.targetsWritten()).isEqualTo(2);
-            assertThat(result.errors()).isEqualTo(0);
+            assertThat(result.errors()).as("%s", engineDiag.all()).isZero();
 
             String content = Files.readString(outputPath);
             // SCNT format: attributes are in column order
@@ -317,7 +317,7 @@ class DmavToDm01Lfp3IntegrationTest {
             TransformResult result = engine.runTyped(plan, onceReaderFactory(nf, lfp), Map.of("dm01", writer));
 
             assertThat(result.targetsWritten()).isEqualTo(2);
-            assertThat(result.errors()).isEqualTo(0);
+            assertThat(result.errors()).as("%s", engineDiag.all()).isZero();
             String content = Files.readString(outputPath);
             assertThat(content).contains("LFP3Nachfuehrung");
             assertThat(content).contains("LFP3");

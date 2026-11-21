@@ -114,20 +114,15 @@ Multi-pass execution:
 
 - **Pass 0**: Source scan — read input files, index objects
 - **Pass 1**: Target creation — build target objects, assign scalar attributes, generate OIDs, store deferred refs
-- **Pass 2**: Reference resolution — resolve deferred refs against IdMapping, check type compatibility
-- **Write**: Stable-sort and write output via IoxWriter
+- **Pass 2**: `ReferenceResolutionService` resolves deferred references against the source identity and producing rule, then validates the target class, cardinality and output basket.
+- **Write**: Stable-sort and write output via `IoxWriter`.
 
-### StateStore (InMemoryStateStore)
+### Runtime state
 
-Manages runtime state:
-
-- `SourceRecord` — indexed source objects
-- `TargetRecord` — built target objects
-- `IdMapping` — maps SourceKey → TargetKey for reference resolution
-- `DeferredRef` — unresolved references for Pass 2
-- `ObjectIndex` — optional secondary indexes
-
-Cross-class IdMapping: global entries with `sourceClass=null` enable resolution across class boundaries.
+`InMemoryStateStore` holds source records, registered target objects and deferred
+references. `ReferenceIndex` maps source keys to the actual output, class, OID,
+basket and producing rule of each target. The [state store contract](state-store.md)
+describes the lookup scope and transfer encoding.
 
 ### BasketRouter
 

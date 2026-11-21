@@ -6,7 +6,7 @@ Die Transformationsruntime arbeitet konzeptionell auf `IoxEvent` und `IomObject`
 
 ## D002: INTERLIS-I/O bleibt abstrahiert
 
-INTERLIS 2.3 vs 2.4 Transferformatdetails sollen nicht in der Engine special-cased werden. Reader/Writer-Libraries abstrahieren diese Unterschiede.
+Reader und Writer kodieren die Transferformate. Die Runtime bestimmt den Geltungsbereich von Referenzen, routet ITF-Objekte nach Thema und prüft, ob das Ausgabeformat die Zielidentität abbilden kann. IOX 1.24.4 kann externe XTF-2.3-Referenzen zwischen Baskets nicht normgerecht schreiben.
 
 ## D003: DM01/DMAV ist Referenz-Use-Case, nicht Engine-Sonderfall
 

@@ -66,7 +66,7 @@ class ValueTest {
 
     @Test
     void referenceValue() {
-        ReferenceValue v = new ReferenceValue("LFP3Nachfuehrung", "abc-123");
+        ReferenceValue v = new ReferenceValue("LFP3Nachfuehrung", "abc-123", null, "s", null);
         assertThat(v.targetClass()).isEqualTo("LFP3Nachfuehrung");
         assertThat(v.oid()).isEqualTo("abc-123");
         assertThat(v.toNative()).isEqualTo("abc-123");

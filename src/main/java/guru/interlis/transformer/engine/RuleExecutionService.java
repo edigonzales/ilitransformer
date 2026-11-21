@@ -236,7 +236,8 @@ public final class RuleExecutionService {
 
                     metrics.recordRuleMatch(rule.ruleId());
                     recordLosses(rule, record, evalCtx);
-                    int created = targetObjectFactory.createTarget(rule, source, record, evalCtx, plan, ctx);
+                    int created = targetObjectFactory.createTarget(
+                            rule, source, record, Map.of(source.alias(), record), evalCtx, plan, ctx);
                     metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
                 }
             }
@@ -322,7 +323,7 @@ public final class RuleExecutionService {
 
             metrics.recordRuleMatch(rule.ruleId());
             recordLosses(rule, driverRecord, evalCtx);
-            targetObjectFactory.createTarget(rule, driverPlan, driverRecord, evalCtx, plan, ctx);
+            targetObjectFactory.createTarget(rule, driverPlan, driverRecord, boundRecords, evalCtx, plan, ctx);
             metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
             return;
         }
@@ -558,7 +559,7 @@ public final class RuleExecutionService {
                             sources, diagnostics, parentRule.ruleId(), plan.enumMaps(), null, sourceAttrTypes)
                     .withLookupIndex(sourceLookupIndex);
 
-            targetObjectFactory.createTargetForCreatePlan(create, parentRule, record, evalCtx, plan, ctx);
+            targetObjectFactory.createTargetForCreatePlan(create, sp, record, evalCtx, plan, ctx);
             metrics.recordTarget(TargetObjectFactory.getScopedName(create.targetClass()));
         }
     }

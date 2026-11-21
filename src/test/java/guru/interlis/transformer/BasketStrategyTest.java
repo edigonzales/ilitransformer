@@ -13,21 +13,21 @@ class BasketStrategyTest {
 
     @Test
     void preserveReturnsSourceBasketId() {
-        String result = BasketRouter.determineTargetBasket(BasketStrategy.PRESERVE, "src-basket-1", "Topic", "Class");
+        String result = BasketRouter.determineTargetBasket(BasketStrategy.PRESERVE, "src-basket-1", "Topic", null);
         assertThat(result).isEqualTo("src-basket-1");
     }
 
     @Test
     void generateUuidCreatesValidUuid() {
-        String result = BasketRouter.determineTargetBasket(BasketStrategy.GENERATE_UUID, null, "Topic", "Class");
+        String result = BasketRouter.determineTargetBasket(BasketStrategy.GENERATE_UUID, null, "Topic", null);
         assertThat(result).isNotNull();
         assertThatCode(() -> UUID.fromString(result)).doesNotThrowAnyException();
     }
 
     @Test
     void generateUuidCreatesUniqueIds() {
-        String r1 = BasketRouter.determineTargetBasket(BasketStrategy.GENERATE_UUID, null, "Topic", "Class");
-        String r2 = BasketRouter.determineTargetBasket(BasketStrategy.GENERATE_UUID, null, "Topic", "Class");
+        String r1 = BasketRouter.determineTargetBasket(BasketStrategy.GENERATE_UUID, null, "Topic", null);
+        String r2 = BasketRouter.determineTargetBasket(BasketStrategy.GENERATE_UUID, null, "Topic", null);
         assertThat(r1).isNotEqualTo(r2);
     }
 
@@ -35,41 +35,41 @@ class BasketStrategyTest {
     void preserveOrGeneratePreservesUuidSourceBasket() {
         String uuid = "550e8400-e29b-41d4-a716-446655440000";
         String result =
-                BasketRouter.determineTargetBasket(BasketStrategy.PRESERVE_OR_GENERATE_UUID, uuid, "Topic", "Class");
+                BasketRouter.determineTargetBasket(BasketStrategy.PRESERVE_OR_GENERATE_UUID, uuid, "Topic", null);
         assertThat(result).isEqualTo(uuid);
     }
 
     @Test
     void preserveOrGenerateGeneratesForNonUuidSourceBasket() {
         String result = BasketRouter.determineTargetBasket(
-                BasketStrategy.PRESERVE_OR_GENERATE_UUID, "not-a-uuid", "Topic", "Class");
+                BasketStrategy.PRESERVE_OR_GENERATE_UUID, "not-a-uuid", "Topic", null);
         assertThat(result).isNotEqualTo("not-a-uuid");
         assertThatCode(() -> UUID.fromString(result)).doesNotThrowAnyException();
     }
 
     @Test
     void byTopicCreatesTopicBasedBasketId() {
-        String result = BasketRouter.determineTargetBasket(BasketStrategy.BY_TOPIC, null, "MyModel.MyTopic", "Class");
+        String result = BasketRouter.determineTargetBasket(BasketStrategy.BY_TOPIC, null, "MyModel.MyTopic", null);
         assertThatCode(() -> UUID.fromString(result)).doesNotThrowAnyException();
     }
 
     @Test
     void byTopicSameTopicProducesSameBasketId() {
-        String r1 = BasketRouter.determineTargetBasket(BasketStrategy.BY_TOPIC, null, "A.B", "C1");
-        String r2 = BasketRouter.determineTargetBasket(BasketStrategy.BY_TOPIC, null, "A.B", "C2");
+        String r1 = BasketRouter.determineTargetBasket(BasketStrategy.BY_TOPIC, null, "A.B", null);
+        String r2 = BasketRouter.determineTargetBasket(BasketStrategy.BY_TOPIC, null, "A.B", null);
         assertThat(r1).isEqualTo(r2);
     }
 
     @Test
     void byTopicDifferentTopicProducesDifferentBasketId() {
-        String r1 = BasketRouter.determineTargetBasket(BasketStrategy.BY_TOPIC, null, "A.B1", "C");
-        String r2 = BasketRouter.determineTargetBasket(BasketStrategy.BY_TOPIC, null, "A.B2", "C");
+        String r1 = BasketRouter.determineTargetBasket(BasketStrategy.BY_TOPIC, null, "A.B1", null);
+        String r2 = BasketRouter.determineTargetBasket(BasketStrategy.BY_TOPIC, null, "A.B2", null);
         assertThat(r1).isNotEqualTo(r2);
     }
 
     @Test
     void expressionReturnsNull() {
-        String result = BasketRouter.determineTargetBasket(BasketStrategy.EXPRESSION, "src", "Topic", "Class");
+        String result = BasketRouter.determineTargetBasket(BasketStrategy.EXPRESSION, "src", "Topic", null);
         assertThat(result).isNull();
     }
 }

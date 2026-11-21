@@ -58,6 +58,10 @@ public final class JobRunner {
             DiagnosticCode.RUN_DUPLICATE_TARGET_OID,
             DiagnosticCode.MODEL_COMPILE_FAILED,
             DiagnosticCode.RUN_REF_MISSING_MANDATORY,
+            DiagnosticCode.RUN_REF_AMBIGUOUS,
+            DiagnosticCode.RUN_REF_UNREPRESENTABLE,
+            DiagnosticCode.RUN_REF_TYPE_MISMATCH,
+            DiagnosticCode.RUN_REF_CARDINALITY,
             DiagnosticCode.RUN_MISSING_SOURCE_OID);
 
     private final java.util.function.Consumer<String> log;

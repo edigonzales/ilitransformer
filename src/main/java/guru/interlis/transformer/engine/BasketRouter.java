@@ -1,5 +1,6 @@
 package guru.interlis.transformer.engine;
 
+import guru.interlis.transformer.mapping.plan.OutputBinding;
 import guru.interlis.transformer.state.BasketStrategy;
 
 import java.nio.charset.StandardCharsets;
@@ -10,7 +11,9 @@ public final class BasketRouter {
     private BasketRouter() {}
 
     public static String determineTargetBasket(
-            BasketStrategy strategy, String sourceBasketId, String targetTopic, String targetClass) {
+            BasketStrategy strategy, String sourceBasketId, String targetTopic, OutputBinding output) {
+        // ITF writes a topic block rather than a basket identifier.
+        if (output != null && "itf".equals(output.format())) return null;
         return switch (strategy) {
             case PRESERVE -> sourceBasketId;
             case GENERATE_UUID -> UUID.randomUUID().toString();

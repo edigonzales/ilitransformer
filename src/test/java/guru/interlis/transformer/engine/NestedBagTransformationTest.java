@@ -351,7 +351,7 @@ class NestedBagTransformationTest {
 
         assertThat(childTarget.getattrobj("Parent", 0).getobjectrefoid()).isEqualTo("parent-target-1");
         assertThat(grandChildTarget.getattrobj("Child", 0).getobjectrefoid()).isEqualTo("oid-1");
-        assertThat(stateStore.deferredRefs()).isEmpty();
+        assertThat(stateStore.deferredReferences()).isEmpty();
         assertThat(stateStore.deferredReferences()).isEmpty();
         assertThat(diagnostics.all()).isEmpty();
     }

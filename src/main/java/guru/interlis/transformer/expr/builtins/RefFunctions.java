@@ -32,11 +32,7 @@ public final class RefFunctions {
 
     static Value refOid(List<Value> args, EvalContext ctx) {
         if (args.isEmpty() || !args.get(0).isDefined()) return NullValue.INSTANCE;
-        Value val = args.get(0);
-        if (val instanceof ReferenceValue rv) {
-            return new guru.interlis.transformer.expr.TextValue(rv.oid());
-        }
-        return val;
+        return args.get(0);
     }
 
     static Value refEquals(List<Value> args, EvalContext ctx) {
