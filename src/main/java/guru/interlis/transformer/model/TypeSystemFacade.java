@@ -352,6 +352,9 @@ public final class TypeSystemFacade {
 
     public static String unsupportedAssociation(AssociationDef association) {
         String path = getScopedName(association);
+        if (association.getDerivedFrom() != null) {
+            return "Derived associations cannot be mapped as transfer objects: " + path;
+        }
         if (association.getExtending() != null || association.getRoles().size() != 2) {
             return "Only standalone binary associations without association inheritance can be mapped: " + path;
         }

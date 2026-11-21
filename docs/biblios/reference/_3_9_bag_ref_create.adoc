@@ -80,7 +80,7 @@ keine TID. Eingebettete Rollen werden am Besitzer gemappt.
 Für direkte `REFERENCE TO`-Klassenattribute bezeichnet `ref` den
 Zielattributnamen. `sourceRef` liest das Quellattribut als Referenzwert. Der
 Resolver verwendet Modellziel, `EXTERNAL` und die Ziel-OID der erzeugenden Regel.
-Das gilt auch für geerbte Attribute und Typaliase. Assoziationsvererbung,
+Das gilt auch für geerbte Attribute und Typaliase. Abgeleitete Assoziationen, Assoziationsvererbung,
 mehr als zwei Rollen, geordnete Rollen, Rollen mit alternativen oder
 eingeschränkten Zielen sowie Referenzen in verschachtelten Strukturen
 liegen ausserhalb dieses Funktionsumfangs.

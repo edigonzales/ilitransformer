@@ -143,6 +143,7 @@ class StandaloneAssociationIntegrationTest {
             s.AnonymousRoute;|s;|ILITRF-RUN-REF-MISSING-MANDATORY
             source s from original class "P42Source.Data.Anonymous";|source s from original class "P42Source.Data.Embedded";|ILITRF-MAP-UNSUPPORTED-FEATURE
             ref RemoteSite { target rule mapSite sourceRef s.RemoteSite; }|assign { RemoteSite = refOid(s.RemoteSite); }|ILITRF-MAP-TYPE-MISMATCH
+            target migrated class "P42Target.Data.Anonymous";|target migrated class "P42Target.Data.Computed";|ILITRF-MAP-UNSUPPORTED-FEATURE
 """)
     void rejectsInvalidMappingsWithoutPublishing(String from, String to, String code) throws Exception {
         String text = mappingText().replace(from, to == null ? "" : to);

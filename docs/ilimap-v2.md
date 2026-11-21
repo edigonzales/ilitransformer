@@ -650,8 +650,9 @@ rule migrateLink {
 Assoziationen mit eigener OID verwenden die konfigurierte OID-Strategie.
 Assoziationen ohne eigene OID werden ohne TID ausgegeben. Eingebettete
 Assoziationen werden in der Regel des Besitzerobjekts als Rollen behandelt.
-P4.2 unterstützt binäre Links ohne Assoziationsvererbung, geordnete Rollen
-oder Rollen mit alternativen oder eingeschränkten Zielen.
+P4.2 unterstützt übertragene binäre Links. Abgeleitete Assoziationen,
+Assoziationsvererbung, geordnete Rollen und Rollen mit alternativen oder
+eingeschränkten Zielen liegen ausserhalb dieses Umfangs.
 
 Für ein direktes Klassenattribut `REFERENCE TO` ist der Zielname der
 Attributname, beispielsweise `ref Site { target rule migrateSite sourceRef s.Site; }`.

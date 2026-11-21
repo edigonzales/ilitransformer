@@ -350,7 +350,7 @@ Selbständig übertragene binäre Assoziationen werden in XTF über eine explizi
 Quell- und Zielregel migriert. Beide Rollen brauchen je ein `ref`-Mapping,
 Fachattribute werden per `assign` zugewiesen. Die OID-Strategie gilt für
 Assoziationen mit eigener OID. Links ohne eigene OID werden ohne TID übertragen.
-Eingebettete Rollen bleiben am Besitzerobjekt. Assoziationsvererbung, mehr als
+Eingebettete Rollen bleiben am Besitzerobjekt. Abgeleitete Assoziationen, Assoziationsvererbung, mehr als
 zwei Rollen, geordnete Rollen, Rollen mit alternativen oder eingeschränkten
 Zielen und Referenzen in verschachtelten Strukturen liegen ausserhalb dieses
 Mappings. Ein vollständiges Regelbeispiel steht in der [ilimap-Referenz](ilimap-v2.md#selbständige-assoziationen-und-reference-to).

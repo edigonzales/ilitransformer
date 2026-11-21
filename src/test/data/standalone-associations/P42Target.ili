@@ -35,6 +35,17 @@ MODEL P42Target (en) AT "https://example.org" VERSION "2026-11-21" =
       ManualRoute -- {0..*} Route;
     END Manual;
 
+    VIEW SiteRoutes
+      JOIN OF Site, Route;
+      =
+    END SiteRoutes;
+
+    ASSOCIATION Computed
+      DERIVED FROM SiteRoutes =
+      ComputedSite -- {0..*} Site := SiteRoutes->Site;
+      ComputedRoute -- {0..*} Route := SiteRoutes->Route;
+    END Computed;
+
     ASSOCIATION Embedded =
       EmbeddedSite -- {0..1} Site;
       EmbeddedRoute -- {0..*} Route;
