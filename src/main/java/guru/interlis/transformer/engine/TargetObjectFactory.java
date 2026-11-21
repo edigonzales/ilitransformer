@@ -33,7 +33,6 @@ import guru.interlis.transformer.state.StateStore;
 import guru.interlis.transformer.state.TargetObjectKey;
 import guru.interlis.transformer.state.TargetReference;
 
-import ch.interlis.ili2c.metamodel.Model;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 
@@ -64,7 +63,6 @@ public final class TargetObjectFactory {
             RulePlan rule,
             SourcePlan matchedSource,
             SourceRecord driverRecord,
-            Map<String, SourceRecord> boundRecords,
             EvalContext evalCtx,
             TransformPlan plan,
             ObjectCreationContext ctx) {
@@ -80,7 +78,6 @@ public final class TargetObjectFactory {
                 rule.outputId(),
                 rule.ruleId(),
                 driverRecord,
-                boundRecords,
                 evalCtx,
                 target,
                 targetBasket,
@@ -146,19 +143,30 @@ public final class TargetObjectFactory {
             String outputId,
             String ruleId,
             SourceRecord driverRecord,
-            Map<String, SourceRecord> boundRecords,
             EvalContext evalCtx,
             Iom_jObject target,
             String targetBasket,
             TypeSystemFacade targetTs,
             TransformPlan plan,
             ObjectCreationContext ctx) {
+        Map<String, SourceRecord> boundRecords = evalCtx.sourceRecords();
         for (RefPlan ref : references) {
             var role = targetTs == null ? null : targetTs.resolveReference(target.getobjecttag(), ref.targetRoleName());
             String expression = ref.sourceRef();
             boolean singleton = expression != null && expression.trim().startsWith("#");
             Value value = expression == null || singleton ? null : expressionEngine.evaluate(expression, evalCtx);
-            if (value instanceof ReferenceValue reference
+            ReferenceValue reference = value instanceof ReferenceValue refValue ? refValue : null;
+            if (reference == null && value != null && value.isDefined()) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.RUN_REF_TYPE_MISMATCH,
+                                Severity.ERROR,
+                                "sourceRef must yield a reference for role '" + ref.targetRoleName() + "'",
+                                ruleId + " / " + target.getobjecttag() + "/" + target.getobjectoid(),
+                                "Use the complete reference value or a bound source object"));
+                continue;
+            }
+            if (reference != null
                     && reference.sourceAttribute() != null
                     && boundRecords
                                     .get(reference.sourceAlias())
@@ -175,7 +183,7 @@ public final class TargetObjectFactory {
                                 "Use a source reference with a single value"));
                 continue;
             }
-            var selectors = sourceSelectors(ref, driverRecord, boundRecords, value, singleton, plan);
+            var selectors = sourceSelectors(ref, driverRecord, boundRecords, reference, singleton, plan);
             ctx.stateStore()
                     .addDeferredReference(new DeferredReference(
                             new TargetObjectKey(outputId, target.getobjecttag(), target.getobjectoid()),
@@ -202,46 +210,34 @@ public final class TargetObjectFactory {
             RefPlan ref,
             SourceRecord driver,
             Map<String, SourceRecord> boundRecords,
-            Value value,
+            ReferenceValue reference,
             boolean singleton,
             TransformPlan plan) {
         if (singleton) {
             return List.of(new SourceReferenceSelector(
                     driver.sourceFileId(), driver.sourceBasketId(), null, ref.sourceRef(), false));
         }
-        ReferenceValue reference = value instanceof ReferenceValue rv ? rv : null;
-        String rawOid = reference != null
-                ? reference.oid()
-                : value != null && value.isDefined() ? java.util.Objects.toString(value.toNative(), null) : null;
+        if (reference == null) {
+            return List.of(
+                    new SourceReferenceSelector(driver.sourceFileId(), driver.sourceBasketId(), null, null, false));
+        }
+        String rawOid = reference.oid();
         String oid = rawOid == null || rawOid.isBlank() ? null : rawOid;
-        SourceRecord origin = reference != null && reference.sourceAlias() != null
-                ? boundRecords.get(reference.sourceAlias())
-                : driver;
-        if (origin == null
-                || (reference == null
-                        && boundRecords.values().stream()
-                                .anyMatch(record -> !driver.sourceFileId().equals(record.sourceFileId())
-                                        || !java.util.Objects.equals(
-                                                driver.sourceBasketId(), record.sourceBasketId())))) {
+        SourceRecord origin = reference.sourceAlias() == null ? null : boundRecords.get(reference.sourceAlias());
+        if (origin == null) {
             return List.of(new SourceReferenceSelector(null, driver.sourceBasketId(), null, oid, false));
         }
 
-        String explicitBid = reference != null ? reference.basketId() : null;
-        String sourceClass = reference != null ? reference.targetClass() : null;
+        String explicitBid = reference.basketId();
+        String sourceClass = reference.targetClass();
         var input = plan.inputsById().get(origin.sourceFileId());
         var sourceTs = input != null ? input.typeSystem() : null;
-        var sourceRole = sourceTs != null && reference != null && reference.sourceAttribute() != null
+        var sourceRole = sourceTs != null && reference.sourceAttribute() != null
                 ? sourceTs.resolveReference(origin.sourceClass(), reference.sourceAttribute())
                 : null;
         if (sourceRole != null) sourceClass = sourceRole.targetClass();
         // XTF 2.4 EXTERNAL references carry a transfer ID without a BID.
-        boolean transferScoped = explicitBid == null
-                && sourceRole != null
-                && sourceRole.external()
-                && "xtf".equals(input.format())
-                && input.transferDescription() != null
-                && Model.ILI2_4.equals(
-                        input.transferDescription().getLastModel().getIliVersion());
+        boolean transferScoped = reference.isTransferScoped(input, sourceRole);
 
         String basket = explicitBid != null ? explicitBid : origin.sourceBasketId();
         String originInput = origin.sourceFileId();
@@ -257,7 +253,7 @@ public final class TargetObjectFactory {
                 .distinct()
                 .toList();
         List<String> inputs = List.of(originInput);
-        if ((reference == null || reference.targetClass() == null) && !targetInputs.isEmpty()) {
+        if (reference.targetClass() == null && !targetInputs.isEmpty()) {
             if (explicitBid != null || transferScoped || !targetInputs.contains(originInput)) {
                 inputs = targetInputs;
             }
@@ -306,7 +302,8 @@ public final class TargetObjectFactory {
                     ctx.geometryAdapter(),
                     ctx.sourceAttributeTypes(),
                     ctx.sourceLookupIndex(),
-                    ctx.referenceIndex());
+                    ctx.referenceIndex(),
+                    ctx.basketRouter());
             if (bag.isEmbed()) {
                 bagTransformationService.embed(bagCtx);
             } else {
@@ -370,11 +367,13 @@ public final class TargetObjectFactory {
             TransformPlan plan,
             ObjectCreationContext ctx) {
         String targetTopic = extractTopic(target.getobjecttag());
-        String targetBasketId = BasketRouter.determineTargetBasket(
-                plan.basketPlan().defaultStrategy(),
-                driverRecord.sourceBasketId(),
-                targetTopic,
-                plan.outputsById().get(outputId));
+        String targetBasketId = ctx.basketRouter()
+                .determineTargetBasket(
+                        plan.basketPlan().defaultStrategy(),
+                        driverRecord.sourceFileId(),
+                        driverRecord.sourceBasketId(),
+                        targetTopic,
+                        plan.outputsById().get(outputId));
         ctx.objectsByOutputAndBasket()
                 .computeIfAbsent(outputId, ignored -> new LinkedHashMap<>())
                 .computeIfAbsent(basketKey(targetTopic, targetBasketId), ignored -> new ArrayList<>())
@@ -384,7 +383,6 @@ public final class TargetObjectFactory {
 
     public int createTargetForCreatePlan(
             CreatePlan create,
-            SourcePlan matchedSource,
             SourceRecord record,
             EvalContext evalCtx,
             TransformPlan plan,
@@ -429,7 +427,6 @@ public final class TargetObjectFactory {
                     create.outputId(),
                     create.id(),
                     record,
-                    Map.of(matchedSource.alias(), record),
                     evalCtx,
                     target,
                     targetBasket,
@@ -504,7 +501,8 @@ public final class TargetObjectFactory {
             ExecutionMetrics metrics,
             GeometryAdapter geometryAdapter,
             Map<String, Map<String, TypeInfo>> sourceAttributeTypes,
-            guru.interlis.transformer.state.SourceLookupIndex sourceLookupIndex) {
+            guru.interlis.transformer.state.SourceLookupIndex sourceLookupIndex,
+            BasketRouter basketRouter) {
         public void recordTargetsCreated(int count) {
             if (metrics != null) {
                 for (int i = 0; i < count; i++) {

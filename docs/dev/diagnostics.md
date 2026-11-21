@@ -40,8 +40,9 @@
 | `ILITRF-RUN-REF-UNRESOLVED` | WARNING/ERROR | Referenz konnte nicht aufgelöst werden |
 | `ILITRF-RUN-REF-AMBIGUOUS` | ERROR | Referenz ist mehrdeutig (mehrere Ziele) |
 | `ILITRF-RUN-REF-TYPE-MISMATCH` | WARNING/ERROR | Referenziertes Objekt hat falsche Zielklasse |
-| `ILITRF-RUN-REF-MISSING-MANDATORY` | WARNING/ERROR | Pflichtreferenz fehlt |
-| `ILITRF-RUN-REF-CARDINALITY` | WARNING | Kardinalität verletzt |
+| `ILITRF-RUN-REF-MISSING-MANDATORY` | ERROR | Pflichtreferenz fehlt |
+| `ILITRF-RUN-REF-UNREPRESENTABLE` | ERROR | Referenz ist im Zieltransfer nicht darstellbar |
+| `ILITRF-RUN-REF-CARDINALITY` | ERROR | Kardinalität verletzt |
 | `ILITRF-RUN-OID-COLLISION` | ERROR | OID-Kollision |
 | `ILITRF-RUN-BASKET` | ERROR | Basket-Zuordnung fehlerhaft |
 | `ILITRF-RUN-SOURCE-READ` | ERROR | Fehler beim Lesen der Quelle |

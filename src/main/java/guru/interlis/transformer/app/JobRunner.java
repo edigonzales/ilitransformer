@@ -10,6 +10,7 @@ import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
 import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.geometry.IoxGeometryAdapter;
+import guru.interlis.transformer.io.FormatIdResolver;
 import guru.interlis.transformer.io.FormatOpenContext;
 import guru.interlis.transformer.io.IoxFormatRegistry;
 import guru.interlis.transformer.io.jdbc.JdbcConnectionException;
@@ -245,7 +246,7 @@ public final class JobRunner {
                             inputId,
                             new ManagedReader(
                                     ioRegistry.createReader(binding, context),
-                                    requireAtomicPublication && "xtf".equals(binding.format())));
+                                    requireAtomicPublication && FormatIdResolver.isXtf(binding.format())));
                 } catch (Exception e) {
                     engineDiag.add(ioOpenDiagnostic(true, inputId, e));
                 }

@@ -6,7 +6,7 @@ Lookup-Funktionen suchen Werte in anderen Quellklassen — auch input-übergreif
 [cols="1,3,3",options="header"]
 |===
 | Funktion | Signatur | Beschreibung
-| `oid` | `(alias) → text` | OID des Quellobjekts
+| `oid` | `(alias) → reference` | Referenz auf das gebundene Quellobjekt
 | `bagFirst` | `(alias, bagAttr, valueAttr) → any` | Erstes Attribut aus einem BAG-Attribut
 | `lookup` | `(classPath, keyAttr, keyValue, returnAttr) → text` | Unscoped Lookup über alle Inputs; WARNING bei keinem Treffer
 | `lookupOptional` | `(classPath, keyAttr, keyValue, returnAttr) → text` | Wie `lookup`, aber still bei keinem Treffer

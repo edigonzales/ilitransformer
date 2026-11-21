@@ -62,7 +62,7 @@ ref gebaeude_ref {
 
 [NOTE]
 ====
-Referenzen werden über den `sourceRef`-Ausdruck aufgelöst. Der Ausdruck muss auf ein Objekt verweisen, das von der Zielregel (`target rule`) erzeugt wurde. Ein Alias allein (z.B. `s`) liefert die OID des aktuellen Quellobjekts; `oid(s)` ist die explizite Schreibweise dafür. Eine Quellreferenz kann mit `s.ParentRef` gelesen werden.
+Referenzen werden über den `sourceRef`-Ausdruck aufgelöst. Der Ausdruck muss auf ein Objekt verweisen, das von der Zielregel (`target rule`) erzeugt wurde. Ein Alias allein (z.B. `s`) oder `oid(s)` liefert eine Referenz auf das gebundene Quellobjekt. Eine Quellreferenz kann mit `s.ParentRef` gelesen werden.
 
 Eine lokale Referenz gilt im Basket des Quellobjekts. Eine explizite Quell-BID bestimmt den referenzierten Basket. Die Zielregel kann den Input eingrenzen. Mehrdeutige Treffer und fehlende Pflichtreferenzen führen zu einem Fehler.
 Externe Referenzen zwischen Baskets werden in XTF 2.4 über die Transfer-ID innerhalb derselben Ausgabe kodiert. Die Zielrolle muss `EXTERNAL` erlauben. Für XTF 2.3 schlägt die Ausgabe dieses Falls fehl, weil der eingesetzte IOX-Writer `REF` mit `BID` nicht korrekt kodiert.

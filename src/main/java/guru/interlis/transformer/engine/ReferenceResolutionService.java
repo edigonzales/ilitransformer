@@ -4,6 +4,7 @@ import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
+import guru.interlis.transformer.io.FormatIdResolver;
 import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
@@ -144,7 +145,7 @@ public final class ReferenceResolutionService {
                     .contains(resolvedTarget.targetOid())) {
                 reason = "ambiguous target TID " + resolvedTarget.targetOid();
             } else if (!sameBasket) {
-                if (output == null || !"xtf".equals(output.format()) || role == null || !role.external()) {
+                if (output == null || !FormatIdResolver.isXtf(output.format()) || role == null || !role.external()) {
                     reason = "the target role or output format does not allow an external basket reference";
                 } else if (!xtf24) {
                     // XtfWriterAlt in IOX 1.24.4 emits EXTREF for a non-null refbid.
@@ -201,7 +202,7 @@ public final class ReferenceResolutionService {
         Map<String, Set<String>> duplicates = new HashMap<>();
         for (var output : outputObjects.entrySet()) {
             OutputBinding binding = plan.outputsById().get(output.getKey());
-            if (binding == null || !"xtf".equals(binding.format())) continue;
+            if (binding == null || !FormatIdResolver.isXtf(binding.format())) continue;
             Set<String> seen = new HashSet<>();
             for (var basket : output.getValue().values()) {
                 ExecutionCancellation.check();

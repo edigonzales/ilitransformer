@@ -31,6 +31,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 class ReferenceMappingTest {
@@ -137,6 +139,37 @@ class ReferenceMappingTest {
 
         assertThat(plan.diagnostics().all())
                 .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"refOid(c.ParentRole)", "trim(c.ParentRole)"})
+    void sourceRefRejectsOidProjection(String expression) {
+        TransformPlan plan = compileMapping(compositionConfig(expression));
+
+        assertThat(plan.diagnostics().hasErrors()).isTrue();
+        assertThat(plan.diagnostics().all())
+                .anyMatch(d -> d.code().equals(DiagnosticCode.EXPR_UNSUPPORTED)
+                        && d.message().contains("must yield a reference"));
+    }
+
+    @Test
+    void sourceRefRejectsTextChosenAtRuntime() throws Exception {
+        TransformPlan plan = compileMapping(compositionConfig("if(false, c.ParentRole, trim(c.ParentRole))"));
+        assertThat(plan.diagnostics().hasErrors()).isFalse();
+
+        var parent = object("AssocModel.AssocTopic.Parent", "p1", "Parent");
+        var child = object("AssocModel.AssocTopic.Child", "c1", "Child");
+        child.addattrobj("ParentRole", Iom_jObject.REF).setobjectrefoid("p1");
+        var diagnostics = new DiagnosticCollector();
+        var stateStore = new InMemoryStateStore();
+        var engine = new TransformationEngine(new ExpressionEngine(), stateStore, diagnostics);
+        engine.runTyped(plan, inputId -> TestMockReaders.mockReader(parent, child), Map.of("out", recordingWriter()));
+
+        assertThat(diagnostics.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_TYPE_MISMATCH));
+        var target = stateStore
+                .findTarget(new TargetObjectKey("out", "AssocModel.AssocTopic.Child", "c1"))
+                .orElseThrow();
+        assertThat(target.getattrvaluecount("ParentRole")).isZero();
     }
 
     private static TransformPlan compileMapping(JobConfig config) {

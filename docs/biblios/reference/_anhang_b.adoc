@@ -35,8 +35,8 @@ oid deterministicUuid {
 |===
 | Strategie | Verhalten
 | `preserve` | Basket-ID unverändert aus der Quelle übernehmen
-| `generateUuid` | Für jedes Zielobjekt einen neuen UUID-Basket generieren
-| `preserveOrGenerateUuid` | Quelle übernehmen wenn vorhanden, sonst UUID generieren
+| `generateUuid` | Pro Lauf eine UUID je Ausgabe, Zieltopic, Quellinput und Quellbasket generieren
+| `preserveOrGenerateUuid` | Gültige Quell-UUID übernehmen, sonst wie `generateUuid` gruppieren
 | `byTopic` | Objekte nach INTERLIS-Topic in separate Baskets gruppieren
 | `expression` | *Reserviert, nicht implementiert*
 |===

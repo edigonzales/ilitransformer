@@ -19,14 +19,18 @@ import guru.interlis.transformer.state.InMemoryStateStore;
 
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.IoxWriter;
+import ch.interlis.iox.StartBasketEvent;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -52,6 +56,7 @@ class CreateAdditionalObjectIntegrationTest {
     @Test
     void createGeneratesAdditionalTargetObject() throws Exception {
         JobConfig config = configWithCreate();
+        config.mapping.basketStrategy.defaultStrategy = "generateUuid";
         Map<String, TypeSystemFacade> sourceTs = Map.of("TestModel", testModelTs);
         Map<String, TypeSystemFacade> targetTs = Map.of("TestModel", testModelTs);
         TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
@@ -98,6 +103,19 @@ class CreateAdditionalObjectIntegrationTest {
             assertThat(outputPath.toFile()).exists();
             String content = Files.readString(outputPath);
             assertThat(content).contains("TestModel:TestClass");
+
+            var baskets = new ArrayList<String>();
+            IoxReader reader = ioFactory.createReader(outputPath, transferDescription);
+            try {
+                IoxEvent event;
+                while ((event = reader.read()) != null) {
+                    if (event instanceof StartBasketEvent basket) baskets.add(basket.getBid());
+                }
+            } finally {
+                reader.close();
+            }
+            assertThat(baskets).singleElement().satisfies(bid -> assertThat(UUID.fromString(bid))
+                    .isNotNull());
         } finally {
             Files.deleteIfExists(outputPath);
         }
@@ -204,6 +222,7 @@ class CreateAdditionalObjectIntegrationTest {
 
         JobConfig.CreateSpec create = new JobConfig.CreateSpec();
         create.clazz = "TestModel.TestTopic.TestClass";
+        create.assign = Map.of("Name", "${s.Name}");
         rule.create = List.of(create);
 
         return config;

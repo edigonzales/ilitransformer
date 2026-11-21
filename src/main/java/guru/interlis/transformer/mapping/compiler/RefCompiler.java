@@ -106,7 +106,7 @@ final class RefCompiler {
             for (SourcePlan sourcePlan : sourcePlans) {
                 sourcesByAlias.put(sourcePlan.alias(), sourcePlan);
             }
-            ctx.expressionCompiler()
+            var expression = ctx.expressionCompiler()
                     .compile(
                             sourceRef,
                             new ExpressionCompileContext(
@@ -116,6 +116,18 @@ final class RefCompiler {
                                     ctx.functionRegistry(),
                                     ctx.enumMaps()),
                             ctx.diagnostics());
+            TypeInfo type = expression.resultType();
+            if (type != TypeInfo.REFERENCE
+                    && type != TypeInfo.UNKNOWN
+                    && !sourceRef.trim().startsWith("#")) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.EXPR_UNSUPPORTED,
+                                Severity.ERROR,
+                                "sourceRef must yield a reference for role '" + roleName + "'",
+                                ruleId,
+                                "Use the complete reference value or a bound source object"));
+            }
         }
 
         return new RefPlan(roleName, association, sourceRef, targetRuleId, ref.required);

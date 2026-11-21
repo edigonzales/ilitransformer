@@ -87,6 +87,7 @@ public final class RuleExecutionService {
 
         Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket = new LinkedHashMap<>();
         Map<String, Map<String, List<IomObject>>> expandedTargets = new LinkedHashMap<>();
+        BasketRouter basketRouter = new BasketRouter();
 
         Map<String, Map<String, TypeInfo>> sourceAttrTypes = buildSourceAttributeTypeMap(plan);
 
@@ -125,6 +126,7 @@ public final class RuleExecutionService {
                 processJoinedRule(
                         rule,
                         plan,
+                        basketRouter,
                         dispatchIndex,
                         stateStore,
                         sourceLookupIndex,
@@ -137,6 +139,7 @@ public final class RuleExecutionService {
                 processSingleSourceRule(
                         rule,
                         plan,
+                        basketRouter,
                         dispatchIndex,
                         stateStore,
                         objectsByOutputAndBasket,
@@ -154,6 +157,7 @@ public final class RuleExecutionService {
                         create,
                         rule,
                         plan,
+                        basketRouter,
                         stateStore,
                         objectsByOutputAndBasket,
                         sourceAttrTypes,
@@ -189,6 +193,7 @@ public final class RuleExecutionService {
     private void processSingleSourceRule(
             RulePlan rule,
             TransformPlan plan,
+            BasketRouter basketRouter,
             RuleDispatchIndex dispatchIndex,
             StateStore stateStore,
             Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket,
@@ -208,7 +213,8 @@ public final class RuleExecutionService {
                 metrics,
                 geometryAdapter,
                 sourceAttrTypes,
-                sourceLookupIndex);
+                sourceLookupIndex,
+                basketRouter);
 
         for (SourcePlan source : rule.sources()) {
             ExecutionCancellation.check();
@@ -219,15 +225,15 @@ public final class RuleExecutionService {
                 for (SourceRecord record : stateStore.sourceRecords(inputId, scopedClass)) {
                     ExecutionCancellation.check();
                     metrics.recordRuleSourceRecordVisited(rule.ruleId());
-                    Map<String, IomObject> sources = Map.of(source.alias(), record.sourceObject());
-                    EvalContext evalCtx = new EvalContext(
-                                    sources,
-                                    diagnostics,
-                                    rule.ruleId(),
-                                    plan.enumMaps(),
-                                    geometryAdapter,
-                                    sourceAttrTypes)
-                            .withLookupIndex(sourceLookupIndex);
+                    EvalContext evalCtx = EvalContext.forRecords(
+                            Map.of(source.alias(), record),
+                            plan.inputsById(),
+                            diagnostics,
+                            rule.ruleId(),
+                            plan.enumMaps(),
+                            geometryAdapter,
+                            sourceAttrTypes,
+                            sourceLookupIndex);
 
                     if (!evaluateWhereAndPredicate(source, rule, evalCtx, expressionEngine, metrics)) {
                         recordLosses(rule, record, evalCtx);
@@ -236,8 +242,7 @@ public final class RuleExecutionService {
 
                     metrics.recordRuleMatch(rule.ruleId());
                     recordLosses(rule, record, evalCtx);
-                    int created = targetObjectFactory.createTarget(
-                            rule, source, record, Map.of(source.alias(), record), evalCtx, plan, ctx);
+                    int created = targetObjectFactory.createTarget(rule, source, record, evalCtx, plan, ctx);
                     metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
                 }
             }
@@ -247,6 +252,7 @@ public final class RuleExecutionService {
     private void processJoinedRule(
             RulePlan rule,
             TransformPlan plan,
+            BasketRouter basketRouter,
             RuleDispatchIndex dispatchIndex,
             StateStore stateStore,
             SourceLookupIndex sourceLookupIndex,
@@ -265,7 +271,8 @@ public final class RuleExecutionService {
                 metrics,
                 geometryAdapter,
                 sourceAttrTypes,
-                sourceLookupIndex);
+                sourceLookupIndex,
+                basketRouter);
 
         List<JoinPlan> joins = rule.joins();
         SourcePlan driverPlan = joins.get(0).left();
@@ -309,21 +316,22 @@ public final class RuleExecutionService {
             ExecutionMetrics metrics,
             TargetObjectFactory.ObjectCreationContext ctx) {
         if (joinIndex >= joins.size()) {
-            EvalContext evalCtx = new EvalContext(
-                            toSourceObjects(boundRecords),
-                            diagnostics,
-                            rule.ruleId(),
-                            plan.enumMaps(),
-                            geometryAdapter,
-                            sourceAttrTypes)
-                    .withLookupIndex(sourceLookupIndex);
+            EvalContext evalCtx = EvalContext.forRecords(
+                    boundRecords,
+                    plan.inputsById(),
+                    diagnostics,
+                    rule.ruleId(),
+                    plan.enumMaps(),
+                    geometryAdapter,
+                    sourceAttrTypes,
+                    sourceLookupIndex);
             if (!evaluateWhereAndPredicate(driverPlan, rule, evalCtx, expressionEngine, metrics)) {
                 return;
             }
 
             metrics.recordRuleMatch(rule.ruleId());
             recordLosses(rule, driverRecord, evalCtx);
-            targetObjectFactory.createTarget(rule, driverPlan, driverRecord, boundRecords, evalCtx, plan, ctx);
+            targetObjectFactory.createTarget(rule, driverPlan, driverRecord, evalCtx, plan, ctx);
             metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
             return;
         }
@@ -422,14 +430,15 @@ public final class RuleExecutionService {
             Map<String, SourceRecord> joinedRecords = new LinkedHashMap<>(boundRecords);
             joinedRecords.put(join.right().alias(), rightRecord);
 
-            EvalContext joinCtx = new EvalContext(
-                            toSourceObjects(joinedRecords),
-                            diagnostics,
-                            rule.ruleId(),
-                            plan.enumMaps(),
-                            geometryAdapter,
-                            sourceAttrTypes)
-                    .withLookupIndex(sourceLookupIndex);
+            EvalContext joinCtx = EvalContext.forRecords(
+                    joinedRecords,
+                    plan.inputsById(),
+                    diagnostics,
+                    rule.ruleId(),
+                    plan.enumMaps(),
+                    geometryAdapter,
+                    sourceAttrTypes,
+                    sourceLookupIndex);
 
             Value joinResult = expressionEngine.evaluate(join.condition(), joinCtx);
             if (!isFilterTruthy(joinResult)) {
@@ -501,15 +510,6 @@ public final class RuleExecutionService {
                 leftPath.attributeName(), rightPath.attributeName(), rightPath.attributeName() == null);
     }
 
-    private static Map<String, IomObject> toSourceObjects(Map<String, SourceRecord> boundRecords) {
-        Map<String, IomObject> sources = new LinkedHashMap<>();
-        for (Map.Entry<String, SourceRecord> entry : boundRecords.entrySet()) {
-            ExecutionCancellation.check();
-            sources.put(entry.getKey(), entry.getValue().sourceObject());
-        }
-        return sources;
-    }
-
     private record JoinConditionParts(String leftAttr, String rightAttr, boolean rightIsObject) {}
 
     private static String readAttributeOrRefOid(IomObject obj, String attrName) {
@@ -529,6 +529,7 @@ public final class RuleExecutionService {
             CreatePlan create,
             RulePlan parentRule,
             TransformPlan plan,
+            BasketRouter basketRouter,
             StateStore stateStore,
             Map<String, Map<String, List<IomObject>>> objectsByOutputAndBasket,
             Map<String, Map<String, TypeInfo>> sourceAttrTypes,
@@ -546,7 +547,8 @@ public final class RuleExecutionService {
                 metrics,
                 geometryAdapter,
                 sourceAttrTypes,
-                sourceLookupIndex);
+                sourceLookupIndex,
+                basketRouter);
 
         for (SourceRecord record : stateStore.sourceRecords()) {
             ExecutionCancellation.check();
@@ -554,12 +556,16 @@ public final class RuleExecutionService {
             if (sp == null) continue;
             metrics.recordRuleSourceRecordVisited(parentRule.ruleId());
 
-            Map<String, IomObject> sources = Map.of(sp.alias(), record.sourceObject());
-            EvalContext evalCtx = new EvalContext(
-                            sources, diagnostics, parentRule.ruleId(), plan.enumMaps(), null, sourceAttrTypes)
-                    .withLookupIndex(sourceLookupIndex);
-
-            targetObjectFactory.createTargetForCreatePlan(create, sp, record, evalCtx, plan, ctx);
+            EvalContext evalCtx = EvalContext.forRecords(
+                    Map.of(sp.alias(), record),
+                    plan.inputsById(),
+                    diagnostics,
+                    parentRule.ruleId(),
+                    plan.enumMaps(),
+                    null,
+                    sourceAttrTypes,
+                    sourceLookupIndex);
+            targetObjectFactory.createTargetForCreatePlan(create, record, evalCtx, plan, ctx);
             metrics.recordTarget(TargetObjectFactory.getScopedName(create.targetClass()));
         }
     }

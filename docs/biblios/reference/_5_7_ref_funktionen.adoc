@@ -4,9 +4,15 @@
 [cols="1,3,3",options="header"]
 |===
 | Funktion | Signatur | Beschreibung
-| `refOid` | `(ref) → text` | OID eines Referenz-Objekts extrahieren
-| `refEquals` | `(a, b) → boolean` | Prüfen, ob zwei Referenzen auf dasselbe Objekt zeigen
+| `refOid` | `(ref) → text` | Nur die OID als Text liefern. Eine NULL-Referenz ergibt NULL.
+| `refEquals` | `(a, b) → boolean` | Die Objektidentität von Referenzen oder gebundenen Quellobjekten vergleichen.
 |===
+
+Für `sourceRef` den vollständigen Referenzwert verwenden. `refEquals` vergleicht
+OID und Input sowie die explizite BID oder den Basket des gebundenen Quellobjekts.
+Eine modellierte XTF-2.4-`EXTERNAL`-Referenz ohne BID bezeichnet ihr Ziel
+transferweit innerhalb des Inputs. Bekannte Zielklassen müssen kompatibel sein.
+Lässt sich dieselbe Identität nicht feststellen, ergibt der Vergleich `false`.
 
 ==== Beispiele
 

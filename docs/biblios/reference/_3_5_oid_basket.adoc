@@ -48,8 +48,8 @@ basket preserve;
 |===
 | Strategie | Beschreibung
 | `preserve` | Basket-IDs aus der Quelle übernehmen
-| `generateUuid` | Neue UUID-Baskets generieren
-| `preserveOrGenerateUuid` | Quelle übernehmen, sonst UUID generieren
+| `generateUuid` | Pro Lauf eine UUID je Ausgabe, Zieltopic, Quellinput und Quellbasket generieren
+| `preserveOrGenerateUuid` | Gültige Quell-UUID übernehmen, sonst wie `generateUuid` gruppieren
 | `byTopic` | Baskets nach Topic gruppieren
 | `expression` | *Reserviert, nicht implementiert*
 |===

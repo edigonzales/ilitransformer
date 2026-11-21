@@ -13,6 +13,8 @@ Ein Coding Agent muss diese Datei lesen, bevor er Code, Tests, Build-Dateien, Ma
 - Entferne ersetzte Runtime-Pfade und APIs vollständig.
 - Referenzen löst ausschliesslich `ReferenceResolutionService` aus `TransformationEngine.runTyped()` auf.
 - Die Suche bleibt im durch Quelle und Transferformat bestimmten Kontext. Ein ausgebliebener Treffer rechtfertigt keinen Wechsel von Basket oder Input.
+- Verwende für Referenzmappings den vollständigen Referenzwert. `refOid()` projiziert die OID auf Text.
+- Generierte Ziel-BIDs werden je Ausgabe, Zieltopic, Quellinput und Quellbasket innerhalb eines Laufs gemeinsam verwendet.
 - Behaupte nie, Tests seien erfolgreich, wenn du sie nicht wirklich ausgeführt hast.
 - Committe nie, bevor Definition of Done und Commit Policy erfüllt sind.
 - Erfinde keine INTERLIS-Modellsyntax und keine INTERLIS-Transferdaten.

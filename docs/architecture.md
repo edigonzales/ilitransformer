@@ -127,8 +127,8 @@ describes the lookup scope and transfer encoding.
 Determines target basket for generated objects:
 
 - `preserve` -- keep source basket ID
-- `generateUuid` -- new UUID basket
-- `preserveOrGenerateUuid` -- keep if valid, else generate
+- `generateUuid` -- one new UUID per output, target topic, source input and source basket within the run
+- `preserveOrGenerateUuid` -- keep a valid source UUID or use the same grouping as `generateUuid`
 - `byTopic` -- one basket per target topic
 - `expression` -- stub (future)
 

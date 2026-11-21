@@ -9,15 +9,20 @@ import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
+import guru.interlis.transformer.expr.BooleanValue;
+import guru.interlis.transformer.expr.EvalContext;
 import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.io.FormatIdResolver;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
+import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
+import guru.interlis.transformer.state.SourceRecord;
 import guru.interlis.transformer.validation.InProcessIlivalidatorService;
 
 import ch.interlis.ili2c.metamodel.TransferDescription;
@@ -247,9 +252,11 @@ class ReferenceResolutionIntegrationTest {
     // -- Helpers -------------------------------------------------------------
 
     @ParameterizedTest
-    @ValueSource(strings = {"2.3", "2.4"})
-    void externalSourceReferenceSurvivesXtfRoundTrip(String version, @TempDir Path dir) throws Exception {
+    @ValueSource(strings = {"2.3", "2.4", "2.4-local", "2.4-xml"})
+    void sourceReferenceSurvivesXtfRoundTrip(String version, @TempDir Path dir) throws Exception {
         boolean xtf23 = "2.3".equals(version);
+        boolean local = "2.4-local".equals(version);
+        String iliVersion = xtf23 ? "2.3" : "2.4";
         Path modelFile = dir.resolve("BasketRefs.ili");
         Files.writeString(modelFile, """
                 INTERLIS %s;
@@ -260,37 +267,40 @@ class ReferenceResolutionIntegrationTest {
                     CLASS Facility = Name : TEXT*40; END Facility;
                     CLASS Line = Name : TEXT*40; END Line;
                     ASSOCIATION LineFacility =
-                      Facility (EXTERNAL) -- {1} Facility;
+                      Facility %s-- {1} Facility;
                       Lines -- {0..*} Line;
                     END LineFacility;
                   END Data;
                 END BasketRefs.
-                """.formatted(version));
+                """.formatted(iliVersion, local ? "" : "(EXTERNAL) "));
         var compiled = new IliModelService().compileModel(modelFile.toString(), dir.toString());
         assertThat(compiled.diagnostics().all()).isEmpty();
         var td = compiled.transferDescription();
         var tsMap = Map.of("BasketRefs", new TypeSystemFacade(td));
-        Path source = dir.resolve("source.xtf");
-        Path output = dir.resolve("output.xtf");
+        String suffix = "2.4-xml".equals(version) ? ".xml" : ".xtf";
+        Path source = dir.resolve("source" + suffix);
+        Path output = dir.resolve("output" + suffix);
         String facilityOid = UUID.randomUUID().toString();
         String lineOid = UUID.randomUUID().toString();
         String facilityBid = UUID.randomUUID().toString();
-        String lineBid = UUID.randomUUID().toString();
+        String lineBid = local ? facilityBid : UUID.randomUUID().toString();
 
         var io = new InterlisIoFactory();
+        var facility = new Iom_jObject("BasketRefs.Data.Facility", facilityOid);
+        facility.setattrvalue("Name", "Referenced site");
+        var line = new Iom_jObject("BasketRefs.Data.Line", lineOid);
+        var reference = line.addattrobj("Facility", Iom_jObject.REF);
+        reference.setobjectrefoid(facilityOid);
+        if (xtf23) reference.setobjectrefbid(facilityBid);
         IoxWriter writer = io.createWriter(source, td);
         try {
             writer.write(new ch.interlis.iox_j.StartTransferEvent("test", null, null));
             writer.write(new ch.interlis.iox_j.StartBasketEvent("BasketRefs.Data", facilityBid));
-            var facility = new Iom_jObject("BasketRefs.Data.Facility", facilityOid);
-            facility.setattrvalue("Name", "Referenced site");
             writer.write(new ch.interlis.iox_j.ObjectEvent(facility));
-            writer.write(new ch.interlis.iox_j.EndBasketEvent());
-            writer.write(new ch.interlis.iox_j.StartBasketEvent("BasketRefs.Data", lineBid));
-            var line = new Iom_jObject("BasketRefs.Data.Line", lineOid);
-            var reference = line.addattrobj("Facility", Iom_jObject.REF);
-            reference.setobjectrefoid(facilityOid);
-            if (xtf23) reference.setobjectrefbid(facilityBid);
+            if (!local) {
+                writer.write(new ch.interlis.iox_j.EndBasketEvent());
+                writer.write(new ch.interlis.iox_j.StartBasketEvent("BasketRefs.Data", lineBid));
+            }
             writer.write(new ch.interlis.iox_j.ObjectEvent(line));
             writer.write(new ch.interlis.iox_j.EndBasketEvent());
             writer.write(new ch.interlis.iox_j.EndTransferEvent());
@@ -315,6 +325,28 @@ class ReferenceResolutionIntegrationTest {
                     .transform(new DOMSource(document), new StreamResult(source.toFile()));
         }
         assertValidXtf(source, dir);
+        var sourceBinding = new InputBinding(
+                "source",
+                source,
+                "BasketRefs",
+                FormatIdResolver.fromPath(source).orElseThrow(),
+                Map.of(),
+                td,
+                tsMap.get("BasketRefs"));
+        var context = EvalContext.forRecords(
+                Map.of(
+                        "line", new SourceRecord("source", lineBid, line.getobjecttag(), line),
+                        "site", new SourceRecord("source", facilityBid, facility.getobjecttag(), facility)),
+                Map.of("source", sourceBinding),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+        assertThat(new ExpressionEngine().evaluate("refEquals(line.Facility, site)", context))
+                .isEqualTo(BooleanValue.TRUE);
+
         JobConfig config = p7Config(true);
         config.job.inputs.remove(1);
         var input = config.job.inputs.getFirst();
@@ -375,7 +407,7 @@ class ReferenceResolutionIntegrationTest {
         }
         assertThat(targetFacilityBid).isNotNull().isNotEqualTo(facilityBid);
         assertThat(targetLineBid).isNotNull().isNotEqualTo(lineBid);
-        if (xtf23) assertThat(targetLineBid).isEqualTo(targetFacilityBid);
+        if (xtf23 || local) assertThat(targetLineBid).isEqualTo(targetFacilityBid);
         else assertThat(targetLineBid).isNotEqualTo(targetFacilityBid);
         assertThat(targetReference).isNotNull();
         assertThat(targetFacilityOid).isNotNull().isNotEqualTo(facilityOid);

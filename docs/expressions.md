@@ -197,8 +197,15 @@ The authoritative list of built-in functions is generated from `FunctionRegistry
 
 | Function | Signature | Description |
 |---|---|---|
-| `refOid` | `(ref) → text` | Returns the OID from a reference value |
-| `refEquals` | `(a, b) → boolean` | Checks if two references point to the same object |
+| `refOid` | `(ref) → text` | Returns only the OID as text. A null reference yields null. |
+| `refEquals` | `(a, b) → boolean` | Compares the object identities of references or bound source objects. |
+
+Use the full reference value in `sourceRef` to retain its transfer context.
+`refEquals` compares OIDs within the same input and uses each explicit BID or
+the basket of the bound source object. A modeled XTF 2.4 `EXTERNAL` reference
+without a BID identifies its target within that input transfer. Known target
+classes must be compatible. If the identity cannot be established, the result
+is false.
 
 ### Math functions
 
@@ -218,7 +225,7 @@ The authoritative list of built-in functions is generated from `FunctionRegistry
 
 | Function | Signature | Description |
 |---|---|---|
-| `oid` | `(alias) → text` | Returns the OID of the source object identified by the alias |
+| `oid` | `(alias) → reference` | Returns a reference to the source object identified by the alias |
 | `bagFirst` | `(alias, bagAttr, valueAttr) → text` | Returns the first value from a BAG attribute of a source object |
 | `lookup` | `(classPath, keyAttr, keyValue, returnAttr) → text` | Compatibility function. Searches `SourceLookupIndex` across **all inputs** (unscoped). Returns null + warning on no match. Returns first value + warning on multiple matches with different return values. Return type is `UNKNOWN` at compile time. Prefer structural `joins` for modelled relationships. |
 | `lookupOptional` | `(classPath, keyAttr, keyValue, returnAttr) → text` | Optional variant of `lookup` for expected 0..1 child/helper records. Searches `SourceLookupIndex` across **all inputs** (unscoped). Returns null without `LOOKUP_NO_MATCH` diagnostics on no match. Ambiguous matches with different return values still warn. Return type is `UNKNOWN` at compile time. |

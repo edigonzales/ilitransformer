@@ -29,7 +29,7 @@ public final class LookupFunctions {
     public static void registerAll(FunctionRegistry registry) {
         registry.register(
                 "oid",
-                TypeInfo.TEXT,
+                TypeInfo.REFERENCE,
                 List.of(new FunctionDef.FunctionParam("alias", TypeInfo.TEXT)),
                 LookupFunctions::oid);
 
