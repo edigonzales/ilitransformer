@@ -67,11 +67,6 @@ public final class MigrationService {
 
     public DiagnosticCollector execute(Request request, Consumer<String> log) throws Exception {
         log.accept("Compiling models and mapping");
-        var config = new MappingLoader().load(request.mapping());
-        if (config.job.inputs.stream()
-                .anyMatch(i -> i.options != null && "false".equals(i.options.get("migrationReviewed"))))
-            throw new IllegalArgumentException(
-                    "Review the migration proposals and information losses before execution; then set migrationReviewed to true");
         var prepared = prepare(request);
         if (prepared.job().plan().diagnostics().hasErrors())
             return prepared.job().plan().diagnostics();

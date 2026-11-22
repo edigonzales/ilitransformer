@@ -8,15 +8,17 @@ compiler, plans and runtime as the CLI.
 `MigrationDraftService` compiles source/target models, provides schema inventories,
 compares same-name elements and prepares an explicit ilimap draft. Renames, incompatible
 types, units and enum values remain review decisions; narrower target constraints
-require data validation. Fingerprints cover actual model source contents. Drafts
-must be reviewed before execution; no live auto-mapping takes place at runtime.
+require data validation. Draft comments identify decisions that need explicit
+mappings or loss declarations. Execution compiles the current models and checks
+the typed mapping against them.
 
 `MigrationService.prepare(Request)` returns the compiled job and diagnostics without
 executing it. `execute(Request, Consumer<String>)` runs exactly one XTF input/output job
 with optional path and model-directory overrides, strict failure policy, validation,
 report directory and overwrite setting. Relative paths resolve against the mapping
 file. Original/target aliases, unresolved paths and changes to the original are rejected.
-Output is prepared beside its destination and validated before atomic publication.
+Output is prepared beside its destination and validated before atomic publication
+when validation is enabled.
 No-overwrite publication uses an atomic hard link; unsupported filesystems fail safely.
 Existing CLI publication defaults remain unchanged. Interrupts are checked between
 processing steps and before commit. Compilation/ilivalidator use the ili2c Main.class

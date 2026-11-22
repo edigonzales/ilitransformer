@@ -993,7 +993,9 @@ change the selected content. Concrete subtypes which do not match the compiled s
 structure are rejected. The existing `from c in input class "..."` form is unchanged.
 YAML expresses the new path as `from.attribute` instead of `from.class`.
 
-Migration drafts may record `option modelFingerprint "<sha256>"` on input/output.
-Compilation compares the contents of all compiled model source files to this fingerprint.
-The embedded migration API also requires `option migrationReviewed true` when a draft
-has been marked `false`; this is an explicit review decision, not a validation result.
+Migration drafts include `// REVIEW` comments for unmapped source content and open
+mapping decisions. Resolve these explicitly, for example by adding mappings or
+declaring intentional losses. Execution compiles the current source and target
+models and checks the typed mapping against them. A global review confirmation is
+no longer required. The migration API checks the source transfer for changes
+before publishing and validates the target XTF when validation is enabled.

@@ -140,8 +140,7 @@ class MigrationVerticalTest {
                 mapping = dir.resolve("migration.ilimap");
         var draft = new MigrationDraftService()
                 .create("MigrationDemo_V1", "MigrationDemo_V2", models, input.toString(), output.toString());
-        var document =
-                new IlimapEditorDocument(draft.text().replace("migrationReviewed false", "migrationReviewed true"));
+        var document = new IlimapEditorDocument(draft.text());
         String rule = MigrationDraftService.ruleId("MigrationDemo_V1.Data.Line");
         document.assign(rule, "", "Name", "trim(s.Label)");
         document.assign(rule, "", "Origin", "\"migration\"");
