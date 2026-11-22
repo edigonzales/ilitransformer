@@ -82,6 +82,14 @@ final class StructuralValidator {
     }
 
     private void validateRuleTarget(JobConfig.RuleSpec rule, Set<String> outputIds, DiagnosticCollector diag) {
+        if (hasNoTarget(rule)) {
+            String problem = classLossProblem(rule);
+            if (problem != null) {
+                diag.add(new Diagnostic(
+                        DiagnosticCode.MAP_MISSING_TARGET_CLASS, Severity.ERROR, problem, rule.id, null));
+            }
+            return;
+        }
         String targetClass = JobConfigNormalizer.getEffectiveTargetClass(rule);
         if (targetClass == null || targetClass.isBlank()) {
             diag.add(new Diagnostic(
@@ -103,6 +111,45 @@ final class StructuralValidator {
                     rule.id,
                     "Ensure the output id exists in job.outputs"));
         }
+    }
+
+    static boolean hasNoTarget(JobConfig.RuleSpec rule) {
+        return rule.target == null && rule.targetClass == null && rule.output == null;
+    }
+
+    static String classLossProblem(JobConfig.RuleSpec rule) {
+        if (rule.sources.size() != 1 || rule.losses == null || rule.losses.size() != 1) {
+            return "A rule without a target needs exactly one source and one class loss declaration";
+        }
+        var source = rule.sources.getFirst();
+        var loss = rule.losses.getFirst();
+        if (loss == null) {
+            return "A rule without a target needs a class loss declaration";
+        }
+        if (rule.where != null || source.where != null || loss.when != null) {
+            return "Class loss rules cannot have where or when conditions";
+        }
+        if (rule.assign != null
+                || rule.attributes != null
+                || rule.defaults != null
+                || rule.identity != null
+                || rule.joins != null
+                || rule.refs != null
+                || rule.bags != null
+                || rule.create != null
+                || rule.metadata != null) {
+            return "A class loss rule can contain only a source and a loss declaration";
+        }
+        if (source.alias == null || loss.sourcePath == null || !source.alias.equals(loss.sourcePath.strip())) {
+            return "Class loss sourcePath must be the declared source alias";
+        }
+        if (loss.reasonCode == null || loss.reasonCode.isBlank()) {
+            return "Class loss requires a non-empty reasonCode";
+        }
+        if (loss.description == null || loss.description.isBlank()) {
+            return "Class loss requires a non-empty description";
+        }
+        return null;
     }
 
     private void validateRuleSources(

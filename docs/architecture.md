@@ -115,6 +115,12 @@ Multi-pass execution:
 - **Pass 2**: `ReferenceResolutionService` resolves deferred references against the source identity and producing rule, then validates the target class, cardinality and output basket.
 - **Write**: Stable-sort and write output via `IoxWriter`.
 
+A class loss compiles to a `RulePlan` with no target class. The compiler rejects
+overlap with a mapping of the same class on the same input. In pass 1, the rule
+visits the existing indexed `SourceRecord` objects and records one `LossEvent`
+for each. Target construction, OID generation and basket routing are skipped.
+`JobRunner` writes the existing JSON and Markdown loss reports.
+
 ### Runtime state
 
 `InMemoryStateStore` holds source records, registered target objects and deferred

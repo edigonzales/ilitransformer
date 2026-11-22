@@ -3,7 +3,9 @@ package guru.interlis.transformer.api;
 import static org.assertj.core.api.Assertions.*;
 
 import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.loss.LossEvent;
 import guru.interlis.transformer.mapping.ilimap.editor.IlimapEditorDocument;
+import guru.interlis.transformer.validation.InProcessIlivalidatorService;
 
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
@@ -13,12 +15,122 @@ import ch.interlis.iox_j.*;
 import java.nio.file.*;
 import java.util.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class MigrationVerticalTest {
     @TempDir
     Path dir;
+
+    @Test
+    void migratesXtfAndReportsExplicitClassAndConditionalAttributeLosses() throws Exception {
+        String models = Path.of("src/test/data/migration").toAbsolutePath().toString();
+        Path input = dir.resolve("source.xtf"), output = dir.resolve("target.xtf");
+        Path mapping = dir.resolve("migration.ilimap"), report = dir.resolve("report");
+        var draft = new MigrationDraftService()
+                .create("P43Source", "P43Target", models, input.toString(), output.toString());
+        Files.writeString(mapping, """
+                mapping v2 {
+                  input original { path "source.xtf"; model "P43Source"; }
+                  output migrated { path "target.xtf"; model "P43Target"; }
+                  oid { strategy preserve; }
+                  basket preserve;
+                  rule migrate {
+                    source s from original class "P43Source.Data.Item";
+                    target migrated class "P43Target.Data.Item";
+                    assign { Name = s.Name; Origin = "original"; }
+                    loss {
+                      sourcePath s.LegacyCode;
+                      reasonCode "ATTRIBUTE_REMOVED";
+                      description "Legacy codes were retired";
+                      when defined(s.LegacyCode);
+                    }
+                  }
+                  rule discard {
+                    source s from original, original class "P43Source.Data.Obsolete";
+                    loss { sourcePath s; reasonCode "CLASS_REMOVED"; description "Obsolete class"; }
+                  }
+                  rule discardEmpty {
+                    source s from original class "P43Source.Data.Empty";
+                    loss { sourcePath s; reasonCode "CLASS_REMOVED"; description "Class without records"; }
+                  }
+                }
+                """);
+
+        var writer = new InterlisIoFactory()
+                .createWriter(input, draft.source().types().getTransferDescription());
+        try {
+            writer.write(new StartTransferEvent("test", null, null));
+            writer.write(new StartBasketEvent("P43Source.Data", "items"));
+            var first = new Iom_jObject("P43Source.Data.Item", "i1");
+            first.setattrvalue("Name", "First");
+            first.setattrvalue("LegacyCode", "retired");
+            var second = new Iom_jObject("P43Source.Data.Item", "i2");
+            second.setattrvalue("Name", "Second");
+            writer.write(new ObjectEvent(first));
+            writer.write(new ObjectEvent(second));
+            writer.write(new EndBasketEvent());
+            writer.write(new StartBasketEvent("P43Source.Data", "discarded"));
+            writer.write(new ObjectEvent(new Iom_jObject("P43Source.Data.Obsolete", "old1")));
+            writer.write(new ObjectEvent(new Iom_jObject("P43Source.Data.Obsolete", "old2")));
+            writer.write(new EndBasketEvent());
+            writer.write(new EndTransferEvent());
+        } finally {
+            writer.close();
+        }
+        var validation = new InProcessIlivalidatorService()
+                .validate(input, List.of(models), List.of("P43Source"), dir.resolve("source-validation.log"));
+        assertThat(validation.valid()).as("%s", validation.logText()).isTrue();
+
+        var request = new MigrationService.Request(mapping, null, null, List.of(models), true, false, report);
+        var result = new MigrationService().execute(request, ignored -> {});
+        assertThat(result.hasErrors()).as("%s", result.all()).isFalse();
+        var reader = new InterlisIoFactory()
+                .createReader(output, draft.target().types().getTransferDescription());
+        var objects = new ArrayList<IomObject>();
+        var baskets = new ArrayList<String>();
+        try {
+            for (IoxEvent event; (event = reader.read()) != null; ) {
+                if (event instanceof ObjectEvent object) objects.add(object.getIomObject());
+                if (event instanceof StartBasketEvent basket) baskets.add(basket.getBid());
+                if (event instanceof EndTransferEvent) break;
+            }
+        } finally {
+            reader.close();
+        }
+        assertThat(baskets).containsExactly("items");
+        assertThat(objects)
+                .extracting(
+                        IomObject::getobjecttag,
+                        IomObject::getobjectoid,
+                        obj -> obj.getattrvalue("Name"),
+                        obj -> obj.getattrvalue("Origin"))
+                .containsExactlyInAnyOrder(
+                        tuple("P43Target.Data.Item", "i1", "First", "original"),
+                        tuple("P43Target.Data.Item", "i2", "Second", "original"));
+
+        var losses = new ObjectMapper()
+                .readValue(report.resolve("lossiness-report.json").toFile(), LossEvent[].class);
+        assertThat(losses)
+                .containsExactlyInAnyOrder(
+                        new LossEvent(
+                                "discard", "P43Source.Data.Obsolete", "old1", "s", "CLASS_REMOVED", "Obsolete class"),
+                        new LossEvent(
+                                "discard", "P43Source.Data.Obsolete", "old2", "s", "CLASS_REMOVED", "Obsolete class"),
+                        new LossEvent(
+                                "migrate",
+                                "P43Source.Data.Item",
+                                "i1",
+                                "s.LegacyCode",
+                                "ATTRIBUTE_REMOVED",
+                                "Legacy codes were retired"));
+        assertThat(Files.readString(report.resolve("lossiness-report.md")))
+                .contains(
+                        "| discard | P43Source.Data.Obsolete | old1 | s | CLASS_REMOVED | Obsolete class |",
+                        "| discard | P43Source.Data.Obsolete | old2 | s | CLASS_REMOVED | Obsolete class |",
+                        "| migrate | P43Source.Data.Item | i1 | s.LegacyCode | ATTRIBUTE_REMOVED | Legacy codes were retired |");
+    }
 
     @Test
     void migrationPreservesReferencesCurvesXyzAndNestedOccurrences() throws Exception {

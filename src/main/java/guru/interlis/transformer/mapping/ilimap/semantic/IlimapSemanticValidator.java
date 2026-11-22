@@ -161,6 +161,7 @@ public final class IlimapSemanticValidator {
 
         List<IlimapTargetStmt> targets = new ArrayList<>();
         List<IlimapSourceStmt> sources = new ArrayList<>();
+        int lossCount = 0;
         int identityCount = 0;
         int assignCount = 0;
         int defaultsCount = 0;
@@ -177,16 +178,18 @@ public final class IlimapSemanticValidator {
                 case IlimapBagBlock ignored -> {}
                 case IlimapRefBlock ignored -> {}
                 case IlimapCreateBlock ignored -> {}
-                case IlimapLossBlock ignored -> {}
+                case IlimapLossBlock ignored -> lossCount++;
                 case IlimapMetadataBlock ignored -> {}
             }
         }
 
-        if (targets.isEmpty()) {
+        if (targets.isEmpty()
+                && (sources.size() != 1 || lossCount != 1 || rule.elements().size() != 2)) {
             diagnostics.add(new Diagnostic(
                     DiagnosticCode.ILIMAP_MISSING_TARGET,
                     Severity.ERROR,
-                    "rule '" + rule.id() + "' must have exactly one target",
+                    "rule '" + rule.id()
+                            + "' needs one target or, for a class loss, only one source and one loss block",
                     formatRange(rule.range()),
                     null));
         } else if (targets.size() > 1) {

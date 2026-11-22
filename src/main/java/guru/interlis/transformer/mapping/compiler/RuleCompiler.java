@@ -28,6 +28,9 @@ final class RuleCompiler {
     private final MandatoryCoverageValidator mandatoryCoverageValidator = new MandatoryCoverageValidator();
 
     RulePlan compileRule(JobConfig.RuleSpec rule, CompilerContext ctx) {
+        if (StructuralValidator.hasNoTarget(rule)) {
+            return compileClassLoss(rule, ctx);
+        }
         String ruleId = rule.id;
         String targetOutput = JobConfigNormalizer.getEffectiveTargetOutput(rule);
         String targetClassName = JobConfigNormalizer.getEffectiveTargetClass(rule);
@@ -193,5 +196,52 @@ final class RuleCompiler {
                 predicate,
                 joinPlans,
                 createPlans);
+    }
+
+    private RulePlan compileClassLoss(JobConfig.RuleSpec rule, CompilerContext ctx) {
+        if (StructuralValidator.classLossProblem(rule) != null) return null;
+        SourcePlan source = sourceCompiler.compileSource(rule.sources.getFirst(), rule.id, ctx);
+        if (source == null || source.sourceClass() == null) return null;
+
+        String className = TypeSystemFacade.getScopedName(source.sourceClass());
+        var inputs = ctx.modelRegistry().inputsById();
+        var inputIds = source.inputIds().stream().distinct().toList();
+        for (String inputId : inputIds) {
+            var input = inputs.get(inputId);
+            var cls = input == null || input.typeSystem() == null
+                    ? null
+                    : input.typeSystem().resolveClass(className);
+            boolean transferable =
+                    switch (cls) {
+                        case Table table ->
+                            table.isIdentifiable() && !table.isImplicit() && !table.isIli1LineAttrStruct();
+                        case AssociationDef association -> TypeSystemFacade.unsupportedAssociation(association) == null;
+                        case null, default -> false;
+                    };
+            if (!transferable || cls.isAbstract()) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.MAP_UNSUPPORTED_FEATURE,
+                                Severity.ERROR,
+                                "Class loss requires a concrete transfer class: " + className + " in input " + inputId,
+                                rule.id,
+                                null));
+                return null;
+            }
+        }
+
+        return new RulePlan(
+                rule.id,
+                "",
+                null,
+                List.of(new SourcePlan(source.alias(), source.sourceClass(), inputIds, null)),
+                List.of(),
+                List.of(),
+                List.of(),
+                lossCompiler.compileLosses(rule, Map.of(source.alias(), source), rule.id, ctx),
+                List.of(),
+                null,
+                List.of(),
+                List.of());
     }
 }

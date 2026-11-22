@@ -113,19 +113,21 @@ public final class MigrationDraftService {
             if (entity.structure()) continue;
             String targetName = targetModel + entity.name().substring(sourceModel.length());
             Entity other = target.entities().stream()
-                    .filter(e -> e.name().equals(targetName) && !e.structure())
+                    .filter(e -> e.name().equals(targetName))
                     .findFirst()
                     .orElse(null);
             if (other == null) {
                 differences.add(new Difference(
+                        entity.name(), "", "", Status.NOT_MAPPED, "Add a mapping rule or an explicit class loss rule"));
+                continue;
+            }
+            if (other.structure()) {
+                differences.add(new Difference(
                         entity.name(),
+                        other.name(),
                         "",
-                        "",
-                        Status.NOT_MAPPED,
-                        "Choose a target class or explicitly record the loss"));
-                text.append("  // Unmapped source class: ")
-                        .append(entity.name())
-                        .append('\n');
+                        Status.DECISION,
+                        "The matching target name is a structure. Choose a target class explicitly"));
                 continue;
             }
             var sourceClass = source.types().resolveClass(entity.name());
@@ -159,14 +161,15 @@ public final class MigrationDraftService {
                 differences.add(
                         new Difference("", entity.name(), "", Status.DECISION, "Target class has no source rule"));
         for (Difference difference : differences) {
-            if (difference.status() == Status.DECISION || difference.status() == Status.NOT_MAPPED)
+            if (difference.status() == Status.DECISION || difference.status() == Status.NOT_MAPPED) {
                 text.append("  // REVIEW ")
-                        .append(difference.sourceClass())
-                        .append(".")
-                        .append(difference.attribute())
-                        .append(": ")
-                        .append(difference.detail())
-                        .append("\n");
+                        .append(
+                                difference.sourceClass().isEmpty()
+                                        ? difference.targetClass()
+                                        : difference.sourceClass());
+                if (!difference.attribute().isEmpty()) text.append('.').append(difference.attribute());
+                text.append(": ").append(difference.detail()).append("\n");
+            }
         }
         text.append("}\n");
         return new Draft(text.toString(), source, target, List.copyOf(differences));
@@ -285,7 +288,11 @@ public final class MigrationDraftService {
         for (Field field : from.fields())
             if (!used.contains(field.name()))
                 differences.add(new Difference(
-                        from.name(), to.name(), field.name(), Status.NOT_MAPPED, "Source attribute not mapped"));
+                        from.name(),
+                        to.name(),
+                        field.name(),
+                        Status.NOT_MAPPED,
+                        "Map this source attribute or declare a loss"));
         if (!assignments.isEmpty())
             text.append(indent)
                     .append("assign {\n")

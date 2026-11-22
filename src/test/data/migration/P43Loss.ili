@@ -1,0 +1,28 @@
+INTERLIS 2.4;
+MODEL P43Source (en) AT "https://example.org" VERSION "2026-11-22" =
+  TOPIC Data =
+    STRUCTURE Details = Note : TEXT*40; END Details;
+    CLASS AbstractItem (ABSTRACT) = END AbstractItem;
+    CLASS Item EXTENDS AbstractItem =
+      Name : MANDATORY TEXT*40;
+      LegacyCode : TEXT*40;
+      LegacyItem : REFERENCE TO Item;
+      Kind : TEXT*20;
+    END Item;
+    CLASS Obsolete = END Obsolete;
+    CLASS ChangesKind = END ChangesKind;
+    CLASS Empty = END Empty;
+  END Data;
+END P43Source.
+
+MODEL P43Target (en) AT "https://example.org" VERSION "2026-11-22" =
+  TOPIC Data =
+    STRUCTURE ChangesKind = Note : TEXT*40; END ChangesKind;
+    CLASS Item =
+      Name : MANDATORY TEXT*40;
+      Origin : MANDATORY TEXT*40;
+      History : BAG {0..*} OF ChangesKind;
+      Kind : 0 .. 10;
+    END Item;
+  END Data;
+END P43Target.

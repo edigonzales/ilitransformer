@@ -143,6 +143,15 @@ entries:
     description: "Direct and inherited reference attributes resolve to actual target OIDs, with local or EXTERNAL basket semantics"
     testReferences:
       - "StandaloneAssociationIntegrationTest"
+  - feature: "Explicit class and attribute losses"
+    phase: "4.3"
+    status: SUPPORTED
+    description: "Draft review for unmapped source content, targetless class loss rules and conditional attribute loss events in JSON and Markdown"
+    testReferences:
+      - "MigrationServiceTest"
+      - "MigrationVerticalTest"
+      - "TypedCompilerTest"
+      - "StandaloneAssociationIntegrationTest"
   - feature: "failPolicy (strict/lenient/reportOnly)"
     phase: "7"
     status: SUPPORTED

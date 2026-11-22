@@ -295,6 +295,26 @@ class IlimapSemanticValidatorTest {
     }
 
     @Test
+    void acceptsClassLossWithoutTarget() {
+        var result = validate("""
+                mapping v2 {
+                  input src { path "in.xtf"; model "M"; }
+                  output out { path "out.xtf"; model "M"; }
+                  rule drop {
+                    source s from src class "M.Topic.Obsolete";
+                    loss {
+                      sourcePath s;
+                      reasonCode "CLASS_REMOVED";
+                      description "Obsolete class";
+                    }
+                  }
+                }
+                """);
+
+        assertThat(result.diagnostics()).isEmpty();
+    }
+
+    @Test
     void rejectsMissingTargetInRule() {
         var result = validate("""
                 mapping v2 {
