@@ -22,7 +22,7 @@ class MigrationServiceTest {
     Path dir;
 
     @Test
-    void draftExcludesImplicitCompilerTables() throws Exception {
+    void draftExcludesIli1LineAttributeHelperTables() throws Exception {
         String models = Path.of("src/test/data/av/models").toAbsolutePath().toString();
         String model = "DM01AVCH24LV95D";
         String className = model + ".Liegenschaften.ProjLiegenschaft";
@@ -33,11 +33,7 @@ class MigrationServiceTest {
         Table helper = geometry.getLineAttributeStructure();
         assertThat(helper).as("ili2c-generated LINEATTR table").isNotNull();
         assertThat(helper.isIli1LineAttrStruct()).isTrue();
-        // ili2c 5.6.8 sets the LINEATTR marker on this helper and leaves implicit false.
-        var implicit = Table.class.getDeclaredField("implicit");
-        implicit.setAccessible(true);
-        implicit.setBoolean(helper, true);
-        assertThat(helper.isImplicit()).isTrue();
+        assertThat(helper.isImplicit()).isFalse();
 
         var drafts = new MigrationDraftService();
         String helperName = helper.getScopedName(null);
