@@ -32,8 +32,7 @@ public final class GeometryAttributeResolver {
             Optional<GeometryKind> configuredKind)
             throws ShapefileMappingException {
 
-        Table table = typeSystem.resolveClass(className);
-        if (table == null) {
+        if (!(typeSystem.resolveClass(className) instanceof Table table)) {
             throw new ShapefileMappingException("Source class '" + className + "' not found in model");
         }
 
@@ -82,8 +81,7 @@ public final class GeometryAttributeResolver {
             Optional<GeometryKind> configuredKind)
             throws ShapefileMappingException {
 
-        Table table = typeSystem.resolveClass(className);
-        if (table == null) {
+        if (!(typeSystem.resolveClass(className) instanceof Table table)) {
             throw new ShapefileMappingException("Output class '" + className + "' not found in model");
         }
 

@@ -60,8 +60,8 @@ public final class ReferenceResolutionService {
                             .filter(candidate -> ref.targetRuleId() == null
                                     || ref.targetRuleId().equals(candidate.producingRuleId()))
                             .toList();
-            String ownerLocation = ref.ownerRuleId() + " / " + ref.owner().targetClass() + "/"
-                    + ref.owner().targetOid();
+            String ownerLocation = ref.ownerRuleId() + " / " + ref.owner().getobjecttag() + "/"
+                    + ref.owner().getobjectoid();
             boolean required = ref.required()
                     || ref.expectedCardinality() != null
                             && ref.expectedCardinality().isRequired();
@@ -97,7 +97,7 @@ public final class ReferenceResolutionService {
 
             if (ref.expectedTargetClass() != null
                     && !ref.expectedTargetClass().isEmpty()
-                    && !isTypeCompatible(plan, ref.owner().outputId(), ref.expectedTargetClass(), resolvedTarget)) {
+                    && !isTypeCompatible(plan, ref.ownerOutputId(), ref.expectedTargetClass(), resolvedTarget)) {
                 Severity severity = required ? Severity.ERROR : failPolicySeverity(plan, Severity.ERROR);
                 diagnostics.add(new Diagnostic(
                         DiagnosticCode.RUN_REF_TYPE_MISMATCH,
@@ -109,7 +109,7 @@ public final class ReferenceResolutionService {
                 continue;
             }
 
-            IomObject owner = stateStore.findTarget(ref.owner()).orElseThrow();
+            IomObject owner = ref.owner();
             long max = ref.expectedCardinality() == null
                     ? Long.MAX_VALUE
                     : ref.expectedCardinality().max();
@@ -124,20 +124,19 @@ public final class ReferenceResolutionService {
                 continue;
             }
 
-            boolean sameOutput = ref.owner().outputId().equals(resolvedTarget.outputId());
+            boolean sameOutput = ref.ownerOutputId().equals(resolvedTarget.outputId());
             boolean sameBid = Objects.equals(ref.ownerBasketId(), resolvedTarget.targetBasketId());
             boolean sameBasket = sameOutput
                     && sameBid
-                    && TargetObjectFactory.extractTopic(ref.owner().targetClass())
+                    && TargetObjectFactory.extractTopic(ref.owner().getobjecttag())
                             .equals(TargetObjectFactory.extractTopic(resolvedTarget.targetClass()));
-            OutputBinding output =
-                    plan != null ? plan.outputsById().get(ref.owner().outputId()) : null;
+            OutputBinding output = plan != null ? plan.outputsById().get(ref.ownerOutputId()) : null;
             boolean xtf24 = output != null
                     && output.transferDescription() != null
                     && Model.ILI2_4.equals(
                             output.transferDescription().getLastModel().getIliVersion());
             var role = output != null && output.typeSystem() != null
-                    ? output.typeSystem().resolveReference(ref.owner().targetClass(), ref.targetRoleName())
+                    ? output.typeSystem().resolveReference(ref.owner().getobjecttag(), ref.targetRoleName())
                     : null;
             String reason = null;
             if (duplicateXtfOids
@@ -162,7 +161,7 @@ public final class ReferenceResolutionService {
                         DiagnosticCode.RUN_REF_UNREPRESENTABLE,
                         Severity.ERROR,
                         "Cannot encode reference for " + context(ref, oid) + " from output/basket "
-                                + ref.owner().outputId() + "/" + ref.ownerBasketId() + " to "
+                                + ref.ownerOutputId() + "/" + ref.ownerBasketId() + " to "
                                 + resolvedTarget.outputId() + "/" + resolvedTarget.targetBasketId() + ": " + reason,
                         ownerLocation,
                         "Check the model's EXTERNAL declaration, output format and basket routing"));

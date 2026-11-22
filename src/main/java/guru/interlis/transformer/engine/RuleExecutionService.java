@@ -675,7 +675,9 @@ public final class RuleExecutionService {
     }
 
     private static void addSourceAttributeTypes(
-            Map<String, Map<String, TypeInfo>> result, String alias, ch.interlis.ili2c.metamodel.Table sourceClass) {
+            Map<String, Map<String, TypeInfo>> result,
+            String alias,
+            ch.interlis.ili2c.metamodel.AbstractClassDef<?> sourceClass) {
         if (alias == null || sourceClass == null) return;
         Map<String, TypeInfo> aliasTypes = result.computeIfAbsent(alias, ignored -> new LinkedHashMap<>());
         Iterator<ch.interlis.ili2c.metamodel.ViewableTransferElement> it = sourceClass.getAttributesAndRoles2();

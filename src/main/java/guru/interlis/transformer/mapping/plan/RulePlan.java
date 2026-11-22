@@ -1,11 +1,11 @@
 package guru.interlis.transformer.mapping.plan;
 
-import ch.interlis.ili2c.metamodel.Table;
+import ch.interlis.ili2c.metamodel.AbstractClassDef;
 
 public record RulePlan(
         String ruleId,
         String outputId,
-        Table targetClass,
+        AbstractClassDef<?> targetClass,
         java.util.List<SourcePlan> sources,
         java.util.List<AssignmentPlan> assignments,
         java.util.List<RefPlan> refs,

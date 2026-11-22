@@ -40,8 +40,8 @@ final class CreateCompiler {
             String createId = ruleId + "-create-" + i;
 
             String targetClassName = cs.clazz;
-            Table targetClass = CompileUtils.resolveTargetClass(targetOutput, targetClassName, ctx.modelRegistry());
-            if (targetClass == null) {
+            if (!(CompileUtils.resolveTargetClass(targetOutput, targetClassName, ctx.modelRegistry())
+                    instanceof Table targetClass)) {
                 ctx.diagnostics()
                         .add(new Diagnostic(
                                 DiagnosticCode.MAP_CREATE_UNKNOWN_CLASS,

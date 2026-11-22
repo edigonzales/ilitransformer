@@ -283,12 +283,12 @@ public final class ExpressionTypeChecker {
     }
 
     private static ch.interlis.ili2c.metamodel.AttributeDef findAttribute(
-            ch.interlis.ili2c.metamodel.Table table, String attrName) {
+            ch.interlis.ili2c.metamodel.AbstractClassDef<?> table, String attrName) {
         ch.interlis.ili2c.metamodel.AttributeDef found = table.findAttribute(attrName);
         if (found != null) return found;
         var it = table.getAttributesAndRoles2();
         while (it.hasNext()) {
-            ch.interlis.ili2c.metamodel.ViewableTransferElement element = it.next();
+            var element = it.next();
             if (element.obj instanceof ch.interlis.ili2c.metamodel.AttributeDef attr
                     && attrName.equals(attr.getName())) {
                 return attr;
@@ -298,10 +298,10 @@ public final class ExpressionTypeChecker {
     }
 
     private static ch.interlis.ili2c.metamodel.RoleDef findRole(
-            ch.interlis.ili2c.metamodel.Table table, String roleName) {
+            ch.interlis.ili2c.metamodel.AbstractClassDef<?> table, String roleName) {
         var it = table.getAttributesAndRoles2();
         while (it.hasNext()) {
-            ch.interlis.ili2c.metamodel.ViewableTransferElement element = it.next();
+            var element = it.next();
             if (element.obj instanceof ch.interlis.ili2c.metamodel.RoleDef role && roleName.equals(role.getName())) {
                 return role;
             }
@@ -310,7 +310,9 @@ public final class ExpressionTypeChecker {
         java.util.Iterator<ch.interlis.ili2c.metamodel.RoleDef> targetRoles = table.getTargetForRoles();
         while (targetRoles != null && targetRoles.hasNext()) {
             ch.interlis.ili2c.metamodel.RoleDef role = targetRoles.next();
-            if (roleName.equals(role.getName())) {
+            if (roleName.equals(role.getName())
+                    && (!(role.getContainer() instanceof ch.interlis.ili2c.metamodel.AssociationDef association)
+                            || association.isLightweight())) {
                 return role;
             }
         }

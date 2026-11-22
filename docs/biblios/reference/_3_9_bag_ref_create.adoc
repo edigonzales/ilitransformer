@@ -62,7 +62,7 @@ ref gebaeude_ref {
 
 [NOTE]
 ====
-Referenzen werden über den `sourceRef`-Ausdruck aufgelöst. Der Ausdruck muss auf ein Objekt verweisen, das von der Zielregel (`target rule`) erzeugt wurde. Ein Alias allein (z.B. `s`) oder `oid(s)` liefert eine Referenz auf das gebundene Quellobjekt. Eine Quellreferenz kann mit `s.ParentRef` gelesen werden.
+Referenzen werden über den `sourceRef`-Ausdruck aufgelöst. Ein Alias wie `s` verweist auf das gebundene Quellobjekt. Ein Pfad wie `s.ParentRef` liefert den vollständigen Referenzwert. `oid(s)` und `refOid(s.ParentRef)` liefern OIDs als Text.
 
 Eine lokale Referenz gilt im Basket des Quellobjekts. Eine explizite Quell-BID bestimmt den referenzierten Basket. Die Zielregel kann den Input eingrenzen. Mehrdeutige Treffer und fehlende Pflichtreferenzen führen zu einem Fehler.
 Externe Referenzen zwischen Baskets werden in XTF 2.4 über die Transfer-ID innerhalb derselben Ausgabe kodiert. Die Zielrolle muss `EXTERNAL` erlauben. Für XTF 2.3 schlägt die Ausgabe dieses Falls fehl, weil der eingesetzte IOX-Writer `REF` mit `BID` nicht korrekt kodiert.
@@ -70,6 +70,20 @@ Externe Referenzen zwischen Baskets werden in XTF 2.4 über die Transfer-ID inne
 Bei einer Komposition muss die Referenz in der Regel des abhängigen Child-Objekts auf dessen Parent-Rolle zeigen. `oid(s)` liefert dort weiterhin nur die OID des Child-Objekts und nicht automatisch die OID des Parents.
 Zeigt die Zielrolle auf eine abstrakte Basisklasse, darf die Zielregel eine konkrete Unterklasse erzeugen. Die Referenzauflösung berücksichtigt die INTERLIS-Vererbung; unverwandte Zielklassen werden weiterhin als Typfehler abgewiesen.
 ====
+
+Selbständig übertragene binäre Assoziationen werden in XTF durch eine explizite
+Regel mit Assoziationsnamen in `source` und `target` migriert. Für jede der
+beiden Rollen gibt es einen `ref`-Block. Fachattribute verwenden `assign`.
+Links mit eigener OID folgen der OID-Strategie. Links ohne eigene OID haben
+keine TID. Eingebettete Rollen werden am Besitzer gemappt.
+
+Für direkte `REFERENCE TO`-Klassenattribute bezeichnet `ref` den
+Zielattributnamen. `sourceRef` liest das Quellattribut als Referenzwert. Der
+Resolver verwendet Modellziel, `EXTERNAL` und die Ziel-OID der erzeugenden Regel.
+Das gilt auch für geerbte Attribute und Typaliase. Abgeleitete Assoziationen, Assoziationsvererbung,
+mehr als zwei Rollen, geordnete Rollen, Rollen mit alternativen oder
+eingeschränkten Zielen sowie Referenzen in verschachtelten Strukturen
+liegen ausserhalb dieses Funktionsumfangs.
 
 ==== create — Zusätzliche Zielobjekte
 

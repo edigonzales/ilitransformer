@@ -3,8 +3,11 @@ package guru.interlis.transformer.api;
 import static org.assertj.core.api.Assertions.*;
 
 import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.interlis.InterlisModelLoader;
 import guru.interlis.transformer.mapping.ilimap.editor.IlimapEditorDocument;
 
+import ch.interlis.ili2c.metamodel.SurfaceOrAreaType;
+import ch.interlis.ili2c.metamodel.Table;
 import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox_j.*;
 
@@ -17,6 +20,34 @@ import org.junit.jupiter.api.io.TempDir;
 class MigrationServiceTest {
     @TempDir
     Path dir;
+
+    @Test
+    void draftExcludesImplicitCompilerTables() throws Exception {
+        String models = Path.of("src/test/data/av/models").toAbsolutePath().toString();
+        String model = "DM01AVCH24LV95D";
+        String className = model + ".Liegenschaften.ProjLiegenschaft";
+        var td = new InterlisModelLoader().compileModel(model, models);
+        assertThat(td).isNotNull();
+        var table = (Table) td.getElement(className);
+        var geometry = (SurfaceOrAreaType) table.findAttribute("Geometrie").getDomainResolvingAliases();
+        Table helper = geometry.getLineAttributeStructure();
+        assertThat(helper).as("ili2c-generated LINEATTR table").isNotNull();
+        assertThat(helper.isIli1LineAttrStruct()).isTrue();
+        // ili2c 5.6.8 sets the LINEATTR marker on this helper and leaves implicit false.
+        var implicit = Table.class.getDeclaredField("implicit");
+        implicit.setAccessible(true);
+        implicit.setBoolean(helper, true);
+        assertThat(helper.isImplicit()).isTrue();
+
+        var drafts = new MigrationDraftService();
+        String helperName = helper.getScopedName(null);
+        assertThat(drafts.schema(model, td).entities())
+                .extracting(MigrationDraftService.Entity::name)
+                .contains(className)
+                .doesNotContain(helperName);
+        var draft = drafts.create(model, model, models, "source.itf", "target.itf");
+        assertThat(draft.text()).contains("class \"" + className + "\"").doesNotContain("class \"" + helperName + "\"");
+    }
 
     @Test
     void preparedDraftMigratesEmbeddedOccurrencesAndValidates() throws Exception {

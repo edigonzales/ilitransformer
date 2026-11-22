@@ -47,7 +47,7 @@ public final class OutputWritingService {
     public static Comparator<IomObject> targetObjectComparator() {
         return Comparator.comparingInt(OutputWritingService::referenceWeight)
                 .thenComparing(IomObject::getobjecttag)
-                .thenComparing(IomObject::getobjectoid);
+                .thenComparing(IomObject::getobjectoid, Comparator.nullsLast(Comparator.naturalOrder()));
     }
 
     private static int referenceWeight(IomObject object) {

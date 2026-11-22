@@ -12,11 +12,8 @@ import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.model.TypeSystemFacade;
 
+import ch.interlis.ili2c.metamodel.AbstractClassDef;
 import ch.interlis.ili2c.metamodel.AttributeDef;
-import ch.interlis.ili2c.metamodel.Container;
-import ch.interlis.ili2c.metamodel.Model;
-import ch.interlis.ili2c.metamodel.Table;
-import ch.interlis.ili2c.metamodel.Topic;
 
 import java.util.List;
 
@@ -24,30 +21,19 @@ final class CompileUtils {
 
     private CompileUtils() {}
 
-    static String getScopedName(Table table) {
-        if (table == null) return null;
-        Container container = table.getContainer();
-        if (container instanceof Topic topic) {
-            Container modelContainer = topic.getContainer();
-            if (modelContainer instanceof Model model) {
-                return model.getName() + "." + topic.getName() + "." + table.getName();
-            }
-        }
-        if (container instanceof Model model) {
-            return model.getName() + "." + table.getName();
-        }
-        return table.getName();
+    static String getScopedName(AbstractClassDef<?> table) {
+        return table == null ? null : TypeSystemFacade.getScopedName(table);
     }
 
-    static Table resolveTargetClass(String outputId, String className, ModelRegistry modelRegistry) {
+    static AbstractClassDef<?> resolveTargetClass(String outputId, String className, ModelRegistry modelRegistry) {
         if (className == null || className.isBlank()) return null;
         if (outputId != null && !outputId.isEmpty()) {
             TypeSystemFacade ts = modelRegistry.requireTargetTypeSystem(outputId);
-            Table resolved = ts.resolveClass(className);
+            AbstractClassDef<?> resolved = ts.resolveClass(className);
             if (resolved != null) return resolved;
         }
         for (OutputBinding binding : modelRegistry.outputsById().values()) {
-            Table resolved = binding.typeSystem().resolveClass(className);
+            AbstractClassDef<?> resolved = binding.typeSystem().resolveClass(className);
             if (resolved != null) return resolved;
         }
         return null;
@@ -196,7 +182,7 @@ final class CompileUtils {
             if (sp.alias().equals(alias) && sp.sourceClass() != null) {
                 var it = sp.sourceClass().getAttributes();
                 while (it.hasNext()) {
-                    ch.interlis.ili2c.metamodel.Extendable ext = it.next();
+                    var ext = it.next();
                     if (ext instanceof AttributeDef attrDef) {
                         if (attrName.equals(attrDef.getName())) {
                             return classifyIliType(attrDef);

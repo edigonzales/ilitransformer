@@ -23,6 +23,8 @@
 | ReferenceIndex + ReferenceResolutionService | 19 | ✅ SUPPORTED | Separate ReferenceIndex with SourceObjectKey/TargetReference; ReferenceResolutionService with per-owner cardinality, ambiguity detection, association-aware diagnostics | ReferenceIndexTest, ReferenceResolutionServiceTest |
 | Same OID different context resolution | 19 | ✅ SUPPORTED | Lookup is scoped to the source input, basket and class or to the transfer ID of an XTF 2.4 EXTERNAL reference | ReferenceIndexTest, ReferenceResolutionServiceTest, ReferenceResolutionIntegrationTest |
 | Association-aware role resolution | 19 | ✅ SUPPORTED | requireRole() with AssociationDef; association name in diagnostics; XTF association serialization tested with ilivalidator | AssociationXtfIntegrationTest |
+| Standalone binary associations | 4.2 | ✅ SUPPORTED | Explicit XTF mapping with two roles, scalar attributes and model-defined OID presence | StandaloneAssociationIntegrationTest |
+| Direct class REFERENCE TO | 4.2 | ✅ SUPPORTED | Direct and inherited reference attributes resolve to actual target OIDs, with local or EXTERNAL basket semantics | StandaloneAssociationIntegrationTest |
 | failPolicy (strict/lenient/reportOnly) | 7 | ✅ SUPPORTED | Configurable error handling at plan level | ReferenceResolutionIntegrationTest |
 | GeometryAdapter (Coord/Polyline/Surface/Area) | 13/24 | ✅ SUPPORTED | IoxGeometryAdapter with GeometryValueCopier, ItfGeometryWriter for ILI1 helper tables | IoxGeometryAdapterTest, GeometryIntegrationTest, GeometryDeepCopyTest |
 | GeometryValueCopier | 24 | ✅ SUPPORTED | Deep copy IomObject geometries to prevent source-target aliasing | GeometryDeepCopyTest |

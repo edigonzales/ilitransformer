@@ -131,6 +131,18 @@ entries:
     description: "requireRole() with AssociationDef; association name in diagnostics; XTF association serialization tested with ilivalidator"
     testReferences:
       - "AssociationXtfIntegrationTest"
+  - feature: "Standalone binary associations"
+    phase: "4.2"
+    status: SUPPORTED
+    description: "Explicit XTF mapping with two roles, scalar attributes and model-defined OID presence"
+    testReferences:
+      - "StandaloneAssociationIntegrationTest"
+  - feature: "Direct class REFERENCE TO"
+    phase: "4.2"
+    status: SUPPORTED
+    description: "Direct and inherited reference attributes resolve to actual target OIDs, with local or EXTERNAL basket semantics"
+    testReferences:
+      - "StandaloneAssociationIntegrationTest"
   - feature: "failPolicy (strict/lenient/reportOnly)"
     phase: "7"
     status: SUPPORTED

@@ -335,11 +335,11 @@ public final class IliModelService {
 
     private String buildTypeString(AttributeDef attr) {
         ch.interlis.ili2c.metamodel.Type type = attr.getDomain();
-        if (type == null) return "???";
         return formatTypeString(type);
     }
 
-    static String formatTypeString(ch.interlis.ili2c.metamodel.Type type) {
+    public static String formatTypeString(ch.interlis.ili2c.metamodel.Type type) {
+        if (type == null) return "???";
         if (type instanceof ch.interlis.ili2c.metamodel.CompositionType comp) {
             var component = comp.getComponentType();
             if (component != null && component.getName() != null) {

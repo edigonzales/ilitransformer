@@ -20,6 +20,7 @@ import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.OidStrategy;
 
+import ch.interlis.ili2c.metamodel.AbstractClassDef;
 import ch.interlis.ili2c.metamodel.AttributeDef;
 import ch.interlis.ili2c.metamodel.Cardinality;
 import ch.interlis.ili2c.metamodel.CompositionType;
@@ -40,7 +41,7 @@ final class BagCompiler {
             JobConfig.RuleSpec rule,
             List<SourcePlan> sourcePlans,
             Map<String, SourcePlan> sourcesByAlias,
-            Table targetClass,
+            AbstractClassDef<?> targetClass,
             TypeSystemFacade targetTs,
             String ruleId,
             CompilerContext ctx,
@@ -78,8 +79,7 @@ final class BagCompiler {
                 TypeSystemFacade structTs = structTsOutput != null && !structTsOutput.isEmpty()
                         ? ctx.modelRegistry().requireTargetTypeSystem(structTsOutput)
                         : null;
-                componentTable = structTs != null ? structTs.resolveClass(structClass) : null;
-                if (componentTable == null) {
+                if (!(structTs != null && structTs.resolveClass(structClass) instanceof Table table)) {
                     diag.add(new Diagnostic(
                             DiagnosticCode.MAP_UNKNOWN_TARGET_CLASS,
                             Severity.ERROR,
@@ -88,6 +88,7 @@ final class BagCompiler {
                             "Check the target class in bags.<name>.structure"));
                     continue;
                 }
+                componentTable = table;
                 effectiveStructureName = CompileUtils.getScopedName(componentTable);
             } else {
                 AttributeDef bagAttr = targetTs != null ? targetTs.findAttribute(targetClass, targetBagAttrName) : null;
@@ -193,7 +194,7 @@ final class BagCompiler {
                     continue;
                 }
                 List<String> path = List.of(from.attribute.split("\\.", -1));
-                Table component = owner.sourceClass();
+                AbstractClassDef<?> component = owner.sourceClass();
                 boolean valid = component != null;
                 for (int pi = 0; valid && pi < path.size(); pi++) {
                     AttributeDef attribute = component.findAttribute(path.get(pi));
@@ -247,11 +248,7 @@ final class BagCompiler {
                 }
 
                 TypeSystemFacade sourceTs = ctx.modelRegistry().requireSourceTypeSystem(from.input);
-                Table bagSourceClass = null;
-                if (sourceTs != null) {
-                    bagSourceClass = sourceTs.resolveClass(from.clazz);
-                }
-                if (bagSourceClass == null) {
+                if (!(sourceTs != null && sourceTs.resolveClass(from.clazz) instanceof Table bagSourceClass)) {
                     diag.add(new Diagnostic(
                             DiagnosticCode.MAP_UNKNOWN_SOURCE_CLASS,
                             Severity.ERROR,

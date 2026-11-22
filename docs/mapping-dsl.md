@@ -342,6 +342,19 @@ Zielbasket. Externe Referenzen zwischen Baskets benötigen XTF 2.4 mit beiden
 Baskets in derselben Ausgabe. Der eingesetzte IOX-Writer kodiert externe
 XTF-2.3-Ausgabereferenzen fehlerhaft, deshalb meldet die Engine einen Fehler.
 
+Direkte `REFERENCE TO`-Klassenattribute verwenden in `role` den Attributnamen
+und in `sourceRef` den vollständigen Referenzwert. Das gilt auch für geerbte
+Attribute und Typaliase. Für Pflichtreferenzen ist ein `ref`-Mapping erforderlich.
+
+Selbständig übertragene binäre Assoziationen werden in XTF über eine explizite
+Quell- und Zielregel migriert. Beide Rollen brauchen je ein `ref`-Mapping,
+Fachattribute werden per `assign` zugewiesen. Die OID-Strategie gilt für
+Assoziationen mit eigener OID. Links ohne eigene OID werden ohne TID übertragen.
+Eingebettete Rollen bleiben am Besitzerobjekt. Abgeleitete Assoziationen, Assoziationsvererbung, mehr als
+zwei Rollen, geordnete Rollen, Rollen mit alternativen oder eingeschränkten
+Zielen und Referenzen in verschachtelten Strukturen liegen ausserhalb dieses
+Mappings. Ein vollständiges Regelbeispiel steht in der [ilimap-Referenz](ilimap-v2.md#selbständige-assoziationen-und-reference-to).
+
 ### BagSpec
 
 ```yaml
