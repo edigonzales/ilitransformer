@@ -192,7 +192,6 @@ class IlimapFullRuleToJobConfigTest {
                     source p from src class "M.B";
                     ref Entstehung {
                       association "Entstehung_LFP3";
-                      role "Entstehung";
                       required;
                       target rule r1 sourceRef p.Entstehung;
                     }
@@ -202,15 +201,11 @@ class IlimapFullRuleToJobConfigTest {
         JobConfig.RuleSpec rule = config.mapping.rules.get(1);
         assertThat(rule.refs).hasSize(1);
         JobConfig.RefMapping ref = rule.refs.get(0);
-        assertThat(ref.target).isEqualTo("Entstehung");
         assertThat(ref.association).isEqualTo("Entstehung_LFP3");
         assertThat(ref.role).isEqualTo("Entstehung");
         assertThat(ref.required).isTrue();
         assertThat(ref.targetRule).isEqualTo("r1");
         assertThat(ref.sourceRef).isEqualTo("p.Entstehung");
-        assertThat(ref.targetObject).isNotNull();
-        assertThat(ref.targetObject.rule).isEqualTo("r1");
-        assertThat(ref.targetObject.sourceRef).isEqualTo("p.Entstehung");
     }
 
     @Test

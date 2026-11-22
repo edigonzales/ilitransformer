@@ -3,7 +3,6 @@ package guru.interlis.transformer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import guru.interlis.transformer.app.IlivalidatorRunner;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.engine.TransformResult;
 import guru.interlis.transformer.engine.TransformationEngine;
@@ -14,8 +13,10 @@ import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.InMemoryStateStore;
+import guru.interlis.transformer.validation.InProcessIlivalidatorService;
+import guru.interlis.transformer.validation.ValidationResult;
 
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom.IomObject;
@@ -51,8 +52,6 @@ class Dm01ToDmavEoIntegrationTest {
     private static final String TARGET_MODEL = "DMAV_Einzelobjekte_V1_1";
     private static final String SOURCE_BASKET = "DM01AVCH24LV95D.Einzelobjekte";
 
-    private static TypeSystemFacade dm01Ts;
-    private static TypeSystemFacade dmavTs;
     private static TransferDescription dmavTransferDescription;
 
     @BeforeAll
@@ -63,14 +62,12 @@ class Dm01ToDmavEoIntegrationTest {
         if (dm01Result.hasErrors()) {
             fail("DM01 compile errors:\n  " + formatDiagnostics(dm01Result));
         }
-        dm01Ts = new TypeSystemFacade(dm01Result.transferDescription());
 
         IliModelCompileResult dmavResult = service.compileModel(TARGET_MODEL, MODELDIR);
         if (dmavResult.hasErrors()) {
             fail("DMAV compile errors:\n  " + formatDiagnostics(dmavResult));
         }
         dmavTransferDescription = dmavResult.transferDescription();
-        dmavTs = new TypeSystemFacade(dmavTransferDescription);
     }
 
     @Test
@@ -171,9 +168,9 @@ class Dm01ToDmavEoIntegrationTest {
                                     code.contains("RUN_REF_MISSING_MANDATORY") || code.contains("RUN_REF_UNRESOLVED")))
                     .isFalse();
 
-            IlivalidatorRunner.ValidationResult validation =
-                    IlivalidatorRunner.validate(outputPath, List.of(MODELDIR), TARGET_MODEL, validationLog);
-            assertThat(validation.success()).as(validation.log()).isTrue();
+            ValidationResult validation = new InProcessIlivalidatorService()
+                    .validate(outputPath, List.of(MODELDIR), List.of(TARGET_MODEL), validationLog);
+            assertThat(validation.valid()).as(validation.logText()).isTrue();
 
             List<IomObject> objects = readAllObjects(outputPath);
             List<String> objectTags =
@@ -234,7 +231,8 @@ class Dm01ToDmavEoIntegrationTest {
     private static TransformPlan compilePlan() throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
-        return new MappingCompiler().compileTyped(config, Map.of(SOURCE_MODEL, dm01Ts), Map.of(TARGET_MODEL, dmavTs));
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        return new MappingCompiler().compileTyped(config, registry);
     }
 
     private static Iom_jObject coord(String c1, String c2) {

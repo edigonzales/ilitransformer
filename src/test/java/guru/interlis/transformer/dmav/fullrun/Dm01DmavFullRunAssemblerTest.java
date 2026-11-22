@@ -93,15 +93,14 @@ class Dm01DmavFullRunAssemblerTest {
                         "eo-einzelobjekt-gueltig",
                         "gs-grenzpunkt-gueltig",
                         "gs-grenzpunkt-projektiert");
-        assertThat(rulesById.get("lfp3-lfp3").getEffectiveRefs())
+        assertThat(rulesById.get("lfp3-lfp3").refs).singleElement().satisfies(ref -> assertThat(ref.targetRule)
+                .isEqualTo("lfp3-lfp3-nachfuehrung"));
+        assertThat(rulesById.get("gs-grenzpunkt-gueltig").refs)
                 .singleElement()
-                .satisfies(ref -> assertThat(ref.targetObject.rule).isEqualTo("lfp3-lfp3-nachfuehrung"));
-        assertThat(rulesById.get("gs-grenzpunkt-gueltig").getEffectiveRefs())
+                .satisfies(ref -> assertThat(ref.targetRule).isEqualTo("gs-gs-nachfuehrung-gueltig"));
+        assertThat(rulesById.get("gs-grenzpunkt-projektiert").refs)
                 .singleElement()
-                .satisfies(ref -> assertThat(ref.targetObject.rule).isEqualTo("gs-gs-nachfuehrung-gueltig"));
-        assertThat(rulesById.get("gs-grenzpunkt-projektiert").getEffectiveRefs())
-                .singleElement()
-                .satisfies(ref -> assertThat(ref.targetObject.rule).isEqualTo("gs-gs-nachfuehrung-projektiert"));
+                .satisfies(ref -> assertThat(ref.targetRule).isEqualTo("gs-gs-nachfuehrung-projektiert"));
     }
 
     @Test
@@ -323,7 +322,7 @@ class Dm01DmavFullRunAssemblerTest {
                         class: DmavTestModel.Topic.Target
                       sources:
                         - alias: s
-                          input: dm01
+                          inputs: [dm01]
                           class: Dm01TestModel.Topic.Source
                       assign:
                         Flag: "enumMap(s.Flag, 'SharedEnum')"

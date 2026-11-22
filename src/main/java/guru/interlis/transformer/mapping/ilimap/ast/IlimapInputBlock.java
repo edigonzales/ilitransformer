@@ -22,10 +22,4 @@ public record IlimapInputBlock(
         options = options == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(options));
         queries = queries == null ? List.of() : List.copyOf(queries);
     }
-
-    /** Backward-compatible constructor for non-JDBC inputs (no connection/queries). */
-    public IlimapInputBlock(
-            String id, String path, String model, String format, Map<String, String> options, IlimapSourceRange range) {
-        this(id, path, model, format, options, null, List.of(), range);
-    }
 }

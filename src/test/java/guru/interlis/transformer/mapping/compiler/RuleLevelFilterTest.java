@@ -6,35 +6,23 @@ import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
-import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 
 import java.util.List;
-import java.util.Map;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class RuleLevelFilterTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade testModelTs;
-
-    @BeforeAll
-    static void compileModels() {
-        IliModelService service = new IliModelService();
-        var result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
-        assertThat(result.hasErrors()).isFalse();
-        testModelTs = new TypeSystemFacade(result.transferDescription());
-    }
 
     @Test
     void ruleLevelFilterIsCompiled() {
         JobConfig config = minimalConfig();
         config.mapping.rules.get(0).where = "${s.Aktiv} == true";
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.rules()).hasSize(1);
         assertThat(plan.rules().get(0).predicate()).isNotNull();
@@ -46,8 +34,8 @@ class RuleLevelFilterTest {
         JobConfig config = minimalConfig();
         config.mapping.rules.get(0).where = "${s.Aktiv} =="; // syntax error
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().all()).anyMatch(d -> d.code().equals(DiagnosticCode.EXPR_SYNTAX));
     }
@@ -56,8 +44,8 @@ class RuleLevelFilterTest {
     void noWhereClauseMeansNullPredicate() {
         JobConfig config = minimalConfig();
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.rules()).hasSize(1);
         assertThat(plan.rules().get(0).predicate()).isNull();

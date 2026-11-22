@@ -38,7 +38,7 @@ mapping:
         class: "DemoTarget.Catalog.Station"
       sources:
         - alias: src
-          input: shp-input
+          inputs: [shp-input]
           class: "DemoShpSource.Data.Station"
       identity:
         sourceKey: ["src.bfsnr"]

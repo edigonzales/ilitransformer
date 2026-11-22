@@ -26,12 +26,4 @@ public final class MappingLoader {
         JobConfigNormalizer.normalize(config);
         return config;
     }
-
-    /**
-     * @deprecated Use {@link JobConfigNormalizer#normalize(JobConfig)} instead.
-     */
-    @Deprecated
-    void normalize(JobConfig config) {
-        JobConfigNormalizer.normalize(config);
-    }
 }

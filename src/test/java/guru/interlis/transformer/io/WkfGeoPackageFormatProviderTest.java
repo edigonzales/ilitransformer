@@ -56,8 +56,8 @@ class WkfGeoPackageFormatProviderTest {
 
     @Test
     void requiresTableOption() {
-        InputBinding binding =
-                new InputBinding("in", Path.of("data.gpkg"), "DemoGpkgSource", "gpkg", Map.of(), null, null);
+        InputBinding binding = new InputBinding(
+                "in", Path.of("data.gpkg"), "DemoGpkgSource", "gpkg", Map.of(), null, null, null, null);
         FormatOpenContext context = new FormatOpenContext(null, null, new DiagnosticCollector());
 
         assertThatThrownBy(() -> provider.openReader(binding, context))
@@ -66,6 +66,6 @@ class WkfGeoPackageFormatProviderTest {
     }
 
     private static InputBinding inputWithFormat(String format) {
-        return new InputBinding(null, Path.of("a.gpkg"), null, format, null, null, null);
+        return new InputBinding(null, Path.of("a.gpkg"), null, format, null, null, null, null, null);
     }
 }

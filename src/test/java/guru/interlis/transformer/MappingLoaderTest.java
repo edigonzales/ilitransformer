@@ -1,13 +1,19 @@
 package guru.interlis.transformer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.model.MappingLoader;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class MappingLoaderTest {
 
@@ -27,8 +33,8 @@ class MappingLoaderTest {
 
         JobConfig.RuleSpec rule = config.mapping.rules.get(0);
         assertThat(rule.id).isEqualTo("rule1");
-        assertThat(rule.getEffectiveTargetClass()).isEqualTo("TestModel.TestTopic.TestClass");
-        assertThat(rule.getEffectiveTargetOutput()).isEqualTo("out1");
+        assertThat(rule.target.clazz).isEqualTo("TestModel.TestTopic.TestClass");
+        assertThat(rule.target.output).isEqualTo("out1");
         assertThat(rule.sources).hasSize(1);
         assertThat(rule.sources.get(0).alias).isEqualTo("s");
     }
@@ -48,7 +54,7 @@ class MappingLoaderTest {
         JobConfig config = loader.load(path);
 
         JobConfig.RuleSpec rule = config.mapping.rules.get(0);
-        assertThat(rule.sources.get(0).getInputIds()).containsExactly("in1");
+        assertThat(rule.sources.get(0).inputs).containsExactly("in1");
     }
 
     @Test
@@ -58,41 +64,32 @@ class MappingLoaderTest {
 
         JobConfig.RuleSpec rule = config.mapping.rules.get(0);
         assertThat(rule.assign).isNotNull();
-        assertThat(rule.getAllAttributes()).hasSize(1);
-        assertThat(rule.getAllAttributes().get(0).target).isEqualTo("attr1");
-        assertThat(rule.getAllAttributes().get(0).expr).isEqualTo("${s.field}");
+        assertThat(rule.assign).containsExactlyEntriesOf(java.util.Map.of("attr1", "${s.field}"));
     }
 
-    @Test
-    void normalizesBackwardCompatInputToInputs() throws Exception {
-        // Programmatic config with old-style input field
-        JobConfig config = new JobConfig();
-        config.version = 1;
-        JobConfig.InputSpec in = new JobConfig.InputSpec();
-        in.id = "inX";
-        config.job.inputs.add(in);
-        JobConfig.OutputSpec out = new JobConfig.OutputSpec();
-        out.id = "outX";
-        config.job.outputs.add(out);
-
-        JobConfig.RuleSpec rule = new JobConfig.RuleSpec();
-        rule.id = "r1";
-        rule.targetClass = "M.T.C";
-        rule.output = "outX";
-        JobConfig.SourceSpec src = new JobConfig.SourceSpec();
-        src.alias = "s";
-        src.input = "inX";
-        src.clazz = "M.S.C";
-        rule.sources.add(src);
-        config.mapping.rules.add(rule);
-
-        // Simulate what load() does
-        new guru.interlis.transformer.mapping.model.MappingLoader()
-                .load(java.nio.file.Path.of(
-                        "src/test/resources/mappings/minimal-valid.yaml")); // just to verify loader works
-
-        // Direct test: getInputIds() works even with old input field
-        assertThat(src.getInputIds()).containsExactly("inX");
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            id: rule1 | targetClass: TestModel.TestTopic.TestClass
+            id: rule1 | output: out1
+            id: rule1 | attributes: []
+            inputs: [in1] | input: in1
+            class: "TestModel.TestTopic.TestClass" | clazz: TestModel.TestTopic.TestClass
+            class: "TestModel.TestTopic.SourceClass" | clazz: TestModel.TestTopic.SourceClass
+            role: "Entstehung" | target: Entstehung
+            role: "Entstehung" | expr: p.Entstehung
+            role: "Entstehung" | targetObject: {}
+            """)
+    void rejectsLegacyFields(String canonical, String legacy, @TempDir Path tempDir) throws Exception {
+        Path source = canonical.startsWith("role:")
+                ? Path.of("profiles/dm01-to-dmav/1.1/lfp3.yaml")
+                : Path.of("src/test/resources/mappings/minimal-valid.yaml");
+        String yaml = Files.readString(source);
+        assertThat(yaml).contains(canonical);
+        Path mapping = Files.writeString(tempDir.resolve("legacy.yaml"), yaml.replace(canonical, legacy));
+        assertThatThrownBy(() -> loader.load(mapping))
+                .isInstanceOfSatisfying(
+                        UnrecognizedPropertyException.class,
+                        error -> assertThat(error.getPropertyName()).isEqualTo(legacy.split(":", 2)[0]));
     }
 
     @Test
@@ -117,13 +114,11 @@ class MappingLoaderTest {
         // Assign map
         JobConfig.RuleSpec lfp3 = config.mapping.rules.get(1);
         assertThat(lfp3.assign).containsKeys("NBIdent", "Nummer", "LFPArt", "Geometrie");
-        assertThat(lfp3.getAllAttributes()).isNotEmpty();
 
         // Refs
         assertThat(lfp3.refs).hasSize(1);
         assertThat(lfp3.refs.get(0).association).isEqualTo("Entstehung_LFP3");
-        assertThat(lfp3.refs.get(0).targetObject).isNotNull();
-        assertThat(lfp3.refs.get(0).targetObject.rule).isEqualTo("lfp3-nachfuehrung");
+        assertThat(lfp3.refs.get(0).targetRule).isEqualTo("lfp3-nachfuehrung");
 
         // Identity
         assertThat(lfp3.identity).isNotNull();

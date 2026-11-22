@@ -24,7 +24,7 @@ public final class InterlisIoFactory {
     private final BuiltInInterlisFormatProvider provider = new BuiltInInterlisFormatProvider();
 
     public IoxReader createReader(Path path, TransferDescription transferDescription) throws Exception {
-        InputBinding binding = new InputBinding(null, path, null, null, null, transferDescription, null);
+        InputBinding binding = new InputBinding(null, path, null, null, null, transferDescription, null, null, null);
         FormatOpenContext context = new FormatOpenContext(null, transferDescription, null);
         return provider.openReader(binding, context);
     }

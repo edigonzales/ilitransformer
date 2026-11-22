@@ -286,12 +286,4 @@ public final class ExpressionEngine {
                         source.getobjecttag() + "/" + oid,
                         "Ensure the model-aware ITF reader merges geometry helper tables and the input contains them"));
     }
-
-    // -- Legacy compatibility -----------------------------------------
-
-    @Deprecated
-    public Object evaluateLegacy(String expression, Map<String, IomObject> sources) {
-        Value result = evaluate(expression, sources);
-        return result.toNative();
-    }
 }

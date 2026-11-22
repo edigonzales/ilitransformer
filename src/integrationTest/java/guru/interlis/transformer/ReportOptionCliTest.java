@@ -73,7 +73,7 @@ class ReportOptionCliTest {
                         class: "TestModel.TestTopic.TestClass"
                       sources:
                         - alias: s
-                          input: in1
+                          inputs: [in1]
                           class: "TestModel.TestTopic.TestClass"
                       assign:
                         Name: "${s.Name}"

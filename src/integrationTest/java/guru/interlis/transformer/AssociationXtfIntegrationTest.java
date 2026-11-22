@@ -21,29 +21,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class AssociationXtfIntegrationTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade assocTs;
-
-    @BeforeAll
-    static void compileModels() {
-        IliModelService service = new IliModelService();
-        IliModelCompileResult result = service.compileModel("src/test/data/models/with-references.ili", MODELDIR);
-        assertThat(result.hasErrors())
-                .as("Model compilation errors: %s", result.diagnostics())
-                .isFalse();
-        assocTs = new TypeSystemFacade(result.transferDescription());
-    }
 
     @Test
     void resolvesAssociationRolesWithReferenceIndex() throws Exception {
         JobConfig config = p7Config(true);
-        Map<String, TypeSystemFacade> tsMap = Map.of("P7Model", assocTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors())
                 .as("Compiler errors: %s", plan.diagnostics().all())
                 .isFalse();
@@ -97,8 +85,8 @@ class AssociationXtfIntegrationTest {
     @Test
     void detectsMissingMandatoryAssociationRole() throws Exception {
         JobConfig config = p7Config(true);
-        Map<String, TypeSystemFacade> tsMap = Map.of("P7Model", assocTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject srcA = new Iom_jObject("P7Model.P7Topic.ClassA", "a1");
@@ -137,8 +125,8 @@ class AssociationXtfIntegrationTest {
         JobConfig.RefMapping refMapping = config.mapping.rules.get(0).refs.get(0);
         refMapping.association = "AtoB";
 
-        Map<String, TypeSystemFacade> tsMap = Map.of("P7Model", assocTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject srcA = new Iom_jObject("P7Model.P7Topic.ClassA", "a1");

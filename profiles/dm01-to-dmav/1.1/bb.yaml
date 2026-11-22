@@ -73,7 +73,7 @@ mapping:
         class: "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.BBNachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Bodenbedeckung.BBNachfuehrung"
           where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       identity:
@@ -91,7 +91,7 @@ mapping:
         class: "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.BBNachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Bodenbedeckung.BBNachfuehrung"
           where: "nf.Gueltigkeit == #projektiert"
       identity:
@@ -109,7 +109,7 @@ mapping:
         class: "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung"
       sources:
         - alias: bb
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Bodenbedeckung.BoFlaeche"
       assign:
         Geometrie: "bb.Geometrie"
@@ -184,9 +184,8 @@ mapping:
         - association: "Entstehung_Bodenbedeckung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: bb-nachfuehrung-gueltig
-            sourceRef: "bb.Entstehung"
+          targetRule: bb-nachfuehrung-gueltig
+          sourceRef: "bb.Entstehung"
 
     - id: boflaeche-projektiert
       target:
@@ -194,7 +193,7 @@ mapping:
         class: "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung"
       sources:
         - alias: bb
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Bodenbedeckung.ProjBoFlaeche"
       assign:
         Geometrie: "bb.Geometrie"
@@ -269,9 +268,8 @@ mapping:
         - association: "Entstehung_Bodenbedeckung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: bb-nachfuehrung-projektiert
-            sourceRef: "bb.Entstehung"
+          targetRule: bb-nachfuehrung-projektiert
+          sourceRef: "bb.Entstehung"
 
     - id: einzelpunkt
       target:
@@ -279,7 +277,7 @@ mapping:
         class: "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Messpunkt"
       sources:
         - alias: ep
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Bodenbedeckung.Einzelpunkt"
       identity:
         sourceKey: ["ep.Identifikator"]
@@ -293,6 +291,5 @@ mapping:
         - association: "Entstehung_Messpunkt"
           role: "Entstehung"
           required: false
-          targetObject:
-            rule: bb-nachfuehrung-gueltig
-            sourceRef: "ep.Entstehung"
+          targetRule: bb-nachfuehrung-gueltig
+          sourceRef: "ep.Entstehung"

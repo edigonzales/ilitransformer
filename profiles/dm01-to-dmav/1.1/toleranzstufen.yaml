@@ -42,7 +42,7 @@ mapping:
         class: "DMAV_Toleranzstufen_V1_1.Toleranzstufen.TSNachfuehrung"
       sources:
         - alias: ts
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.TSEinteilung.Toleranzstufe"
       identity:
         sourceKey: ["ts.NBIdent", "ts.Identifikator"]
@@ -58,7 +58,7 @@ mapping:
         class: "DMAV_Toleranzstufen_V1_1.Toleranzstufen.Toleranzstufe"
       sources:
         - alias: ts
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.TSEinteilung.Toleranzstufe"
       identity:
         sourceKey: ["ts.NBIdent", "ts.Identifikator"]
@@ -72,6 +72,5 @@ mapping:
         - association: "Entstehung_Toleranzstufe"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: ts-nachfuehrung
-            sourceRef: "ts"
+          targetRule: ts-nachfuehrung
+          sourceRef: "ts"

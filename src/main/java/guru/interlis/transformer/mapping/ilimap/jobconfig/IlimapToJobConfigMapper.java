@@ -231,20 +231,12 @@ public final class IlimapToJobConfigMapper {
                         spec.refs = new ArrayList<>();
                     }
                     JobConfig.RefMapping rm = new JobConfig.RefMapping();
-                    rm.target = ref.id();
                     rm.association = ref.association();
-                    rm.role = ref.role();
+                    rm.role = ref.role() != null ? ref.role() : ref.id();
                     rm.required = ref.required();
-                    if (ref.targetRuleId() != null) {
-                        rm.targetObject = new JobConfig.RefMapping.RefTargetObject();
-                        rm.targetObject.rule = ref.targetRuleId();
-                        if (ref.sourceRef() != null) {
-                            rm.targetObject.sourceRef = normalizer.normalizeForJobConfig(ref.sourceRef(), symbols);
-                        }
-                        rm.targetRule = ref.targetRuleId();
-                        if (ref.sourceRef() != null) {
-                            rm.sourceRef = normalizer.normalizeForJobConfig(ref.sourceRef(), symbols);
-                        }
+                    rm.targetRule = ref.targetRuleId();
+                    if (ref.sourceRef() != null) {
+                        rm.sourceRef = normalizer.normalizeForJobConfig(ref.sourceRef(), symbols);
                     }
                     spec.refs.add(rm);
                 }

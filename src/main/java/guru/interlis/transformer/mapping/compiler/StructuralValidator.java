@@ -5,7 +5,6 @@ import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
-import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 
 import java.util.HashSet;
 import java.util.List;
@@ -69,20 +68,20 @@ final class StructuralValidator {
                     DiagnosticCode.MAP_MISSING_ID,
                     Severity.ERROR,
                     "Rule is missing required 'id' field",
-                    JobConfigNormalizer.getEffectiveTargetClass(rule),
+                    rule.target != null ? rule.target.clazz : null,
                     "Add an 'id' to each rule"));
         } else if (!seenIds.add(rule.id)) {
             diag.add(new Diagnostic(
                     DiagnosticCode.MAP_DUPLICATE_ID,
                     Severity.ERROR,
                     "Duplicate rule id: " + rule.id,
-                    JobConfigNormalizer.getEffectiveTargetClass(rule),
+                    rule.target != null ? rule.target.clazz : null,
                     "Rule ids must be unique within a mapping file"));
         }
     }
 
     private void validateRuleTarget(JobConfig.RuleSpec rule, Set<String> outputIds, DiagnosticCollector diag) {
-        if (hasNoTarget(rule)) {
+        if (rule.target == null) {
             String problem = classLossProblem(rule);
             if (problem != null) {
                 diag.add(new Diagnostic(
@@ -90,16 +89,16 @@ final class StructuralValidator {
             }
             return;
         }
-        String targetClass = JobConfigNormalizer.getEffectiveTargetClass(rule);
+        String targetClass = rule.target.clazz;
         if (targetClass == null || targetClass.isBlank()) {
             diag.add(new Diagnostic(
                     DiagnosticCode.MAP_MISSING_TARGET_CLASS,
                     Severity.ERROR,
                     "Rule is missing target class",
                     rule.id,
-                    "Add 'target.class' or 'targetClass' to the rule"));
+                    "Add 'target.class' to the rule"));
         }
-        String targetOutput = JobConfigNormalizer.getEffectiveTargetOutput(rule);
+        String targetOutput = rule.target.output;
         if (targetOutput != null
                 && !targetOutput.isBlank()
                 && !outputIds.isEmpty()
@@ -111,10 +110,6 @@ final class StructuralValidator {
                     rule.id,
                     "Ensure the output id exists in job.outputs"));
         }
-    }
-
-    static boolean hasNoTarget(JobConfig.RuleSpec rule) {
-        return rule.target == null && rule.targetClass == null && rule.output == null;
     }
 
     static String classLossProblem(JobConfig.RuleSpec rule) {
@@ -130,7 +125,6 @@ final class StructuralValidator {
             return "Class loss rules cannot have where or when conditions";
         }
         if (rule.assign != null
-                || rule.attributes != null
                 || rule.defaults != null
                 || rule.identity != null
                 || rule.joins != null
@@ -181,14 +175,14 @@ final class StructuralValidator {
                         rule.id,
                         "Add 'class' to each source definition"));
             }
-            List<String> sourceInputs = JobConfigNormalizer.getInputIds(source);
+            List<String> sourceInputs = source.inputs != null ? source.inputs : List.of();
             if (sourceInputs.isEmpty() || sourceInputs.stream().allMatch(String::isBlank)) {
                 diag.add(new Diagnostic(
                         DiagnosticCode.MAP_MISSING_INPUT,
                         Severity.ERROR,
-                        "Source '" + source.alias + "' is missing 'input' field in rule " + rule.id,
+                        "Source '" + source.alias + "' is missing 'inputs' field in rule " + rule.id,
                         rule.id,
-                        "Add 'input' or 'inputs' to each source definition"));
+                        "Add 'inputs' to each source definition"));
             }
             for (String inputId : sourceInputs) {
                 if (inputId != null && !inputId.isBlank() && !inputIds.isEmpty() && !inputIds.contains(inputId)) {

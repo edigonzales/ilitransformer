@@ -27,7 +27,7 @@ final class LossCompiler {
         }
         List<LossPlan> result = new ArrayList<>();
         for (JobConfig.LossSpec loss : rule.losses) {
-            if (!StructuralValidator.hasNoTarget(rule)) {
+            if (rule.target != null) {
                 validateSourcePath(loss.sourcePath, sourcesByAlias, ruleId, ctx);
             }
             CompiledExpression when = null;

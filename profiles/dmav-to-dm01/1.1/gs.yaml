@@ -62,7 +62,7 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
       sources:
         - alias: nf
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
@@ -80,7 +80,7 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.Grenzpunkt"
       sources:
         - alias: gp
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
           where: "gp.IstHoheitsgrenzpunkt == false"
       identity:
@@ -97,9 +97,8 @@ mapping:
         - association: "GrenzpunktEntstehung"
           role: "Entstehung"
           required: false
-          targetObject:
-            rule: gs-nachfuehrung-gueltig
-            sourceRef: "gp.Entstehung"
+          targetRule: gs-nachfuehrung-gueltig
+          sourceRef: "gp.Entstehung"
 
     - id: hoheitsgrenzpunkt-from-dmav
       target:
@@ -107,7 +106,7 @@ mapping:
         class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
       sources:
         - alias: gp
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
           where: "gp.IstHoheitsgrenzpunkt == true"
       identity:
@@ -127,7 +126,7 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck"
       sources:
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
           where: 'gs.Grundstuecksart == #Liegenschaft and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #projektiert and notDefined(gs.Untergang)'
       identity:
@@ -161,9 +160,8 @@ mapping:
         - association: "ProjGrundstueckEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gueltig
-            sourceRef: "gs.Entstehung"
+          targetRule: gs-nachfuehrung-gueltig
+          sourceRef: "gs.Entstehung"
 
     - id: proj-liegenschaft
       target:
@@ -171,10 +169,10 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.ProjLiegenschaft"
       sources:
         - alias: ls
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft"
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       assign:
         NummerTeilGrundstueck: "ls.NummerTeilgrundstueck"
@@ -185,9 +183,8 @@ mapping:
         - association: "ProjLiegenschaftProjLiegenschaft_von"
           role: "ProjLiegenschaft_von"
           required: true
-          targetObject:
-            rule: proj-grundstueck
-            sourceRef: "ls.Grundstueck"
+          targetRule: proj-grundstueck
+          sourceRef: "ls.Grundstueck"
       joins:
         - left: ls
           right: gs
@@ -200,7 +197,7 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck"
       sources:
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
           where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #projektiert and notDefined(gs.Untergang)'
       identity:
@@ -217,9 +214,8 @@ mapping:
         - association: "ProjGrundstueckEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gueltig
-            sourceRef: "gs.Entstehung"
+          targetRule: gs-nachfuehrung-gueltig
+          sourceRef: "gs.Entstehung"
 
     - id: proj-selbstrecht
       target:
@@ -227,10 +223,10 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.ProjSelbstRecht"
       sources:
         - alias: sr
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.SelbstaendigesDauerndesRecht"
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       assign:
         NummerTeilGrundstueck: "sr.NummerTeilgrundstueck"
@@ -241,9 +237,8 @@ mapping:
         - association: "ProjSelbstRechtProjSelbstRecht_von"
           role: "ProjSelbstRecht_von"
           required: true
-          targetObject:
-            rule: proj-selbstrecht-grundstueck
-            sourceRef: "sr.Grundstueck"
+          targetRule: proj-selbstrecht-grundstueck
+          sourceRef: "sr.Grundstueck"
       joins:
         - left: sr
           right: gs
@@ -256,7 +251,7 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck"
       sources:
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
           where: 'gs.Grundstuecksart == #Bergwerk and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #projektiert and notDefined(gs.Untergang)'
       identity:
@@ -273,9 +268,8 @@ mapping:
         - association: "ProjGrundstueckEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gueltig
-            sourceRef: "gs.Entstehung"
+          targetRule: gs-nachfuehrung-gueltig
+          sourceRef: "gs.Entstehung"
 
     - id: proj-bergwerk
       target:
@@ -283,10 +277,10 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.ProjBergwerk"
       sources:
         - alias: bw
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Bergwerk"
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       assign:
         NummerTeilGrundstueck: "bw.NummerTeilgrundstueck"
@@ -297,9 +291,8 @@ mapping:
         - association: "ProjBergwerkProjBergwerk_von"
           role: "ProjBergwerk_von"
           required: true
-          targetObject:
-            rule: proj-bergwerk-grundstueck
-            sourceRef: "bw.Grundstueck"
+          targetRule: proj-bergwerk-grundstueck
+          sourceRef: "bw.Grundstueck"
       joins:
         - left: bw
           right: gs
@@ -312,7 +305,7 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.Grundstueck"
       sources:
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
           where: 'gs.Grundstuecksart == #SelbstaendigesDauerndesRecht and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), "Mutationsart_Status") != #gueltig)'
       identity:
@@ -329,9 +322,8 @@ mapping:
         - association: "GrundstueckEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gueltig
-            sourceRef: "gs.Entstehung"
+          targetRule: gs-nachfuehrung-gueltig
+          sourceRef: "gs.Entstehung"
 
     - id: selbstrecht
       target:
@@ -339,10 +331,10 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.SelbstRecht"
       sources:
         - alias: sr
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.SelbstaendigesDauerndesRecht"
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       assign:
         NummerTeilGrundstueck: "sr.NummerTeilgrundstueck"
@@ -353,9 +345,8 @@ mapping:
         - association: "SelbstRechtSelbstRecht_von"
           role: "SelbstRecht_von"
           required: true
-          targetObject:
-            rule: selbstrecht-grundstueck
-            sourceRef: "sr.Grundstueck"
+          targetRule: selbstrecht-grundstueck
+          sourceRef: "sr.Grundstueck"
       joins:
         - left: sr
           right: gs
@@ -368,7 +359,7 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.Grundstueck"
       sources:
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
           where: 'gs.Grundstuecksart == #Bergwerk and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), "Mutationsart_Status") != #gueltig)'
       identity:
@@ -385,9 +376,8 @@ mapping:
         - association: "GrundstueckEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gueltig
-            sourceRef: "gs.Entstehung"
+          targetRule: gs-nachfuehrung-gueltig
+          sourceRef: "gs.Entstehung"
 
     - id: bergwerk
       target:
@@ -395,10 +385,10 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.Bergwerk"
       sources:
         - alias: bw
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Bergwerk"
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       assign:
         NummerTeilGrundstueck: "bw.NummerTeilgrundstueck"
@@ -409,9 +399,8 @@ mapping:
         - association: "BergwerkBergwerk_von"
           role: "Bergwerk_von"
           required: true
-          targetObject:
-            rule: bergwerk-grundstueck
-            sourceRef: "bw.Grundstueck"
+          targetRule: bergwerk-grundstueck
+          sourceRef: "bw.Grundstueck"
       joins:
         - left: bw
           right: gs
@@ -424,7 +413,7 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.Grundstueck"
       sources:
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
           where: 'gs.Grundstuecksart == #Liegenschaft and gs.Fiktiv == false and defined(gs.Entstehung) and enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Entstehung), "Mutationsart"), #Normal), "Mutationsart_Status") == #gueltig and (notDefined(gs.Untergang) or enumMap(coalesce(lookupIn("dmav", "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung", "__objectOid", oid(gs.Untergang), "Mutationsart"), #Normal), "Mutationsart_Status") != #gueltig)'
       assign:
@@ -456,9 +445,8 @@ mapping:
         - association: "GrundstueckEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gueltig
-            sourceRef: "gs.Entstehung"
+          targetRule: gs-nachfuehrung-gueltig
+          sourceRef: "gs.Entstehung"
 
     - id: liegenschaft
       target:
@@ -466,11 +454,11 @@ mapping:
         class: "DM01AVCH24LV95D.Liegenschaften.Liegenschaft"
       sources:
         - alias: ls
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft"
           where: "ls.Fiktiv == false"
         - alias: gs
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       assign:
         NummerTeilGrundstueck: "ls.NummerTeilgrundstueck"
@@ -481,9 +469,8 @@ mapping:
         - association: "LiegenschaftLiegenschaft_von"
           role: "Liegenschaft_von"
           required: true
-          targetObject:
-            rule: grundstueck-gueltig
-            sourceRef: "ls.Grundstueck"
+          targetRule: grundstueck-gueltig
+          sourceRef: "ls.Grundstueck"
       joins:
         - left: ls
           right: gs

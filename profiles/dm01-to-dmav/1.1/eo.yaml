@@ -88,7 +88,7 @@ mapping:
         class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.EONachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
           where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       identity:
@@ -106,7 +106,7 @@ mapping:
         class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.EONachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
           where: "nf.Gueltigkeit == #projektiert"
       identity:
@@ -125,10 +125,10 @@ mapping:
       where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       sources:
         - alias: eo
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Einzelobjekte.Einzelobjekt"
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
       joins:
         - left: eo
@@ -250,9 +250,8 @@ mapping:
         - association: "Entstehung_Einzelobjekt"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: eo-nachfuehrung-gueltig
-            sourceRef: "eo.Entstehung"
+          targetRule: eo-nachfuehrung-gueltig
+          sourceRef: "eo.Entstehung"
 
     - id: einzelobjekt-projektiert
       target:
@@ -261,10 +260,10 @@ mapping:
       where: "nf.Gueltigkeit == #projektiert"
       sources:
         - alias: eo
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Einzelobjekte.Einzelobjekt"
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
       joins:
         - left: eo
@@ -386,9 +385,8 @@ mapping:
         - association: "Entstehung_Einzelobjekt"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: eo-nachfuehrung-projektiert
-            sourceRef: "eo.Entstehung"
+          targetRule: eo-nachfuehrung-projektiert
+          sourceRef: "eo.Entstehung"
 
     - id: messpunkt-ohne-entstehung
       target:
@@ -396,7 +394,7 @@ mapping:
         class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Messpunkt"
       sources:
         - alias: ep
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt"
           where: "notDefined(ep.Entstehung)"
       identity:
@@ -415,11 +413,11 @@ mapping:
       where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       sources:
         - alias: ep
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt"
           where: "defined(ep.Entstehung)"
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
       joins:
         - left: ep
@@ -438,9 +436,8 @@ mapping:
         - association: "Entstehung_Messpunkt"
           role: "Entstehung"
           required: false
-          targetObject:
-            rule: eo-nachfuehrung-gueltig
-            sourceRef: "ep.Entstehung"
+          targetRule: eo-nachfuehrung-gueltig
+          sourceRef: "ep.Entstehung"
 
     - id: messpunkt-projektiert
       target:
@@ -449,11 +446,11 @@ mapping:
       where: "nf.Gueltigkeit == #projektiert"
       sources:
         - alias: ep
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt"
           where: "defined(ep.Entstehung)"
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
       joins:
         - left: ep
@@ -472,6 +469,5 @@ mapping:
         - association: "Entstehung_Messpunkt"
           role: "Entstehung"
           required: false
-          targetObject:
-            rule: eo-nachfuehrung-projektiert
-            sourceRef: "ep.Entstehung"
+          targetRule: eo-nachfuehrung-projektiert
+          sourceRef: "ep.Entstehung"

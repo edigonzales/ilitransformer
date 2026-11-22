@@ -68,7 +68,7 @@ class BundleAssemblerTest {
                         class: DmavTestModel.Topic.Target
                       sources:
                         - alias: s
-                          input: dm01
+                          inputs: [dm01]
                           class: Dm01TestModel.Topic.Source
                       assign:
                         Flag: "enumMap(s.Flag, 'SharedEnum')"

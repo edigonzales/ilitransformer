@@ -31,7 +31,8 @@ class IoxFormatRegistryTest {
 
     @Test
     void resolvesXtfInputByPathExtension() {
-        InputBinding binding = new InputBinding(null, Path.of("municipalities.xtf"), null, null, null, null, null);
+        InputBinding binding =
+                new InputBinding(null, Path.of("municipalities.xtf"), null, null, null, null, null, null, null);
         assertThat(registry.findForInput(binding)).get().isInstanceOf(BuiltInInterlisFormatProvider.class);
     }
 
@@ -44,13 +45,14 @@ class IoxFormatRegistryTest {
 
     @Test
     void resolvesShapefileInputByResolvedFormat() {
-        InputBinding binding = new InputBinding(null, Path.of("parcels.shp"), null, "shp", null, null, null);
+        InputBinding binding =
+                new InputBinding(null, Path.of("parcels.shp"), null, "shp", null, null, null, null, null);
         assertThat(registry.findForInput(binding)).get().isInstanceOf(ShapefileFormatProvider.class);
     }
 
     @Test
     void rejectsUnknownInputFormatWithHelpfulMessage() {
-        InputBinding binding = new InputBinding(null, Path.of("source.csv"), null, null, null, null, null);
+        InputBinding binding = new InputBinding(null, Path.of("source.csv"), null, null, null, null, null, null, null);
         FormatOpenContext context = new FormatOpenContext(null, null, new DiagnosticCollector());
         assertThatThrownBy(() -> registry.createReader(binding, context))
                 .isInstanceOf(IllegalArgumentException.class)

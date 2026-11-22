@@ -59,7 +59,7 @@ class CsvFormatProviderTest {
         Files.writeString(csv, "a;b\n1;2\n");
 
         InputBinding binding =
-                new InputBinding("in", csv, "DemoCsvSource", "csv", Map.of("separator", "::"), null, null);
+                new InputBinding("in", csv, "DemoCsvSource", "csv", Map.of("separator", "::"), null, null, null, null);
         FormatOpenContext context = new FormatOpenContext(tempDir, null, new DiagnosticCollector());
 
         assertThatThrownBy(() -> provider.openReader(binding, context))
@@ -69,6 +69,6 @@ class CsvFormatProviderTest {
     }
 
     private static InputBinding inputWithFormat(String format) {
-        return new InputBinding(null, Path.of("a.csv"), null, format, null, null, null);
+        return new InputBinding(null, Path.of("a.csv"), null, format, null, null, null, null, null);
     }
 }

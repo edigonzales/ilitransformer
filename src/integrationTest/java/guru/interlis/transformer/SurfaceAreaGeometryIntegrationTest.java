@@ -8,19 +8,15 @@ import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
-import guru.interlis.transformer.model.IliModelCompileResult;
-import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.support.TestGeometries;
 
 import ch.interlis.iom.IomObject;
 
 import java.nio.file.Path;
-import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class SurfaceAreaGeometryIntegrationTest {
@@ -28,41 +24,12 @@ class SurfaceAreaGeometryIntegrationTest {
     private static final String MODELDIR = "src/test/data/models/";
     private static final String MAPPING_FILE = "src/test/resources/mappings/dm01-to-dmav-surface-area-test.yaml";
 
-    private static TypeSystemFacade dm01Ts;
-    private static TypeSystemFacade dmavTs;
-
-    @BeforeAll
-    static void compileModels() {
-        IliModelService service = new IliModelService();
-
-        IliModelCompileResult dm01Result =
-                service.compileModel("src/test/data/models/dm01-surface-area-test.ili", MODELDIR);
-        if (dm01Result.hasErrors()) {
-            String errors = dm01Result.diagnostics().all().stream()
-                    .map(d -> d.severity() + " " + d.code() + ": " + d.message())
-                    .collect(java.util.stream.Collectors.joining("\n  "));
-            fail("DM01 model compilation errors:\n  " + errors);
-        }
-        dm01Ts = new TypeSystemFacade(dm01Result.transferDescription());
-
-        IliModelCompileResult dmavResult =
-                service.compileModel("src/test/data/models/dmav-surface-area-test.ili", MODELDIR);
-        if (dmavResult.hasErrors()) {
-            String errors = dmavResult.diagnostics().all().stream()
-                    .map(d -> d.severity() + " " + d.code() + ": " + d.message())
-                    .collect(java.util.stream.Collectors.joining("\n  "));
-            fail("DMAV model compilation errors:\n  " + errors);
-        }
-        dmavTs = new TypeSystemFacade(dmavResult.transferDescription());
-    }
-
     @Test
     void compileDetectsSurfaceAndAreaTypes() throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
-        Map<String, TypeSystemFacade> src = Map.of("Dm01SurfaceAreaTestModel", dm01Ts);
-        Map<String, TypeSystemFacade> tgt = Map.of("DmavSurfaceAreaTestModel", dmavTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, src, tgt);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors())
                 .as("Compiler errors: %s", plan.diagnostics().all())
                 .isFalse();

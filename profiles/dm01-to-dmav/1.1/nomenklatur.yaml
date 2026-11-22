@@ -40,7 +40,7 @@ mapping:
         class: "DMAV_Nomenklatur_V1_1.Nomenklatur.NKNachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Nomenklatur.NKNachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
@@ -57,7 +57,7 @@ mapping:
         class: "DMAV_Nomenklatur_V1_1.Nomenklatur.Flurname"
       sources:
         - alias: fn
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Nomenklatur.Flurname"
       identity:
         sourceKey: ["fn.Name"]
@@ -84,9 +84,8 @@ mapping:
         - association: "Entstehung_Flurname"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: nk-nachfuehrung-gueltig
-            sourceRef: "fn.Entstehung"
+          targetRule: nk-nachfuehrung-gueltig
+          sourceRef: "fn.Entstehung"
 
     - id: ortsname
       target:
@@ -94,7 +93,7 @@ mapping:
         class: "DMAV_Nomenklatur_V1_1.Nomenklatur.Ortsname"
       sources:
         - alias: on
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Nomenklatur.Ortsname"
       identity:
         sourceKey: ["on.Name"]
@@ -121,9 +120,8 @@ mapping:
         - association: "Entstehung_Ortsname"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: nk-nachfuehrung-gueltig
-            sourceRef: "on.Entstehung"
+          targetRule: nk-nachfuehrung-gueltig
+          sourceRef: "on.Entstehung"
 
     - id: gelaendename
       target:
@@ -131,10 +129,10 @@ mapping:
         class: "DMAV_Nomenklatur_V1_1.Nomenklatur.Gelaendename"
       sources:
         - alias: gnp
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Nomenklatur.GelaendenamePos"
         - alias: gn
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Nomenklatur.Gelaendename"
       joins:
         - left: gn
@@ -165,6 +163,5 @@ mapping:
         - association: "Entstehung_Gelaendename"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: nk-nachfuehrung-gueltig
-            sourceRef: "gn.Entstehung"
+          targetRule: nk-nachfuehrung-gueltig
+          sourceRef: "gn.Entstehung"

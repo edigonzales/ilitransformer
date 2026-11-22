@@ -5,28 +5,16 @@ import static org.assertj.core.api.Assertions.*;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class MandatoryCoveredByDefaultTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade testModelTs;
-
-    @BeforeAll
-    static void compileModels() {
-        IliModelService service = new IliModelService();
-        var result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
-        assertThat(result.hasErrors()).isFalse();
-        testModelTs = new TypeSystemFacade(result.transferDescription());
-    }
 
     @Test
     void mandatoryAttributeCoveredByRuleDefault() {
@@ -39,8 +27,8 @@ class MandatoryCoveredByDefaultTest {
         rule.defaults = new LinkedHashMap<>();
         rule.defaults.put("Name", "\"default-name\"");
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         // Name should be in assignments via default
         var nameAssign = plan.rules().get(0).assignments().stream()
@@ -60,8 +48,8 @@ class MandatoryCoveredByDefaultTest {
         config.mapping.defaults = new LinkedHashMap<>();
         config.mapping.defaults.put("Name", "\"global-default\"");
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         // Name should be in assignments via mapping default
         var nameAssign = plan.rules().get(0).assignments().stream()
@@ -79,8 +67,8 @@ class MandatoryCoveredByDefaultTest {
         rule.assign.put("Beschreibung", "${s.Beschreibung}");
         // Name (mandatory) not assigned, no defaults
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         // Should still report mandatory missing (upgraded to ERROR in STRICT mode)
         assertThat(plan.diagnostics().all())

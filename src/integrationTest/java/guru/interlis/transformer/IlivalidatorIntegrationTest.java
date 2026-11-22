@@ -2,13 +2,13 @@ package guru.interlis.transformer;
 
 import static org.assertj.core.api.Assertions.*;
 
-import guru.interlis.transformer.app.IlivalidatorRunner;
-import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
 import guru.interlis.transformer.expr.*;
 import guru.interlis.transformer.geometry.IoxGeometryAdapter;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.*;
 import guru.interlis.transformer.support.TestGeometries;
+import guru.interlis.transformer.validation.InProcessIlivalidatorService;
+import guru.interlis.transformer.validation.ValidationResult;
 
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
@@ -44,9 +44,13 @@ class IlivalidatorIntegrationTest {
             writer.flush();
             writer.close();
 
-            ValidationResult result = IlivalidatorRunner.validate(
-                    filePath, List.of("src/test/data/av/models/;https://models.interlis.ch"), "DM01AVCH24LV95D", null);
-            assertThat(result.success()).as("DM01 ITF output validation").isTrue();
+            ValidationResult result = new InProcessIlivalidatorService()
+                    .validate(
+                            filePath,
+                            List.of("src/test/data/av/models/;https://models.interlis.ch"),
+                            List.of("DM01AVCH24LV95D"),
+                            null);
+            assertThat(result.valid()).as("DM01 ITF output validation").isTrue();
         } finally {
             Files.deleteIfExists(filePath);
         }
@@ -90,9 +94,13 @@ class IlivalidatorIntegrationTest {
 
             Path logFile = Files.createTempFile("ilival-", ".log");
             try {
-                ValidationResult result = IlivalidatorRunner.validate(
-                        p, List.of("src/test/data/av/models/;https://models.interlis.ch"), "DM01AVCH24LV95D", logFile);
-                assertThat(result.success()).as("Surface ITF validation").isTrue();
+                ValidationResult result = new InProcessIlivalidatorService()
+                        .validate(
+                                p,
+                                List.of("src/test/data/av/models/;https://models.interlis.ch"),
+                                List.of("DM01AVCH24LV95D"),
+                                logFile);
+                assertThat(result.valid()).as("Surface ITF validation").isTrue();
             } finally {
                 Files.deleteIfExists(logFile);
             }
@@ -106,9 +114,9 @@ class IlivalidatorIntegrationTest {
         Path badFile = Files.createTempFile("bad-", ".xtf");
         try {
             Files.writeString(badFile, "this is not a valid XTF file");
-            ValidationResult result =
-                    IlivalidatorRunner.validate(badFile, List.of("src/test/data/av/models/"), "DM01AVCH24LV95D", null);
-            assertThat(result.success()).isFalse().as("Invalid file should fail validation");
+            ValidationResult result = new InProcessIlivalidatorService()
+                    .validate(badFile, List.of("src/test/data/av/models/"), List.of("DM01AVCH24LV95D"), null);
+            assertThat(result.valid()).isFalse().as("Invalid file should fail validation");
         } finally {
             Files.deleteIfExists(badFile);
         }

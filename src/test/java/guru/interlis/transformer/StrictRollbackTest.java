@@ -13,6 +13,7 @@ import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
 
@@ -20,6 +21,7 @@ import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.IoxReader;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -45,8 +47,8 @@ class StrictRollbackTest {
     @Test
     void strictFailsOnRuntimeError(@TempDir Path tempDir) throws Exception {
         JobConfig config = buildConfig(tempDir.resolve("output.xtf").toString());
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", modelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().hasErrors()).isFalse();
         assertThat(plan.failPolicy()).isEqualTo(FailPolicy.STRICT);
@@ -75,8 +77,8 @@ class StrictRollbackTest {
     void strictSuccessProducesOutput(@TempDir Path tempDir) throws Exception {
         Path output = tempDir.resolve("output.xtf");
         JobConfig config = buildConfig(output.toString());
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", modelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
@@ -123,7 +125,7 @@ class StrictRollbackTest {
         rule.target = tgt;
         JobConfig.SourceSpec src = new JobConfig.SourceSpec();
         src.alias = "s";
-        src.input = "in1";
+        src.inputs = List.of("in1");
         src.clazz = "TestModel.TestTopic.TestClass";
         rule.sources.add(src);
         rule.assign = Map.of("Name", "${s.Name}");

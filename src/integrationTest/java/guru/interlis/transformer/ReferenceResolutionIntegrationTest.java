@@ -18,14 +18,13 @@ import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
 import guru.interlis.transformer.state.SourceRecord;
 import guru.interlis.transformer.validation.InProcessIlivalidatorService;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.IoxEvent;
@@ -44,7 +43,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -53,26 +51,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 class ReferenceResolutionIntegrationTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade p7Ts;
-    private static TransferDescription p7TransferDescription;
-
-    @BeforeAll
-    static void compileModels() {
-        IliModelService service = new IliModelService();
-        IliModelCompileResult result = service.compileModel("src/test/data/models/with-references.ili", MODELDIR);
-        assertThat(result.hasErrors())
-                .as("Model compilation errors: %s", result.diagnostics())
-                .isFalse();
-        p7TransferDescription = result.transferDescription();
-        p7Ts = new TypeSystemFacade(p7TransferDescription);
-    }
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void resolvesReferenceOnlyInTheSelectedSourceBasket(boolean wrongBasket) throws Exception {
         JobConfig config = p7Config(true);
-        Map<String, TypeSystemFacade> tsMap = Map.of("P7Model", p7Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors())
                 .as("Compiler errors: %s", plan.diagnostics().all())
                 .isFalse();
@@ -124,8 +109,8 @@ class ReferenceResolutionIntegrationTest {
     @Test
     void emitsUnresolvedDiagnosticWhenRefNotFound() throws Exception {
         JobConfig config = p7Config(true);
-        Map<String, TypeSystemFacade> tsMap = Map.of("P7Model", p7Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject srcA = new Iom_jObject("P7Model.P7Topic.ClassA", "a1");
@@ -156,8 +141,8 @@ class ReferenceResolutionIntegrationTest {
     @Test
     void emitsMissingMandatoryWhenRequiredRefHasNoSourceValue() throws Exception {
         JobConfig config = p7Config(true);
-        Map<String, TypeSystemFacade> tsMap = Map.of("P7Model", p7Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject srcA = new Iom_jObject("P7Model.P7Topic.ClassA", "a1");
@@ -187,8 +172,8 @@ class ReferenceResolutionIntegrationTest {
     void strictReportsMissingMandatoryTarget() throws Exception {
         JobConfig config = p7Config(true);
         config.job.failPolicy = "strict";
-        Map<String, TypeSystemFacade> tsMap = Map.of("P7Model", p7Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
         assertThat(plan.failPolicy()).isEqualTo(guru.interlis.transformer.mapping.plan.FailPolicy.STRICT);
 
@@ -220,8 +205,8 @@ class ReferenceResolutionIntegrationTest {
     void lenientStillRejectsMissingRequiredReference() throws Exception {
         JobConfig config = p7Config(true);
         config.job.failPolicy = "lenient";
-        Map<String, TypeSystemFacade> tsMap = Map.of("P7Model", p7Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
         assertThat(plan.failPolicy()).isEqualTo(guru.interlis.transformer.mapping.plan.FailPolicy.LENIENT);
 
@@ -332,7 +317,9 @@ class ReferenceResolutionIntegrationTest {
                 FormatIdResolver.fromPath(source).orElseThrow(),
                 Map.of(),
                 td,
-                tsMap.get("BasketRefs"));
+                tsMap.get("BasketRefs"),
+                null,
+                null);
         var context = EvalContext.forRecords(
                 Map.of(
                         "line", new SourceRecord("source", lineBid, line.getobjecttag(), line),
@@ -368,7 +355,9 @@ class ReferenceResolutionIntegrationTest {
         facilityRule.sources.getFirst().inputs = List.of(input.id);
         facilityRule.target.clazz = "BasketRefs.Data.Facility";
 
-        TransformPlan plan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
+        var registry =
+                ModelRegistry.builder().config(config).modelDir(dir.toString()).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors())
                 .as("%s", plan.diagnostics().all())
                 .isFalse();
@@ -420,7 +409,11 @@ class ReferenceResolutionIntegrationTest {
             config.job.outputs.getFirst().path = rejected.toString();
             config.job.failPolicy = "lenient";
             config.mapping.basketStrategy.defaultStrategy = "generateUuid";
-            var rejectedPlan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
+            var rejectedRegistry = ModelRegistry.builder()
+                    .config(config)
+                    .modelDir(dir.toString())
+                    .build();
+            var rejectedPlan = new MappingCompiler().compileTyped(config, rejectedRegistry);
             var errors = runner.runPrepared(new PreparedJob(rejectedPlan, null, dir), options);
             assertThat(errors.all())
                     .anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_UNREPRESENTABLE)
@@ -432,7 +425,11 @@ class ReferenceResolutionIntegrationTest {
             config.job.outputs.getFirst().path = missing.toString();
             config.job.failPolicy = "lenient";
             facilityRule.sources.getFirst().where = "false";
-            var missingPlan = new MappingCompiler().compileTyped(config, tsMap, tsMap);
+            var missingRegistry = ModelRegistry.builder()
+                    .config(config)
+                    .modelDir(dir.toString())
+                    .build();
+            var missingPlan = new MappingCompiler().compileTyped(config, missingRegistry);
             var errors = runner.runPrepared(new PreparedJob(missingPlan, null, dir), options);
             assertThat(errors.all()).anyMatch(d -> d.code().equals(DiagnosticCode.RUN_REF_MISSING_MANDATORY));
             assertThat(missing).doesNotExist();

@@ -38,7 +38,7 @@ mapping:
         class: "DemoPolylineTarget.Catalog.Road"
       sources:
         - alias: src
-          input: shp-input
+          inputs: [shp-input]
           class: "DemoShpPolylineSource.Data.Road"
       identity:
         sourceKey: ["src.id"]

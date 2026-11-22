@@ -135,7 +135,7 @@ class RunBundleCliTest {
                         class: P5Model.P5Topic.TargetClass
                       sources:
                         - alias: src
-                          input: source
+                          inputs: [source]
                           class: P5Model.P5Topic.SourceClass
                       assign:
                         Label: ${src.Name}

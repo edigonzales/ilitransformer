@@ -38,7 +38,7 @@ mapping:
         class: "DemoPolygonTarget.Catalog.Parcel"
       sources:
         - alias: src
-          input: shp-input
+          inputs: [shp-input]
           class: "DemoShpPolygonSource.Data.Parcel"
       identity:
         sourceKey: ["src.id"]

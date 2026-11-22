@@ -13,7 +13,6 @@ import guru.interlis.transformer.mapping.plan.CompileMode;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.ModelRegistry;
-import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
 import guru.interlis.transformer.validation.InProcessIlivalidatorService;
 
@@ -39,7 +38,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 class MandatoryCoveredByBagTest {
     private static final String MODELDIR = "src/test/data/models/";
     private static TransferDescription td;
-    private static TypeSystemFacade ts;
 
     @TempDir
     Path temp;
@@ -49,7 +47,6 @@ class MandatoryCoveredByBagTest {
         var result = new IliModelService().compileModel(MODELDIR + "mandatory-bag.ili", MODELDIR);
         assertThat(result.hasErrors()).as("%s", result.diagnostics().all()).isFalse();
         td = result.transferDescription();
-        ts = new TypeSystemFacade(td);
     }
 
     @ParameterizedTest
@@ -190,9 +187,7 @@ class MandatoryCoveredByBagTest {
     }
 
     private static TransformPlan compile(JobConfig config) {
-        var registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(Map.of("MandatoryBag", ts), Map.of("MandatoryBag", ts));
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
         return new MappingCompiler().compileTyped(config, registry);
     }
 

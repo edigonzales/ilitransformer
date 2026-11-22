@@ -117,40 +117,4 @@ class MappingCompilerTest {
         assertThat(result.diagnostics().hasErrors()).isTrue();
         assertThat(result.diagnostics().all()).isNotEmpty();
     }
-
-    @Test
-    void backwardCompatFlatTargetClassStillWorks() {
-        JobConfig config = new JobConfig();
-        config.version = 1;
-        JobConfig.InputSpec in = new JobConfig.InputSpec();
-        in.id = "in1";
-        in.model = "A";
-        in.path = "in.xtf";
-        config.job.inputs.add(in);
-        JobConfig.OutputSpec out = new JobConfig.OutputSpec();
-        out.id = "out1";
-        out.model = "B";
-        out.path = "out.xtf";
-        config.job.outputs.add(out);
-
-        JobConfig.RuleSpec rule = new JobConfig.RuleSpec();
-        rule.id = "r1";
-        rule.targetClass = "M.T.C"; // flat format
-        rule.output = "out1"; // flat format
-        JobConfig.SourceSpec src = new JobConfig.SourceSpec();
-        src.alias = "s";
-        src.input = "in1"; // single string input
-        src.clazz = "M.S.C";
-        rule.sources.add(src);
-        config.mapping.rules.add(rule);
-
-        assertThatCode(() -> new MappingCompiler().validate(config)).doesNotThrowAnyException();
-
-        // Effective accessors also work on flat format after normalization
-        var normalized = new MappingCompiler().compile(config).config();
-        JobConfig.RuleSpec loadedRule = normalized.mapping.rules.get(0);
-        assertThat(loadedRule.getEffectiveTargetClass()).isEqualTo("M.T.C");
-        assertThat(loadedRule.getEffectiveTargetOutput()).isEqualTo("out1");
-        assertThat(loadedRule.sources.get(0).getInputIds()).containsExactly("in1");
-    }
 }

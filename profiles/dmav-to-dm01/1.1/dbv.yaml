@@ -40,7 +40,7 @@ mapping:
         class: "DM01AVCH24LV95D.Rutschgebiete.Rutschung"
       sources:
         - alias: dbv
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_DauerndeBodenverschiebungen_V1_1.DauerndeBodenverschiebungen.DauerndeBodenverschiebung"
       identity:
         sourceKey: ["dbv.NBIdent", "dbv.Identifikator"]

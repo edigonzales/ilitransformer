@@ -51,7 +51,7 @@ mapping:
         class: "DM01AVCH24LV95D.Rohrleitungen.RLNachfuehrung"
       sources:
         - alias: rl
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Rohrleitungen_V1_1.Rohrleitungen.RLNachfuehrung"
       identity:
         sourceKey: ["rl.NBIdent", "rl.Identifikator"]
@@ -69,7 +69,7 @@ mapping:
         class: "DM01AVCH24LV95D.Rohrleitungen.Leitungsobjekt"
       sources:
         - alias: lo
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Rohrleitungen_V1_1.Rohrleitungen.Leitungsobjekt"
       assign:
         Betreiber: "lo.Betreiber"
@@ -79,9 +79,8 @@ mapping:
         - association: "LeitungsobjektEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: rl-nachfuehrung
-            sourceRef: "lo.Entstehung"
+          targetRule: rl-nachfuehrung
+          sourceRef: "lo.Entstehung"
       bags:
         Punktelement:
           mode: expand
@@ -119,7 +118,7 @@ mapping:
         class: "DM01AVCH24LV95D.Rohrleitungen.Signalpunkt"
       sources:
         - alias: sig
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Rohrleitungen_V1_1.Rohrleitungen.Signal"
       assign:
         Nummer: "sig.Nummer"
@@ -132,9 +131,8 @@ mapping:
         - association: "SignalpunktEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: rl-nachfuehrung
-            sourceRef: "sig.Entstehung"
+          targetRule: rl-nachfuehrung
+          sourceRef: "sig.Entstehung"
       bags:
         Textposition:
           mode: expand
@@ -158,7 +156,7 @@ mapping:
         class: "DM01AVCH24LV95D.Rohrleitungen.Einzelpunkt"
       sources:
         - alias: mp
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Rohrleitungen_V1_1.Rohrleitungen.Messpunkt"
       assign:
         Identifikator: "coalesce(mp.Nummer, '')"
@@ -170,6 +168,5 @@ mapping:
         - association: "EinzelpunktEntstehung"
           role: "Entstehung"
           required: false
-          targetObject:
-            rule: rl-nachfuehrung
-            sourceRef: "mp.Entstehung"
+          targetRule: rl-nachfuehrung
+          sourceRef: "mp.Entstehung"

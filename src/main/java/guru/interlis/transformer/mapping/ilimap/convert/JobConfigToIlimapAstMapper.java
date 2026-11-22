@@ -198,10 +198,9 @@ public final class JobConfigToIlimapAstMapper {
         }
 
         for (JobConfig.SourceSpec source : rule.sources) {
-            List<String> inputIds = JobConfigNormalizer.getInputIds(source);
             elements.add(new IlimapSourceStmt(
                     applyAlias(source.alias, aliasRenames),
-                    inputIds,
+                    source.inputs != null ? source.inputs : List.of(),
                     source.clazz,
                     source.where != null ? exprRewrite(source.where, enumNames, aliasRenames) : null,
                     SYNTHETIC));
@@ -327,30 +326,14 @@ public final class JobConfigToIlimapAstMapper {
     }
 
     private IlimapRefBlock mapRef(JobConfig.RefMapping ref, Set<String> enumNames, Map<String, String> aliasRenames) {
-        String targetRuleId = null;
-        IlimapExpressionText sourceRef = null;
-
-        if (ref.targetObject != null) {
-            targetRuleId = ref.targetObject.rule;
-            if (ref.targetObject.sourceRef != null) {
-                sourceRef = exprRewrite(ref.targetObject.sourceRef, enumNames, aliasRenames);
-            }
-        } else if (ref.targetRule != null) {
-            targetRuleId = ref.targetRule;
-            if (ref.sourceRef != null) {
-                sourceRef = exprRewrite(ref.sourceRef, enumNames, aliasRenames);
-            }
-        }
-
-        String refName = ref.target;
-        if (refName == null || refName.isBlank()) {
-            refName = ref.role;
-        }
+        String refName = ref.role;
         if (refName == null || refName.isBlank()) {
             refName = ref.association;
         }
-
-        return new IlimapRefBlock(refName, ref.association, ref.role, ref.required, targetRuleId, sourceRef, SYNTHETIC);
+        IlimapExpressionText sourceRef =
+                ref.sourceRef != null ? exprRewrite(ref.sourceRef, enumNames, aliasRenames) : null;
+        return new IlimapRefBlock(
+                refName, ref.association, ref.role, ref.required, ref.targetRule, sourceRef, SYNTHETIC);
     }
 
     private IlimapCreateBlock mapCreate(

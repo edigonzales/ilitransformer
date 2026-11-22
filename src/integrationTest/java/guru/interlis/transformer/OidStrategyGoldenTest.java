@@ -9,12 +9,9 @@ import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelCompileResult;
-import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.InMemoryStateStore;
 
-import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.IoxEvent;
@@ -25,28 +22,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class OidStrategyGoldenTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade p5ModelTs;
-    private static TransferDescription p5TransferDescription;
-
-    @BeforeAll
-    static void compileModels() {
-        IliModelService service = new IliModelService();
-        IliModelCompileResult result = service.compileModel("src/test/data/models/p5-test.ili", MODELDIR);
-        assertThat(result.hasErrors()).isFalse();
-        p5TransferDescription = result.transferDescription();
-        p5ModelTs = new TypeSystemFacade(p5TransferDescription);
-    }
 
     private TransformPlan compileConfig(JobConfig config) {
-        Map<String, TypeSystemFacade> sourceTs = Map.of("P5Model", p5ModelTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("P5Model", p5ModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors())
                 .as("Compiler errors: %s", plan.diagnostics().all())
                 .isFalse();

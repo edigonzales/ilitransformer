@@ -26,19 +26,4 @@ public record InputBinding(
         options = options == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(options));
         queries = queries == null ? List.of() : List.copyOf(queries);
     }
-
-    /**
-     * Backward-compatible constructor for non-JDBC bindings (no connection/queries). Keeps existing
-     * call sites that predate the JDBC format support working unchanged.
-     */
-    public InputBinding(
-            String inputId,
-            Path path,
-            String declaredModelName,
-            String format,
-            Map<String, String> options,
-            TransferDescription transferDescription,
-            TypeSystemFacade typeSystem) {
-        this(inputId, path, declaredModelName, format, options, transferDescription, typeSystem, null, null);
-    }
 }

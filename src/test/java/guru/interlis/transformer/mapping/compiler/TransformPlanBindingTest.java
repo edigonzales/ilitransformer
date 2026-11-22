@@ -7,9 +7,7 @@ import guru.interlis.transformer.mapping.plan.FailPolicy;
 import guru.interlis.transformer.mapping.plan.InputBinding;
 import guru.interlis.transformer.mapping.plan.OutputBinding;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.ModelRegistry;
-import guru.interlis.transformer.model.TypeSystemFacade;
 
 import java.util.List;
 import java.util.Map;
@@ -20,21 +18,14 @@ import org.junit.jupiter.api.Test;
 class TransformPlanBindingTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade testModelTs;
     private static ModelRegistry modelRegistry;
     private static JobConfig testConfig;
 
     @BeforeAll
     static void compileModels() {
-        IliModelService service = new IliModelService();
-        var result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
-        assertThat(result.hasErrors()).isFalse();
-        testModelTs = new TypeSystemFacade(result.transferDescription());
-
         testConfig = minimalConfig();
-        modelRegistry = ModelRegistry.builder()
-                .config(testConfig)
-                .buildWithSuppliedTypeSystems(Map.of("TestModel", testModelTs), Map.of("TestModel", testModelTs));
+        modelRegistry =
+                ModelRegistry.builder().config(testConfig).modelDir(MODELDIR).build();
     }
 
     private static JobConfig minimalConfig() {

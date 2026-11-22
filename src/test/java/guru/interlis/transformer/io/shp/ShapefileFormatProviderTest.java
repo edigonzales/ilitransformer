@@ -59,8 +59,8 @@ class ShapefileFormatProviderTest {
 
     @Test
     void openReaderFailsWithHelpfulMessageForMissingFile() {
-        InputBinding binding =
-                new InputBinding("parcels", Path.of("parcels.shp"), "DemoShpSource", "shp", null, null, null);
+        InputBinding binding = new InputBinding(
+                "parcels", Path.of("parcels.shp"), "DemoShpSource", "shp", null, null, null, null, null);
         FormatOpenContext context = new FormatOpenContext(null, null, new DiagnosticCollector());
         assertThatThrownBy(() -> provider.openReader(binding, context))
                 .isInstanceOf(Exception.class)
@@ -68,7 +68,7 @@ class ShapefileFormatProviderTest {
     }
 
     private static InputBinding inputWithFormat(String format) {
-        return new InputBinding(null, Path.of("a.shp"), null, format, null, null, null);
+        return new InputBinding(null, Path.of("a.shp"), null, format, null, null, null, null, null);
     }
 
     private static OutputBinding outputWithFormat(String format) {

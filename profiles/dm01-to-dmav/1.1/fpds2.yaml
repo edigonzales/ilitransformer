@@ -42,7 +42,7 @@ mapping:
         class: "KGKCGC_FPDS2_V1_1.FPDS2.Zustaendigkeit"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent"]
@@ -56,7 +56,7 @@ mapping:
         class: "KGKCGC_FPDS2_V1_1.FPDS2.Zustaendigkeit"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent"]
@@ -70,7 +70,7 @@ mapping:
         class: "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtMassstab"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent"]
@@ -83,7 +83,7 @@ mapping:
         class: "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtMassstab"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent"]
@@ -96,7 +96,7 @@ mapping:
         class: "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtGeodienst"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent"]
@@ -110,7 +110,7 @@ mapping:
         class: "KGKCGC_FPDS2_V1_1.FPDS2.UebersichtGeodienst"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent"]
@@ -126,7 +126,7 @@ mapping:
         class: "KGKCGC_FPDS2_V1_1.FPDS2.FixpunkteNachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
@@ -144,7 +144,7 @@ mapping:
         class: "KGKCGC_FPDS2_V1_1.FPDS2.FixpunkteNachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
@@ -164,7 +164,7 @@ mapping:
         class: "KGKCGC_FPDS2_V1_1.FPDS2.Fixpunkt"
       sources:
         - alias: p
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie2.LFP2"
       identity:
         sourceKey: ["p.NBIdent", "p.Nummer"]
@@ -182,21 +182,18 @@ mapping:
         - association: "FP_Zustaendigkeit"
           role: "ZS"
           required: true
-          targetObject:
-            rule: fpds2-zustaendigkeit
-            sourceRef: "p.Entstehung"
+          targetRule: fpds2-zustaendigkeit
+          sourceRef: "p.Entstehung"
         - association: "FP_UebersichtMassstab"
           role: "UM"
           required: true
-          targetObject:
-            rule: fpds2-massstab
-            sourceRef: "p.Entstehung"
+          targetRule: fpds2-massstab
+          sourceRef: "p.Entstehung"
         - association: "FP_UebersichtGeodienst"
           role: "UG"
           required: true
-          targetObject:
-            rule: fpds2-geodienst
-            sourceRef: "p.Entstehung"
+          targetRule: fpds2-geodienst
+          sourceRef: "p.Entstehung"
 
     - id: fixpunkt-hfp2
       target:
@@ -204,7 +201,7 @@ mapping:
         class: "KGKCGC_FPDS2_V1_1.FPDS2.Fixpunkt"
       sources:
         - alias: p
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie2.HFP2"
       identity:
         sourceKey: ["p.NBIdent", "p.Nummer"]
@@ -221,18 +218,15 @@ mapping:
         - association: "FP_Zustaendigkeit"
           role: "ZS"
           required: true
-          targetObject:
-            rule: fpds2-zustaendigkeit-hfp2
-            sourceRef: "p.Entstehung"
+          targetRule: fpds2-zustaendigkeit-hfp2
+          sourceRef: "p.Entstehung"
         - association: "FP_UebersichtMassstab"
           role: "UM"
           required: true
-          targetObject:
-            rule: fpds2-massstab-hfp2
-            sourceRef: "p.Entstehung"
+          targetRule: fpds2-massstab-hfp2
+          sourceRef: "p.Entstehung"
         - association: "FP_UebersichtGeodienst"
           role: "UG"
           required: true
-          targetObject:
-            rule: fpds2-geodienst-hfp2
-            sourceRef: "p.Entstehung"
+          targetRule: fpds2-geodienst-hfp2
+          sourceRef: "p.Entstehung"

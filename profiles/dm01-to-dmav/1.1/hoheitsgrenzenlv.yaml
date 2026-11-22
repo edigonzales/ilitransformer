@@ -41,7 +41,7 @@ mapping:
         class: "DMAV_HoheitsgrenzenLV_V1_0.HoheitsgrenzenLV.Landesgrenze"
       sources:
         - alias: lg
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Landesgrenzen.Landesgrenzabschnitt"
       assign:
         Geometrie: "lg.Geometrie"

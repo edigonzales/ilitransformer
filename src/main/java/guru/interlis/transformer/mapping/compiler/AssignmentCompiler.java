@@ -4,7 +4,6 @@ import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.expr.ExpressionCompiler;
-import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.AssignmentPlan;
 import guru.interlis.transformer.mapping.plan.CompiledExpression;
 import guru.interlis.transformer.mapping.plan.ExpressionCompileContext;
@@ -21,15 +20,13 @@ import java.util.Map;
 final class AssignmentCompiler {
 
     AssignmentPlan compileAssignment(
-            JobConfig.AttributeMapping attr,
+            String targetName,
+            String expr,
             AbstractClassDef<?> targetClass,
             TypeSystemFacade targetTs,
             Map<String, SourcePlan> sourcesByAlias,
             String ruleId,
             CompilerContext ctx) {
-        String targetName = attr.target;
-        String expr = attr.expr;
-
         AttributeDef targetAttr = null;
         if (targetTs != null) {
             targetAttr = targetTs.findAttribute(targetClass, targetName);

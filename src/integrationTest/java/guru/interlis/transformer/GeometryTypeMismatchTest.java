@@ -1,44 +1,19 @@
 package guru.interlis.transformer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelCompileResult;
-import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
-
-import java.util.Map;
+import guru.interlis.transformer.model.ModelRegistry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class GeometryTypeMismatchTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade dm01Ts;
-    private static TypeSystemFacade dmavGeomTs;
-
-    @BeforeAll
-    static void compileModels() {
-        IliModelService service = new IliModelService();
-
-        IliModelCompileResult dm01Result = service.compileModel("src/test/data/models/dm01-geom-test.ili", MODELDIR);
-        if (dm01Result.hasErrors()) {
-            fail("DM01 model compilation errors:\n  " + formatDiagnostics(dm01Result));
-        }
-        dm01Ts = new TypeSystemFacade(dm01Result.transferDescription());
-
-        IliModelCompileResult dmavResult = service.compileModel("src/test/data/models/dmav-geom-test.ili", MODELDIR);
-        if (dmavResult.hasErrors()) {
-            fail("DMAV model compilation errors:\n  " + formatDiagnostics(dmavResult));
-        }
-        dmavGeomTs = new TypeSystemFacade(dmavResult.transferDescription());
-    }
 
     @Test
     void coordToSurfaceMappingProducesDiagnostic() throws Exception {
@@ -71,7 +46,7 @@ class GeometryTypeMismatchTest {
                         class: "DmavGeomTestModel.Fixpunkte.LFP3"
                       sources:
                         - alias: p
-                          input: dm01
+                          inputs: [dm01]
                           class: "Dm01GeomTestModel.Fixpunkte.LFP3"
                       identity:
                         sourceKey: ["p.NBIdent"]
@@ -85,8 +60,8 @@ class GeometryTypeMismatchTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(yaml, JobConfig.class);
 
-        TransformPlan plan = new MappingCompiler()
-                .compileTyped(config, Map.of("Dm01GeomTestModel", dm01Ts), Map.of("DmavGeomTestModel", dmavTs()));
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().hasErrors())
                 .as(
@@ -126,7 +101,7 @@ class GeometryTypeMismatchTest {
                         class: "DmavGeomTestModel.Fixpunkte.LFP3"
                       sources:
                         - alias: p
-                          input: dm01
+                          inputs: [dm01]
                           class: "Dm01GeomTestModel.Fixpunkte.LFP3"
                       identity:
                         sourceKey: ["p.NBIdent"]
@@ -140,24 +115,13 @@ class GeometryTypeMismatchTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(yaml, JobConfig.class);
 
-        TransformPlan plan = new MappingCompiler()
-                .compileTyped(config, Map.of("Dm01GeomTestModel", dm01Ts), Map.of("DmavGeomTestModel", dmavTs()));
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().hasErrors())
                 .as(
                         "Same geometry types should be compatible: %s",
                         plan.diagnostics().all())
                 .isFalse();
-    }
-
-    private TypeSystemFacade dmavTs() {
-        return dmavGeomTs;
-    }
-
-    private static String formatDiagnostics(IliModelCompileResult result) {
-        return result.diagnostics().all().stream()
-                .map(d -> d.severity() + " " + d.code() + ": " + d.message())
-                .reduce((left, right) -> left + "\n  " + right)
-                .orElse("<none>");
     }
 }

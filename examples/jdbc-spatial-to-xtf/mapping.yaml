@@ -46,7 +46,7 @@ mapping:
         class: "DemoJdbcSpatialTarget.Catalog.Station"
       sources:
         - alias: src
-          input: jdbc-input
+          inputs: [jdbc-input]
           class: "DemoJdbcSpatialSource.Data.Station"
       identity:
         sourceKey: ["src.identifier"]

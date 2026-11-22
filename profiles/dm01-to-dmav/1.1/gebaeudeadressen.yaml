@@ -49,7 +49,7 @@ mapping:
         class: "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.GANachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gebaeudeadressen.GEBNachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
@@ -65,7 +65,7 @@ mapping:
         class: "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Lokalisation"
       sources:
         - alias: lok
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gebaeudeadressen.Lokalisation"
       assign:
         Nummerierungsprinzip: "lok.Nummerierungsprinzip"
@@ -114,9 +114,8 @@ mapping:
         - association: "Entstehung_Lokalisation"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: ga-nachfuehrung-gueltig
-            sourceRef: "lok.Entstehung"
+          targetRule: ga-nachfuehrung-gueltig
+          sourceRef: "lok.Entstehung"
 
     - id: gebaeudeeingang
       target:
@@ -124,7 +123,7 @@ mapping:
         class: "DMAV_Gebaeudeadressen_V1_1.Gebaeudeadressen.Gebaeudeeingang"
       sources:
         - alias: ge
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gebaeudeadressen.Gebaeudeeingang"
       assign:
         Gebaeudestatus: "ge.Status"
@@ -152,12 +151,10 @@ mapping:
         - association: "Entstehung_Gebaeudeeingang"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: ga-nachfuehrung-gueltig
-            sourceRef: "ge.Entstehung"
+          targetRule: ga-nachfuehrung-gueltig
+          sourceRef: "ge.Entstehung"
         - association: "LokalisationGebaeudeeingang"
           role: "Lokalisation"
           required: false
-          targetObject:
-            rule: lokalisation
-            sourceRef: "ge.Gebaeudeeingang_von"
+          targetRule: lokalisation
+          sourceRef: "ge.Gebaeudeeingang_von"

@@ -30,7 +30,7 @@ mapping:
         class: "DmavSurfaceAreaTestModel.TestTopic.SurfaceClass"
       sources:
         - alias: s
-          input: dm01
+          inputs: [dm01]
           class: "Dm01SurfaceAreaTestModel.TestTopic.SurfaceClass"
       identity:
         sourceKey: ["s.NBIdent"]
@@ -44,7 +44,7 @@ mapping:
         class: "DmavSurfaceAreaTestModel.TestTopic.AreaClass"
       sources:
         - alias: a
-          input: dm01
+          inputs: [dm01]
           class: "Dm01SurfaceAreaTestModel.TestTopic.AreaClass"
       identity:
         sourceKey: ["a.NBIdent"]

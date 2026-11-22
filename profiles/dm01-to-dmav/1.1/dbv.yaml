@@ -40,7 +40,7 @@ mapping:
         class: "DMAV_DauerndeBodenverschiebungen_V1_1.DauerndeBodenverschiebungen.DBVNachfuehrung"
       sources:
         - alias: r
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Rutschgebiete.Rutschung"
       identity:
         sourceKey: ["r.NBIdent", "r.Identifikator"]
@@ -57,7 +57,7 @@ mapping:
         class: "DMAV_DauerndeBodenverschiebungen_V1_1.DauerndeBodenverschiebungen.DauerndeBodenverschiebung"
       sources:
         - alias: r
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Rutschgebiete.Rutschung"
       identity:
         sourceKey: ["r.NBIdent", "r.Identifikator"]
@@ -85,6 +85,5 @@ mapping:
         - association: "Entstehung_DauerndeBodenverschiebung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: dbv-nachfuehrung-gueltig
-            sourceRef: "r"
+          targetRule: dbv-nachfuehrung-gueltig
+          sourceRef: "r"

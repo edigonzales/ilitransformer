@@ -120,7 +120,7 @@ class IlimapEndToEndTransformationTest {
                         class: "P5Model.P5Topic.TargetClass"
                       sources:
                         - alias: s
-                          input: src
+                          inputs: [src]
                           class: "P5Model.P5Topic.SourceClass"
                       assign:
                         Label: "s.Name"

@@ -35,7 +35,7 @@ mapping:
         class: "DmavTestModel.Fixpunkte.HFP3Nachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "Dm01TestModel.Fixpunkte.HFP3Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
@@ -51,7 +51,7 @@ mapping:
         class: "DmavTestModel.Fixpunkte.HFP3"
       sources:
         - alias: p
-          input: dm01
+          inputs: [dm01]
           class: "Dm01TestModel.Fixpunkte.HFP3"
       identity:
         sourceKey: ["p.NBIdent", "p.Nummer"]
@@ -80,6 +80,5 @@ mapping:
         - association: "Entstehung_HFP3"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: hfp3-nachfuehrung
-            sourceRef: "p.Entstehung"
+          targetRule: hfp3-nachfuehrung
+          sourceRef: "p.Entstehung"

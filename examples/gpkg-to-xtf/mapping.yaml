@@ -32,7 +32,7 @@ mapping:
         class: "DemoTarget.Catalog.Municipality"
       sources:
         - alias: src
-          input: gpkg-input
+          inputs: [gpkg-input]
           class: "DemoGpkgSource.Data.Municipality"
       identity:
         sourceKey: ["src.bfsnr"]

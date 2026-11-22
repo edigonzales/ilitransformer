@@ -14,9 +14,7 @@ import guru.interlis.transformer.expr.ExpressionEngine;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelCompileResult;
-import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.InMemoryStateStore;
 import guru.interlis.transformer.state.TargetObjectKey;
 
@@ -29,7 +27,6 @@ import ch.interlis.iox.ObjectEvent;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -38,16 +35,6 @@ import org.mockito.ArgumentCaptor;
 class ReferenceMappingTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade associationTs;
-
-    @BeforeAll
-    static void compileModel() {
-        IliModelCompileResult result = new IliModelService().compileModel(MODELDIR + "with-associations.ili", MODELDIR);
-        assertThat(result.hasErrors())
-                .as("Model compilation errors: %s", result.diagnostics().all())
-                .isFalse();
-        associationTs = new TypeSystemFacade(result.transferDescription());
-    }
 
     @Test
     void sourceRefEvaluatesOidFunctionForJoinedSource() throws Exception {
@@ -173,8 +160,8 @@ class ReferenceMappingTest {
     }
 
     private static TransformPlan compileMapping(JobConfig config) {
-        return new MappingCompiler()
-                .compileTyped(config, Map.of("AssocModel", associationTs), Map.of("AssocModel", associationTs));
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        return new MappingCompiler().compileTyped(config, registry);
     }
 
     private static JobConfig oidExpressionConfig() {

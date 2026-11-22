@@ -168,17 +168,6 @@ public final class MappingCompiler {
                 enumMaps);
     }
 
-    @Deprecated
-    public TransformPlan compileTyped(
-            JobConfig config,
-            Map<String, TypeSystemFacade> sourceTypeSystems,
-            Map<String, TypeSystemFacade> targetTypeSystems) {
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(sourceTypeSystems, targetTypeSystems);
-        return compileTyped(config, registry);
-    }
-
     public void validate(JobConfig config) {
         CompileResult result = compile(config);
         if (result.diagnostics().hasErrors()) {

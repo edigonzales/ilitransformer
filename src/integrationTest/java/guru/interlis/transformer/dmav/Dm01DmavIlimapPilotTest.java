@@ -15,7 +15,7 @@ import guru.interlis.transformer.mapping.plan.RulePlan;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.InMemoryStateStore;
 
 import ch.interlis.ili2c.metamodel.TransferDescription;
@@ -51,8 +51,6 @@ class Dm01DmavIlimapPilotTest {
     private static final String PRODUCTION_YAML = "profiles/dm01-to-dmav/1.1/lfp3.yaml";
     private static final String PRODUCTION_ILIMAP = "profiles/dm01-to-dmav/1.1/lfp3.ilimap";
 
-    private static TypeSystemFacade dm01Ts;
-    private static TypeSystemFacade dmavTs;
     private static TransferDescription dmavTransferDescription;
 
     @BeforeAll
@@ -66,7 +64,6 @@ class Dm01DmavIlimapPilotTest {
                     .collect(Collectors.joining("\n  "));
             fail("DM01 model compilation errors:\n  " + errors);
         }
-        dm01Ts = new TypeSystemFacade(dm01Result.transferDescription());
 
         IliModelCompileResult dmavResult = service.compileModel(MODELDIR + "dmav-test.ili", MODELDIR);
         if (dmavResult.hasErrors()) {
@@ -76,7 +73,6 @@ class Dm01DmavIlimapPilotTest {
             fail("DMAV model compilation errors:\n  " + errors);
         }
         dmavTransferDescription = dmavResult.transferDescription();
-        dmavTs = new TypeSystemFacade(dmavTransferDescription);
     }
 
     @Test
@@ -87,11 +83,20 @@ class Dm01DmavIlimapPilotTest {
         IlimapLoader ilimapLoader = new IlimapLoader();
         JobConfig ilimapConfig = ilimapLoader.load(Path.of(ILIMAP_MAPPING));
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("Dm01TestModel", dm01Ts);
-        Map<String, TypeSystemFacade> targetTs = Map.of("DmavTestModel", dmavTs);
-
-        TransformPlan yamlPlan = new MappingCompiler().compileTyped(yamlConfig, sourceTs, targetTs);
-        TransformPlan ilimapPlan = new MappingCompiler().compileTyped(ilimapConfig, sourceTs, targetTs);
+        TransformPlan yamlPlan = new MappingCompiler()
+                .compileTyped(
+                        yamlConfig,
+                        ModelRegistry.builder()
+                                .config(yamlConfig)
+                                .modelDir(MODELDIR)
+                                .build());
+        TransformPlan ilimapPlan = new MappingCompiler()
+                .compileTyped(
+                        ilimapConfig,
+                        ModelRegistry.builder()
+                                .config(ilimapConfig)
+                                .modelDir(MODELDIR)
+                                .build());
 
         assertThat(yamlPlan.diagnostics().hasErrors())
                 .as(
@@ -125,9 +130,8 @@ class Dm01DmavIlimapPilotTest {
         IlimapLoader ilimapLoader = new IlimapLoader();
         JobConfig config = ilimapLoader.load(Path.of(ILIMAP_MAPPING));
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("Dm01TestModel", dm01Ts);
-        Map<String, TypeSystemFacade> targetTs = Map.of("DmavTestModel", dmavTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject nf = new Iom_jObject("Dm01TestModel.Fixpunkte.LFP3Nachfuehrung", "1");

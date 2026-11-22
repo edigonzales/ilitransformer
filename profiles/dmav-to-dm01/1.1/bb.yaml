@@ -74,7 +74,7 @@ mapping:
         class: "DM01AVCH24LV95D.Bodenbedeckung.BBNachfuehrung"
       sources:
         - alias: nf
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.BBNachfuehrung"
           where: "lookup('DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung', 'Entstehung', oid(nf), 'Objektstatus') != #projektiert"
       identity:
@@ -93,7 +93,7 @@ mapping:
         class: "DM01AVCH24LV95D.Bodenbedeckung.BBNachfuehrung"
       sources:
         - alias: nf
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.BBNachfuehrung"
           where: "lookup('DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung', 'Entstehung', oid(nf), 'Objektstatus') == #projektiert"
       identity:
@@ -112,7 +112,7 @@ mapping:
         class: "DM01AVCH24LV95D.Bodenbedeckung.BoFlaeche"
       sources:
         - alias: b
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung"
           where: "b.Fiktiv == 'false' and b.Objektstatus != #projektiert"
       identity:
@@ -198,9 +198,8 @@ mapping:
         - association: "BoFlaecheEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: bb-nachfuehrung-gueltig
-            sourceRef: "b.Entstehung"
+          targetRule: bb-nachfuehrung-gueltig
+          sourceRef: "b.Entstehung"
 
     - id: boflaeche-projektiert
       target:
@@ -208,7 +207,7 @@ mapping:
         class: "DM01AVCH24LV95D.Bodenbedeckung.ProjBoFlaeche"
       sources:
         - alias: b
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Bodenbedeckung"
           where: "b.Fiktiv == 'false' and b.Objektstatus == #projektiert"
       identity:
@@ -294,9 +293,8 @@ mapping:
         - association: "ProjBoFlaecheEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: bb-nachfuehrung-projektiert
-            sourceRef: "b.Entstehung"
+          targetRule: bb-nachfuehrung-projektiert
+          sourceRef: "b.Entstehung"
 
     - id: einzelpunkt
       target:
@@ -304,7 +302,7 @@ mapping:
         class: "DM01AVCH24LV95D.Bodenbedeckung.Einzelpunkt"
       sources:
         - alias: m
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Bodenbedeckung_V1_1.Bodenbedeckung.Messpunkt"
       identity:
         sourceKey: ["m.Nummer"]
@@ -318,6 +316,5 @@ mapping:
         - association: "EinzelpunktEntstehung"
           role: "Entstehung"
           required: false
-          targetObject:
-            rule: bb-nachfuehrung-gueltig
-            sourceRef: "m.Entstehung"
+          targetRule: bb-nachfuehrung-gueltig
+          sourceRef: "m.Entstehung"

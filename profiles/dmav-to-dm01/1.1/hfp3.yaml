@@ -41,7 +41,7 @@ mapping:
         class: "DM01AVCH24LV95D.FixpunkteKategorie3.HFP3Nachfuehrung"
       sources:
         - alias: nf
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.HFP3Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
@@ -58,7 +58,7 @@ mapping:
         class: "DM01AVCH24LV95D.FixpunkteKategorie3.HFP3"
       sources:
         - alias: p
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.HFP3"
       identity:
         sourceKey: ["p.NBIdent", "p.Nummer"]
@@ -74,9 +74,8 @@ mapping:
       refs:
         - role: "Entstehung"
           required: true
-          targetObject:
-            rule: hfp3-nachfuehrung
-            sourceRef: "p.Entstehung"
+          targetRule: hfp3-nachfuehrung
+          sourceRef: "p.Entstehung"
       bags:
         Textposition:
           mode: expand

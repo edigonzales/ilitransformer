@@ -26,10 +26,6 @@ final class RefCompiler {
             String ruleId,
             CompilerContext ctx) {
         String roleName = ref.role;
-        if (roleName == null && ref.target != null) {
-            roleName = ref.target; // backward compat
-        }
-
         if (roleName != null && targetTs != null) {
             TypeSystemFacade.ReferenceInfo referenceInfo =
                     targetTs.resolveReference(CompileUtils.getScopedName(targetClass), roleName);
@@ -91,16 +87,7 @@ final class RefCompiler {
             }
         }
 
-        String association = ref.association;
         String sourceRef = ref.sourceRef;
-        String targetRuleId = ref.targetRule;
-        if (targetRuleId == null && ref.targetObject != null) {
-            targetRuleId = ref.targetObject.rule;
-            if (sourceRef == null) {
-                sourceRef = ref.targetObject.sourceRef;
-            }
-        }
-
         if (sourceRef != null && !sourceRef.isBlank()) {
             Map<String, SourcePlan> sourcesByAlias = new LinkedHashMap<>();
             for (SourcePlan sourcePlan : sourcePlans) {
@@ -130,6 +117,6 @@ final class RefCompiler {
             }
         }
 
-        return new RefPlan(roleName, association, sourceRef, targetRuleId, ref.required);
+        return new RefPlan(roleName, ref.association, sourceRef, ref.targetRule, ref.required);
     }
 }

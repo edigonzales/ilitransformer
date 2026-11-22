@@ -4,28 +4,16 @@ import static org.assertj.core.api.Assertions.*;
 
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class DefaultPrecedenceTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade testModelTs;
-
-    @BeforeAll
-    static void compileModels() {
-        IliModelService service = new IliModelService();
-        var result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
-        assertThat(result.hasErrors()).isFalse();
-        testModelTs = new TypeSystemFacade(result.transferDescription());
-    }
 
     @Test
     void explicitAssignOverridesRuleDefault() {
@@ -37,8 +25,8 @@ class DefaultPrecedenceTest {
         rule.defaults = new LinkedHashMap<>();
         rule.defaults.put("Name", "${s.Beschreibung}"); // rule default - should not be used
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         var nameAssign = plan.rules().get(0).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Name"))
@@ -60,8 +48,8 @@ class DefaultPrecedenceTest {
         config.mapping.defaults = new LinkedHashMap<>();
         config.mapping.defaults.put("Beschreibung", "\"mapping-default\""); // mapping default - should not be used
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         var descAssign = plan.rules().get(0).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Beschreibung"))
@@ -80,8 +68,8 @@ class DefaultPrecedenceTest {
         config.mapping.defaults = new LinkedHashMap<>();
         config.mapping.defaults.put("Beschreibung", "\"mapping-default\"");
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         var descAssign = plan.rules().get(0).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Beschreibung"))
@@ -103,8 +91,8 @@ class DefaultPrecedenceTest {
         config.mapping.defaults = new LinkedHashMap<>();
         config.mapping.defaults.put("Name", "\"global\""); // mapping default
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         var nameAssign = plan.rules().get(0).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Name"))
