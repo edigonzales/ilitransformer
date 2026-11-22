@@ -36,7 +36,7 @@ create:
 
 [source,yaml]
 ----
-loss:
+losses:
   - sourcePath: "s.AlteGeometrie"
     reasonCode: "GEOM_VEREINFACHT"
     description: "Geometrie wurde vereinfacht"
@@ -46,10 +46,10 @@ loss:
 [cols="1,1,3",options="header"]
 |===
 | Feld | Pflicht | Beschreibung
-| `sourcePath` | ja | Quellattribut, das verloren geht
-| `reasonCode` | ja | Kategorie des Verlusts
-| `description` | ja | Beschreibung
-| `when` | nein | Bedingung
+| `sourcePath` | bei Klassenverlust | Pfad zum verlorenen Quellattribut oder Quellalias bei Klassenverlust
+| `reasonCode` | bei Klassenverlust | Kategorie des Verlusts
+| `description` | bei Klassenverlust | Beschreibung
+| `when` | nein | Boolescher Bedingungsausdruck für Attributverluste
 |===
 
 ==== MetadataSpec

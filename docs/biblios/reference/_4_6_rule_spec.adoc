@@ -9,7 +9,7 @@ Eine Regel in der YAML-DSL.
 |===
 | Feld | Typ | Pflicht | Beschreibung
 | `id` | string | ja | Eindeutige Regel-ID
-| `target` | TargetSpec | ja | Zielklasse und Output
+| `target` | TargetSpec | ja für normale Mappingregeln | Zielklasse und Output. Bei reinen Klassenverlustregeln entfällt `target`.
 | `sources` | list[SourceSpec] | ja | Quellklassen (>= 1)
 | `where` | string | nein | Filter-Ausdruck (betrifft alle Quellen)
 | `identity` | IdentitySpec | nein | Business-Key
@@ -18,7 +18,7 @@ Eine Regel in der YAML-DSL.
 | `bags` | map[string, BagSpec] | nein | BAG OF STRUCTURE
 | `joins` | list[JoinSpec] | nein | Joins (experimentell, max. 1)
 | `create` | list[CreateSpec] | nein | Zusätzliche Zielobjekte (experimentell)
-| `loss` | list[LossSpec] | nein | Informationsverlust
+| `losses` | list[LossSpec] | nein | Informationsverlust
 | `metadata` | MetadataSpec | nein | Metadaten
 | `defaults` | map[string, string] | nein | Regel-Defaults
 |===
@@ -37,7 +37,7 @@ target:
 [source,yaml]
 ----
 sources:
-  - input: src
+  - inputs: [src]
     alias: s
     class: "SourceModel.Topic.SourceClass"
     where: "s.Status == #aktiv"
@@ -53,7 +53,7 @@ rules:
       output: out
       class: "LV95.Gebaeude"
     sources:
-      - input: src
+      - inputs: [src]
         alias: g
         class: "AV.Gebaeude"
     assign:
@@ -77,7 +77,7 @@ rules:
         role: "Gebaeude"
         sourceRef: "g.RefOID"
         targetRule: "gebaeude_rule"
-    loss:
+    losses:
       - sourcePath: "g.AlteGeometrie"
         reasonCode: "GEOM_VEREINFACHT"
         description: "Geometrie vereinfacht"
