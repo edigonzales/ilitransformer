@@ -29,7 +29,7 @@ mapping:
         class: "BagFlatSource.FlatTopic.Parent"
       sources:
         - alias: p
-          input: nested
+          inputs: [nested]
           class: "BagNestedTarget.NestedTopic.Parent"
       identity:
         sourceKey: ["p.ParentId"]

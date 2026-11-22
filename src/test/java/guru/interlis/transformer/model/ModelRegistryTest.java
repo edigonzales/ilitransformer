@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 class ModelRegistryTest {
 
+    private static final String MODELDIR = "src/test/data/models/";
+
     private static JobConfig twoInputsConfig() {
         JobConfig config = new JobConfig();
         config.version = 1;
@@ -18,19 +20,19 @@ class ModelRegistryTest {
 
         JobConfig.InputSpec in1 = new JobConfig.InputSpec();
         in1.id = "dm01";
-        in1.model = "DM01AVCH24LV95";
+        in1.model = "TestModel";
         in1.path = "input.xtf";
         config.job.inputs.add(in1);
 
         JobConfig.InputSpec in2 = new JobConfig.InputSpec();
         in2.id = "gwr";
-        in2.model = "DM01AVCH24LV95";
+        in2.model = "TestModel";
         in2.path = "gwr.xtf";
         config.job.inputs.add(in2);
 
         JobConfig.OutputSpec out = new JobConfig.OutputSpec();
         out.id = "dmav";
-        out.model = "DMAV_FixpunkteAVKategorie3_V1_1";
+        out.model = "P5Model";
         out.path = "output.xtf";
         config.job.outputs.add(out);
 
@@ -39,36 +41,29 @@ class ModelRegistryTest {
 
     @Test
     void registryRequiresInputById() {
-        // Build registry with config but without compiling models (requires real ILI files)
-        // Instead use buildWithSuppliedTypeSystems with mock TypeSystemFacades
         JobConfig config = twoInputsConfig();
-        TypeSystemFacade mockTs = new TypeSystemFacade(null);
 
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(
-                        java.util.Map.of("DM01AVCH24LV95", mockTs),
-                        java.util.Map.of("DMAV_FixpunkteAVKategorie3_V1_1", mockTs));
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
         InputBinding dm01 = registry.requireInput("dm01");
         assertThat(dm01.inputId()).isEqualTo("dm01");
-        assertThat(dm01.declaredModelName()).isEqualTo("DM01AVCH24LV95");
+        assertThat(dm01.declaredModelName()).isEqualTo("TestModel");
 
         InputBinding gwr = registry.requireInput("gwr");
         assertThat(gwr.inputId()).isEqualTo("gwr");
-        assertThat(gwr.declaredModelName()).isEqualTo("DM01AVCH24LV95");
+        assertThat(gwr.declaredModelName()).isEqualTo("TestModel");
 
         OutputBinding dmav = registry.requireOutput("dmav");
         assertThat(dmav.outputId()).isEqualTo("dmav");
-        assertThat(dmav.declaredModelName()).isEqualTo("DMAV_FixpunkteAVKategorie3_V1_1");
+        assertThat(dmav.declaredModelName()).isEqualTo("P5Model");
     }
 
     @Test
     void registryThrowsForUnknownInputId() {
         JobConfig config = twoInputsConfig();
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(java.util.Map.of(), java.util.Map.of());
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
         assertThatThrownBy(() -> registry.requireInput("unknown"))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -78,9 +73,8 @@ class ModelRegistryTest {
     @Test
     void registryThrowsForUnknownOutputId() {
         JobConfig config = twoInputsConfig();
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(java.util.Map.of(), java.util.Map.of());
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
         assertThatThrownBy(() -> registry.requireOutput("unknown"))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -89,18 +83,15 @@ class ModelRegistryTest {
 
     @Test
     void outputIdDifferentFromModelName() {
-        // Output ID "dmav" != model name "DMAV_FixpunkteAVKategorie3_V1_1"
+        // Output ID "dmav" != model name "P5Model"
         JobConfig config = twoInputsConfig();
-        TypeSystemFacade mockTs = new TypeSystemFacade(null);
 
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(
-                        java.util.Map.of(), java.util.Map.of("DMAV_FixpunkteAVKategorie3_V1_1", mockTs));
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
         OutputBinding dmav = registry.requireOutput("dmav");
         assertThat(dmav.outputId()).isEqualTo("dmav");
-        assertThat(dmav.declaredModelName()).isEqualTo("DMAV_FixpunkteAVKategorie3_V1_1");
+        assertThat(dmav.declaredModelName()).isEqualTo("P5Model");
         assertThat(dmav.outputId()).isNotEqualTo(dmav.declaredModelName());
     }
 
@@ -110,29 +101,24 @@ class ModelRegistryTest {
         config.version = 1;
         JobConfig.InputSpec in = new JobConfig.InputSpec();
         in.id = "src1";
-        in.model = "SomeVeryLongModelName_V2_3";
+        in.model = "TestModel";
         config.job.inputs.add(in);
 
-        TypeSystemFacade mockTs = new TypeSystemFacade(null);
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(
-                        java.util.Map.of("SomeVeryLongModelName_V2_3", mockTs), java.util.Map.of());
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
         InputBinding binding = registry.requireInput("src1");
         assertThat(binding.inputId()).isEqualTo("src1");
-        assertThat(binding.declaredModelName()).isEqualTo("SomeVeryLongModelName_V2_3");
+        assertThat(binding.declaredModelName()).isEqualTo("TestModel");
         assertThat(binding.inputId()).isNotEqualTo(binding.declaredModelName());
     }
 
     @Test
     void multipleInputsSameModel() {
         JobConfig config = twoInputsConfig();
-        TypeSystemFacade mockTs = new TypeSystemFacade(null);
 
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(java.util.Map.of("DM01AVCH24LV95", mockTs), java.util.Map.of());
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
         InputBinding dm01 = registry.requireInput("dm01");
         InputBinding gwr = registry.requireInput("gwr");
@@ -146,61 +132,55 @@ class ModelRegistryTest {
         config.version = 1;
         JobConfig.OutputSpec out1 = new JobConfig.OutputSpec();
         out1.id = "targetA";
-        out1.model = "ModelAlpha";
+        out1.model = "TestModel";
         config.job.outputs.add(out1);
 
         JobConfig.OutputSpec out2 = new JobConfig.OutputSpec();
         out2.id = "targetB";
-        out2.model = "ModelBeta";
+        out2.model = "P5Model";
         config.job.outputs.add(out2);
 
-        TypeSystemFacade mockTs = new TypeSystemFacade(null);
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(
-                        java.util.Map.of(), java.util.Map.of("ModelAlpha", mockTs, "ModelBeta", mockTs));
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
         OutputBinding a = registry.requireOutput("targetA");
         OutputBinding b = registry.requireOutput("targetB");
-        assertThat(a.declaredModelName()).isEqualTo("ModelAlpha");
-        assertThat(b.declaredModelName()).isEqualTo("ModelBeta");
+        assertThat(a.declaredModelName()).isEqualTo("TestModel");
+        assertThat(b.declaredModelName()).isEqualTo("P5Model");
         assertThat(a.declaredModelName()).isNotEqualTo(b.declaredModelName());
     }
 
     @Test
     void requireSourceTypeSystemReturnsTypeSystemFacade() {
         JobConfig config = twoInputsConfig();
-        TypeSystemFacade mockTs = new TypeSystemFacade(null);
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(java.util.Map.of("DM01AVCH24LV95", mockTs), java.util.Map.of());
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
         TypeSystemFacade ts = registry.requireSourceTypeSystem("dm01");
-        assertThat(ts).isSameAs(mockTs);
+        assertThat(ts.getTransferDescription())
+                .isSameAs(registry.findByModelName("TestModel").orElseThrow());
     }
 
     @Test
     void requireTargetTypeSystemReturnsTypeSystemFacade() {
         JobConfig config = twoInputsConfig();
-        TypeSystemFacade mockTs = new TypeSystemFacade(null);
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(
-                        java.util.Map.of(), java.util.Map.of("DMAV_FixpunkteAVKategorie3_V1_1", mockTs));
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
         TypeSystemFacade ts = registry.requireTargetTypeSystem("dmav");
-        assertThat(ts).isSameAs(mockTs);
+        assertThat(ts.getTransferDescription())
+                .isSameAs(registry.findByModelName("P5Model").orElseThrow());
     }
 
     @Test
     void findByModelNameFindsCachedModel() {
         JobConfig config = twoInputsConfig();
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(java.util.Map.of(), java.util.Map.of());
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
-        // Without pre-supplied ts, findByModelName should be empty
-        assertThat(registry.findByModelName("DM01AVCH24LV95")).isEmpty();
+        assertThat(registry.findByModelName("TestModel"))
+                .containsSame(registry.requireInput("dm01").transferDescription());
+        assertThat(registry.findByModelName("unknown")).isEmpty();
     }
 
     @Test
@@ -210,7 +190,7 @@ class ModelRegistryTest {
 
         JobConfig.InputSpec in = new JobConfig.InputSpec();
         in.id = "src";
-        in.model = "M";
+        in.model = "TestModel";
         in.path = "in.csv";
         in.options = new java.util.LinkedHashMap<>();
         in.options.put("firstLineIsHeader", Boolean.TRUE);
@@ -220,14 +200,12 @@ class ModelRegistryTest {
 
         JobConfig.OutputSpec out = new JobConfig.OutputSpec();
         out.id = "tgt";
-        out.model = "M";
+        out.model = "TestModel";
         out.path = "out.xtf";
         config.job.outputs.add(out);
 
-        TypeSystemFacade mockTs = new TypeSystemFacade(null);
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(java.util.Map.of("M", mockTs), java.util.Map.of("M", mockTs));
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
         InputBinding binding = registry.requireInput("src");
         assertThat(binding.options())
@@ -242,12 +220,8 @@ class ModelRegistryTest {
     @Test
     void bindingOptionsAreNeverNull() {
         JobConfig config = twoInputsConfig();
-        TypeSystemFacade mockTs = new TypeSystemFacade(null);
-        ModelRegistry registry = ModelRegistry.builder()
-                .config(config)
-                .buildWithSuppliedTypeSystems(
-                        java.util.Map.of("DM01AVCH24LV95", mockTs),
-                        java.util.Map.of("DMAV_FixpunkteAVKategorie3_V1_1", mockTs));
+        ModelRegistry registry =
+                ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
 
         assertThat(registry.requireInput("dm01").options()).isNotNull().isEmpty();
         assertThat(registry.requireOutput("dmav").options()).isNotNull().isEmpty();

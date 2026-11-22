@@ -5,7 +5,6 @@ import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.io.FormatIdResolver;
 import guru.interlis.transformer.mapping.model.JobConfig;
-import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 import guru.interlis.transformer.mapping.plan.*;
 import guru.interlis.transformer.model.TypeSystemFacade;
 
@@ -28,12 +27,12 @@ final class RuleCompiler {
     private final MandatoryCoverageValidator mandatoryCoverageValidator = new MandatoryCoverageValidator();
 
     RulePlan compileRule(JobConfig.RuleSpec rule, CompilerContext ctx) {
-        if (StructuralValidator.hasNoTarget(rule)) {
+        if (rule.target == null) {
             return compileClassLoss(rule, ctx);
         }
         String ruleId = rule.id;
-        String targetOutput = JobConfigNormalizer.getEffectiveTargetOutput(rule);
-        String targetClassName = JobConfigNormalizer.getEffectiveTargetClass(rule);
+        String targetOutput = rule.target.output;
+        String targetClassName = rule.target.clazz;
 
         AbstractClassDef<?> targetClass =
                 CompileUtils.resolveTargetClass(targetOutput, targetClassName, ctx.modelRegistry());
@@ -113,22 +112,16 @@ final class RuleCompiler {
 
         List<AssignmentPlan> assignmentPlans = new ArrayList<>();
         Set<String> assignedTargets = new HashSet<>();
-        for (JobConfig.AttributeMapping attr : JobConfigNormalizer.getAllAttributes(rule)) {
-            if (attr.target == null || attr.target.isBlank()) continue;
-            if (!assignedTargets.add(attr.target)) {
-                ctx.diagnostics()
-                        .add(new Diagnostic(
-                                DiagnosticCode.MAP_DUPLICATE_TARGET_ASSIGN,
-                                Severity.ERROR,
-                                "Target attribute assigned multiple times: " + attr.target,
-                                ruleId,
-                                "Remove duplicate assignment or use an explicit merge policy"));
-            }
-
-            AssignmentPlan ap =
-                    assignmentCompiler.compileAssignment(attr, targetClass, targetTs, sourcesByAlias, ruleId, ctx);
-            if (ap != null) {
-                assignmentPlans.add(ap);
+        if (rule.assign != null) {
+            for (var entry : rule.assign.entrySet()) {
+                String name = entry.getKey();
+                if (name == null || name.isBlank()) continue;
+                assignedTargets.add(name);
+                AssignmentPlan assignment = assignmentCompiler.compileAssignment(
+                        name, entry.getValue(), targetClass, targetTs, sourcesByAlias, ruleId, ctx);
+                if (assignment != null) {
+                    assignmentPlans.add(assignment);
+                }
             }
         }
 
@@ -159,10 +152,9 @@ final class RuleCompiler {
         }
 
         List<RefPlan> refPlans = new ArrayList<>();
-        for (JobConfig.RefMapping ref : JobConfigNormalizer.getEffectiveRefs(rule)) {
-            RefPlan rp = refCompiler.compileRef(ref, targetClass, targetTs, sourcePlans, ruleId, ctx);
-            if (rp != null) {
-                refPlans.add(rp);
+        if (rule.refs != null) {
+            for (JobConfig.RefMapping ref : rule.refs) {
+                refPlans.add(refCompiler.compileRef(ref, targetClass, targetTs, sourcePlans, ruleId, ctx));
             }
         }
 

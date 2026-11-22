@@ -132,7 +132,7 @@ class JdbcPostgisToXtfIT {
                         class: "DemoTarget.Catalog.Municipality"
                       sources:
                         - alias: src
-                          input: db
+                          inputs: [db]
                           class: "DemoJdbcSource.Data.Municipality"
                       identity:
                         sourceKey: ["src.bfsnr"]

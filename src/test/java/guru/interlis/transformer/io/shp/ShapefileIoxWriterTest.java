@@ -275,7 +275,9 @@ class ShapefileIoxWriterTest {
                 "shp",
                 Map.of("class", className, "geometryAttribute", geometryAttribute),
                 td,
-                ts);
+                ts,
+                null,
+                null);
         List<IomObject> objects = new ArrayList<>();
         ShapefileIoxReader reader = ShapefileIoxReader.open(binding, context());
         try {

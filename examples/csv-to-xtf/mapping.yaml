@@ -33,7 +33,7 @@ mapping:
         class: "DemoTarget.Catalog.Municipality"
       sources:
         - alias: src
-          input: csv-input
+          inputs: [csv-input]
           class: "DemoCsvSource.Data.Municipality"
       identity:
         sourceKey: ["src.bfsnr"]

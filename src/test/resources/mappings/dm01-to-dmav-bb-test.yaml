@@ -63,7 +63,7 @@ mapping:
         class: "DmavBbTestModel.Bodenbedeckung.BBNachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "Dm01BbTestModel.Bodenbedeckung.BBNachfuehrung"
           where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       identity:
@@ -80,7 +80,7 @@ mapping:
         class: "DmavBbTestModel.Bodenbedeckung.BBNachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "Dm01BbTestModel.Bodenbedeckung.BBNachfuehrung"
           where: "nf.Gueltigkeit == #projektiert"
       identity:
@@ -97,7 +97,7 @@ mapping:
         class: "DmavBbTestModel.Bodenbedeckung.Bodenbedeckung"
       sources:
         - alias: bb
-          input: dm01
+          inputs: [dm01]
           class: "Dm01BbTestModel.Bodenbedeckung.BoFlaeche"
       assign:
         Geometrie: "bb.Geometrie"
@@ -172,9 +172,8 @@ mapping:
         - association: "Entstehung_Bodenbedeckung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: bb-nachfuehrung-gueltig
-            sourceRef: "bb.Entstehung"
+          targetRule: bb-nachfuehrung-gueltig
+          sourceRef: "bb.Entstehung"
 
     - id: boflaeche-projektiert
       target:
@@ -182,7 +181,7 @@ mapping:
         class: "DmavBbTestModel.Bodenbedeckung.Bodenbedeckung"
       sources:
         - alias: bb
-          input: dm01
+          inputs: [dm01]
           class: "Dm01BbTestModel.Bodenbedeckung.ProjBoFlaeche"
       assign:
         Geometrie: "bb.Geometrie"
@@ -257,9 +256,8 @@ mapping:
         - association: "Entstehung_Bodenbedeckung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: bb-nachfuehrung-projektiert
-            sourceRef: "bb.Entstehung"
+          targetRule: bb-nachfuehrung-projektiert
+          sourceRef: "bb.Entstehung"
 
     - id: einzelpunkt
       target:
@@ -267,7 +265,7 @@ mapping:
         class: "DmavBbTestModel.Bodenbedeckung.Messpunkt"
       sources:
         - alias: ep
-          input: dm01
+          inputs: [dm01]
           class: "Dm01BbTestModel.Bodenbedeckung.Einzelpunkt"
       identity:
         sourceKey: ["ep.Identifikator"]
@@ -281,6 +279,5 @@ mapping:
         - association: "Entstehung_Messpunkt"
           role: "Entstehung"
           required: false
-          targetObject:
-            rule: bb-nachfuehrung-gueltig
-            sourceRef: "ep.Entstehung"
+          targetRule: bb-nachfuehrung-gueltig
+          sourceRef: "ep.Entstehung"

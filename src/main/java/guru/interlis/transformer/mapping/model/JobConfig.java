@@ -5,8 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class JobConfig {
@@ -77,7 +75,6 @@ public final class JobConfig {
         public String id;
 
         @JsonProperty("class")
-        @JsonAlias("clazz")
         public String clazz;
 
         public String topic;
@@ -166,19 +163,10 @@ public final class JobConfig {
         @JsonProperty("target")
         public TargetSpec target;
 
-        @JsonAlias("targetClass")
-        public String targetClass; // backward compat
-
-        @JsonAlias("output")
-        public String output; // backward compat
-
         public List<SourceSpec> sources = new ArrayList<>();
 
         @JsonProperty("assign")
         public Map<String, String> assign;
-
-        @JsonAlias("attributes")
-        public List<AttributeMapping> attributes; // backward compat
 
         @JsonProperty("where")
         public String where;
@@ -206,34 +194,6 @@ public final class JobConfig {
 
         @JsonProperty("defaults")
         public Map<String, String> defaults;
-
-        /** @deprecated Use {@link JobConfigNormalizer#getEffectiveTargetClass(RuleSpec)} instead. */
-        @Deprecated
-        @JsonIgnore
-        public String getEffectiveTargetClass() {
-            return JobConfigNormalizer.getEffectiveTargetClass(this);
-        }
-
-        /** @deprecated Use {@link JobConfigNormalizer#getEffectiveTargetOutput(RuleSpec)} instead. */
-        @Deprecated
-        @JsonIgnore
-        public String getEffectiveTargetOutput() {
-            return JobConfigNormalizer.getEffectiveTargetOutput(this);
-        }
-
-        /** @deprecated Use {@link JobConfigNormalizer#getAllAttributes(RuleSpec)} instead. */
-        @Deprecated
-        @JsonIgnore
-        public List<AttributeMapping> getAllAttributes() {
-            return JobConfigNormalizer.getAllAttributes(this);
-        }
-
-        /** @deprecated Use {@link JobConfigNormalizer#getEffectiveRefs(RuleSpec)} instead. */
-        @Deprecated
-        @JsonIgnore
-        public List<RefMapping> getEffectiveRefs() {
-            return JobConfigNormalizer.getEffectiveRefs(this);
-        }
     }
 
     // -- TargetSpec --------------------------------------------------------
@@ -242,7 +202,6 @@ public final class JobConfig {
         public String output;
 
         @JsonProperty("class")
-        @JsonAlias("clazz")
         public String clazz;
     }
 
@@ -253,38 +212,18 @@ public final class JobConfig {
         public String alias;
 
         @JsonProperty("class")
-        @JsonAlias("clazz")
         public String clazz;
 
         @JsonProperty("inputs")
         public List<String> inputs;
 
-        @JsonAlias("input")
-        public String input; // backward compat
-
         @JsonProperty("where")
         public String where;
-
-        /** @deprecated Use {@link JobConfigNormalizer#getInputIds(SourceSpec)} instead. */
-        @Deprecated
-        @JsonIgnore
-        public List<String> getInputIds() {
-            return JobConfigNormalizer.getInputIds(this);
-        }
-    }
-
-    // -- AttributeMapping --------------------------------------------------
-
-    public static final class AttributeMapping {
-        public String target;
-        public String expr;
     }
 
     // -- RefMapping --------------------------------------------------------
 
     public static final class RefMapping {
-        public String target; // backward compat (target attribute name)
-        public String expr; // backward compat (expression)
 
         @JsonProperty("association")
         public String association;
@@ -300,14 +239,6 @@ public final class JobConfig {
 
         @JsonProperty("required")
         public boolean required;
-
-        @JsonProperty("targetObject")
-        public RefTargetObject targetObject;
-
-        public static final class RefTargetObject {
-            public String rule;
-            public String sourceRef;
-        }
     }
 
     // -- IdentitySpec ------------------------------------------------------

@@ -13,7 +13,7 @@ import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.DefaultOidGenerationService;
 import guru.interlis.transformer.state.InMemoryReferenceIndex;
 import guru.interlis.transformer.state.InMemoryStateStore;
@@ -45,8 +45,6 @@ class DmavToDm01BbIntegrationTest {
     private static final String MODELDIR = "src/test/data/models/";
     private static final String MAPPING_FILE = "src/test/resources/mappings/dmav-to-dm01-bb-test.yaml";
 
-    private static TypeSystemFacade dm01Ts;
-    private static TypeSystemFacade dmavTs;
     private static TransferDescription dm01TransferDescription;
 
     @BeforeAll
@@ -60,7 +58,6 @@ class DmavToDm01BbIntegrationTest {
                     .collect(java.util.stream.Collectors.joining("\n  "));
             fail("DMAV BB model compilation errors:\n  " + errors);
         }
-        dmavTs = new TypeSystemFacade(dmavResult.transferDescription());
 
         IliModelCompileResult dm01Result = service.compileModel(MODELDIR + "dm01-bb-test.ili", MODELDIR);
         if (dm01Result.hasErrors()) {
@@ -70,7 +67,6 @@ class DmavToDm01BbIntegrationTest {
             fail("DM01 BB model compilation errors:\n  " + errors);
         }
         dm01TransferDescription = dm01Result.transferDescription();
-        dm01Ts = new TypeSystemFacade(dm01TransferDescription);
     }
 
     @Test
@@ -78,9 +74,8 @@ class DmavToDm01BbIntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavBbTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01BbTestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         for (var d : plan.diagnostics().all()) {
             System.out.println("REV DIAG: [" + d.severity() + "] " + d.code() + ": " + d.message());
@@ -99,9 +94,8 @@ class DmavToDm01BbIntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavBbTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01BbTestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject nf = new Iom_jObject("DmavBbTestModel.Bodenbedeckung.BBNachfuehrung", "uuid-nf-1");
@@ -206,9 +200,8 @@ class DmavToDm01BbIntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavBbTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01BbTestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().all()).isEmpty();
 
         // Two separate BBNachfuehrung objects: one for gueltig objects, one for projektiert.
@@ -299,9 +292,8 @@ class DmavToDm01BbIntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavBbTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01BbTestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject nf = new Iom_jObject("DmavBbTestModel.Bodenbedeckung.BBNachfuehrung", "uuid-nf-1");
@@ -348,9 +340,8 @@ class DmavToDm01BbIntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavBbTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01BbTestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject nf = new Iom_jObject("DmavBbTestModel.Bodenbedeckung.BBNachfuehrung", "uuid-nf-1");
@@ -407,9 +398,8 @@ class DmavToDm01BbIntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavBbTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01BbTestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
         assertThat(plan.oidPlan().defaultStrategy().name()).isEqualTo("INTEGER");
 

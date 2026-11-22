@@ -22,7 +22,7 @@ mapping:
         class: "ExampleModel.ExampleTopic.TargetClass"
       sources:
         - alias: src
-          input: source
+          inputs: [source]
           class: "ExampleModel.ExampleTopic.SourceClass"
       assign:
         Label: "${src.Name}"

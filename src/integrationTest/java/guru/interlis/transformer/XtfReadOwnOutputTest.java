@@ -3,11 +3,11 @@ package guru.interlis.transformer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import guru.interlis.transformer.app.IlivalidatorRunner;
-import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
+import guru.interlis.transformer.validation.InProcessIlivalidatorService;
+import guru.interlis.transformer.validation.ValidationResult;
 
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
@@ -70,8 +70,9 @@ class XtfReadOwnOutputTest {
             writer.flush();
             writer.close();
 
-            ValidationResult validation = IlivalidatorRunner.validate(xtfPath, List.of(MODELDIR), MODEL, null);
-            assertThat(validation.success()).as(validation.log()).isTrue();
+            ValidationResult validation =
+                    new InProcessIlivalidatorService().validate(xtfPath, List.of(MODELDIR), List.of(MODEL), null);
+            assertThat(validation.valid()).as(validation.logText()).isTrue();
 
             IoxReader reader = ioFactory.createReader(xtfPath, transferDescription);
             List<IomObject> readBack = new ArrayList<>();
@@ -134,8 +135,9 @@ class XtfReadOwnOutputTest {
             writer.flush();
             writer.close();
 
-            ValidationResult validation = IlivalidatorRunner.validate(xtfPath, List.of(MODELDIR), MODEL, null);
-            assertThat(validation.success()).as(validation.log()).isTrue();
+            ValidationResult validation =
+                    new InProcessIlivalidatorService().validate(xtfPath, List.of(MODELDIR), List.of(MODEL), null);
+            assertThat(validation.valid()).as(validation.logText()).isTrue();
 
             IoxReader reader = ioFactory.createReader(xtfPath, transferDescription);
             List<IomObject> readBack = new ArrayList<>();

@@ -89,7 +89,7 @@ mapping:
         class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
       sources:
         - alias: nf
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.EONachfuehrung"
           where: "lookup('DMAV_Einzelobjekte_V1_1.Einzelobjekte.Einzelobjekt', 'Entstehung', oid(nf), 'Objektstatus') != #projektiert"
       identity:
@@ -108,7 +108,7 @@ mapping:
         class: "DM01AVCH24LV95D.Einzelobjekte.EONachfuehrung"
       sources:
         - alias: nf
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.EONachfuehrung"
           where: "lookup('DMAV_Einzelobjekte_V1_1.Einzelobjekte.Einzelobjekt', 'Entstehung', oid(nf), 'Objektstatus') == #projektiert"
       identity:
@@ -127,7 +127,7 @@ mapping:
         class: "DM01AVCH24LV95D.Einzelobjekte.Einzelobjekt"
       sources:
         - alias: eo
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Einzelobjekt"
           where: "eo.Objektstatus != #projektiert"
       identity:
@@ -264,9 +264,8 @@ mapping:
         - association: "EinzelobjektEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: eo-nachfuehrung-gueltig
-            sourceRef: "eo.Entstehung"
+          targetRule: eo-nachfuehrung-gueltig
+          sourceRef: "eo.Entstehung"
 
     - id: messpunkt
       target:
@@ -274,7 +273,7 @@ mapping:
         class: "DM01AVCH24LV95D.Einzelobjekte.Einzelpunkt"
       sources:
         - alias: m
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Einzelobjekte_V1_1.Einzelobjekte.Messpunkt"
       identity:
         sourceKey: ["m.Nummer"]
@@ -288,6 +287,5 @@ mapping:
         - association: "EinzelpunktEntstehung"
           role: "Entstehung"
           required: false
-          targetObject:
-            rule: eo-nachfuehrung-gueltig
-            sourceRef: "m.Entstehung"
+          targetRule: eo-nachfuehrung-gueltig
+          sourceRef: "m.Entstehung"

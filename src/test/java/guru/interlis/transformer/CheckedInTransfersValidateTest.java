@@ -2,10 +2,10 @@ package guru.interlis.transformer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import guru.interlis.transformer.app.IlivalidatorRunner;
-import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
 import guru.interlis.transformer.dmav.Dm01DmavFixtures;
 import guru.interlis.transformer.dmav.Dm01DmavPaths;
+import guru.interlis.transformer.validation.InProcessIlivalidatorService;
+import guru.interlis.transformer.validation.ValidationResult;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -201,8 +201,9 @@ class CheckedInTransfersValidateTest {
                 compiled.put(modelName, r.transferDescription());
             }
 
-            ValidationResult result = IlivalidatorRunner.validate(file, List.of(AV_MODELDIR), modelName, null);
-            if (result.success()) {
+            ValidationResult result =
+                    new InProcessIlivalidatorService().validate(file, List.of(AV_MODELDIR), List.of(modelName), null);
+            if (result.valid()) {
                 successes.add(file + " -> " + modelName);
             } else {
                 failures.add(file + ": validation failed against " + modelName + compactLog(result));
@@ -231,10 +232,10 @@ class CheckedInTransfersValidateTest {
     }
 
     private static String compactLog(ValidationResult result) {
-        if (result.log() == null || result.log().isBlank()) {
+        if (result.logText() == null || result.logText().isBlank()) {
             return "";
         }
-        String compact = result.log().replace('\n', ' ');
+        String compact = result.logText().replace('\n', ' ');
         return " - " + compact.substring(0, Math.min(200, compact.length()));
     }
 

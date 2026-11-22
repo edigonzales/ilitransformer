@@ -200,7 +200,6 @@ public final class BundleAssembler {
             for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
                 rewritten.put(String.valueOf(entry.getKey()), rewriteValue(entry.getValue(), ruleRenames, enumRenames));
             }
-            rewriteRuleReference(rewritten, "rule", ruleRenames);
             rewriteRuleReference(rewritten, "targetRule", ruleRenames);
             return rewritten;
         }

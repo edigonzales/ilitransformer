@@ -97,7 +97,7 @@ class JdbcToXtfIntegrationTest {
                         class: "DemoTarget.Catalog.Municipality"
                       sources:
                         - alias: src
-                          input: db
+                          inputs: [db]
                           class: "DemoJdbcSource.Data.Municipality"
                 """.formatted(work.resolve("db/demo.sqlite").toAbsolutePath(), output));
 
@@ -147,7 +147,7 @@ class JdbcToXtfIntegrationTest {
                         class: "DemoTarget.Catalog.Municipality"
                       sources:
                         - alias: src
-                          input: db
+                          inputs: [db]
                           class: "DemoJdbcSource.Data.Municipality"
                 """.formatted(output));
 

@@ -176,7 +176,7 @@ class MultiJoinReferenceIntegrationTest {
                         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung"
                       sources:
                         - alias: ls
-                          input: dm01
+                          inputs: [dm01]
                           class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
                       identity:
                         sourceKey: ["ls.NBIdent", "ls.Identifikator"]
@@ -193,13 +193,13 @@ class MultiJoinReferenceIntegrationTest {
                         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
                       sources:
                         - alias: hgp
-                          input: dm01
+                          inputs: [dm01]
                           class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
                         - alias: gem
-                          input: dm01
+                          inputs: [dm01]
                           class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
                         - alias: ls
-                          input: dm01
+                          inputs: [dm01]
                           class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
                       joins:
                         - left: hgp
@@ -226,9 +226,8 @@ class MultiJoinReferenceIntegrationTest {
                         - association: "Entstehung_Grenzpunkt"
                           role: "Entstehung"
                           required: true
-                          targetObject:
-                            rule: gs-nachfuehrung
-                            sourceRef: "ls"
+                          targetRule: gs-nachfuehrung
+                          sourceRef: "ls"
                 """;
     }
 

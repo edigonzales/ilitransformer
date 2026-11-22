@@ -61,7 +61,7 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
           where: "if(notDefined(nf.Gueltigkeit), true, nf.Gueltigkeit != #projektiert)"
       identity:
@@ -80,7 +80,7 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
           where: "nf.Gueltigkeit == #projektiert"
       identity:
@@ -99,7 +99,7 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung"
       sources:
         - alias: gem
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
           where: "if(notDefined(gem.Gueltigkeit), true, gem.Gueltigkeit != #projektiert) and not(existsIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent', gem.NBIdent))"
       identity:
@@ -118,7 +118,7 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.GSNachfuehrung"
       sources:
         - alias: gem
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
           where: "gem.Gueltigkeit == #projektiert and not(existsIn('dm01', 'DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung', 'Identifikator', gem.Identifikator, 'NBIdent', gem.NBIdent))"
       identity:
@@ -137,10 +137,10 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
       sources:
         - alias: gp
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.Grenzpunkt"
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
       joins:
         - left: gp
@@ -164,9 +164,8 @@ mapping:
         - association: "Entstehung_Grenzpunkt"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gueltig
-            sourceRef: "gp.Entstehung"
+          targetRule: gs-nachfuehrung-gueltig
+          sourceRef: "gp.Entstehung"
 
     - id: grenzpunkt-projektiert
       target:
@@ -174,10 +173,10 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
       sources:
         - alias: gp
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.Grenzpunkt"
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
       joins:
         - left: gp
@@ -201,9 +200,8 @@ mapping:
         - association: "Entstehung_Grenzpunkt"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-projektiert
-            sourceRef: "gp.Entstehung"
+          targetRule: gs-nachfuehrung-projektiert
+          sourceRef: "gp.Entstehung"
 
     - id: hoheitsgrenzpunkt-ls-gueltig
       target:
@@ -211,13 +209,13 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
       sources:
         - alias: hgp
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
         - alias: gem
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
         - alias: ls
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
       joins:
         - left: hgp
@@ -245,9 +243,8 @@ mapping:
         - association: "Entstehung_Grenzpunkt"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gueltig
-            sourceRef: "ls"
+          targetRule: gs-nachfuehrung-gueltig
+          sourceRef: "ls"
 
     - id: hoheitsgrenzpunkt-ls-projektiert
       target:
@@ -255,13 +252,13 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
       sources:
         - alias: hgp
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
         - alias: gem
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
         - alias: ls
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.LSNachfuehrung"
       joins:
         - left: hgp
@@ -289,9 +286,8 @@ mapping:
         - association: "Entstehung_Grenzpunkt"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-projektiert
-            sourceRef: "ls"
+          targetRule: gs-nachfuehrung-projektiert
+          sourceRef: "ls"
 
     - id: hoheitsgrenzpunkt-gem-gueltig
       target:
@@ -299,10 +295,10 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
       sources:
         - alias: hgp
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
         - alias: gem
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
       joins:
         - left: hgp
@@ -326,9 +322,8 @@ mapping:
         - association: "Entstehung_Grenzpunkt"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gem-gueltig
-            sourceRef: "gem"
+          targetRule: gs-nachfuehrung-gem-gueltig
+          sourceRef: "gem"
 
     - id: hoheitsgrenzpunkt-gem-projektiert
       target:
@@ -336,10 +331,10 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grenzpunkt"
       sources:
         - alias: hgp
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gemeindegrenzen.Hoheitsgrenzpunkt"
         - alias: gem
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
       joins:
         - left: hgp
@@ -363,9 +358,8 @@ mapping:
         - association: "Entstehung_Grenzpunkt"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gem-projektiert
-            sourceRef: "gem"
+          targetRule: gs-nachfuehrung-gem-projektiert
+          sourceRef: "gem"
 
     - id: proj-grundstueck
       target:
@@ -373,7 +367,7 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       sources:
         - alias: gs
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.ProjGrundstueck"
           where: "gs.Art == #Liegenschaft"
       identity:
@@ -404,9 +398,8 @@ mapping:
         - association: "Entstehung_Grundstueck"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-projektiert
-            sourceRef: "gs.Entstehung"
+          targetRule: gs-nachfuehrung-projektiert
+          sourceRef: "gs.Entstehung"
 
     - id: proj-liegenschaft
       target:
@@ -414,7 +407,7 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft"
       sources:
         - alias: ls
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.ProjLiegenschaft"
       assign:
         NummerTeilgrundstueck: "ls.NummerTeilGrundstueck"
@@ -426,9 +419,8 @@ mapping:
         - association: "GrundstueckLiegenschaft"
           role: "Grundstueck"
           required: true
-          targetObject:
-            rule: proj-grundstueck
-            sourceRef: "ls.ProjLiegenschaft_von"
+          targetRule: proj-grundstueck
+          sourceRef: "ls.ProjLiegenschaft_von"
 
     - id: grundstueck-gueltig
       target:
@@ -436,7 +428,7 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       sources:
         - alias: gs
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.Grundstueck"
           where: "gs.Art == #Liegenschaft"
       identity:
@@ -467,9 +459,8 @@ mapping:
         - association: "Entstehung_Grundstueck"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gueltig
-            sourceRef: "gs.Entstehung"
+          targetRule: gs-nachfuehrung-gueltig
+          sourceRef: "gs.Entstehung"
 
     - id: liegenschaft
       target:
@@ -477,7 +468,7 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Liegenschaft"
       sources:
         - alias: ls
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.Liegenschaft"
       assign:
         NummerTeilgrundstueck: "ls.NummerTeilGrundstueck"
@@ -489,9 +480,8 @@ mapping:
         - association: "GrundstueckLiegenschaft"
           role: "Grundstueck"
           required: true
-          targetObject:
-            rule: grundstueck-gueltig
-            sourceRef: "ls.Liegenschaft_von"
+          targetRule: grundstueck-gueltig
+          sourceRef: "ls.Liegenschaft_von"
 
     - id: selbstrecht-grundstueck
       target:
@@ -499,7 +489,7 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.Grundstueck"
       sources:
         - alias: gs
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.Grundstueck"
           where: "gs.Art != #Liegenschaft"
       identity:
@@ -517,9 +507,8 @@ mapping:
         - association: "Entstehung_Grundstueck"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gs-nachfuehrung-gueltig
-            sourceRef: "gs.Entstehung"
+          targetRule: gs-nachfuehrung-gueltig
+          sourceRef: "gs.Entstehung"
 
     - id: selbstrecht
       target:
@@ -527,7 +516,7 @@ mapping:
         class: "DMAV_Grundstuecke_V1_1.Grundstuecke.SelbstaendigesDauerndesRecht"
       sources:
         - alias: sr
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.Liegenschaften.SelbstRecht"
       assign:
         NummerTeilgrundstueck: "sr.NummerTeilGrundstueck"
@@ -538,6 +527,5 @@ mapping:
         - association: "GrundstueckSelbstaendigesDauerndesRecht"
           role: "Grundstueck"
           required: true
-          targetObject:
-            rule: selbstrecht-grundstueck
-            sourceRef: "sr.SelbstRecht_von"
+          targetRule: selbstrecht-grundstueck
+          sourceRef: "sr.SelbstRecht_von"

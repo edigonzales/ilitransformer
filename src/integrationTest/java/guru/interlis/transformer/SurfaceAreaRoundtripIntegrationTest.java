@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import guru.interlis.transformer.app.IlivalidatorRunner;
-import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
 import guru.interlis.transformer.diag.Diagnostic;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.DiagnosticCollector;
@@ -18,8 +16,10 @@ import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.InMemoryStateStore;
+import guru.interlis.transformer.validation.InProcessIlivalidatorService;
+import guru.interlis.transformer.validation.ValidationResult;
 
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
@@ -59,8 +59,6 @@ class SurfaceAreaRoundtripIntegrationTest {
 
     private static ch.interlis.ili2c.metamodel.TransferDescription ili1TransferDescription;
     private static ch.interlis.ili2c.metamodel.TransferDescription ili2TransferDescription;
-    private static TypeSystemFacade ili1TypeSystem;
-    private static TypeSystemFacade ili2TypeSystem;
     private static TransformPlan reversePlan;
     private static TransformPlan forwardPlan;
 
@@ -73,19 +71,15 @@ class SurfaceAreaRoundtripIntegrationTest {
             fail("ILI1 model compilation errors:\n  " + formatDiagnostics(ili1Result));
         }
         ili1TransferDescription = ili1Result.transferDescription();
-        ili1TypeSystem = new TypeSystemFacade(ili1TransferDescription);
 
         IliModelCompileResult ili2Result = service.compileModel(ILI2_MODEL, MODELDIR);
         if (ili2Result.hasErrors()) {
             fail("ILI2 model compilation errors:\n  " + formatDiagnostics(ili2Result));
         }
         ili2TransferDescription = ili2Result.transferDescription();
-        ili2TypeSystem = new TypeSystemFacade(ili2TransferDescription);
 
-        reversePlan =
-                compilePlan(REVERSE_MAPPING, Map.of(ILI2_MODEL, ili2TypeSystem), Map.of(ILI1_MODEL, ili1TypeSystem));
-        forwardPlan =
-                compilePlan(FORWARD_MAPPING, Map.of(ILI1_MODEL, ili1TypeSystem), Map.of(ILI2_MODEL, ili2TypeSystem));
+        reversePlan = compilePlan(REVERSE_MAPPING);
+        forwardPlan = compilePlan(FORWARD_MAPPING);
     }
 
     @Test
@@ -112,11 +106,11 @@ class SurfaceAreaRoundtripIntegrationTest {
         assertThat(roundtrip.forwardDiagnostics().hasErrors())
                 .as(roundtrip.forwardDiagnostics().all().toString())
                 .isFalse();
-        assertThat(roundtrip.reverseValidation().success())
-                .as(roundtrip.reverseValidation().log())
+        assertThat(roundtrip.reverseValidation().valid())
+                .as(roundtrip.reverseValidation().logText())
                 .isTrue();
-        assertThat(roundtrip.forwardValidation().success())
-                .as(roundtrip.forwardValidation().log())
+        assertThat(roundtrip.forwardValidation().valid())
+                .as(roundtrip.forwardValidation().logText())
                 .isTrue();
         assertThat(Files.readString(roundtrip.itfPath())).contains("ARCP");
 
@@ -145,11 +139,11 @@ class SurfaceAreaRoundtripIntegrationTest {
         assertThat(roundtrip.forwardDiagnostics().hasErrors())
                 .as(roundtrip.forwardDiagnostics().all().toString())
                 .isFalse();
-        assertThat(roundtrip.reverseValidation().success())
-                .as(roundtrip.reverseValidation().log())
+        assertThat(roundtrip.reverseValidation().valid())
+                .as(roundtrip.reverseValidation().logText())
                 .isTrue();
-        assertThat(roundtrip.forwardValidation().success())
-                .as(roundtrip.forwardValidation().log())
+        assertThat(roundtrip.forwardValidation().valid())
+                .as(roundtrip.forwardValidation().logText())
                 .isTrue();
         assertThat(content).containsPattern("TABL AreaClass\\ROBJE \\d+ ART1 [0-9]+\\.[0-9]+ [0-9]+\\.[0-9]+");
 
@@ -231,7 +225,7 @@ class SurfaceAreaRoundtripIntegrationTest {
                         class: "Ili1SurfaceAreaTestModel.TestTopic.SurfaceClass"
                       sources:
                         - alias: s
-                          input: src
+                          inputs: [src]
                           class: "DMAV_Grundstuecke_V1_0.Grundstuecke.GSNachfuehrung"
                       identity:
                         sourceKey: ["s.NBIdent", "s.Identifikator"]
@@ -240,10 +234,7 @@ class SurfaceAreaRoundtripIntegrationTest {
                         Perimeter: "s.Perimeter"
                 """;
 
-        TransformPlan plan = compilePlan(
-                mapping,
-                Map.of(REAL_DMAV_MODEL, new TypeSystemFacade(sourceResult.transferDescription())),
-                Map.of(ILI1_MODEL, ili1TypeSystem));
+        TransformPlan plan = compilePlan(mapping);
 
         Path outputPath = Files.createTempFile("real-dmav-surface-", ".itf");
         DiagnosticCollector diagnostics = new DiagnosticCollector();
@@ -256,12 +247,13 @@ class SurfaceAreaRoundtripIntegrationTest {
                 "src",
                 "tgt",
                 diagnostics);
-        ValidationResult validation = IlivalidatorRunner.validate(outputPath, List.of(MODELDIR), ILI1_MODEL, null);
+        ValidationResult validation =
+                new InProcessIlivalidatorService().validate(outputPath, List.of(MODELDIR), List.of(ILI1_MODEL), null);
         List<IomObject> reverseObjects = readAllObjects(outputPath, ili1TransferDescription);
 
         assertThat(result.errors()).isZero();
         assertThat(diagnostics.hasErrors()).as(diagnostics.all().toString()).isFalse();
-        assertThat(validation.success()).as(validation.log()).isTrue();
+        assertThat(validation.valid()).as(validation.logText()).isTrue();
 
         IomObject surface = findFirstBySuffix(reverseObjects, ".SurfaceClass");
         assertThat(surface).isNotNull();
@@ -284,7 +276,8 @@ class SurfaceAreaRoundtripIntegrationTest {
                 "ili2",
                 "ili1",
                 reverseDiagnostics);
-        ValidationResult reverseValidation = IlivalidatorRunner.validate(itfPath, List.of(MODELDIR), ILI1_MODEL, null);
+        ValidationResult reverseValidation =
+                new InProcessIlivalidatorService().validate(itfPath, List.of(MODELDIR), List.of(ILI1_MODEL), null);
         List<IomObject> reverseObjects = readAllObjects(itfPath, ili1TransferDescription);
 
         DiagnosticCollector forwardDiagnostics = new DiagnosticCollector();
@@ -297,7 +290,8 @@ class SurfaceAreaRoundtripIntegrationTest {
                 "ili1",
                 "ili2",
                 forwardDiagnostics);
-        ValidationResult forwardValidation = IlivalidatorRunner.validate(xtfPath, List.of(MODELDIR), ILI2_MODEL, null);
+        ValidationResult forwardValidation =
+                new InProcessIlivalidatorService().validate(xtfPath, List.of(MODELDIR), List.of(ILI2_MODEL), null);
         List<IomObject> forwardObjects = readAllObjects(xtfPath, ili2TransferDescription);
 
         Files.deleteIfExists(sourcePath);
@@ -340,24 +334,28 @@ class SurfaceAreaRoundtripIntegrationTest {
                 Map.of(outputId, writer));
     }
 
-    private static TransformPlan compilePlan(
-            Path path, Map<String, TypeSystemFacade> sourceTypes, Map<String, TypeSystemFacade> targetTypes)
-            throws Exception {
+    private static TransformPlan compilePlan(Path path) throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(path.toFile(), JobConfig.class);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTypes, targetTypes);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors())
                 .as(plan.diagnostics().all().toString())
                 .isFalse();
         return plan;
     }
 
-    private static TransformPlan compilePlan(
-            String yaml, Map<String, TypeSystemFacade> sourceTypes, Map<String, TypeSystemFacade> targetTypes)
-            throws Exception {
+    private static TransformPlan compilePlan(String yaml) throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(yaml, JobConfig.class);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTypes, targetTypes);
+        TransformPlan plan = new MappingCompiler()
+                .compileTyped(
+                        config,
+                        ModelRegistry.builder()
+                                .config(config)
+                                .modelDir(REAL_DMAV_MODELDIR)
+                                .modelDir(MODELDIR)
+                                .build());
         assertThat(plan.diagnostics().hasErrors())
                 .as(plan.diagnostics().all().toString())
                 .isFalse();

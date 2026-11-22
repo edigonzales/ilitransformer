@@ -6,27 +6,15 @@ import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 
 import java.util.List;
-import java.util.Map;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class UnsupportedOidStrategyRejectedTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade testModelTs;
-
-    @BeforeAll
-    static void compileModels() {
-        IliModelService service = new IliModelService();
-        var result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
-        assertThat(result.hasErrors()).isFalse();
-        testModelTs = new TypeSystemFacade(result.transferDescription());
-    }
 
     @Test
     void externalOidStrategyIsRejected() {
@@ -34,8 +22,8 @@ class UnsupportedOidStrategyRejectedTest {
         config.mapping.oidStrategy = new JobConfig.OidStrategySpec();
         config.mapping.oidStrategy.defaultStrategy = "external";
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().all())
                 .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_EXTERNAL_STRATEGY_UNSUPPORTED)
@@ -48,8 +36,8 @@ class UnsupportedOidStrategyRejectedTest {
         config.mapping.oidStrategy = new JobConfig.OidStrategySpec();
         config.mapping.oidStrategy.defaultStrategy = "preserve";
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().all())
                 .noneMatch(d -> d.code().equals(DiagnosticCode.MAP_EXTERNAL_STRATEGY_UNSUPPORTED));

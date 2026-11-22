@@ -16,7 +16,7 @@ import guru.interlis.transformer.mapping.plan.RulePlan;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.InMemoryStateStore;
 
 import ch.interlis.ili2c.metamodel.TransferDescription;
@@ -44,8 +44,6 @@ import org.junit.jupiter.api.Test;
 class BagTransformationTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade flatTs;
-    private static TypeSystemFacade nestedTs;
     private static TransferDescription flatTransferDescription;
     private static TransferDescription nestedTransferDescription;
 
@@ -56,14 +54,12 @@ class BagTransformationTest {
         if (flatResult.hasErrors()) {
             fail("Flat model compile errors: " + flatResult.diagnostics().all());
         }
-        flatTs = new TypeSystemFacade(flatResult.transferDescription());
         flatTransferDescription = flatResult.transferDescription();
 
         IliModelCompileResult nestedResult = service.compileModel(MODELDIR + "bag-nested-target.ili", MODELDIR);
         if (nestedResult.hasErrors()) {
             fail("Nested model compile errors: " + nestedResult.diagnostics().all());
         }
-        nestedTs = new TypeSystemFacade(nestedResult.transferDescription());
         nestedTransferDescription = nestedResult.transferDescription();
     }
 
@@ -167,7 +163,7 @@ class BagTransformationTest {
                         class: "BagNestedTarget.NestedTopic.Parent"
                       sources:
                         - alias: p
-                          input: flat
+                          inputs: [flat]
                           class: "BagFlatSource.FlatTopic.Parent"
                           where: "p.Description == 'active'"
                       identity:
@@ -194,7 +190,7 @@ class BagTransformationTest {
                         class: "BagNestedTarget.NestedTopic.Parent"
                       sources:
                         - alias: p
-                          input: flat
+                          inputs: [flat]
                           class: "BagFlatSource.FlatTopic.Parent"
                           where: "p.Description == 'inactive'"
                       identity:
@@ -532,13 +528,8 @@ class BagTransformationTest {
     }
 
     private TransformPlan compileMapping(JobConfig config) {
-        Map<String, TypeSystemFacade> sourceTs = Map.of(
-                "BagFlatSource", flatTs,
-                "BagNestedTarget", nestedTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of(
-                "BagFlatSource", flatTs,
-                "BagNestedTarget", nestedTs);
-        return new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        return new MappingCompiler().compileTyped(config, registry);
     }
 
     private static int countOccurrences(String text, String needle) {

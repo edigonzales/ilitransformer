@@ -40,7 +40,7 @@ mapping:
         class: "DemoTarget.Catalog.Municipality"
       sources:
         - alias: src
-          input: jdbc-input
+          inputs: [jdbc-input]
           class: "DemoJdbcSource.Data.Municipality"
       identity:
         sourceKey: ["src.bfsnr"]

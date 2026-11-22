@@ -313,13 +313,11 @@ class JobConfigToIlimapAstMapperTest {
         rule.refs = new ArrayList<>();
 
         JobConfig.RefMapping ref = new JobConfig.RefMapping();
-        ref.target = "Entstehung";
         ref.association = "Entstehung_LFP3";
         ref.role = "Entstehung";
         ref.required = true;
-        ref.targetObject = new JobConfig.RefMapping.RefTargetObject();
-        ref.targetObject.rule = "lfp3-nachfuehrung";
-        ref.targetObject.sourceRef = "p.Entstehung";
+        ref.targetRule = "lfp3-nachfuehrung";
+        ref.sourceRef = "p.Entstehung";
         rule.refs.add(ref);
 
         IlimapDocument doc = mapper.map(config);

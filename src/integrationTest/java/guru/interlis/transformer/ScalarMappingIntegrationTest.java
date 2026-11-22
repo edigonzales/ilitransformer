@@ -14,7 +14,7 @@ import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.InMemoryStateStore;
 
 import ch.interlis.ili2c.metamodel.TransferDescription;
@@ -34,7 +34,6 @@ class ScalarMappingIntegrationTest {
 
     private static final String MODELDIR = "src/test/data/models/";
 
-    private static TypeSystemFacade p5ModelTs;
     private static TransferDescription p5TransferDescription;
 
     @BeforeAll
@@ -45,7 +44,6 @@ class ScalarMappingIntegrationTest {
                 .as("Model compilation errors: %s", result.diagnostics())
                 .isFalse();
         p5TransferDescription = result.transferDescription();
-        p5ModelTs = new TypeSystemFacade(p5TransferDescription);
     }
 
     // -- Engine test with mocked reader + real writer ------------------------
@@ -53,9 +51,8 @@ class ScalarMappingIntegrationTest {
     @Test
     void transformsScalarAttributes1to1() throws Exception {
         JobConfig config = p5Config(null);
-        Map<String, TypeSystemFacade> sourceTs = Map.of("P5Model", p5ModelTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("P5Model", p5ModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors())
                 .as("Compiler errors: %s", plan.diagnostics().all())
                 .isFalse();
@@ -114,9 +111,8 @@ class ScalarMappingIntegrationTest {
     @Test
     void whereFilterExcludesAllObjects() throws Exception {
         JobConfig config = p5Config("${s.Name} == null");
-        Map<String, TypeSystemFacade> sourceTs = Map.of("P5Model", p5ModelTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("P5Model", p5ModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
         assertThat(plan.rules().get(0).sources().get(0).where().sourceText()).isEqualTo("${s.Name} == null");
 
@@ -156,9 +152,8 @@ class ScalarMappingIntegrationTest {
     @Test
     void whereFilterKeepsAllWithDefined() throws Exception {
         JobConfig config = p5Config("defined(${s.Name})");
-        Map<String, TypeSystemFacade> sourceTs = Map.of("P5Model", p5ModelTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("P5Model", p5ModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject src1 = new Iom_jObject("P5Model.P5Topic.SourceClass", "1");

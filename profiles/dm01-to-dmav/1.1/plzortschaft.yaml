@@ -34,10 +34,10 @@ mapping:
         class: "DMAV_PLZ_Ortschaft_V1_0.PLZ_Ortschaft.Ortschaft"
       sources:
         - alias: os
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.PLZOrtschaft.Ortschaft"
         - alias: osn
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.PLZOrtschaft.OrtschaftsName"
           where: "eq(osn.Sprache, #de)"
       joins:
@@ -55,7 +55,7 @@ mapping:
         class: "DMAV_PLZ_Ortschaft_V1_0.PLZ_Ortschaft.PLZ"
       sources:
         - alias: plz6
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.PLZOrtschaft.PLZ6"
       assign:
         Geometrie: "plz6.Flaeche"
@@ -65,6 +65,5 @@ mapping:
         - association: "OrtschaftPLZ"
           role: "Ortschaft"
           required: true
-          targetObject:
-            rule: ortschaft
-            sourceRef: "plz6.PLZ6_von"
+          targetRule: ortschaft
+          sourceRef: "plz6.PLZ6_von"

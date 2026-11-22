@@ -14,6 +14,7 @@ import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
 
@@ -43,7 +44,6 @@ class GeometryIntegrationTest {
     private static final String MODELDIR = "src/test/data/models/";
     private static final String MAPPING_FILE = "src/test/resources/mappings/dm01-to-dmav-geom-test.yaml";
 
-    private static TypeSystemFacade dm01Ts;
     private static TypeSystemFacade dmavTs;
 
     @BeforeAll
@@ -57,7 +57,6 @@ class GeometryIntegrationTest {
                     .collect(java.util.stream.Collectors.joining("\n  "));
             fail("DM01 geometry model compilation errors:\n  " + errors);
         }
-        dm01Ts = new TypeSystemFacade(dm01Result.transferDescription());
 
         IliModelCompileResult dmavResult = service.compileModel("src/test/data/models/dmav-geom-test.ili", MODELDIR);
         if (dmavResult.hasErrors()) {
@@ -74,9 +73,8 @@ class GeometryIntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("Dm01GeomTestModel", dm01Ts);
-        Map<String, TypeSystemFacade> targetTs = Map.of("DmavGeomTestModel", dmavTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().hasErrors())
                 .as("Compiler errors: %s", plan.diagnostics().all())
@@ -95,9 +93,8 @@ class GeometryIntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("Dm01GeomTestModel", dm01Ts);
-        Map<String, TypeSystemFacade> targetTs = Map.of("DmavGeomTestModel", dmavTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject lfp = new Iom_jObject("Dm01GeomTestModel.Fixpunkte.LFP3", "1");

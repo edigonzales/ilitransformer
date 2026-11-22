@@ -50,7 +50,7 @@ mapping:
         class: "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3Nachfuehrung"
       sources:
         - alias: nf
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
@@ -67,7 +67,7 @@ mapping:
         class: "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3"
       sources:
         - alias: p
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3"
       identity:
         sourceKey: ["p.NBIdent", "p.Nummer"]
@@ -101,6 +101,5 @@ mapping:
         - association: "Entstehung_LFP3"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: lfp3-nachfuehrung
-            sourceRef: "p.Entstehung"
+          targetRule: lfp3-nachfuehrung
+          sourceRef: "p.Entstehung"

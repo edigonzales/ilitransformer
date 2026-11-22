@@ -152,52 +152,5 @@ public final class ModelRegistry {
                 throw new RuntimeException("Failed to compile model " + modelName, ex);
             }
         }
-
-        /**
-         * Builds a ModelRegistry from pre-compiled TypeSystemFacade maps.
-         * For use by the deprecated {@code MappingCompiler.compileTyped(JobConfig, Map, Map)} only.
-         */
-        public ModelRegistry buildWithSuppliedTypeSystems(
-                Map<String, TypeSystemFacade> sourceTypeSystems, Map<String, TypeSystemFacade> targetTypeSystems) {
-            if (config == null) {
-                throw new IllegalStateException("JobConfig must be set");
-            }
-
-            ModelRegistry registry = new ModelRegistry();
-
-            // Build InputBindings from source type systems
-            for (JobConfig.InputSpec input : config.job.inputs) {
-                TypeSystemFacade ts = sourceTypeSystems.get(input.model);
-                TransferDescription td = ts != null ? ts.getTransferDescription() : null;
-                Path path = input.path != null ? Path.of(input.path) : null;
-                String format = FormatIdResolver.resolveInputFormat(input);
-                Map<String, String> options = JobConfigNormalizer.normalizeOptions(input.options);
-                registry.inputsById.put(
-                        input.id,
-                        new InputBinding(
-                                input.id, path, input.model, format, options, td, ts, input.connection, input.queries));
-                if (td != null) {
-                    registry.tdByModel.putIfAbsent(input.model, td);
-                    registry.tsByModel.putIfAbsent(input.model, ts);
-                }
-            }
-
-            // Build OutputBindings from target type systems
-            for (JobConfig.OutputSpec output : config.job.outputs) {
-                TypeSystemFacade ts = targetTypeSystems.get(output.model);
-                TransferDescription td = ts != null ? ts.getTransferDescription() : null;
-                Path path = output.path != null ? Path.of(output.path) : null;
-                String format = FormatIdResolver.resolveOutputFormat(output);
-                Map<String, String> options = JobConfigNormalizer.normalizeOptions(output.options);
-                registry.outputsById.put(
-                        output.id, new OutputBinding(output.id, path, output.model, format, options, td, ts));
-                if (td != null) {
-                    registry.tdByModel.putIfAbsent(output.model, td);
-                    registry.tsByModel.putIfAbsent(output.model, ts);
-                }
-            }
-
-            return registry;
-        }
     }
 }

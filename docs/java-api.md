@@ -26,7 +26,11 @@ monitor so embedding hosts can coordinate global compiler state on that monitor.
 
 The engine holds source objects, target objects and references in memory.
 Use a complete small sample for preview so that the referenced objects are available.
-Direct runtime callers use `TransformationEngine.runTyped(TransformPlan, …)`.
+Direct runtime callers build a `ModelRegistry` with `ModelRegistry.builder()`,
+compile a `JobConfig` with `MappingCompiler.compileTyped(config, registry)`,
+and pass the resulting plan to `TransformationEngine.runTyped(TransformPlan, …)`.
+To validate a transfer directly, call `TransferValidationService.validate(…)`,
+implemented by `InProcessIlivalidatorService`.
 The engine resolves local references in their source basket and honours explicit
 source BIDs. It checks uniqueness, type and cardinality before publication.
 The [runtime reference contract](dev/state-store.md#reference-resolution) describes

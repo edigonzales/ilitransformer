@@ -41,7 +41,7 @@ mapping:
         class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
       sources:
         - alias: nf
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.HHGNachfuehrung"
           where: "defined(nf.GenehmigtAm)"
       identity:
@@ -61,7 +61,7 @@ mapping:
         class: "DM01AVCH24LV95D.Gemeindegrenzen.GEMNachfuehrung"
       sources:
         - alias: nf
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.HHGNachfuehrung"
           where: "notDefined(nf.GenehmigtAm)"
       identity:
@@ -81,7 +81,7 @@ mapping:
         class: "DM01AVCH24LV95D.Gemeindegrenzen.Gemeinde"
       sources:
         - alias: gm
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Gemeinde"
       identity:
         sourceKey: ["gm.BFSNummer"]
@@ -95,7 +95,7 @@ mapping:
         class: "DM01AVCH24LV95D.Gemeindegrenzen.ProjGemeindegrenze"
       sources:
         - alias: pg
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.ProjGemeindegrenzabschnitt"
       assign:
         Geometrie: "pg.Geometrie"
@@ -103,15 +103,13 @@ mapping:
         - association: "ProjGemeindegrenzeEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gem-nachfuehrung-projektiert
-            sourceRef: "pg.Entstehung"
+          targetRule: gem-nachfuehrung-projektiert
+          sourceRef: "pg.Entstehung"
         - association: "ProjGemeindegrenzeProjGemeindegrenze_von"
           role: "ProjGemeindegrenze_von"
           required: true
-          targetObject:
-            rule: gemeinde-to-dm01
-            sourceRef: "pg.Gemeinde"
+          targetRule: gemeinde-to-dm01
+          sourceRef: "pg.Gemeinde"
 
     - id: gemeindegrenze-to-dm01
       target:
@@ -119,7 +117,7 @@ mapping:
         class: "DM01AVCH24LV95D.Gemeindegrenzen.Gemeindegrenze"
       sources:
         - alias: gg
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Gemeindegrenze"
       assign:
         Geometrie: "gg.Geometrie"
@@ -127,15 +125,13 @@ mapping:
         - association: "GemeindegrenzeEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: gem-nachfuehrung-gueltig
-            sourceRef: "gg.Entstehung"
+          targetRule: gem-nachfuehrung-gueltig
+          sourceRef: "gg.Entstehung"
         - association: "GemeindegrenzeGemeindegrenze_von"
           role: "Gemeindegrenze_von"
           required: true
-          targetObject:
-            rule: gemeinde-to-dm01
-            sourceRef: "gg.Gemeinde"
+          targetRule: gemeinde-to-dm01
+          sourceRef: "gg.Gemeinde"
 
     - id: bezirksgrenzabschnitt-to-dm01
       target:
@@ -143,7 +139,7 @@ mapping:
         class: "DM01AVCH24LV95D.Bezirksgrenzen.Bezirksgrenzabschnitt"
       sources:
         - alias: bga
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Bezirksgrenzabschnitt"
       assign:
         Geometrie: "bga.Geometrie"
@@ -155,7 +151,7 @@ mapping:
         class: "DM01AVCH24LV95D.Kantonsgrenzen.Kantonsgrenzabschnitt"
       sources:
         - alias: kga
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_HoheitsgrenzenAV_V1_0.HoheitsgrenzenAV.Kantonsgrenzabschnitt"
       assign:
         Geometrie: "kga.Geometrie"

@@ -42,7 +42,7 @@ mapping:
         class: "TargetModel.Topic.Class"
       sources:
         - alias: src
-          input: in1
+          inputs: [in1]
           class: "SourceModel.Topic.Class"
       assign:
         AttributeName: "${src.SourceAttribute}"
@@ -289,8 +289,6 @@ target:
   class: "M.T.C"   # Pflicht: qualifizierte INTERLIS-Klasse
 ```
 
-Backward-Compat: Die flachen Felder `targetClass` und `output` werden weiterhin unterstützt.
-
 ### SourceSpec
 
 ```yaml
@@ -301,8 +299,6 @@ sources:
     where: "src.Status == 'aktiv'" # Optional: Filter
 ```
 
-Backward-Compat: Das flache Feld `input` (einzelner String) wird weiterhin unterstützt.
-
 ### IdentitySpec
 
 ```yaml
@@ -310,7 +306,7 @@ identity:
   sourceKey: ["src.NBIdent", "src.Nummer"]  # Felder für deterministische OID
 ```
 
-### AttributeMapping (assign)
+### Attributzuweisungen (assign)
 
 ```yaml
 assign:
@@ -328,6 +324,7 @@ refs:
     role: "Entstehung"                # Rollenname
     sourceRef: "src.Entstehung"       # Referenzwert des Quellobjekts
     targetRule: "lfp3-nachfuehrung"   # Rule-ID des Zielobjekts
+    required: true
 ```
 
 Für `sourceRef` den vollständigen Referenzwert verwenden, damit Input und
@@ -440,7 +437,7 @@ mapping:
         class: "TargetModel.Topic.MainClass"
       sources:
         - alias: s
-          input: in1
+          inputs: [in1]
           class: "SourceModel.Topic.Class"
       assign:
         Name: "${s.Name}"

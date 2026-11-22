@@ -50,7 +50,7 @@ mapping:
         class: "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Nachfuehrung"
       sources:
         - alias: nf
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3Nachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
@@ -67,7 +67,7 @@ mapping:
         class: "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3"
       sources:
         - alias: p
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3"
           where: "p.LFPArt == #LFP3"
       identity:
@@ -86,9 +86,8 @@ mapping:
       refs:
         - role: "Entstehung"
           required: true
-          targetObject:
-            rule: lfp3-nachfuehrung
-            sourceRef: "p.Entstehung"
+          targetRule: lfp3-nachfuehrung
+          sourceRef: "p.Entstehung"
       bags:
         Textposition:
           mode: expand
@@ -131,7 +130,7 @@ mapping:
         class: "DM01AVCH24LV95D.FixpunkteKategorie3.LFP3Symbol"
       sources:
         - alias: p
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_FixpunkteAVKategorie3_V1_1.FixpunkteAVKategorie3.LFP3"
           where: "if(p.LFPArt == #LFP3, defined(p.SymbolOri), false)"
       identity:
@@ -141,6 +140,5 @@ mapping:
       refs:
         - role: "LFP3Symbol_von"
           required: true
-          targetObject:
-            rule: lfp3
-            sourceRef: "p"
+          targetRule: lfp3
+          sourceRef: "p"

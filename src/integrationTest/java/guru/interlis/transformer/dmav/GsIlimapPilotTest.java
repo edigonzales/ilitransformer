@@ -102,15 +102,12 @@ class GsIlimapPilotTest {
             assertThat(listOrEmpty(ilimapRule.joins)).hasSameSizeAs(listOrEmpty(yamlRule.joins));
             assertThat(identitySourceKeysOf(ilimapRule)).isEqualTo(identitySourceKeysOf(yamlRule));
             assertThat(ilimapRule.assign.keySet()).isEqualTo(yamlRule.assign.keySet());
-            assertThat(JobConfigNormalizer.getEffectiveRefs(ilimapRule))
-                    .hasSameSizeAs(JobConfigNormalizer.getEffectiveRefs(yamlRule));
 
             for (int sourceIndex = 0; sourceIndex < yamlRule.sources.size(); sourceIndex++) {
                 JobConfig.SourceSpec yamlSource = yamlRule.sources.get(sourceIndex);
                 JobConfig.SourceSpec ilimapSource = ilimapRule.sources.get(sourceIndex);
                 assertThat(ilimapSource.alias).isEqualTo(yamlSource.alias);
-                assertThat(JobConfigNormalizer.getInputIds(ilimapSource))
-                        .isEqualTo(JobConfigNormalizer.getInputIds(yamlSource));
+                assertThat(ilimapSource.inputs).isEqualTo(yamlSource.inputs);
                 assertThat(ilimapSource.clazz).isEqualTo(yamlSource.clazz);
                 assertThat(normalizeQuotes(ilimapSource.where)).isEqualTo(normalizeQuotes(yamlSource.where));
             }
@@ -132,16 +129,17 @@ class GsIlimapPilotTest {
                         .isEqualTo(normalizeQuotes(yamlRule.assign.get(key)));
             }
 
-            List<JobConfig.RefMapping> yamlRefs = JobConfigNormalizer.getEffectiveRefs(yamlRule);
-            List<JobConfig.RefMapping> ilimapRefs = JobConfigNormalizer.getEffectiveRefs(ilimapRule);
+            List<JobConfig.RefMapping> yamlRefs = listOrEmpty(yamlRule.refs);
+            List<JobConfig.RefMapping> ilimapRefs = listOrEmpty(ilimapRule.refs);
+            assertThat(ilimapRefs).hasSameSizeAs(yamlRefs);
             for (int refIndex = 0; refIndex < yamlRefs.size(); refIndex++) {
                 JobConfig.RefMapping yamlRef = yamlRefs.get(refIndex);
                 JobConfig.RefMapping ilimapRef = ilimapRefs.get(refIndex);
                 assertThat(ilimapRef.association).isEqualTo(yamlRef.association);
                 assertThat(ilimapRef.role).isEqualTo(yamlRef.role);
                 assertThat(ilimapRef.required).isEqualTo(yamlRef.required);
-                assertThat(ilimapRef.targetObject.rule).isEqualTo(yamlRef.targetObject.rule);
-                assertThat(ilimapRef.targetObject.sourceRef).isEqualTo(yamlRef.targetObject.sourceRef);
+                assertThat(ilimapRef.targetRule).isEqualTo(yamlRef.targetRule);
+                assertThat(ilimapRef.sourceRef).isEqualTo(yamlRef.sourceRef);
             }
         }
     }

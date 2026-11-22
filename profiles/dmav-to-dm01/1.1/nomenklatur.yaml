@@ -40,7 +40,7 @@ mapping:
         class: "DM01AVCH24LV95D.Nomenklatur.NKNachfuehrung"
       sources:
         - alias: nf
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Nomenklatur_V1_1.Nomenklatur.NKNachfuehrung"
       identity:
         sourceKey: ["nf.NBIdent", "nf.Identifikator"]
@@ -58,7 +58,7 @@ mapping:
         class: "DM01AVCH24LV95D.Nomenklatur.Flurname"
       sources:
         - alias: f
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Nomenklatur_V1_1.Nomenklatur.Flurname"
       assign:
         Name: "f.Name"
@@ -84,9 +84,8 @@ mapping:
         - association: "FlurnameEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: nk-nachfuehrung-gueltig
-            sourceRef: "f.Entstehung"
+          targetRule: nk-nachfuehrung-gueltig
+          sourceRef: "f.Entstehung"
 
     - id: ortsname-gueltig
       target:
@@ -94,7 +93,7 @@ mapping:
         class: "DM01AVCH24LV95D.Nomenklatur.Ortsname"
       sources:
         - alias: o
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Nomenklatur_V1_1.Nomenklatur.Ortsname"
       identity:
         sourceKey: ["o.Name"]
@@ -123,9 +122,8 @@ mapping:
         - association: "OrtsnameEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: nk-nachfuehrung-gueltig
-            sourceRef: "o.Entstehung"
+          targetRule: nk-nachfuehrung-gueltig
+          sourceRef: "o.Entstehung"
 
     - id: gelaendename-gueltig
       target:
@@ -133,7 +131,7 @@ mapping:
         class: "DM01AVCH24LV95D.Nomenklatur.Gelaendename"
       sources:
         - alias: g
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Nomenklatur_V1_1.Nomenklatur.Gelaendename"
       identity:
         sourceKey: ["g.Name"]
@@ -160,6 +158,5 @@ mapping:
         - association: "GelaendenameEntstehung"
           role: "Entstehung"
           required: true
-          targetObject:
-            rule: nk-nachfuehrung-gueltig
-            sourceRef: "g.Entstehung"
+          targetRule: nk-nachfuehrung-gueltig
+          sourceRef: "g.Entstehung"

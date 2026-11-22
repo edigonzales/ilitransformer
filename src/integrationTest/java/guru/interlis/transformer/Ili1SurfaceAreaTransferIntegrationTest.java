@@ -16,7 +16,7 @@ import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.InMemoryStateStore;
 
 import ch.interlis.iom.IomObject;
@@ -49,8 +49,6 @@ class Ili1SurfaceAreaTransferIntegrationTest {
 
     private static ch.interlis.ili2c.metamodel.TransferDescription ili1Td;
     private static ch.interlis.ili2c.metamodel.TransferDescription ili2Td;
-    private static TypeSystemFacade ili1Ts;
-    private static TypeSystemFacade ili2Ts;
 
     @BeforeAll
     static void compileModels() {
@@ -61,14 +59,12 @@ class Ili1SurfaceAreaTransferIntegrationTest {
             fail("ILI1 model compilation errors:\n  " + formatDiagnostics(ili1Result));
         }
         ili1Td = ili1Result.transferDescription();
-        ili1Ts = new TypeSystemFacade(ili1Td);
 
         IliModelCompileResult ili2Result = service.compileModel("DmavSurfaceAreaTestModel", MODELDIR);
         if (ili2Result.hasErrors()) {
             fail("ILI2 model compilation errors:\n  " + formatDiagnostics(ili2Result));
         }
         ili2Td = ili2Result.transferDescription();
-        ili2Ts = new TypeSystemFacade(ili2Td);
     }
 
     @Test
@@ -151,9 +147,8 @@ class Ili1SurfaceAreaTransferIntegrationTest {
     private TransferRun runTransfer(Path inputPath) throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(MAPPING_FILE.toFile(), JobConfig.class);
-        TransformPlan plan = new MappingCompiler()
-                .compileTyped(
-                        config, Map.of("Ili1SurfaceAreaTestModel", ili1Ts), Map.of("DmavSurfaceAreaTestModel", ili2Ts));
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().hasErrors())
                 .as("Compiler diagnostics: %s", plan.diagnostics().all())

@@ -8,15 +8,11 @@ import guru.interlis.transformer.mapping.ilimap.IlimapLoader;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
-import guru.interlis.transformer.model.IliModelService;
 import guru.interlis.transformer.model.ModelRegistry;
-import guru.interlis.transformer.model.TypeSystemFacade;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -24,15 +20,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 class TypedCompilerTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade testModelTs;
-
-    @BeforeAll
-    static void compileModels() {
-        IliModelService service = new IliModelService();
-        var result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
-        assertThat(result.hasErrors()).isFalse();
-        testModelTs = new TypeSystemFacade(result.transferDescription());
-    }
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
@@ -178,10 +165,9 @@ class TypedCompilerTest {
     @Test
     void compilesValidMappingToTransformPlan() {
         JobConfig config = minimalConfig();
-        Map<String, TypeSystemFacade> sourceTs = Map.of("TestModel", testModelTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("TestModel", testModelTs);
 
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.rules()).hasSize(1);
         assertThat(plan.rules().get(0).targetClass()).isNotNull();
         assertThat(plan.rules().get(0).targetClass().getName()).isEqualTo("TestClass");
@@ -194,10 +180,9 @@ class TypedCompilerTest {
     @Test
     void assignsAreCorrectlyCompiled() {
         JobConfig config = minimalConfig();
-        Map<String, TypeSystemFacade> sourceTs = Map.of("TestModel", testModelTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("TestModel", testModelTs);
 
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         var assignments = plan.rules().get(0).assignments();
 
         var nameAssign = assignments.stream()
@@ -217,8 +202,8 @@ class TypedCompilerTest {
         rule.assign.put("Name", "\"literal\"");
         rule.assign.put("Aktiv", "true");
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         var nameAssign = plan.rules().get(0).assignments().stream()
                 .filter(a -> a.targetAttrName().equals("Name"))
@@ -242,8 +227,8 @@ class TypedCompilerTest {
         config.mapping.rules.get(0).target.clazz = "TestModel.TestTopic.NonExistent";
         config.mapping.rules.get(0).target.output = "out1";
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().all()).isNotEmpty();
         assertThat(plan.diagnostics().all())
@@ -259,8 +244,8 @@ class TypedCompilerTest {
         rule.assign = new java.util.LinkedHashMap<>();
         rule.assign.put("NonExistentAttr", "${s.Name}");
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().all())
                 .anyMatch(d ->
@@ -274,8 +259,8 @@ class TypedCompilerTest {
         rule.assign = new java.util.LinkedHashMap<>();
         rule.assign.put("Name", "${s.NonExistent}");
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().all())
                 .anyMatch(d ->
@@ -289,8 +274,8 @@ class TypedCompilerTest {
         rule.assign = new java.util.LinkedHashMap<>();
         rule.assign.put("Aktiv", "${s.Beschreibung}"); // TEXT source -> BOOLEAN target
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().all()).anyMatch(d -> d.code().equals(DiagnosticCode.MAP_TYPE_MISMATCH));
     }
@@ -303,34 +288,12 @@ class TypedCompilerTest {
         rule.assign = new java.util.LinkedHashMap<>();
         rule.assign.put("Beschreibung", "${s.Beschreibung}");
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().all())
                 .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_MANDATORY_MISSING)
                         && d.message().contains("Name"));
-    }
-
-    @Test
-    void rejectsDuplicateTargetAssignments() {
-        JobConfig config = minimalConfig();
-        var rule = config.mapping.rules.get(0);
-        // Use attributes list to allow duplicates
-        rule.assign = null;
-        JobConfig.AttributeMapping am1 = new JobConfig.AttributeMapping();
-        am1.target = "Name";
-        am1.expr = "${s.Name}";
-        JobConfig.AttributeMapping am2 = new JobConfig.AttributeMapping();
-        am2.target = "Name";
-        am2.expr = "${s.Beschreibung}";
-        rule.attributes = List.of(am1, am2);
-
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
-
-        assertThat(plan.diagnostics().all())
-                .anyMatch(d ->
-                        d.code().equals(DiagnosticCode.MAP_DUPLICATE_TARGET_ASSIGN) && d.severity() == Severity.ERROR);
     }
 
     @Test
@@ -343,14 +306,8 @@ class TypedCompilerTest {
                 config, "rule1", "INTERLIS.TIMESYSTEMS.CALENDAR", "out1", "in1", "INTERLIS.TIMESYSTEMS.CALENDAR");
 
         // Compile INTERLIS predefined model
-        IliModelService service = new IliModelService();
-        var result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
-        assertThat(result.hasErrors()).isFalse();
-        // The TransferDescription contains the INTERLIS model too
-        TypeSystemFacade interlisTs = new TypeSystemFacade(result.transferDescription());
-
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", interlisTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         // CALENDAR extends SCALSYSTEM (not abstract), so no abstract error expected here
         // But non-identifiable (isIli1Optional tables) might trigger a warning
@@ -379,8 +336,8 @@ class TypedCompilerTest {
         ref2.targetRule = "r1";
         rule2.refs = List.of(ref2);
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().all())
                 .anyMatch(d -> d.code().equals(DiagnosticCode.MAP_CYCLIC_DEPENDENCY) && d.severity() == Severity.ERROR);
@@ -393,8 +350,8 @@ class TypedCompilerTest {
         rule.assign = new java.util.LinkedHashMap<>();
         rule.assign.put("Name", "#enumValue");
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         var assign = plan.rules().get(0).assignments().get(0);
         assertThat(assign.expression().resultType()).isEqualTo(TypeInfo.ENUM);
@@ -409,8 +366,8 @@ class TypedCompilerTest {
         rule.assign = new java.util.LinkedHashMap<>();
         rule.assign.put("Name", "truncate(${s.Beschreibung}, 60)");
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         var assign = plan.rules().get(0).assignments().get(0);
         assertThat(assign.expression().resultType()).isEqualTo(TypeInfo.TEXT);
@@ -423,8 +380,8 @@ class TypedCompilerTest {
         rule.assign = new java.util.LinkedHashMap<>();
         rule.assign.put("Name", "toXmlDateTime(${s.Beschreibung})");
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         var assign = plan.rules().get(0).assignments().get(0);
         assertThat(assign.expression().resultType()).isEqualTo(TypeInfo.XML_DATE_TIME);
@@ -437,8 +394,8 @@ class TypedCompilerTest {
         rule.assign = new java.util.LinkedHashMap<>();
         rule.assign.put("Name", "nonexistent(42)");
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         var assign = plan.rules().get(0).assignments().get(0);
         assertThat(assign.expression().resultType()).isEqualTo(TypeInfo.UNKNOWN);

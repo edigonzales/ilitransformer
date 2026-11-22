@@ -14,7 +14,7 @@ import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.InMemoryStateStore;
 
 import ch.interlis.ili2c.metamodel.TransferDescription;
@@ -39,7 +39,6 @@ class CreateAdditionalObjectIntegrationTest {
 
     private static final String MODELDIR = "src/test/data/models/";
 
-    private static TypeSystemFacade testModelTs;
     private static TransferDescription transferDescription;
 
     @BeforeAll
@@ -50,16 +49,14 @@ class CreateAdditionalObjectIntegrationTest {
                 .as("Model compilation errors: %s", result.diagnostics())
                 .isFalse();
         transferDescription = result.transferDescription();
-        testModelTs = new TypeSystemFacade(transferDescription);
     }
 
     @Test
     void createGeneratesAdditionalTargetObject() throws Exception {
         JobConfig config = configWithCreate();
         config.mapping.basketStrategy.defaultStrategy = "generateUuid";
-        Map<String, TypeSystemFacade> sourceTs = Map.of("TestModel", testModelTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors())
                 .as("Compiler errors: %s", plan.diagnostics().all())
                 .isFalse();
@@ -124,9 +121,8 @@ class CreateAdditionalObjectIntegrationTest {
     @Test
     void createAssignsValuesCorrectly() throws Exception {
         JobConfig config = configWithCreateAndAssign();
-        Map<String, TypeSystemFacade> sourceTs = Map.of("TestModel", testModelTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
         assertThat(plan.rules().get(0).creates()).hasSize(1);
 
@@ -170,9 +166,8 @@ class CreateAdditionalObjectIntegrationTest {
         badCreate.clazz = "TestModel.TestTopic.NonExistentClass";
         config.mapping.rules.get(0).create = List.of(badCreate);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("TestModel", testModelTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().hasErrors()).isTrue();
         assertThat(plan.diagnostics().all())

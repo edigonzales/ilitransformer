@@ -30,7 +30,7 @@ mapping:
         class: "DmavGeomTestModel.Fixpunkte.LFP3"
       sources:
         - alias: p
-          input: dm01
+          inputs: [dm01]
           class: "Dm01GeomTestModel.Fixpunkte.LFP3"
       identity:
         sourceKey: ["p.NBIdent", "p.Nummer"]

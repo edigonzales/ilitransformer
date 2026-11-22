@@ -173,7 +173,6 @@ class StandaloneAssociationIntegrationTest {
                 .refs
                 .getFirst();
         ref.targetRule = null;
-        ref.targetObject = null;
         var registry = ModelRegistry.builder()
                 .config(config)
                 .modelDirs(List.of(MODELS))

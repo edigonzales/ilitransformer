@@ -6,7 +6,6 @@ import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.io.FormatIdResolver;
 import guru.interlis.transformer.mapping.model.JobConfig;
-import guru.interlis.transformer.mapping.model.JobConfigNormalizer;
 import guru.interlis.transformer.mapping.plan.CompiledExpression;
 import guru.interlis.transformer.mapping.plan.ExpressionCompileContext;
 import guru.interlis.transformer.mapping.plan.SourcePlan;
@@ -33,8 +32,9 @@ final class SourceCompiler {
         ModelRegistry modelRegistry = ctx.modelRegistry();
         DiagnosticCollector diag = ctx.diagnostics();
 
+        List<String> inputIds = src.inputs != null ? src.inputs : List.of();
         TypeSystemFacade sourceTs = null;
-        for (String inputId : JobConfigNormalizer.getInputIds(src)) {
+        for (String inputId : inputIds) {
             try {
                 sourceTs = modelRegistry.requireSourceTypeSystem(inputId);
                 break;
@@ -59,7 +59,7 @@ final class SourceCompiler {
         if (sourceClass instanceof AssociationDef association) {
             String problem = TypeSystemFacade.unsupportedAssociation(association);
             if (problem == null
-                    && JobConfigNormalizer.getInputIds(src).stream()
+                    && inputIds.stream()
                             .map(modelRegistry.inputsById()::get)
                             .anyMatch(input -> input != null && !FormatIdResolver.isXtf(input.format()))) {
                 problem = "Standalone association sources require XTF input: " + src.clazz;
@@ -70,7 +70,7 @@ final class SourceCompiler {
             }
         }
 
-        return new SourcePlan(src.alias, sourceClass, JobConfigNormalizer.getInputIds(src), null);
+        return new SourcePlan(src.alias, sourceClass, inputIds, null);
     }
 
     List<SourcePlan> compileWhereFilters(

@@ -32,7 +32,7 @@ mapping:
         class: "DemoSpatialTarget.Catalog.Station"
       sources:
         - alias: src
-          input: gpkg-input
+          inputs: [gpkg-input]
           class: "DemoSpatialSource.Data.Station"
       identity:
         sourceKey: ["src.identifier"]

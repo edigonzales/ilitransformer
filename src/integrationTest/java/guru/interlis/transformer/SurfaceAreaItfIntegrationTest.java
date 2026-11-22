@@ -3,12 +3,12 @@ package guru.interlis.transformer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import guru.interlis.transformer.app.IlivalidatorRunner;
-import guru.interlis.transformer.app.IlivalidatorRunner.ValidationResult;
 import guru.interlis.transformer.diag.DiagnosticCollector;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
+import guru.interlis.transformer.validation.InProcessIlivalidatorService;
+import guru.interlis.transformer.validation.ValidationResult;
 
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
@@ -61,7 +61,7 @@ class SurfaceAreaItfIntegrationTest {
         WriteResult write = writeItf(surface);
 
         assertThat(write.diagnostics().hasErrors()).isFalse();
-        assertThat(write.validation().success()).as(write.validation().log()).isTrue();
+        assertThat(write.validation().valid()).as(write.validation().logText()).isTrue();
 
         List<IomObject> objects = readAllObjects(write.path());
         IomObject roundtrip = findFirstBySuffix(objects, ".SurfaceClass");
@@ -84,7 +84,7 @@ class SurfaceAreaItfIntegrationTest {
         String content = Files.readString(write.path());
 
         assertThat(write.diagnostics().hasErrors()).isFalse();
-        assertThat(write.validation().success()).as(write.validation().log()).isTrue();
+        assertThat(write.validation().valid()).as(write.validation().logText()).isTrue();
         assertThat(content).contains("ARCP 2601050.000 1201100.000");
 
         IomObject roundtrip = findFirstBySuffix(readAllObjects(write.path()), ".SurfaceClass");
@@ -108,7 +108,7 @@ class SurfaceAreaItfIntegrationTest {
         String content = Files.readString(write.path());
 
         assertThat(write.diagnostics().hasErrors()).isFalse();
-        assertThat(write.validation().success()).as(write.validation().log()).isTrue();
+        assertThat(write.validation().valid()).as(write.validation().logText()).isTrue();
         assertThat(content).contains("TABL AreaClass_Geometrie");
         assertThat(content).containsPattern("TABL AreaClass\\ROBJE \\d+ A001 2602050\\.[0-9]+ 1202050\\.[0-9]+");
 
@@ -139,7 +139,7 @@ class SurfaceAreaItfIntegrationTest {
         WriteResult write = writeItf(surface);
 
         assertThat(write.diagnostics().hasErrors()).isFalse();
-        assertThat(write.validation().success()).as(write.validation().log()).isTrue();
+        assertThat(write.validation().valid()).as(write.validation().logText()).isTrue();
 
         IomObject roundtrip = findFirstBySuffix(readAllObjects(write.path()), ".SurfaceClass");
         assertThat(roundtrip).isNotNull();
@@ -165,7 +165,8 @@ class SurfaceAreaItfIntegrationTest {
             Files.deleteIfExists(path);
             throw ex;
         }
-        ValidationResult validation = IlivalidatorRunner.validate(path, List.of(MODELDIR), MODEL, null);
+        ValidationResult validation =
+                new InProcessIlivalidatorService().validate(path, List.of(MODELDIR), List.of(MODEL), null);
         return new WriteResult(path, diagnostics, validation);
     }
 

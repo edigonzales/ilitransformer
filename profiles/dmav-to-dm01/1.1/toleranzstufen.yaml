@@ -42,7 +42,7 @@ mapping:
         class: "DM01AVCH24LV95D.TSEinteilung.Toleranzstufe"
       sources:
         - alias: ts
-          input: dmav
+          inputs: [dmav]
           class: "DMAV_Toleranzstufen_V1_1.Toleranzstufen.Toleranzstufe"
       identity:
         sourceKey: ["ts.NBIdent", "ts.Identifikator"]

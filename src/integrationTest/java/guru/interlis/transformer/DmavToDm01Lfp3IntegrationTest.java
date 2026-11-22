@@ -12,7 +12,7 @@ import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelCompileResult;
 import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.state.InMemoryStateStore;
 
 import ch.interlis.ili2c.metamodel.TransferDescription;
@@ -42,8 +42,6 @@ class DmavToDm01Lfp3IntegrationTest {
     private static final String MODELDIR = "src/test/data/models/";
     private static final String MAPPING_FILE = "src/test/resources/mappings/dmav-to-dm01-lfp3-test.yaml";
 
-    private static TypeSystemFacade dm01Ts;
-    private static TypeSystemFacade dmavTs;
     private static TransferDescription dm01TransferDescription;
 
     @BeforeAll
@@ -57,7 +55,6 @@ class DmavToDm01Lfp3IntegrationTest {
                     .collect(java.util.stream.Collectors.joining("\n  "));
             fail("DMAV model compilation errors:\n  " + errors);
         }
-        dmavTs = new TypeSystemFacade(dmavResult.transferDescription());
 
         IliModelCompileResult dm01Result = service.compileModel(MODELDIR + "dm01-test.ili", MODELDIR);
         if (dm01Result.hasErrors()) {
@@ -67,7 +64,6 @@ class DmavToDm01Lfp3IntegrationTest {
             fail("DM01 model compilation errors:\n  " + errors);
         }
         dm01TransferDescription = dm01Result.transferDescription();
-        dm01Ts = new TypeSystemFacade(dm01TransferDescription);
     }
 
     @Test
@@ -75,9 +71,8 @@ class DmavToDm01Lfp3IntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01TestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.diagnostics().hasErrors()).isFalse();
         assertThat(plan.rules()).hasSize(2);
@@ -90,9 +85,8 @@ class DmavToDm01Lfp3IntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01TestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject nf = new Iom_jObject("DmavTestModel.Fixpunkte.LFP3Nachfuehrung", "uuid-nf-1");
@@ -147,9 +141,8 @@ class DmavToDm01Lfp3IntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01TestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject nf = new Iom_jObject("DmavTestModel.Fixpunkte.LFP3Nachfuehrung", "uuid-nf-1");
@@ -191,9 +184,8 @@ class DmavToDm01Lfp3IntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01TestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject nf = new Iom_jObject("DmavTestModel.Fixpunkte.LFP3Nachfuehrung", "uuid-nf-1");
@@ -238,9 +230,8 @@ class DmavToDm01Lfp3IntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01TestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
         assertThat(plan.oidPlan().defaultStrategy().name()).isEqualTo("INTEGER");
 
@@ -286,9 +277,8 @@ class DmavToDm01Lfp3IntegrationTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JobConfig config = mapper.readValue(Path.of(MAPPING_FILE).toFile(), JobConfig.class);
 
-        Map<String, TypeSystemFacade> sourceTs = Map.of("DmavTestModel", dmavTs);
-        Map<String, TypeSystemFacade> targetTs = Map.of("Dm01TestModel", dm01Ts);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, sourceTs, targetTs);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject nf = new Iom_jObject("DmavTestModel.Fixpunkte.LFP3Nachfuehrung", "uuid-nf-1");

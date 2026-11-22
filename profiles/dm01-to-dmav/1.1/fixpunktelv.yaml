@@ -39,7 +39,7 @@ mapping:
         class: "DMAV_FixpunkteLV_V1_0.FixpunkteLV.LFP1"
       sources:
         - alias: p
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie1.LFP1"
       identity:
         sourceKey: ["p.NBIdent", "p.Nummer"]
@@ -60,7 +60,7 @@ mapping:
         class: "DMAV_FixpunkteLV_V1_0.FixpunkteLV.HFP1"
       sources:
         - alias: p
-          input: dm01
+          inputs: [dm01]
           class: "DM01AVCH24LV95D.FixpunkteKategorie1.HFP1"
       identity:
         sourceKey: ["p.NBIdent", "p.Nummer"]

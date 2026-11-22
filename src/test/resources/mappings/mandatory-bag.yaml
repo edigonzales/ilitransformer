@@ -25,7 +25,7 @@ mapping:
         class: MandatoryBag.TestTopic.Parent
       sources:
         - alias: s
-          input: src
+          inputs: [src]
           class: MandatoryBag.TestTopic.Source
       assign:
         Name: s.Name

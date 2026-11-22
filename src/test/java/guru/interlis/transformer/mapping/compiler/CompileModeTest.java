@@ -6,27 +6,15 @@ import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.CompileMode;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
-import guru.interlis.transformer.model.IliModelService;
-import guru.interlis.transformer.model.TypeSystemFacade;
+import guru.interlis.transformer.model.ModelRegistry;
 
 import java.util.List;
-import java.util.Map;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class CompileModeTest {
 
     private static final String MODELDIR = "src/test/data/models/";
-    private static TypeSystemFacade testModelTs;
-
-    @BeforeAll
-    static void compileModels() {
-        IliModelService service = new IliModelService();
-        var result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
-        assertThat(result.hasErrors()).isFalse();
-        testModelTs = new TypeSystemFacade(result.transferDescription());
-    }
 
     @Test
     void strictModeUpgradesWarningsToErrors() {
@@ -37,8 +25,8 @@ class CompileModeTest {
         rule.assign = new java.util.LinkedHashMap<>();
         rule.assign.put("Aktiv", "${s.Beschreibung}"); // TEXT->BOOLEAN
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.compileMode()).isEqualTo(CompileMode.STRICT);
         // In STRICT mode, the type mismatch WARNING should be upgraded to ERROR
@@ -56,8 +44,8 @@ class CompileModeTest {
         rule.assign = new java.util.LinkedHashMap<>();
         rule.assign.put("Aktiv", "${s.Beschreibung}"); // TEXT->BOOLEAN
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.compileMode()).isEqualTo(CompileMode.COMPATIBLE);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
@@ -68,8 +56,8 @@ class CompileModeTest {
         JobConfig config = minimalConfig();
         config.mapping.compileMode = "report";
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.compileMode()).isEqualTo(CompileMode.REPORT);
         assertThat(plan.isReportOnly()).isTrue();
@@ -80,8 +68,8 @@ class CompileModeTest {
         JobConfig config = minimalConfig();
         // Default compileMode is "strict"
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.compileMode()).isEqualTo(CompileMode.STRICT);
     }
@@ -91,8 +79,8 @@ class CompileModeTest {
         JobConfig config = minimalConfig();
         config.mapping.compileMode = "unknown";
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.compileMode()).isEqualTo(CompileMode.STRICT);
         assertThat(plan.diagnostics().warnings()).isGreaterThan(0);
@@ -103,8 +91,8 @@ class CompileModeTest {
         JobConfig config = minimalConfig();
         config.mapping.compileMode = "allowTodos";
 
-        Map<String, TypeSystemFacade> ts = Map.of("TestModel", testModelTs);
-        TransformPlan plan = new MappingCompiler().compileTyped(config, ts, ts);
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
 
         assertThat(plan.compileMode()).isEqualTo(CompileMode.STRICT);
         assertThat(plan.diagnostics().all())

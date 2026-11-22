@@ -12,6 +12,7 @@ import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.IliModelService;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.model.TypeSystemFacade;
 import guru.interlis.transformer.state.InMemoryStateStore;
 
@@ -44,11 +45,9 @@ class TransformationProfilingTest {
 
     @Test
     void ruleMetricsAreCapturedForCopyAndJoinRules(@TempDir Path tempDir) throws Exception {
-        TransformPlan plan = new MappingCompiler()
-                .compileTyped(
-                        config(tempDir.resolve("out.xtf").toString()),
-                        Map.of("TestModel", modelTs),
-                        Map.of("TestModel", modelTs));
+        JobConfig config = config(tempDir.resolve("out.xtf").toString());
+        var registry = ModelRegistry.builder().config(config).modelDir(MODELDIR).build();
+        TransformPlan plan = new MappingCompiler().compileTyped(config, registry);
         assertThat(plan.diagnostics().hasErrors()).isFalse();
 
         Iom_jObject first = source("1", "A", "B");
