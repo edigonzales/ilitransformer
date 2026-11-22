@@ -69,7 +69,8 @@ class MigrationServiceTest {
                         "// REVIEW P43Source.Data.Obsolete: Add a mapping rule or an explicit class loss rule",
                         "// REVIEW P43Source.Data.Item.LegacyCode: Map this source attribute or declare a loss",
                         "Name = s.Name;")
-                .doesNotContain("loss {", "reasonCode", "Kind =", "LegacyCode =");
+                .doesNotContain(
+                        "loss {", "reasonCode", "Kind =", "LegacyCode =", "modelFingerprint", "migrationReviewed");
         assertThat(draft.source().entity("P43Source.Data.Details").structure()).isTrue();
     }
 
@@ -120,9 +121,6 @@ class MigrationServiceTest {
         Files.writeString(mapping, draft.text());
         var request =
                 new MigrationService.Request(mapping, null, null, List.of(models), true, false, dir.resolve("report"));
-        assertThatThrownBy(() -> new MigrationService().execute(request, s -> {}))
-                .hasMessageContaining("Review");
-        Files.writeString(mapping, draft.text().replace("migrationReviewed false", "migrationReviewed true"));
         var result = new MigrationService().execute(request, s -> {});
         assertThat(result.all())
                 .filteredOn(d -> d.severity() == guru.interlis.transformer.diag.Severity.ERROR)

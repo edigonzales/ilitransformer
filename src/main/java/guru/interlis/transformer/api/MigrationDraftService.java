@@ -7,8 +7,6 @@ import guru.interlis.transformer.model.TypeSystemFacade;
 
 import ch.interlis.ili2c.metamodel.*;
 
-import java.nio.file.*;
-import java.security.MessageDigest;
 import java.util.*;
 
 /** Model comparison and deterministic explicit mapping proposals, shared by CLI and GUI hosts. */
@@ -30,7 +28,7 @@ public final class MigrationDraftService {
 
     public record Entity(String name, boolean structure, List<Field> fields) {}
 
-    public record Schema(String model, String fingerprint, List<Entity> entities, TypeSystemFacade types) {
+    public record Schema(String model, List<Entity> entities, TypeSystemFacade types) {
         public Entity entity(String name) {
             return entities.stream()
                     .filter(e -> e.name().equals(name))
@@ -49,7 +47,7 @@ public final class MigrationDraftService {
         return schema(model, td);
     }
 
-    public Schema schema(String model, TransferDescription td) throws Exception {
+    public Schema schema(String model, TransferDescription td) {
         var types = new TypeSystemFacade(td);
         List<Entity> entities = new ArrayList<>();
         for (Iterator<Model> models = td.iterator(); models.hasNext(); ) {
@@ -79,12 +77,12 @@ public final class MigrationDraftService {
         for (int i = 0; i < entities.size(); i++) {
             for (Field field : entities.get(i).fields()) {
                 if (field.structureType() != null && known.add(field.structureType())) {
-                    entities.add(structureEntity(new Schema(model, "", entities, types), field.structureType()));
+                    entities.add(structureEntity(new Schema(model, entities, types), field.structureType()));
                 }
             }
         }
         entities.sort(Comparator.comparing(Entity::name));
-        return new Schema(model, fingerprint(td), List.copyOf(entities), types);
+        return new Schema(model, List.copyOf(entities), types);
     }
 
     public Draft create(String sourceModel, String targetModel, String dirs, String input, String output)
@@ -99,14 +97,10 @@ public final class MigrationDraftService {
                 .append(q(input))
                 .append("; model ")
                 .append(q(sourceModel))
-                .append("; option migrationReviewed false; option modelFingerprint ")
-                .append(q(source.fingerprint()))
                 .append("; }\n  output migrated { path ")
                 .append(q(output))
                 .append("; model ")
                 .append(q(targetModel))
-                .append("; option modelFingerprint ")
-                .append(q(target.fingerprint()))
                 .append("; }\n  oid { strategy preserve; }\n  basket preserve;\n");
         Set<String> mappedTargets = new HashSet<>();
         for (Entity entity : source.entities()) {
@@ -444,27 +438,6 @@ public final class MigrationDraftService {
                 + UUID.nameUUIDFromBytes(sourceClass.getBytes(java.nio.charset.StandardCharsets.UTF_8))
                         .toString()
                         .replace('-', '_');
-    }
-
-    public static String fingerprint(TransferDescription td) throws Exception {
-        var digest = MessageDigest.getInstance("SHA-256");
-        SortedMap<String, String> files = new TreeMap<>();
-        var iterator = td.iterator();
-        while (iterator.hasNext()) {
-            Model model = iterator.next();
-            if (model.getFileName() != null) files.put(model.getName(), model.getFileName());
-        }
-        for (var entry : files.entrySet()) {
-            String file = entry.getValue();
-            Path path = Path.of(file);
-            if (!Files.isRegularFile(path))
-                throw new IllegalArgumentException("Model source unavailable for fingerprint: " + file);
-            // Names determine order; moving the same model files must not invalidate a mapping.
-            digest.update(entry.getKey().getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            digest.update((byte) 0);
-            digest.update(Files.readAllBytes(path));
-        }
-        return HexFormat.of().formatHex(digest.digest());
     }
 
     private static String q(String value) {

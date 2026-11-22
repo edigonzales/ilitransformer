@@ -2,6 +2,9 @@ package guru.interlis.transformer.api;
 
 import static org.assertj.core.api.Assertions.*;
 
+import guru.interlis.transformer.diag.Diagnostic;
+import guru.interlis.transformer.diag.DiagnosticCode;
+import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.mapping.ilimap.editor.IlimapEditorDocument;
 
 import java.nio.file.*;
@@ -26,8 +29,7 @@ class MigrationSafetyTest {
         mapping = dir.resolve("mapping.ilimap");
         var draft = new MigrationDraftService()
                 .create("MigrationDemo_V1", "MigrationDemo_V2", dir.toString(), input.toString(), output.toString());
-        var document =
-                new IlimapEditorDocument(draft.text().replace("migrationReviewed false", "migrationReviewed true"));
+        var document = new IlimapEditorDocument(draft.text());
         String rule = MigrationDraftService.ruleId("MigrationDemo_V1.Data.Line");
         document.assign(rule, "", "Name", "s.Label");
         document.assign(rule, "", "Origin", "\"migration\"");
@@ -38,11 +40,23 @@ class MigrationSafetyTest {
     }
 
     @Test
-    void rejectsModelDriftAndKeepsPreviousOutput() throws Exception {
+    void acceptsModelCommentChange() throws Exception {
         Files.writeString(dir.resolve("MigrationDemo.ili"), "\n!! changed model\n", StandardOpenOption.APPEND);
         var result = new MigrationService().execute(request, s -> {});
+        assertThat(result.all()).filteredOn(d -> d.severity() == Severity.ERROR).isEmpty();
+        assertThat(output).content().contains("<MigrationDemo_V2:Line ", ">First</MigrationDemo_V2:Name>");
+    }
+
+    @Test
+    void rejectsMappingToRenamedSourceAttribute() throws Exception {
+        Path model = dir.resolve("MigrationDemo.ili");
+        Files.writeString(model, Files.readString(model).replace("Label : MANDATORY", "Title : MANDATORY"));
+        var result = new MigrationService().execute(request, s -> {});
         assertThat(result.hasErrors()).isTrue();
-        assertThat(result.all().toString()).containsIgnoringCase("fingerprint");
+        assertThat(result.all())
+                .filteredOn(d -> DiagnosticCode.MAP_UNKNOWN_SOURCE_ATTRIBUTE.equals(d.code()))
+                .extracting(Diagnostic::message)
+                .contains("Source attribute not found: s.Label");
         unchangedOutputAndNoTemporaryFiles();
     }
 
