@@ -1,5 +1,6 @@
 package guru.interlis.transformer.api;
 
+import static guru.interlis.transformer.api.MigrationDraftService.Status.*;
 import static org.assertj.core.api.Assertions.*;
 
 import guru.interlis.transformer.interlis.InterlisIoFactory;
@@ -43,6 +44,52 @@ class MigrationServiceTest {
                 .doesNotContain(helperName);
         var draft = drafts.create(model, model, models, "source.itf", "target.itf");
         assertThat(draft.text()).contains("class \"" + className + "\"").doesNotContain("class \"" + helperName + "\"");
+    }
+
+    @Test
+    void draftReportsUnmappedContentAndKeepsOpenDecisions() throws Exception {
+        var draft = new MigrationDraftService()
+                .create("P43Source", "P43Target", "src/test/data/migration", "source.xtf", "target.xtf");
+
+        assertThat(draft.differences())
+                .extracting(
+                        MigrationDraftService.Difference::sourceClass,
+                        MigrationDraftService.Difference::attribute,
+                        MigrationDraftService.Difference::status)
+                .contains(
+                        tuple("P43Source.Data.Obsolete", "", NOT_MAPPED),
+                        tuple("P43Source.Data.Item", "LegacyCode", NOT_MAPPED),
+                        tuple("P43Source.Data.Item", "LegacyItem", NOT_MAPPED),
+                        tuple("P43Source.Data.ChangesKind", "", DECISION),
+                        tuple("P43Source.Data.Item", "Origin", DECISION),
+                        tuple("P43Source.Data.Item", "Kind", DECISION),
+                        tuple("P43Source.Data.Item", "Name", COMPATIBLE));
+        assertThat(draft.text())
+                .contains(
+                        "// REVIEW P43Source.Data.Obsolete: Add a mapping rule or an explicit class loss rule",
+                        "// REVIEW P43Source.Data.Item.LegacyCode: Map this source attribute or declare a loss",
+                        "Name = s.Name;")
+                .doesNotContain("loss {", "reasonCode", "Kind =", "LegacyCode =");
+        assertThat(draft.source().entity("P43Source.Data.Details").structure()).isTrue();
+    }
+
+    @Test
+    void draftReportsMissingStandaloneAssociationAndDirectReference() throws Exception {
+        var draft = new MigrationDraftService()
+                .create(
+                        "P42Source",
+                        "P43Target",
+                        "src/test/data/standalone-associations;src/test/data/migration",
+                        "source.xtf",
+                        "target.xtf");
+
+        assertThat(draft.differences())
+                .extracting(MigrationDraftService.Difference::sourceClass, MigrationDraftService.Difference::status)
+                .contains(tuple("P42Source.Data.Anonymous", NOT_MAPPED))
+                .doesNotContain(tuple("P42Source.Data.Embedded", NOT_MAPPED));
+        assertThat(draft.source().entity("P42Source.Data.Pointer").fields())
+                .extracting(MigrationDraftService.Field::name, MigrationDraftService.Field::referenceTarget)
+                .contains(tuple("Destination", "P42Source.Data.Site"), tuple("RemoteSite", "P42Source.Data.Site"));
     }
 
     @Test

@@ -25,6 +25,7 @@
 | Association-aware role resolution | 19 | ✅ SUPPORTED | requireRole() with AssociationDef; association name in diagnostics; XTF association serialization tested with ilivalidator | AssociationXtfIntegrationTest |
 | Standalone binary associations | 4.2 | ✅ SUPPORTED | Explicit XTF mapping with two roles, scalar attributes and model-defined OID presence | StandaloneAssociationIntegrationTest |
 | Direct class REFERENCE TO | 4.2 | ✅ SUPPORTED | Direct and inherited reference attributes resolve to actual target OIDs, with local or EXTERNAL basket semantics | StandaloneAssociationIntegrationTest |
+| Explicit class and attribute losses | 4.3 | ✅ SUPPORTED | Draft review for unmapped source content, targetless class loss rules and conditional attribute loss events in JSON and Markdown | MigrationServiceTest, MigrationVerticalTest, TypedCompilerTest, StandaloneAssociationIntegrationTest |
 | failPolicy (strict/lenient/reportOnly) | 7 | ✅ SUPPORTED | Configurable error handling at plan level | ReferenceResolutionIntegrationTest |
 | GeometryAdapter (Coord/Polyline/Surface/Area) | 13/24 | ✅ SUPPORTED | IoxGeometryAdapter with GeometryValueCopier, ItfGeometryWriter for ILI1 helper tables | IoxGeometryAdapterTest, GeometryIntegrationTest, GeometryDeepCopyTest |
 | GeometryValueCopier | 24 | ✅ SUPPORTED | Deep copy IomObject geometries to prevent source-target aliasing | GeometryDeepCopyTest |

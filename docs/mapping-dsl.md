@@ -266,12 +266,12 @@ Gruppierung. ITF schreibt Themenblöcke. `expression` ist als Stub vorbereitet.
 
 ## RuleSpec
 
-Jede Rule erzeugt Zielobjekte aus Quellobjekten.
+Eine Rule ordnet Quellobjekte einem Ziel zu oder deklariert einen vollständigen Klassenverlust.
 
 | Feld | Typ | Pflicht | Beschreibung |
 |---|---|---|---|
 | `id` | `string` | Ja | Eindeutige Rule-ID |
-| `target` | `TargetSpec` | Ja | Zielklasse und Output |
+| `target` | `TargetSpec` | Ausser bei reinem Klassenverlust | Zielklasse und Output |
 | `sources` | `list[SourceSpec]` | Ja | Quellklassen (mindestens eine) |
 | `where` | `string` | Nein | Filter-Expression für Quellobjekte |
 | `identity` | `IdentitySpec` | Nein | Schlüsselfelder für deterministische OID |
@@ -387,6 +387,18 @@ Die `on`-Condition muss ein `eq()`-Aufruf sein:
 - `eq(leftPath, rightAlias)` — **Ref-to-Object-Join**: rechte Seite ist ein Bare-Alias. Die linke Attribut-Referenz-OID wird mit der rechten Objekt-OID verglichen. Nützlich für INTERLIS 1 Parent-Child-Beziehungen (z.B. `eq(gnp.GelaendenamePos_von, gn)`).
 
 Derzeit wird **maximal ein Join pro Rule** unterstützt. Mehrere Join-Einträge werden vom Compiler mit einem Fehler abgelehnt.
+
+### LossSpec
+
+In einer Mappingregel dokumentiert `losses` einzelne Verluste. Ein einfacher
+`sourcePath` wie `src.LegacyCode` wird gegen das Quellmodell geprüft. Mit
+`when: "defined(src.LegacyCode)"` entsteht ein Ereignis nur bei gesetztem Wert.
+
+Eine reine Klassenverlustregel verwendet genau einen Eintrag in `sources` und
+genau einen Eintrag in `losses`. Sie setzt den Quellalias als `sourcePath`
+und gibt `reasonCode` und `description` an. Die Regel enthält keine weiteren
+Mapping-Anweisungen oder Bedingungen. Die [ILIMAP-Referenz](ilimap-v2.md#loss)
+zeigt die vollständige Regel und erläutert die Verlustberichte.
 
 ### MetadataSpec
 

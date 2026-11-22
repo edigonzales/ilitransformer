@@ -8,6 +8,7 @@ import guru.interlis.transformer.app.JobRunner;
 import guru.interlis.transformer.app.PreparedJob;
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.interlis.InterlisIoFactory;
+import guru.interlis.transformer.loss.LossEvent;
 import guru.interlis.transformer.mapping.compiler.MappingCompiler;
 import guru.interlis.transformer.mapping.model.MappingLoader;
 import guru.interlis.transformer.model.ModelRegistry;
@@ -27,6 +28,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -185,6 +187,34 @@ class StandaloneAssociationIntegrationTest {
         assertThat(errors.all()).as("%s", errors.all()).anyMatch(d -> d.code()
                 .equals(DiagnosticCode.RUN_REF_AMBIGUOUS));
         assertThat(output).doesNotExist();
+    }
+
+    @Test
+    void reportsOneLossPerOidlessStandaloneAssociation() throws Exception {
+        String text = mappingText();
+        int start = text.indexOf("  rule mapAnonymous");
+        int end = text.indexOf("  rule mapPointer", start);
+        var base = request(text.substring(0, start) + """
+                  rule discardAnonymous {
+                    source s from original class "P42Source.Data.Anonymous";
+                    loss { sourcePath s; reasonCode "CLASS_REMOVED"; description "Removed links"; }
+                  }
+                """ + text.substring(end));
+        Path report = dir.resolve("report");
+        var diagnostics = new MigrationService()
+                .execute(
+                        new MigrationService.Request(
+                                base.mapping(), input, output, List.of(MODELS), true, false, report),
+                        ignored -> {});
+        assertThat(diagnostics.hasErrors()).as("%s", diagnostics.all()).isFalse();
+        assertThat(readObjects(output, draft.target().types().getTransferDescription(), new ArrayList<>()))
+                .extracting(IomObject::getobjecttag)
+                .doesNotContain(TARGET + ".Data.Anonymous");
+        var loss = new LossEvent(
+                "discardAnonymous", SOURCE + ".Data.Anonymous", null, "s", "CLASS_REMOVED", "Removed links");
+        assertThat(new ObjectMapper()
+                        .readValue(report.resolve("lossiness-report.json").toFile(), LossEvent[].class))
+                .containsExactly(loss, loss);
     }
 
     @Test

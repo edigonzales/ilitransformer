@@ -242,8 +242,10 @@ public final class RuleExecutionService {
 
                     metrics.recordRuleMatch(rule.ruleId());
                     recordLosses(rule, record, evalCtx);
-                    int created = targetObjectFactory.createTarget(rule, source, record, evalCtx, plan, ctx);
-                    metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
+                    if (rule.targetClass() != null) {
+                        targetObjectFactory.createTarget(rule, source, record, evalCtx, plan, ctx);
+                        metrics.recordTarget(TargetObjectFactory.getScopedName(rule.targetClass()));
+                    }
                 }
             }
         }

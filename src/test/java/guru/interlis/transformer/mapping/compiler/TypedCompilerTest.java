@@ -4,17 +4,22 @@ import static org.assertj.core.api.Assertions.*;
 
 import guru.interlis.transformer.diag.DiagnosticCode;
 import guru.interlis.transformer.diag.Severity;
+import guru.interlis.transformer.mapping.ilimap.IlimapLoader;
 import guru.interlis.transformer.mapping.model.JobConfig;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.mapping.plan.TypeInfo;
 import guru.interlis.transformer.model.IliModelService;
+import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.model.TypeSystemFacade;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class TypedCompilerTest {
 
@@ -27,6 +32,103 @@ class TypedCompilerTest {
         var result = service.compileModel("src/test/data/models/minimal.ili", MODELDIR);
         assertThat(result.hasErrors()).isFalse();
         testModelTs = new TypeSystemFacade(result.transferDescription());
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            reasonCode "CLASS_REMOVED"; | reasonCode "  "; | non-empty reasonCode
+            reasonCode "CLASS_REMOVED"; | '' | non-empty reasonCode
+            description "Removed"; | '' | non-empty description
+            Obsolete | Missing | Source class not found
+            Obsolete | AbstractItem | concrete transfer class
+            Obsolete | Details | concrete transfer class
+            sourcePath s; | sourcePath s.Name; | declared source alias
+            sourcePath s; | sourcePath other; | declared source alias
+            sourcePath s; | sourcePath s; when true; | where or when
+            "P43Source.Data.Obsolete"; | "P43Source.Data.Obsolete" where true; | where or when
+            loss { | where true; loss { | one source and one loss block
+            loss { | assign { Name = s.Name; } loss { | one source and one loss block
+            loss { | source b from original class "P43Source.Data.Item"; loss { | one source and one loss block
+            loss { | target migrated class "P43Target.Data.Item"; loss { | requires a rule without a target
+            """)
+    void rejectsMalformedClassLoss(String original, String replacement, String message) {
+        assertLossDiagnostics("""
+                rule drop {
+                  source s from original class "P43Source.Data.Obsolete";
+                  loss { sourcePath s; reasonCode "CLASS_REMOVED"; description "Removed"; }
+                }
+                """.replace(original, replacement), message);
+    }
+
+    @Test
+    void rejectsMappingAndClassLossForTheSameInputAndClass() {
+        assertLossDiagnostics("""
+                rule drop {
+                  source s from original class "P43Source.Data.Item";
+                  loss { sourcePath s; reasonCode "CLASS_REMOVED"; description "Removed"; }
+                }
+                rule migrate {
+                  source item from original class "P43Source.Data.Item";
+                  target migrated class "P43Target.Data.Item";
+                  assign { Name = item.Name; Origin = "test"; }
+                }
+                """, "overlaps mapping rule 'migrate'");
+    }
+
+    @Test
+    void rejectsClassLossOverlappingAnExplicitBagSource() {
+        assertLossDiagnostics("""
+                rule drop {
+                  source s from original class "P43Source.Data.Obsolete";
+                  loss { sourcePath s; reasonCode "CLASS_REMOVED"; description "Removed"; }
+                }
+                rule migrate {
+                  source item from original class "P43Source.Data.Item";
+                  target migrated class "P43Target.Data.Item";
+                  assign { Name = item.Name; Origin = "test"; }
+                  bag History {
+                    from old in original class "P43Source.Data.Obsolete";
+                    assign { Note = "old"; }
+                  }
+                }
+                """, "overlaps mapping rule 'migrate'");
+    }
+
+    @ParameterizedTest
+    @CsvSource({"missing.Name, Unknown source alias", "s.Missing, Source attribute not found"})
+    void rejectsInvalidAttributeLossPath(String path, String message) {
+        assertLossDiagnostics("""
+                rule migrate {
+                  source s from original class "P43Source.Data.Item";
+                  target migrated class "P43Target.Data.Item";
+                  assign { Name = s.Name; Origin = "test"; }
+                  loss { sourcePath %s; reasonCode "ATTRIBUTE_REMOVED"; description "Removed"; }
+                }
+                """.formatted(path), message);
+    }
+
+    private static void assertLossDiagnostics(String rules, String message) {
+        var loaded = new IlimapLoader().loadDetailed("""
+                mapping v2 {
+                  input original { path "source.xtf"; model "P43Source"; }
+                  output migrated { path "target.xtf"; model "P43Target"; }
+                  %s
+                }
+                """.formatted(rules), Path.of("."));
+        var diagnostics = loaded.diagnostics();
+        if (!loaded.hasErrors()) {
+            var config = loaded.jobConfig();
+            var registry = ModelRegistry.builder()
+                    .config(config)
+                    .modelDir("src/test/data/migration")
+                    .build();
+            diagnostics = new MappingCompiler()
+                    .compileTyped(config, registry)
+                    .diagnostics()
+                    .all();
+        }
+        assertThat(diagnostics)
+                .anyMatch(d -> d.severity() == Severity.ERROR && d.message().contains(message));
     }
 
     // -- Positive tests -----------------------------------------------------

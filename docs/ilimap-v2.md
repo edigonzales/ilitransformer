@@ -359,7 +359,7 @@ Erlaubte Rule-Elemente:
 
 | Element | Anzahl | Zweck |
 |---|---:|---|
-| `target` | 1 | Zieloutput und Zielklasse |
+| `target` | 1, bei reinem Klassenverlust 0 | Zieloutput und Zielklasse |
 | `source` | 1..n | Quellalias, Input und Quellklasse |
 | `where` | 0..1 | Rule-Filter |
 | `join` | 0..n | Source-Joins |
@@ -691,12 +691,38 @@ loss {
 }
 ```
 
-Loss-Blocks dokumentieren bekannten Informationsverlust. Sie werden ueber
-`IlimapToJobConfigMapper` auf `LossSpec` abgebildet. Alle Felder (`sourcePath`,
-`reasonCode`, `description`, `when`) werden gemappt und sind in `JobConfig` verfuegbar.
-Bei Single-Source-Rules werden passende Loss-Blocks auch fuer durch `where` gefilterte
-Quellobjekte aufgezeichnet. Damit koennen bewusst verworfene Quellobjekte dokumentiert
-werden.
+Ein `loss`-Block deklariert einen beabsichtigten Informationsverlust. Ein einfacher
+Quellpfad wie `p.SymbolOri` muss auf ein vorhandenes Attribut oder eine Rolle der
+angegebenen Quelle verweisen. `when` beschränkt den Verlust auf Records, für die
+die Bedingung zutrifft. Bei Regeln mit einer Quelle werden passende Verluste auch
+für die durch `where` gefilterten Records aufgezeichnet.
+
+Eine reine Klassenverlustregel enthält genau eine `source` und genau einen
+`loss`-Block. Sie verwendet den Quellalias als `sourcePath` und verlangt einen
+nicht leeren `reasonCode` und eine nicht leere `description`.
+
+```ilimap
+rule obsoleteClass {
+  source s from original class "OldModel.Data.Obsolete";
+  loss {
+    sourcePath s;
+    reasonCode "CLASS_REMOVED";
+    description "Die Klasse entfällt im Zielmodell.";
+  }
+}
+```
+
+Die Quelle muss eine konkrete transferierbare Klasse oder eine unterstützte
+selbständige Assoziation sein. Bedingungen, zusätzliche Regelanweisungen und
+eine gleichzeitige Zielzuordnung für dieselbe Klasse im selben Input sind
+unzulässig. Die Regel erzeugt pro betroffenem Quellrecord ein `LossEvent` im
+bestehenden JSON- und Markdown-Bericht. Für eine Klasse ohne Quellrecords
+entsteht kein Eintrag. Die Regel erzeugt keine Zielobjekte oder Baskets.
+
+Im Migrationsentwurf kennzeichnet `NOT_MAPPED` eine offene Zuordnung und
+`DECISION` eine offene fachliche Entscheidung. `// REVIEW` weist auf die
+offenen Punkte hin. Verlustdeklarationen ergänzt der Benutzer ausdrücklich.
+Die Analyse garantiert keine allgemeine Verlustfreiheit.
 
 ## Metadata
 

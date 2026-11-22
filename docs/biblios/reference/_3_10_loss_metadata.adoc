@@ -8,8 +8,7 @@
 loss {
   sourcePath s.AlteGeometrie;
   reasonCode "GEOM_VEREINFACHT";
-  description "Die Geometrie wurde für das Zielmodell vereinfacht. " +
-              "Detailsiehe Transformationsbericht.";
+  description "Die Geometrie wurde für das Zielmodell vereinfacht.";
   when defined(s.AlteGeometrie);
 }
 ----
@@ -17,13 +16,34 @@ loss {
 [cols="1,1,1,3",options="header"]
 |===
 | Feld | Typ | Pflicht | Beschreibung
-| `sourcePath` | expression | ja | Quellattribut, das verloren geht
+| `sourcePath` | expression | ja | Quellattribut oder bei Klassenverlust der Quellalias
 | `reasonCode` | string | ja | Kategorie/Grund des Verlusts
-| `description` | string | ja | Beschreibung des Verlusts (String-Konkatenation mit `+` möglich)
+| `description` | string | ja | Beschreibung des Verlusts
 | `when` | expression | nein | Bedingung, unter der der Verlust eintritt
 |===
 
-`loss`-Blöcke dokumentieren, welche Quelldaten in der Transformation verloren gehen — etwa weil das Zielmodell sie nicht abbilden kann. Sie verhindern keine Transformation, sondern dienen der Nachvollziehbarkeit.
+Ein `loss`-Block deklariert einen beabsichtigten Informationsverlust.
+`when` beschränkt einen Attributverlust auf die Quellrecords, für die die Bedingung zutrifft.
+
+Eine reine Klassenverlustregel enthält genau eine Quelle und genau einen
+`loss`-Block mit dem Quellalias als `sourcePath`. Grund und Beschreibung
+müssen ausgefüllt sein. Die Regel enthält kein Ziel, keine Bedingungen und keine
+weiteren Anweisungen.
+
+[source,ilimap]
+----
+rule obsoleteClass {
+  source s from original class "OldModel.Data.Obsolete";
+  loss {
+    sourcePath s;
+    reasonCode "CLASS_REMOVED";
+    description "Die Klasse entfällt im Zielmodell.";
+  }
+}
+----
+
+Für jeden tatsächlich betroffenen Quellrecord erscheint ein `LossEvent`
+im JSON- und Markdown-Bericht. Eine Klassenverlustregel erzeugt keine Zielobjekte.
 
 ==== metadata — Regel-Metadaten
 

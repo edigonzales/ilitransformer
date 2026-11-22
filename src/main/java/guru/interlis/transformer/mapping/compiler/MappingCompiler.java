@@ -7,6 +7,7 @@ import guru.interlis.transformer.diag.Severity;
 import guru.interlis.transformer.expr.ExpressionCompiler;
 import guru.interlis.transformer.expr.FunctionRegistry;
 import guru.interlis.transformer.mapping.model.JobConfig;
+import guru.interlis.transformer.mapping.plan.BagPlan;
 import guru.interlis.transformer.mapping.plan.BasketPlan;
 import guru.interlis.transformer.mapping.plan.CompileMode;
 import guru.interlis.transformer.mapping.plan.FailPolicy;
@@ -14,6 +15,7 @@ import guru.interlis.transformer.mapping.plan.FailPolicyParser;
 import guru.interlis.transformer.mapping.plan.OidPlan;
 import guru.interlis.transformer.mapping.plan.RefPlan;
 import guru.interlis.transformer.mapping.plan.RulePlan;
+import guru.interlis.transformer.mapping.plan.SourcePlan;
 import guru.interlis.transformer.mapping.plan.TransformPlan;
 import guru.interlis.transformer.model.ModelRegistry;
 import guru.interlis.transformer.model.TypeSystemFacade;
@@ -21,9 +23,11 @@ import guru.interlis.transformer.state.BasketStrategy;
 import guru.interlis.transformer.state.OidStrategy;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public final class MappingCompiler {
 
@@ -147,6 +151,7 @@ public final class MappingCompiler {
             }
         }
 
+        checkClassLossConflicts(rulePlans, diagnostics);
         checkRuleDependencies(rulePlans, diagnostics);
 
         validateOidTypeCompatibility(oidStrategy, rulePlans, modelRegistry, diagnostics);
@@ -213,6 +218,32 @@ public final class MappingCompiler {
             }
             throw new IllegalArgumentException(sb.toString());
         }
+    }
+
+    private void checkClassLossConflicts(List<RulePlan> plans, DiagnosticCollector diag) {
+        for (RulePlan loss : plans) {
+            if (loss.targetClass() != null) continue;
+            var discarded = loss.sources().getFirst();
+            String className = CompileUtils.getScopedName(discarded.sourceClass());
+            Predicate<SourcePlan> matches = source -> className.equals(CompileUtils.getScopedName(source.sourceClass()))
+                    && !Collections.disjoint(discarded.inputIds(), source.inputIds());
+            for (RulePlan mapping : plans) {
+                if (mapping.targetClass() != null
+                        && (mapping.sources().stream().anyMatch(matches) || hasBagSource(mapping.bags(), matches))) {
+                    diag.add(new Diagnostic(
+                            DiagnosticCode.MAP_UNSUPPORTED_FEATURE,
+                            Severity.ERROR,
+                            "Class loss for " + className + " overlaps mapping rule '" + mapping.ruleId()
+                                    + "' on the same source input",
+                            loss.ruleId(),
+                            null));
+                }
+            }
+        }
+    }
+
+    private static boolean hasBagSource(List<BagPlan> bags, Predicate<SourcePlan> matches) {
+        return bags.stream().anyMatch(bag -> matches.test(bag.fromSource()) || hasBagSource(bag.nestedBags(), matches));
     }
 
     private void checkRuleDependencies(List<RulePlan> plans, DiagnosticCollector diag) {
