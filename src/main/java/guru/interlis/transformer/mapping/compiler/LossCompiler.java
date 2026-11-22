@@ -46,17 +46,16 @@ final class LossCompiler {
         if (sourcePath == null || sourcePath.isBlank()) return;
         try {
             if (!(ExpressionParser.parse(sourcePath.strip()) instanceof PathExpr path)) return;
-            if (path.attributeName() == null) {
-                if (sourcesByAlias.containsKey(path.alias())) {
-                    ctx.diagnostics()
-                            .add(new Diagnostic(
-                                    DiagnosticCode.MAP_UNSUPPORTED_FEATURE,
-                                    Severity.ERROR,
-                                    "A loss of an entire source class requires a rule without a target",
-                                    ruleId,
-                                    null));
-                }
-            } else if (!path.attributeName().contains(".")) {
+            String attribute = path.attributeName();
+            if (attribute == null && sourcesByAlias.containsKey(path.alias())) {
+                ctx.diagnostics()
+                        .add(new Diagnostic(
+                                DiagnosticCode.MAP_UNSUPPORTED_FEATURE,
+                                Severity.ERROR,
+                                "A loss of an entire source class requires a rule without a target",
+                                ruleId,
+                                null));
+            } else if (attribute == null || !attribute.contains(".")) {
                 var exprCtx = new ExpressionCompileContext(
                         ruleId, sourcesByAlias, TypeInfo.UNKNOWN, ctx.functionRegistry(), ctx.enumMaps());
                 new ExpressionTypeChecker(exprCtx, ctx.diagnostics()).check(path);

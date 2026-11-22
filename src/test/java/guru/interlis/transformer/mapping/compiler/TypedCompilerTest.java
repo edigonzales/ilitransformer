@@ -60,6 +60,44 @@ class TypedCompilerTest {
                 """.replace(original, replacement), message);
     }
 
+    @ParameterizedTest
+    @CsvSource({"original, true", "alternate, false"})
+    void rejectsOnlyOverlappingClassLossRules(String secondInput, boolean overlaps) {
+        var config = new IlimapLoader().load("""
+                mapping v2 {
+                  input original { path "source.xtf"; model "P43Source"; }
+                  input alternate { path "alternate.xtf"; model "P43Source"; }
+                  output migrated { path "target.xtf"; model "P43Target"; }
+                  rule drop {
+                    source s from original class "P43Source.Data.Obsolete";
+                    loss { sourcePath s; reasonCode "CLASS_REMOVED"; description "Removed"; }
+                  }
+                  rule dropAgain {
+                    source t from %s class "P43Source.Data.Obsolete";
+                    loss { sourcePath t; reasonCode "CLASS_REMOVED"; description "Removed"; }
+                  }
+                }
+                """.formatted(secondInput), Path.of("."));
+        var registry = ModelRegistry.builder()
+                .config(config)
+                .modelDir("src/test/data/migration")
+                .build();
+        var plan = new MappingCompiler().compileTyped(config, registry);
+
+        if (overlaps) {
+            assertThat(plan.diagnostics().all())
+                    .filteredOn(d -> d.severity() == Severity.ERROR)
+                    .singleElement()
+                    .satisfies(d -> assertThat(d.message())
+                            .contains("P43Source.Data.Obsolete", "overlaps class loss rule 'dropAgain'"));
+        } else {
+            assertThat(plan.diagnostics().all())
+                    .filteredOn(d -> d.severity() == Severity.ERROR)
+                    .isEmpty();
+            assertThat(plan.rules()).hasSize(2);
+        }
+    }
+
     @Test
     void rejectsMappingAndClassLossForTheSameInputAndClass() {
         assertLossDiagnostics("""
@@ -95,7 +133,11 @@ class TypedCompilerTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"missing.Name, Unknown source alias", "s.Missing, Source attribute not found"})
+    @CsvSource({
+        "missing.Name, Unknown source alias",
+        "s.Missing, Source attribute not found",
+        "unbekannt, Unknown source alias in expression: unbekannt"
+    })
     void rejectsInvalidAttributeLossPath(String path, String message) {
         assertLossDiagnostics("""
                 rule migrate {

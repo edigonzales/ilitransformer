@@ -221,20 +221,23 @@ public final class MappingCompiler {
     }
 
     private void checkClassLossConflicts(List<RulePlan> plans, DiagnosticCollector diag) {
-        for (RulePlan loss : plans) {
+        for (int i = 0; i < plans.size(); i++) {
+            RulePlan loss = plans.get(i);
             if (loss.targetClass() != null) continue;
             var discarded = loss.sources().getFirst();
             String className = CompileUtils.getScopedName(discarded.sourceClass());
             Predicate<SourcePlan> matches = source -> className.equals(CompileUtils.getScopedName(source.sourceClass()))
                     && !Collections.disjoint(discarded.inputIds(), source.inputIds());
-            for (RulePlan mapping : plans) {
-                if (mapping.targetClass() != null
-                        && (mapping.sources().stream().anyMatch(matches) || hasBagSource(mapping.bags(), matches))) {
+            for (int j = 0; j < plans.size(); j++) {
+                RulePlan other = plans.get(j);
+                boolean classLoss = other.targetClass() == null;
+                if (classLoss && j <= i) continue;
+                if (other.sources().stream().anyMatch(matches) || (!classLoss && hasBagSource(other.bags(), matches))) {
                     diag.add(new Diagnostic(
                             DiagnosticCode.MAP_UNSUPPORTED_FEATURE,
                             Severity.ERROR,
-                            "Class loss for " + className + " overlaps mapping rule '" + mapping.ruleId()
-                                    + "' on the same source input",
+                            "Class loss for " + className + " overlaps " + (classLoss ? "class loss" : "mapping")
+                                    + " rule '" + other.ruleId() + "' on the same source input",
                             loss.ruleId(),
                             null));
                 }
